@@ -1,0 +1,30 @@
+name: Lint and Type Check
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+      - develop
+
+jobs:
+  lint-and-typecheck:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20 # Change based on your Node version
+
+      - name: Install dependencies
+        run: npm ci # or `yarn install` if using yarn
+
+      - name: Run ESLint
+        run: npm run lint # make sure this script exists in package.json
+
+      - name: Run TypeScript type check
+        run: npx tsc --noEmit
