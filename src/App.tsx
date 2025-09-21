@@ -14,10 +14,10 @@ import CountryNewPage from "./pages/Country/CountryPage";
 import CountryFormPage from "./pages/Country/CreatePage";
 
 // users
+import UserPage from "./pages/users/UsersPage";
+import UserDetailsPage from "./pages/users/UsersDetails";
 import UserCreatePage from "./pages/users/CreatePage";
 import UserEditPage from "./pages/users/EditPage";
-import UserDetailsPage from "./pages/users/UserDetailsPage";
-import UsersPage from "./pages/users/UsersPage";
 
 // user master
 import UserMasterCreatePage from "./pages/user-master/CreatePage";
@@ -1601,21 +1601,7 @@ function App() {
                 <Route path="/search" element={<Dashboard />} />
 
                 {/* Users */}
-                <Route path="/users" element={<UsersPage />} />
-                <Route path="/users/:id" element={<UserDetailsPage />} />
-                <Route
-                  path="/users/create"
-                  element={<UserCreatePage isEdit={false} />}
-                />
-                <Route
-                  path="/users/:id/edit"
-                  element={<UserCreatePage isEdit={true} />}
-                />
-                <Route
-                  path="/users/edit/:id"
-                  element={<UserEditPage isEdit={true} />}
-                />
-                <Route path="/users/view" element={<UserDetailsPage />} />
+
                 {/* Users Master */}
                 <Route path="/user-master" element={<UserMasterPage />} />
                 <Route
@@ -1984,6 +1970,20 @@ function App() {
                   path="/assets-category/edit/:id"
                   element={<AssetsEditPage isEdit={true} />}
                 />
+
+                {/* Users */}
+                <Route path="/users" element={<UserPage />} />
+                <Route path="/users/:id" element={<UserDetailsPage />} />
+                <Route
+                  path="/users/create"
+                  element={<UserCreatePage isEdit={false} />}
+                />
+                <Route
+                  path="/users/edit/:id"
+                  element={<UserEditPage isEdit={true} />}
+                />
+                <Route path="/users/view" element={<UserDetailsPage />} />
+
                 {/* Assets Master */}
                 <Route path="/assets-master" element={<AssetsMasterPage />} />
                 <Route

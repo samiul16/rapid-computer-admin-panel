@@ -1,301 +1,408 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useRef, useEffect } from "react";
-import { useTranslation } from "react-i18next";
-import { Trash2, Undo2, MoreVertical, Upload, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import EditableInput, {
-  type EditableInputRef,
-} from "@/components/common/EditableInput";
 import video from "@/assets/videos/test.mp4";
+import { Autocomplete } from "@/components/common/Autocomplete";
+import EditableInput from "@/components/common/EditableInput";
 import GenericPDF from "@/components/common/pdf";
-import { printHtmlContent } from "@/lib/printHtmlContent";
-import { toastError } from "@/lib/toast";
-import { pdf } from "@react-pdf/renderer";
+import { ResetFormModal } from "@/components/common/ResetFormModal";
+import { Button } from "@/components/ui/button";
 import { PrintCommonLayout } from "@/lib/printContents/PrintCommonLayout";
-import PageLayout from "@/components/common/PageLayout";
-import LanguageTranslatorModal from "@/components/common/LanguageTranslatorModel";
+import { printHtmlContent } from "@/lib/printHtmlContent";
+import { toastError, toastRestore, toastSuccess } from "@/lib/toast";
+import { Modal } from "@mantine/core";
+import { pdf } from "@react-pdf/renderer";
+import { Check, Edit, Eye, Plus } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useCountriesPermissions, usePermission } from "@/hooks/usePermissions";
+import { useLanguageLabels } from "@/hooks/useLanguageLabels";
+import { useAppSelector } from "@/store/hooks";
+import { LanguageInputDropdown } from "@/components/LanguageInputDropdown";
+import type { CountryModuleData } from "@/types/modules";
+import MinimizablePageLayout from "@/components/MinimizablePageLayout";
+import { useCountryFormData } from "@/hooks/useCountryFormData";
+import { SwitchSelect } from "@/components/common/SwitchAutoComplete";
+import { ImageUploader } from "@/components/common/ImageUploader";
+import { TemplateContent } from "@/components/common/TemplateContent";
+
+type CountryData = {
+  code: string;
+  title: string;
+  isDefault: boolean;
+  isStatusActive: boolean;
+  isActive: boolean;
+  isDraft: boolean;
+  rating: number;
+  flag: string | null;
+  createdAt: Date | null;
+  draftedAt: Date | null;
+  updatedAt: Date | null;
+  deletedAt: Date | null;
+  ISD: string;
+  isDeleted: boolean;
+  title_ar?: string;
+  title_hi?: string;
+  title_ur?: string;
+  title_bn?: string;
+};
 
 type Props = {
   isEdit?: boolean;
 };
 
-interface UserData {
-  name: string;
-  isDefault: boolean;
-  isActive: boolean;
-  isDraft: boolean;
-  createdAt: Date | null;
-  draftedAt: Date | null;
-  updatedAt: Date | null;
-  deletedAt: Date | null;
-  isDeleted: boolean;
-  photo: string | null;
-}
-
-const initialData: UserData = {
-  name: "John Smith",
+const initialData: CountryData = {
+  code: "US",
+  title: "United States of America",
   isDefault: false,
+  isStatusActive: true,
   isActive: true,
   isDraft: false,
+  rating: 3,
+  flag: null,
   createdAt: new Date(),
   draftedAt: null,
   updatedAt: new Date(),
   deletedAt: null,
+  ISD: "+971",
   isDeleted: false,
-  photo: null,
 };
 
-export default function UserFormPage({ isEdit = false }: Props) {
-  const { t } = useTranslation();
+export default function CountryFormPage({ isEdit = false }: Props) {
   const navigate = useNavigate();
-  const [keepCreating, setKeepCreating] = useState(false);
+  const labels = useLanguageLabels();
+  const { isRTL } = useAppSelector((state) => state.language);
 
+  // Use the custom hook for minimized module data
+  const {
+    moduleData,
+    hasMinimizedData,
+    resetModuleData,
+    getModuleScrollPosition,
+  } = useCountryFormData();
+
+  const [showTemplates, setShowTemplates] = useState(false);
+
+  const [keepCreating, setKeepCreating] = useState(false);
+  // const [imagePreview, setImagePreview] = useState<string | null>(null);
+  // const [isDragging, setIsDragging] = useState(false);
+  // const fileInputRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
-
-  const nameInputRef = useRef<EditableInputRef>(null);
-  const defaultSwitchRef = useRef<HTMLButtonElement>(null);
-  const activeSwitchRef = useRef<HTMLButtonElement>(null);
-  const draftSwitchRef = useRef<HTMLButtonElement>(null);
-  const deleteButtonRef = useRef<HTMLButtonElement>(null);
-  const photoUploadRef = useRef<HTMLInputElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDefaultState, setIsDefaultState] = useState<"Yes" | "No">("No");
+  // const [isDraftState, setIsDraftState] = useState<"Yes" | "No">("No");
+  const [statusState, setStatusState] = useState<"Active" | "Draft" | string>(
+    "Active"
+  );
+  const [isStatusActive] = useState<boolean>(true);
   const [printEnabled, setPrintEnabled] = useState(false);
   const [pdfChecked, setPdfChecked] = useState(false);
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  const [countryLanguageValues, setCountryLanguageValues] = useState<
+    Record<string, string>
+  >({});
+  const [formKey, setFormKey] = useState(0);
+  const [isRestoredFromMinimized, setIsRestoredFromMinimized] = useState(false);
 
-  // Photo upload state
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
+  // Permission checks
+  const { canCreate, canView } = useCountriesPermissions();
+
+  // Field-level permissions
+  const countryName: boolean = usePermission(
+    "countries",
+    "create",
+    "countryName"
+  );
+  const ISD: boolean = usePermission("countries", "create", "ISD");
+  const isDefault: boolean = usePermission("countries", "create", "isDefault");
+  // const isDraft: boolean = usePermission("countries", "create", "isDraft");
+  const flag: boolean = usePermission("countries", "create", "flag");
+  const canPdf: boolean = usePermission("countries", "pdf");
+  const canPrint: boolean = usePermission("countries", "print");
+
+  // Country codes for autocomplete
+  const countryCodes = ["US", "CA", "GB", "AU", "DE", "FR"];
+
+  // Form state
+  const [formData, setFormData] = useState<CountryData>({
+    code: "",
+    ISD: "",
+    title: "",
+    isDefault: false,
+    isStatusActive: true,
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    rating: 3,
+    flag: null,
+    createdAt: null,
+    draftedAt: null,
+    updatedAt: null,
+    deletedAt: null,
+  });
+
+  // Simplified restore logic using the custom hook
+  useEffect(() => {
+    // Auto-restore if:
+    // 1. Has minimized data
+    // 2. Haven't already restored
+    // 3. Current form is empty (to avoid overwriting user input)
+    const shouldAutoRestore =
+      hasMinimizedData &&
+      moduleData?.formData &&
+      !isRestoredFromMinimized &&
+      !formData.title &&
+      !formData.code &&
+      !formData.ISD;
+
+    if (shouldAutoRestore) {
+      const savedFormData = moduleData.formData;
+
+      // Restore all the data (ensure required field is present)
+      setFormData({
+        ...(savedFormData as any),
+        isStatusActive:
+          (savedFormData as any)?.isStatusActive !== undefined
+            ? (savedFormData as any).isStatusActive
+            : true,
+      });
+
+      if (moduleData.countryLanguageValues) {
+        setCountryLanguageValues(moduleData.countryLanguageValues);
+      }
+
+      setIsDefaultState(savedFormData.isDefault ? "Yes" : "No");
+      // setIsDraftState(savedFormData.isDraft ? "Yes" : "No");
+      setStatusState(savedFormData.isActive ? "Active" : "Draft");
+
+      setIsRestoredFromMinimized(true);
+
+      // Restore scroll position
+      const scrollPosition = getModuleScrollPosition("country-form-module");
+      if (scrollPosition) {
+        setTimeout(() => {
+          window.scrollTo(0, scrollPosition);
+        }, 200);
+      }
+    }
+  }, [
+    hasMinimizedData,
+    moduleData,
+    isRestoredFromMinimized,
+    formData.title,
+    formData.code,
+    formData.ISD,
+    getModuleScrollPosition,
+  ]);
+
+  // Initialize with edit data if available (but only if not restoring from minimized)
+  useEffect(() => {
+    if (
+      isEdit &&
+      initialData &&
+      !hasMinimizedData &&
+      !isRestoredFromMinimized
+    ) {
+      setFormData({
+        ...initialData,
+        flag: null,
+      });
+      setIsDefaultState(initialData.isDefault ? "Yes" : "No");
+      // setIsDraftState(initialData.isDraft ? "Yes" : "No");
+      setStatusState(initialData.isActive ? "Active" : "Draft");
+    }
+  }, [isEdit, hasMinimizedData, isRestoredFromMinimized]);
+
+  const [popoverOptions, setPopoverOptions] = useState([
+    {
+      label: isEdit ? "Create" : "Edit",
+      icon: isEdit ? (
+        <Plus className="w-5 h-5 text-green-500" />
+      ) : (
+        <Edit className="w-5 h-5 text-blue-500" />
+      ),
+      onClick: () => {
+        if (isEdit) {
+          navigate("/countries/create");
+        } else {
+          navigate("/countries/edit/undefined");
+        }
+      },
+      show: canCreate,
+    },
+    {
+      label: "View",
+      icon: <Eye className="w-5 h-5 text-green-600" />,
+      onClick: () => {
+        navigate("/countries/view");
+      },
+      show: canView,
+    },
+  ]);
 
   // focus next input field
   const inputRefs = useRef<Record<string, HTMLElement | null>>({});
   const setRef = (name: string) => (el: HTMLElement | null) => {
     inputRefs.current[name] = el;
   };
-
-  // Translation state
-  const [translations, setTranslations] = useState([
-    { id: 1, english: "", arabic: "", bangla: "" },
-  ]);
-
-  // Form state
-  const [formData, setFormData] = useState<UserData>({
-    name: "",
-    isDefault: false,
-    isActive: true,
-    isDraft: false,
-    createdAt: null,
-    draftedAt: null,
-    updatedAt: null,
-    deletedAt: null,
-    isDeleted: false,
-    photo: null,
-  });
-
-  // Update translation data when user name changes
-  useEffect(() => {
-    setTranslations([
-      { id: 1, english: formData.name || "", arabic: "", bangla: "" },
-    ]);
-  }, [formData.name]);
-
-  // Update the focusNextInput function to include all form elements
-  const focusNextInput = (currentField: string) => {
-    console.log("Current field:", currentField);
-    switch (currentField) {
-      case "name":
-        defaultSwitchRef.current?.focus();
-        break;
-      case "default":
-        activeSwitchRef.current?.focus();
-        break;
-      case "active":
-        draftSwitchRef.current?.focus();
-        break;
-      case "draft":
-        deleteButtonRef.current?.focus();
-        break;
-      case "delete":
-        photoUploadRef.current?.focus();
-        break;
-      default:
-        break;
-    }
+  const focusNextInput = (nextField: string) => {
+    inputRefs.current[nextField]?.focus();
   };
 
   // Handle drag events
-  const handleDragEnter = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
-  };
+  // const handleDragEnter = (e: React.DragEvent) => {
+  //   e.preventDefault();
+  //   e.stopPropagation();
+  //   setIsDragging(true);
+  // };
 
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-  };
+  // const handleDragLeave = (e: React.DragEvent) => {
+  //   e.preventDefault();
+  //   e.stopPropagation();
+  //   setIsDragging(false);
+  // };
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
+  // const handleDragOver = (e: React.DragEvent) => {
+  //   e.preventDefault();
+  //   e.stopPropagation();
+  // };
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
+  // const handleDrop = (e: React.DragEvent) => {
+  //   e.preventDefault();
+  //   e.stopPropagation();
+  //   setIsDragging(false);
 
-    const files = e.dataTransfer.files;
-    if (files && files.length > 0) {
-      handleImageFile(files[0]);
-    }
-  };
+  //   const files = e.dataTransfer.files;
+  //   if (files && files.length > 0) {
+  //     handleImageFile(files[0]);
+  //   }
+  // };
 
   // Handle image file selection
-  const handleImageFile = (file: File) => {
-    if (file.type.match("image.*")) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setImagePreview(e.target?.result as string);
-        setFormData({ ...formData, photo: e.target?.result as string });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+  // const handleImageFile = (file: File) => {
+  //   if (file.type.match("image.*")) {
+  //     const reader = new FileReader();
+  //     reader.onload = (e) => {
+  //       setImagePreview(e.target?.result as string);
+  //       setFormData({ ...formData, flag: e.target?.result as string });
+  //     };
+  //     reader.readAsDataURL(file);
+  //   }
+  // };
 
   // Handle image upload via file input
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      handleImageFile(file);
-    }
-  };
-
-  // Trigger file input click
-  const triggerFileInput = () => {
-    fileInputRef.current?.click();
-  };
-
-  const getRelativeTime = (dateString: string | null | Date) => {
-    if (!dateString) return "--/--/----";
-
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInMs = now.getTime() - date.getTime();
-
-    const minutes = Math.floor(diffInMs / (1000 * 60));
-    const hours = Math.floor(diffInMs / (1000 * 60 * 60));
-    const days = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
-    const months = Math.floor(diffInMs / (1000 * 60 * 60 * 24 * 30));
-    const years = Math.floor(diffInMs / (1000 * 60 * 60 * 24 * 365));
-
-    if (years > 0) {
-      return `${years}y ago`;
-    } else if (months > 0) {
-      return `${months}mo ago`;
-    } else if (days > 0) {
-      return `${days}d ago`;
-    } else if (hours > 0) {
-      return `${hours}h ago`;
-    } else if (minutes > 0) {
-      return `${minutes}m ago`;
-    } else {
-      return "Just now";
-    }
-  };
-
-  // Add this function to handle key navigation for switches and buttons
-  const handleSwitchKeyDown = (
-    e: React.KeyboardEvent,
-    currentField: string
-  ) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      // Trigger the switch/button action first
-      switch (currentField) {
-        case "default":
-          setFormData({ ...formData, isDefault: !formData.isDefault });
-          break;
-        case "active":
-          setFormData({ ...formData, isActive: !formData.isActive });
-          break;
-        case "draft":
-          setFormData({ ...formData, isDraft: !formData.isDraft });
-          break;
-        case "delete":
-          setFormData({ ...formData, isDeleted: !formData.isDeleted });
-          break;
-      }
-      // Then move to next field
-      setTimeout(() => focusNextInput(currentField), 50);
-    }
-  };
-
-  // Initialize with edit data if available
-  useEffect(() => {
-    if (isEdit && initialData) {
-      setFormData({
-        ...initialData,
-      });
-      if (initialData.photo) {
-        setImagePreview(initialData.photo);
-      }
-    }
-  }, [isEdit, initialData]);
+  // const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const file = e.target.files?.[0];
+  //   if (file) {
+  //     handleImageFile(file);
+  //     setTimeout(() => {
+  //       focusNextInput("submitButton");
+  //     }, 0);
+  //   }
+  // };
 
   // Handle form field changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
-    setFormData({
+    const newFormData = {
       ...formData,
       [name]: type === "checkbox" ? checked : value,
-    });
+    };
+    setFormData(newFormData);
   };
 
   // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
-  };
 
-  // Handle form reset
-  const handleReset = () => {
-    if (window.confirm(t("form.resetConfirm"))) {
-      setFormData({
-        name: "",
-        isDefault: false,
-        isActive: true,
-        isDraft: false,
-        createdAt: new Date(),
-        draftedAt: null,
-        updatedAt: new Date(),
-        deletedAt: null,
-        isDeleted: false,
-        photo: null,
-      });
-      setImagePreview(null);
-      if (formRef.current) {
-        formRef.current.reset();
-      }
+    if (pdfChecked) {
+      await handleExportPDF();
+    }
+    if (printEnabled) {
+      handlePrintCountry(formData);
+    }
+
+    // keep switch functionality
+    if (keepCreating) {
+      toastSuccess("Country created successfully!");
+      handleReset();
+    } else {
+      toastSuccess("Country created successfully!");
+      navigate("/countries");
     }
   };
 
-  const handlePrintUser = (userData: any) => {
+  const handleResetClick = () => {
+    setIsResetModalOpen(true);
+  };
+
+  // Update handleReset function to use the custom hook
+  const handleReset = async () => {
+    setFormData({
+      code: "",
+      title: "",
+      isDefault: false,
+      isStatusActive: true,
+      isActive: true,
+      isDraft: false,
+      isDeleted: false,
+      rating: 3,
+      flag: null,
+      createdAt: new Date(),
+      draftedAt: null,
+      updatedAt: new Date(),
+      deletedAt: null,
+      ISD: "",
+    });
+    // setImagePreview(null);
+    setIsDefaultState("No");
+    // setIsDraftState("No");
+    setStatusState("Active");
+    setCountryLanguageValues({});
+    setIsRestoredFromMinimized(false);
+
+    if (formRef.current) {
+      formRef.current.reset();
+    }
+
+    // Force re-render of all inputs by changing key
+    setFormKey((prev) => prev + 1);
+
+    // Reset module data using the custom hook
+    if (hasMinimizedData) {
+      try {
+        await resetModuleData("country-form-module");
+        console.log("Form data reset in Redux");
+      } catch (error) {
+        console.error("Error resetting form data:", error);
+      }
+    }
+
+    // Focus the first input field after reset
+    setTimeout(() => {
+      inputRefs.current["code"]?.focus();
+    }, 100);
+  };
+
+  // Trigger file input click
+  // const triggerFileInput = () => {
+  //   fileInputRef.current?.click();
+  // };
+
+  const handlePrintCountry = (countryData: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "User Details",
-        data: [userData],
+        title: "Country Details",
+        data: [countryData],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
-          name: "User Name",
-          isDefault: "Default User",
+          code: "Country Code",
+          title: "Country Name",
+          ISD: "ISD",
+          isDefault: "Default Country",
           isActive: "Active Status",
           isDraft: "Draft Status",
           isDeleted: "Deleted Status",
-          photo: "User Photo",
+          rating: "Rating",
+          flag: "Flag",
           createdAt: "Created At",
           updatedAt: "Updated At",
           draftedAt: "Drafted At",
@@ -311,42 +418,27 @@ export default function UserFormPage({ isEdit = false }: Props) {
 
   const handleSwitchChange = (checked: boolean) => {
     setPrintEnabled(checked);
-    if (checked && formData) {
-      // Small delay to allow switch animation to complete
-      setTimeout(() => handlePrintUser(formData), 100);
-    }
   };
 
   const handlePDFSwitchChange = (pdfChecked: boolean) => {
     setPdfChecked(pdfChecked);
-    if (pdfChecked) {
-      // Small delay to allow switch animation to complete
-      setTimeout(() => handleExportPDF(), 100);
-    }
   };
 
   const handleExportPDF = async () => {
-    console.log("Export PDF clicked");
     try {
-      console.log("userData on pdf click", formData);
       const blob = await pdf(
         <GenericPDF
           data={[formData]}
-          title="User Details"
-          subtitle="User Report"
+          title="Country Details"
+          subtitle="Country Information"
         />
       ).toBlob();
 
-      console.log("blob", blob);
-
       const url = URL.createObjectURL(blob);
-      console.log("url", url);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "users-details.pdf";
+      a.download = "countries-details.pdf";
       a.click();
-      console.log("a", a);
-      console.log("url", url);
       URL.revokeObjectURL(url);
     } catch (error) {
       console.log(error);
@@ -354,262 +446,440 @@ export default function UserFormPage({ isEdit = false }: Props) {
     }
   };
 
+  useEffect(() => {
+    setPopoverOptions((prevOptions) => {
+      // Filter out any existing draft option first
+      const filteredOptions = prevOptions.filter(
+        (opt) => opt.label !== "Draft"
+      );
+
+      // Add draft option only if not already a draft
+      if (!formData.isDraft) {
+        return [
+          ...filteredOptions,
+          {
+            label: "Draft",
+            icon: <Check className="text-green-500" />,
+            onClick: () => {
+              setFormData((prev) => ({
+                ...prev,
+                isDraft: true,
+              }));
+              toastRestore("Country saved as draft successfully");
+            },
+            show: canCreate,
+          },
+        ];
+      }
+      return filteredOptions;
+    });
+  }, [formData.isDraft, canCreate]);
+
+  // Create minimize handler using the custom hook
+  const handleMinimize = useCallback((): CountryModuleData => {
+    return {
+      formData,
+      hasChanges: true,
+      scrollPosition: window.scrollY,
+      countryLanguageValues,
+    };
+  }, [formData, countryLanguageValues]);
+
   return (
     <>
-      <PageLayout
-        title={isEdit ? t("form.editingUser") : t("form.creatingUser")}
+      <MinimizablePageLayout
+        moduleId="country-form-module"
+        moduleName={isEdit ? "Edit Country" : "Adding Country"}
+        moduleRoute={
+          isEdit
+            ? `/countries/edit/${formData.code || "new"}`
+            : "/countries/create"
+        }
+        onMinimize={handleMinimize}
+        title={isEdit ? labels.editingCountry : labels.addingCountry}
+        listPath="countries"
+        popoverOptions={popoverOptions}
         videoSrc={video}
-        videoHeader="Rapid ERP Video"
-        listPath="/users"
-        popoverOptions={[
-          {
-            label: isEdit ? "Create" : "Edit",
-            onClick: () => {
-              // Handle navigation based on current state
-              if (isEdit) {
-                // Navigate to create page
-                navigate("/users/create");
-              } else {
-                // Navigate to edit page
-                navigate("/users/edit/undefined");
-              }
-            },
-          },
-          {
-            label: "View",
-            onClick: () => {
-              navigate("/users/view");
-            },
-          },
-        ]}
+        videoHeader="Tutorial video"
         keepChanges={keepCreating}
         onKeepChangesChange={setKeepCreating}
         pdfChecked={pdfChecked}
-        onPdfToggle={handlePDFSwitchChange}
+        onPdfToggle={canPdf ? handlePDFSwitchChange : undefined}
         printEnabled={printEnabled}
-        onPrintToggle={handleSwitchChange}
+        onPrintToggle={canPrint ? handleSwitchChange : undefined}
+        activePage="create"
+        module="countries"
         additionalFooterButtons={
-          <div className="flex gap-4">
-            <Button
-              variant="outline"
-              className="gap-2 text-primary rounded-full border-primary"
-              onClick={handleReset}
-            >
-              {t("button.reset")}
-            </Button>
-            <Button
-              variant="outline"
-              className="gap-2 text-primary rounded-full border-primary"
-              onClick={() => formRef.current?.requestSubmit()}
-            >
-              {t("button.submit")}
-            </Button>
-          </div>
+          canCreate ? (
+            <div className="flex gap-4 max-[435px]:gap-2">
+              <Button
+                variant="outline"
+                className="gap-2 hover:bg-primary/90! bg-white dark:bg-gray-900 rounded-full border-primary w-28 max-[435px]:w-20 font-semibold! text-primary!"
+                onClick={handleResetClick}
+              >
+                {labels.reset}
+              </Button>
+              <Button
+                variant="outline"
+                className="gap-2 hover:bg-primary/90 bg-white dark:bg-gray-900 rounded-full border-primary w-28 max-[435px]:w-20 font-semibold! text-primary!"
+                onClick={handleSubmit}
+              >
+                {labels.submit}
+              </Button>
+            </div>
+          ) : null
         }
         className="w-full"
       >
-        <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
-          {/* First Row: Name */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <div className="flex justify-between items-center mb-1">
-                <h3 className="font-medium">{t("form.name")}</h3>
-                <MoreVertical
-                  className="h-4 w-4 cursor-pointer"
-                  onClick={() => setIsOptionModalOpen(true)}
-                />
-              </div>
-              <EditableInput
-                ref={nameInputRef}
-                id="name"
-                name="name"
-                className="w-full h-10"
-                value={formData.name}
-                onChange={handleChange}
-                onNext={() => focusNextInput("name")}
-                onCancel={() => {}}
-                tooltipText="Please enter user name"
-                required
-              />
-            </div>
-          </div>
-
-          {/* Second Row: Default, Draft, Active, Delete */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
-            <div className="md:col-span-3 space-y-2">
-              <h3 className="font-medium mb-1">{t("common.default")}</h3>
-              <div className="h-10 flex items-center">
-                <Switch
-                  ref={defaultSwitchRef}
-                  id="isDefault"
-                  name="isDefault"
-                  className=""
-                  checked={formData.isDefault}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, isDefault: checked })
-                  }
-                  onKeyDown={(e) => handleSwitchKeyDown(e, "default")}
-                />
-              </div>
-            </div>
-            <div className="md:col-span-3 space-y-2">
-              <h3 className="font-medium mb-1">{t("common.active")}</h3>
-              <div className="h-10 flex items-center">
-                <Switch
-                  ref={activeSwitchRef}
-                  id="isActive"
-                  name="isActive"
-                  className=""
-                  checked={formData.isActive}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, isActive: checked })
-                  }
-                  onKeyDown={(e) => handleSwitchKeyDown(e, "active")}
-                />
-              </div>
-            </div>
-            <div className="md:col-span-3 space-y-2">
-              <h3 className="font-medium mb-1">{t("common.draft")}</h3>
-              <div className="h-10 flex items-center">
-                <Switch
-                  ref={draftSwitchRef}
-                  id="isDraft"
-                  name="isDraft"
-                  className=""
-                  checked={formData.isDraft}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, isDraft: checked })
-                  }
-                  onKeyDown={(e) => handleSwitchKeyDown(e, "draft")}
-                />
-              </div>
-            </div>
-            <div className="md:col-span-3 space-y-2">
-              <h3 className="font-medium mb-1">
-                {formData.isDeleted ? t("button.restore") : t("button.delete")}
-              </h3>
-              <div className="h-10 flex items-center">
-                <Button
-                  ref={deleteButtonRef}
-                  variant="ghost"
-                  size="icon"
-                  onClick={() =>
-                    setFormData({
-                      ...formData,
-                      isDeleted: !formData.isDeleted,
-                    })
-                  }
-                  onKeyDown={(e) => handleSwitchKeyDown(e, "delete")}
-                >
-                  {formData.isDeleted ? (
-                    <Undo2 className="text-green-500" />
-                  ) : (
-                    <Trash2 className="text-red-500" />
-                  )}
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Third Row: Dates */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-            <div className="md:col-span-3">
-              <h3 className="font-medium mb-1">Created</h3>
-              <p>{getRelativeTime(formData.createdAt)}</p>
-            </div>
-            <div className="md:col-span-3">
-              <h3 className="font-medium mb-1">Updated</h3>
-              <p>{getRelativeTime(formData.updatedAt)}</p>
-            </div>
-            <div className="md:col-span-3">
-              <h3 className="font-medium mb-1">Drafted</h3>
-              <p>{getRelativeTime(formData.draftedAt)}</p>
-            </div>
-            <div className="md:col-span-3">
-              <h3 className="font-medium mb-1">Deleted</h3>
-              <p>{getRelativeTime(formData.deletedAt)}</p>
-            </div>
-          </div>
-
-          {/* Photo Upload */}
-          <div className="space-y-2 my-8 pt-4 cursor-pointer relative">
-            <div
-              className={`border-2 border-dashed rounded-lg p-6 bg-[#f8fafc] text-center focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary ${
-                isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300"
-              }`}
-              tabIndex={0}
-              ref={(el) => setRef("photoUploadElement")(el as HTMLElement)}
-              onDragEnter={handleDragEnter}
-              onDragLeave={handleDragLeave}
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
-              onClick={triggerFileInput}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  if (imagePreview) {
-                    setImagePreview(null);
-                    setFormData({ ...formData, photo: null });
-                    setTimeout(() => {
-                      triggerFileInput();
-                    }, 0);
-                  } else {
-                    triggerFileInput();
-                  }
-                }
-              }}
-            >
-              {imagePreview ? (
-                <div className="relative inline-block">
-                  <img
-                    src={imagePreview}
-                    alt="User Photo Preview"
-                    className="w-40 h-40 object-cover rounded-full"
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-white shadow-sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setImagePreview(null);
-                      setFormData({ ...formData, photo: null });
+        <div dir={isRTL ? "rtl" : "ltr"}>
+          <form
+            ref={formRef}
+            key={formKey}
+            onSubmit={handleSubmit}
+            className="space-y-6 relative"
+          >
+            {/* First Row: Code, Calling Code, Country */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
+              {/* Code field - only show if user can create */}
+              {canCreate && (
+                <div className="space-y-2">
+                  <Autocomplete
+                    ref={(el: any) => setRef("code")(el)}
+                    id="code"
+                    name="code"
+                    allowCustomInput={true}
+                    options={countryCodes}
+                    value={formData.code}
+                    onValueChange={(value: string) => {
+                      setFormData({ ...formData, code: value });
+                      if (value) {
+                        focusNextInput("ISD");
+                      }
                     }}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center gap-2 py-14">
-                  <Upload className="h-10 w-10 text-gray-400" />
-                  <p className="text-base text-gray-500">
-                    Drag and drop user photo here or click to browse
-                  </p>
+                    onEnterPress={() => {
+                      if (formData.code) {
+                        focusNextInput("ISD");
+                      }
+                    }}
+                    placeholder=" "
+                    labelText={labels.code}
+                    className="relative"
+                    tooltipText={labels.countryCodeTooltip}
+                    userLang={isRTL ? "ar" : "en"}
+                    styles={{
+                      input: {
+                        borderColor: "var(--primary)",
+                        "&:focus": {
+                          borderColor: "var(--primary)",
+                        },
+                      },
+                    }}
+                    setShowTemplates={setShowTemplates}
+                    showTemplates={showTemplates}
+                    isShowTemplateIcon={true}
+                  />
                 </div>
               )}
-              <input
-                ref={fileInputRef}
-                type="file"
-                onChange={handleImageChange}
-                accept="image/*"
-                className="hidden"
-              />
-            </div>
-          </div>
-        </form>
-      </PageLayout>
 
-      {/* Language Translator Modal */}
-      <LanguageTranslatorModal
-        isOpen={isOptionModalOpen}
-        onClose={() => setIsOptionModalOpen(false)}
-        title="User Language Translator"
-        initialData={translations}
-        onSave={(data) => {
-          setTranslations(data);
-          console.log("User translations saved:", data);
-        }}
+              {/* Calling Code field - only show if user can create */}
+              {ISD && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("ISD")}
+                    id="ISD"
+                    name="ISD"
+                    value={formData.ISD}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("title")}
+                    onCancel={() => setFormData({ ...formData, ISD: "" })}
+                    labelText="ISD"
+                    tooltipText={labels.isdTooltip}
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Country field - only show if user can create */}
+              {countryName && (
+                <div className="space-y-2">
+                  <div className="relative">
+                    <EditableInput
+                      setRef={setRef("title")}
+                      id="title"
+                      name="title"
+                      value={formData.title}
+                      onChange={handleChange}
+                      onNext={() => focusNextInput("isDefault")}
+                      onCancel={() => setFormData({ ...formData, title: "" })}
+                      labelText={labels.country}
+                      tooltipText={labels.countryNameTooltip}
+                      required
+                    />
+
+                    {/* Language Input Dropdown */}
+                    <LanguageInputDropdown
+                      onSubmit={(values) => {
+                        setCountryLanguageValues(values);
+                        console.log("Country translations:", values);
+                        setFormData((prev) => ({
+                          ...prev,
+                          title_ar: values.ar || "",
+                          title_hi: values.hi || "",
+                          title_ur: values.ur || "",
+                          title_bn: values.bn || "",
+                        }));
+                        setTimeout(() => {
+                          focusNextInput("isDefault");
+                        }, 100);
+                      }}
+                      title="Country Name"
+                      initialValues={countryLanguageValues}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Draft field - only show if user can create */}
+              {isDefault && (
+                <div className="space-y-2 relative">
+                  <SwitchSelect
+                    ref={(el: any) => setRef("isDefault")(el)}
+                    id="isDefault"
+                    name="isDefault"
+                    multiSelect={false}
+                    options={[
+                      {
+                        label: labels.yes,
+                        value: labels.yes,
+                        date: "Set default country",
+                      },
+                      {
+                        label: labels.no,
+                        value: labels.no,
+                        date: "Remove default country",
+                      },
+                    ]}
+                    value={isDefaultState === "Yes" ? labels.yes : labels.no}
+                    labelClassName="rounded-lg"
+                    onValueChange={(value: string | string[]) => {
+                      const isYes = Array.isArray(value)
+                        ? value[0] === labels.yes
+                        : value === labels.yes;
+                      setIsDefaultState(isYes ? "Yes" : "No");
+                      const newValue = isYes;
+                      setFormData((prev) => ({
+                        ...prev,
+                        isDefault: newValue,
+                      }));
+                      focusNextInput("status");
+                    }}
+                    onEnterPress={() => {
+                      if (
+                        formData.isDefault === true ||
+                        formData.isDefault === false
+                      ) {
+                        focusNextInput("isDeleted");
+                      }
+                    }}
+                    placeholder=" "
+                    labelText={labels.default}
+                    className="relative"
+                    tooltipText={labels.defaultCountryTooltip}
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 my-8 relative">
+              {isStatusActive && (
+                <div className="md:col-span-3 space-y-2">
+                  <SwitchSelect
+                    ref={(el: any) => setRef("status")(el)}
+                    id="status"
+                    name="status"
+                    labelText="Status"
+                    multiSelect={false} // Single select mode
+                    options={[
+                      {
+                        label: "Active",
+                        value: "Active",
+                        date: "Set active",
+                      },
+                      { label: "Draft", value: "Draft", date: "Set draft" },
+                    ]}
+                    value={statusState}
+                    onValueChange={(value: string | string[]) => {
+                      const stringValue = Array.isArray(value)
+                        ? value[0] || ""
+                        : value;
+                      console.log("switch value", stringValue);
+                      setStatusState(stringValue);
+
+                      // Update your form data
+                      setFormData((prev) => ({
+                        ...prev,
+                        isDraft: stringValue === "Draft",
+                        isActive: stringValue === "Active",
+                      }));
+                    }}
+                    placeholder=""
+                    styles={{
+                      input: {
+                        borderColor: "var(--primary)",
+                        "&:focus": {
+                          borderColor: "var(--primary)",
+                        },
+                      },
+                    }}
+                    tooltipText={labels.statusTooltip}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Flag Upload - only show if user can create */}
+            {flag && (
+              // <div className="space-y-2 my-8 pt-4 cursor-pointer relative">
+              //   <div
+              //     className={`border-2 border-dashed rounded-lg p-6 bg-[#f8fafc] text-center focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary ${
+              //       isDragging
+              //         ? "border-blue-500 bg-blue-50"
+              //         : "border-gray-300"
+              //     }`}
+              //     tabIndex={0}
+              //     ref={(el) => setRef("fileUploadElement")(el as HTMLElement)}
+              //     onDragEnter={handleDragEnter}
+              //     onDragLeave={handleDragLeave}
+              //     onDragOver={handleDragOver}
+              //     onDrop={handleDrop}
+              //     onClick={triggerFileInput}
+              //     onKeyDown={(e) => {
+              //       if (e.key === "Enter" || e.key === " ") {
+              //         e.preventDefault();
+              //         if (imagePreview) {
+              //           setImagePreview(null);
+              //           setFormData({ ...formData, flag: null });
+              //           setTimeout(() => {
+              //             triggerFileInput();
+              //           }, 0);
+              //         } else {
+              //           triggerFileInput();
+              //         }
+              //       }
+              //     }}
+              //   >
+              //     {imagePreview ? (
+              //       <div className="relative inline-block">
+              //         <img
+              //           src={imagePreview}
+              //           alt={labels.flagPreview}
+              //           className="w-40 h-28 object-contain rounded-md"
+              //         />
+              //         <Button
+              //           variant="ghost"
+              //           size="icon"
+              //           className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-white shadow-sm"
+              //           onClick={(e) => {
+              //             e.stopPropagation();
+              //             setImagePreview(null);
+              //             setFormData({ ...formData, flag: null });
+              //           }}
+              //         >
+              //           <X className="h-4 w-4" />
+              //         </Button>
+              //       </div>
+              //     ) : (
+              //       <div className="flex flex-col items-center justify-center gap-2 py-14">
+              //         <Upload className="h-10 w-10 text-gray-400" />
+              //         <p className="text-base text-gray-500">
+              //           {labels.dragDropImage}
+              //         </p>
+              //       </div>
+              //     )}
+              //     <input
+              //       ref={fileInputRef}
+              //       type="file"
+              //       onChange={handleImageChange}
+              //       accept="image/*"
+              //       className="hidden"
+              //     />
+              //   </div>
+              // </div>
+              <ImageUploader
+                onImageSelect={(file: any) => console.log("Selected:", file)}
+                existingImages={[
+                  "/sample1.png",
+                  "/sample1.png",
+                  "/sample1.png",
+                ]}
+              />
+            )}
+          </form>
+        </div>
+      </MinimizablePageLayout>
+
+      <ResetFormModal
+        opened={isResetModalOpen}
+        onClose={() => setIsResetModalOpen(false)}
+        onConfirm={handleReset}
+        title={labels.resetForm}
+        message={labels.resetFormMessage}
+        confirmText={labels.resetFormConfirm}
+        cancelText={labels.cancel}
       />
+
+      {/* Options Modal */}
+      <Modal
+        opened={isOptionModalOpen}
+        onClose={() => setIsOptionModalOpen(false)}
+        title="Options"
+        size="xl"
+        overlayProps={{ backgroundOpacity: 0.55, blur: 3 }}
+      >
+        <div className="pt-5 pb-14 px-5">Modal Content</div>
+      </Modal>
+
+      {/* Templates Modal */}
+      <Modal
+        opened={showTemplates}
+        onClose={() => setShowTemplates(false)}
+        size="xl"
+        radius={20}
+        overlayProps={{ backgroundOpacity: 0.25, blur: 1 }}
+        withCloseButton={false}
+        centered
+      >
+        <TemplateContent
+          headers={[
+            { key: "code", label: "Code" },
+            { key: "name", label: "Name" },
+          ]}
+          data={[
+            { code: "US", name: "United States" },
+            { code: "CA", name: "Canada" },
+            { code: "GB", name: "United Kingdom" },
+            { code: "AU", name: "Australia" },
+            { code: "DE", name: "Germany" },
+            { code: "FR", name: "France" },
+            { code: "US", name: "United States" },
+            { code: "CA", name: "Canada" },
+            { code: "GB", name: "United Kingdom" },
+            { code: "AU", name: "Australia" },
+            { code: "DE", name: "Germany" },
+            { code: "FR", name: "France" },
+          ]}
+          onSelect={(selectedData: any) => {
+            console.log("Selected:", selectedData);
+            setShowTemplates(false); // Close modal after selection
+            setFormData((prev) => ({
+              ...prev,
+              code: selectedData.code,
+              title: selectedData.name,
+            }));
+          }}
+          onClose={() => setShowTemplates(false)}
+        />
+      </Modal>
     </>
   );
 }
