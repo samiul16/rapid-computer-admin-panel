@@ -16,182 +16,106 @@ import useIsMobile from "@/hooks/useIsMobile";
 // import { usePermission } from "@/hooks/usePermissions";
 
 // Mock data - replace with real data from your API
-const countries = [
+const users = [
   {
     id: "1",
-    name: "United States",
-    code: "US",
-    continent: "North America",
-    population: "331 million",
-    currency: "USD",
-    status: "Active",
-    isDeleted: false,
-    isd: "+1",
+    name: "John Doe",
   },
   {
     id: "2",
-    name: "Canada",
-    code: "CA",
-    continent: "North America",
-    population: "38 million",
-    currency: "CAD",
-    status: "Active",
-    isDeleted: false,
-    isd: "+1",
+    name: "Jane Smith",
   },
   {
     id: "3",
-    name: "Japan",
-    code: "JP",
-    continent: "Asia",
-    population: "125 million",
-    currency: "JPY",
-    status: "Inactive",
-    isDeleted: false,
-    isd: "+81",
+    name: "Michael Johnson",
   },
   {
     id: "4",
-    name: "Germany",
-    code: "DE",
-    continent: "Europe",
-    population: "83 million",
-    currency: "EUR",
-    status: "Active",
-    isDeleted: false,
-    isd: "+49",
+    name: "Emily Davis",
   },
   {
     id: "5",
-    name: "France",
-    code: "FR",
-    continent: "Europe",
-    population: "68 million",
-    currency: "EUR",
-    status: "Draft",
-    isDeleted: false,
-    isd: "+33",
+    name: "David Wilson",
   },
   {
     id: "6",
-    name: "Italy",
-    code: "IT",
-    continent: "Europe",
-    population: "60 million",
-    currency: "EUR",
-    status: "Active",
-    isDeleted: false,
-    isd: "+39",
+    name: "Sarah Brown",
   },
   {
     id: "7",
-    name: "Spain",
-    code: "ES",
-    continent: "Europe",
-    population: "47 million",
-    currency: "EUR",
-    status: "Active",
-    isDeleted: false,
-    isd: "+34",
+    name: "Robert Miller",
   },
   {
     id: "8",
-    name: "Portugal",
-    code: "PT",
-    continent: "Europe",
-    population: "10 million",
-    currency: "EUR",
-    status: "Inactive",
-    isDeleted: false,
-    isd: "+351",
+    name: "Lisa Anderson",
   },
   {
     id: "9",
-    name: "Switzerland",
-    code: "CH",
-    status: "Active",
-    continent: "Europe",
-    population: "9 million",
-    currency: "CHF",
-    isDeleted: false,
-    isd: "+41",
+    name: "James Taylor",
   },
   {
     id: "10",
-    name: "Netherlands",
-    code: "NL",
-    status: "Active",
-    continent: "Europe",
-    population: "17 million",
-    currency: "EUR",
-    isDeleted: false,
-    isd: "+31",
+    name: "Maria Garcia",
   },
   {
     id: "11",
-    name: "Belgium",
-    code: "BE",
-    status: "Active",
-    continent: "Europe",
-    population: "11 million",
-    currency: "EUR",
-    isDeleted: false,
-    isd: "+32",
+    name: "Christopher Martinez",
   },
   {
     id: "12",
-    name: "Belgium",
-    code: "BE",
-    status: "Active",
-    continent: "Europe",
-    population: "11 million",
-    currency: "EUR",
-    isDeleted: false,
-    isd: "+32",
+    name: "Jennifer Thompson",
   },
   {
     id: "13",
-    name: "Belgium",
-    code: "BE",
-    status: "Active",
-    continent: "Europe",
-    population: "11 million",
-    currency: "EUR",
-    isDeleted: false,
-    isd: "+32",
+    name: "Daniel Rodriguez",
   },
   {
     id: "14",
-    name: "United Kingdom",
-    code: "GB",
-    status: "Active",
-    continent: "Europe",
-    population: "67 million",
-    currency: "GBP",
-    isDeleted: false,
-    isd: "+44",
+    name: "Jessica White",
   },
   {
     id: "15",
-    name: "Belgium",
-    code: "BE",
-    status: "Active",
-    continent: "Europe",
-    population: "11 million",
-    currency: "EUR",
-    isDeleted: false,
-    isd: "+32",
+    name: "Matthew Lee",
   },
   {
     id: "16",
-    name: "Belgium",
-    code: "BE",
-    status: "Active",
-    continent: "Europe",
-    population: "11 million",
-    currency: "EUR",
-    isDeleted: false,
-    isd: "+32",
+    name: "Ashley Harris",
+  },
+  {
+    id: "17",
+    name: "Daniel Garcia",
+  },
+  {
+    id: "18",
+    name: "Andrew Martinez",
+  },
+  {
+    id: "19",
+    name: "Brandon Davis",
+  },
+  {
+    id: "20",
+    name: "Jonathan Rodriguez",
+  },
+  {
+    id: "21",
+    name: "David Martinez",
+  },
+  {
+    id: "22",
+    name: "James Garcia",
+  },
+  {
+    id: "23",
+    name: "Jonathan Rodriguez",
+  },
+  {
+    id: "24",
+    name: "David Martinez",
+  },
+  {
+    id: "25",
+    name: "James Garcia",
   },
 ];
 
@@ -203,24 +127,24 @@ type Props = {
   isExportOpen: boolean;
 };
 
-export default function CountriesGrid({
+export default function UsersGrid({
   searchQuery,
   setIsFilterOpen,
   isFilterOpen,
   setIsExportOpen,
   isExportOpen,
 }: Props) {
-  console.log("Countries grid rendered");
+  console.log("Users grid rendered");
 
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { isRTL } = useSelector((state: RootState) => state.language);
   const isMobile = useIsMobile();
 
-  const [countriesData, setCountriesData] = useState(countries);
-  // const canDelete: boolean = usePermission("countries", "delete");
-  // const canRestore: boolean = usePermission("countries", "restore");
-  // const canEdit: boolean = usePermission("countries", "edit");
+  const [usersData, setUsersData] = useState(users);
+  // const canDelete: boolean = usePermission("users", "delete");
+  // const canRestore: boolean = usePermission("users", "restore");
+  // const canEdit: boolean = usePermission("users", "edit");
 
   // Infinite scroll states
   const [isLoading, setIsLoading] = useState(false);
@@ -237,51 +161,48 @@ export default function CountriesGrid({
 
     await new Promise((resolve) => setTimeout(resolve, 800));
 
-    const continents = [
-      "Europe",
-      "Asia",
-      "Africa",
-      "North America",
-      "South America",
-      "Oceania",
+    const firstNames = [
+      "John",
+      "Jane",
+      "Michael",
+      "Emily",
+      "David",
+      "Sarah",
+      "Robert",
+      "Lisa",
+      "James",
+      "Maria",
     ];
-    const statuses = ["Active", "Inactive", "Draft"];
-    const isdCodes = [
-      "+1",
-      "+44",
-      "+49",
-      "+33",
-      "+39",
-      "+34",
-      "+351",
-      "+41",
-      "+31",
-      "+32",
+    const lastNames = [
+      "Smith",
+      "Johnson",
+      "Williams",
+      "Brown",
+      "Jones",
+      "Garcia",
+      "Miller",
+      "Davis",
+      "Rodriguez",
+      "Martinez",
     ];
+
     const newItems = Array.from({ length: ITEMS_PER_PAGE }, (_, index) => ({
       id: `${Date.now()}-${index}`,
-      name: `Country ${countriesData.length + index + 1}`,
-      code: `C${(countriesData.length + index + 1)
-        .toString()
-        .padStart(2, "0")}`,
-      status: statuses[Math.floor(Math.random() * statuses.length)],
-      continent: continents[Math.floor(Math.random() * continents.length)],
-      population: `${Math.floor(Math.random() * 100 + 1)} million`,
-      currency: "USD",
-      isDeleted: false,
-      isd: isdCodes[Math.floor(Math.random() * isdCodes.length)],
+      name: `${firstNames[Math.floor(Math.random() * firstNames.length)]} ${
+        lastNames[Math.floor(Math.random() * lastNames.length)]
+      }`,
     }));
 
     // Stop loading more after reaching 50 items for demo
-    if (countriesData.length >= 46) {
+    if (usersData.length >= 46) {
       setHasMore(false);
     } else {
-      setCountriesData((prev) => [...prev, ...newItems]);
+      setUsersData((prev) => [...prev, ...newItems]);
       setPage((prev) => prev + 1);
     }
 
     setIsLoading(false);
-  }, [countriesData.length, isLoading, hasMore]);
+  }, [usersData.length, isLoading, hasMore]);
 
   // Infinite scroll handler
   const handleScroll = useCallback(() => {
@@ -305,61 +226,19 @@ export default function CountriesGrid({
     return () => container.removeEventListener("scroll", handleScroll);
   }, [handleScroll]);
 
-  // const handleDeleteClick = (countryId: string) => {
-  //   setCountriesData((prevCountries) =>
-  //     prevCountries.map((country) =>
-  //       country.id === countryId
-  //         ? {
-  //             ...country,
-  //             isDeleted: country.isDeleted === true ? false : true,
-  //           }
-  //         : country
-  //     )
-  //   );
-  // };
-
-  // const handleRestoreClick = (countryId: stringId) => {
-  //   setCountriesData((prevCountries) =>
-  //     prevCountries.map((country) =>
-  //       country.id === countryId
-  //         ? {
-  //             ...country,
-  //             isDeleted: country.isDeleted === true ? false : true,
-  //           }
-  //         : country
-  //     )
-  //   );
-  // };
-
-  // const handleActiveInactiveClick = (countryId: string) => {
-  //   setCountriesData((prevCountries) =>
-  //     prevCountries.map((country) =>
-  //       country.id === countryId
-  //         ? {
-  //             ...country,
-  //             status: country.status === "Active" ? "Inactive" : "Active",
-  //           }
-  //         : country
-  //     )
-  //   );
-  // };
-
-  // Filter countries based on search query
-  const filteredCountries = countriesData.filter(
-    (country) =>
-      country.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      country.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      country.continent.toLowerCase().includes(searchQuery.toLowerCase())
+  // Filter users based on search query
+  const filteredUsers = usersData.filter((user) =>
+    user.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // const handleEditClick = (countryId: string) => {
+  // const handleEditClick = (userId: string) => {
   //   const viewMode = searchParams.get("view") || "grid";
-  //   navigate(`/countries/edit/${countryId}?fromView=${viewMode}`);
+  //   navigate(`/users/edit/${userId}?fromView=${viewMode}`);
   // };
 
-  const handleViewClick = (countryId: string) => {
+  const handleViewClick = (userId: string) => {
     const viewMode = searchParams.get("view") || "grid";
-    navigate(`/countries/view/${countryId}?fromView=${viewMode}`);
+    navigate(`/users/view/${userId}?fromView=${viewMode}`);
   };
 
   return (
@@ -390,88 +269,25 @@ export default function CountriesGrid({
                 : "grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
             )}
           >
-            {filteredCountries.map((country, index) => (
+            {filteredUsers.map((user, index) => (
               <Card
                 key={index}
                 className={cn(
-                  "transition-all relative group dark:bg-gray-800 duration-200 w-full shadow-[2px_3px_8px_0_rgba(0,0,0,0.10)] border-[#E2E4EB] border border-solid rounded-[12px] flex p-5 flex-col items-start gap-5 cursor-pointer",
+                  "transition-all relative group dark:bg-gray-800 duration-200 w-full shadow-[2px_3px_8px_0_rgba(0,0,0,0.10)] border-[#E2E4EB] border border-solid rounded-[12px] flex p-5 flex-col items-center justify-center gap-5 cursor-pointer",
                   // Different hover effects for mobile vs desktop
                   isMobile
                     ? "hover:shadow-lg hover:border-primary"
                     : "hover:scale-110 hover:z-50 hover:relative hover:border-primary min-w-[250px]"
                 )}
-                onClick={() => handleViewClick(country.id)}
+                onClick={() => handleViewClick(user.id)}
               >
-                {/* Top Row - Title and Flag */}
-                <div className="grid grid-cols-2 items-center gap-2 w-full mt-[-8px]">
-                  {/* Left - Title */}
-                  <CardTitle
-                    className="text-base font-normal transition-colors truncate"
-                    style={{ fontSize: "18px" }}
-                  >
-                    {country.name}
-                  </CardTitle>
-
-                  {/* Right - Flag */}
-                  <div className="flex justify-end">
-                    <img
-                      src={`https://flagcdn.com/${country.code.toLowerCase()}.svg`}
-                      alt={`${country.name} flag`}
-                      className="h-12 w-16 object-cover border rounded-md shadow-sm flex-shrink-0"
-                      onError={(e) => {
-                        (
-                          e.target as HTMLImageElement
-                        ).src = `https://flagcdn.com/us.svg`;
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* Middle Row - Currency and Status */}
-                <div className="grid grid-cols-2 gap-2 w-full">
-                  {/* Currency - Left */}
-                  <div className="min-w-0">
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      Currency
-                    </div>
-                    <div className="text-sm font-normal text-gray-900 dark:text-gray-100 truncate">
-                      {country.currency}
-                    </div>
-                  </div>
-
-                  {/* Status - Right */}
-                  <div className="text-right min-w-0">
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      Status
-                    </div>
-                    <div className="text-sm font-normal text-gray-900 dark:text-gray-100 truncate">
-                      {country.status}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Bottom Row - Code, Action Icons, and ISD */}
-                <div className="grid grid-cols-2 items-center justify-between gap-2 w-full dark:border-gray-700">
-                  {/* Code - Left aligned */}
-                  <div className="min-w-0">
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      Code
-                    </div>
-                    <div className="text-sm font-normal text-gray-900 dark:text-gray-100 truncate">
-                      {country.code}
-                    </div>
-                  </div>
-
-                  {/* Right - ISD */}
-                  <div className="text-right min-w-0">
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      ISD
-                    </div>
-                    <div className="text-sm font-normal text-gray-900 dark:text-gray-100 truncate">
-                      {country.isd}
-                    </div>
-                  </div>
-                </div>
+                {/* User Name */}
+                <CardTitle
+                  className="text-base font-medium transition-colors text-center"
+                  style={{ fontSize: "18px" }}
+                >
+                  {user.name}
+                </CardTitle>
               </Card>
             ))}
           </div>
@@ -481,16 +297,16 @@ export default function CountriesGrid({
             <div className="flex justify-center items-center py-8">
               <div className="flex items-center gap-2 text-blue-600">
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-                <span className="text-sm">Loading more countries...</span>
+                <span className="text-sm">Loading more users...</span>
               </div>
             </div>
           )}
 
           {/* End of data indicator */}
-          {!hasMore && filteredCountries.length > 12 && (
+          {!hasMore && filteredUsers.length > 12 && (
             <div className="flex justify-center items-center py-8">
               <span className="text-sm text-gray-500 dark:text-gray-400">
-                No more countries to load
+                No more users to load
               </span>
             </div>
           )}
@@ -525,8 +341,8 @@ export default function CountriesGrid({
             >
               <GridFilterComponent
                 key={`filter-panel-${isFilterOpen}`}
-                data={countries}
-                setFilteredData={setCountriesData}
+                data={users}
+                setFilteredData={setUsersData}
                 setShowTabs={setIsFilterOpen}
                 defaultTab="filter"
               />
@@ -563,8 +379,8 @@ export default function CountriesGrid({
             >
               <GridFilterComponent
                 key={`export-panel-${isExportOpen}`}
-                data={countries}
-                setFilteredData={setCountriesData}
+                data={users}
+                setFilteredData={setUsersData}
                 setShowTabs={setIsExportOpen}
                 defaultTab="export"
               />
