@@ -1808,6 +1808,150 @@ function App() {
                   element={<SubCategoryDetails />}
                 />
 
+                {/* Opening Stock Inventory */}
+                <Route
+                  path="/opening-stock-inventory"
+                  element={<OpeningStockInventoryPage />}
+                />
+                <Route
+                  path="/opening-stock-inventory/:id"
+                  element={<OpeningStockInventoryDetails />}
+                />
+                <Route
+                  path="/opening-stock-inventory/create"
+                  element={<OpeningStockInventoryCreatePage />}
+                />
+                <Route
+                  path="/opening-stock-inventory/edit/:id"
+                  element={<OpeningStockInventoryEditPage isEdit={true} />}
+                />
+                {/* Damage Items */}
+                <Route path="/damage-items" element={<DamageItemsPage />} />
+                <Route
+                  path="/damage-items/:id"
+                  element={<DamageItemsDetails />}
+                />
+                <Route
+                  path="/damage-items/create"
+                  element={<DamageItemsCreatePage />}
+                />
+                <Route
+                  path="/damage-items/edit/:id"
+                  element={<DamageItemsEditPage isEdit={true} />}
+                />
+                {/* Expiry Items */}
+                <Route path="/expiry-items" element={<ExpiryItemsPage />} />
+                <Route
+                  path="/expiry-items/:id"
+                  element={<ExpiryItemsDetails />}
+                />
+                <Route
+                  path="/expiry-items/create"
+                  element={<ExpiryItemsCreatePage />}
+                />
+                <Route
+                  path="/expiry-items/:id/edit"
+                  element={<ExpiryItemsEditPage isEdit={true} />}
+                />
+                <Route
+                  path="/expiry-items/edit/:id"
+                  element={<ExpiryItemsEditPage isEdit={true} />}
+                />
+                <Route
+                  path="/expiry-items/view"
+                  element={<ExpiryItemsDetails />}
+                />
+                {/* Stock Transfer */}
+                <Route path="/stock-transfer" element={<StockTransferPage />} />
+                <Route
+                  path="/stock-transfer/:id"
+                  element={<StockTransferDetails />}
+                />
+                <Route
+                  path="/stock-transfer/create"
+                  element={<StockTransferCreatePage />}
+                />
+                <Route
+                  path="/stock-transfer/:id/edit"
+                  element={<StockTransferEditPage isEdit={true} />}
+                />
+                <Route
+                  path="/stock-transfer/edit/:id"
+                  element={<StockTransferEditPage isEdit={true} />}
+                />
+                <Route
+                  path="/stock-transfer/view"
+                  element={<StockTransferDetails />}
+                />
+
+                {/* Purchase Order Logistic */}
+                <Route
+                  path="/purchase-order-logistic"
+                  element={<PurchaseOrderLogisticPage />}
+                />
+                <Route
+                  path="/purchase-order-logistic/:id"
+                  element={<PurchaseOrderLogisticDetails />}
+                />
+                <Route
+                  path="/purchase-order-logistic/create"
+                  element={<PurchaseOrderLogisticCreatePage />}
+                />
+                <Route
+                  path="/purchase-order-logistic/edit/:id"
+                  element={<PurchaseOrderLogisticEditPage isEdit={true} />}
+                />
+                <Route
+                  path="/purchase-order-logistic/:id/edit"
+                  element={<PurchaseOrderLogisticEditPage isEdit={true} />}
+                />
+                <Route
+                  path="/purchase-order-logistic/view"
+                  element={<PurchaseOrderLogisticDetails />}
+                />
+
+                {/* Invoice */}
+                <Route path="/invoices" element={<InvoicesPage />} />
+                <Route path="/invoices/:id" element={<InvoicesDetails />} />
+                <Route
+                  path="/invoices/create"
+                  element={<InvoicesCreatePage />}
+                />
+                <Route
+                  path="/invoices/:id/edit"
+                  element={<InvoicesEditPage isEdit={true} />}
+                />
+                <Route
+                  path="/invoices/edit/:id"
+                  element={<InvoicesEditPage isEdit={true} />}
+                />
+                <Route path="/invoices/view" element={<InvoicesDetails />} />
+                {/* Purchase Returns */}
+                <Route
+                  path="/purchase-returns"
+                  element={<PurchaseReturnsPage />}
+                />
+                <Route
+                  path="/purchase-returns/create"
+                  element={<PurchaseReturnsCreatePage />}
+                />
+                <Route
+                  path="/purchase-returns/:id/edit"
+                  element={<PurchaseReturnsEditPage isEdit={true} />}
+                />
+                <Route
+                  path="/purchase-returns/edit/:id"
+                  element={<PurchaseReturnsEditPage isEdit={true} />}
+                />
+                <Route
+                  path="/purchase-returns/:id"
+                  element={<PurchaseReturnsDetails />}
+                />
+                <Route
+                  path="/purchase-returns/view"
+                  element={<PurchaseReturnsDetails />}
+                />
+
                 {/* {------------------------------------------------------} */}
 
                 {/* Countries */}
@@ -2535,122 +2679,7 @@ function App() {
                   element={<OrderEditPage isEdit={true} />}
                 />
                 <Route path="/orders/view" element={<OrderDetails />} />
-                {/* Invoice */}
-                <Route path="/invoices" element={<InvoicesPage />} />
-                <Route path="/invoices/:id" element={<InvoicesDetails />} />
-                <Route
-                  path="/invoices/create"
-                  element={<InvoicesCreatePage />}
-                />
-                <Route
-                  path="/invoices/:id/edit"
-                  element={<InvoicesEditPage isEdit={true} />}
-                />
-                <Route
-                  path="/invoices/edit/:id"
-                  element={<InvoicesEditPage isEdit={true} />}
-                />
-                <Route path="/invoices/view" element={<InvoicesDetails />} />
-                {/* Purchase Returns */}
-                <Route
-                  path="/purchase-returns"
-                  element={<PurchaseReturnsPage />}
-                />
-                <Route
-                  path="/purchase-returns/create"
-                  element={<PurchaseReturnsCreatePage />}
-                />
-                <Route
-                  path="/purchase-returns/:id/edit"
-                  element={<PurchaseReturnsEditPage isEdit={true} />}
-                />
-                <Route
-                  path="/purchase-returns/edit/:id"
-                  element={<PurchaseReturnsEditPage isEdit={true} />}
-                />
-                <Route
-                  path="/purchase-returns/:id"
-                  element={<PurchaseReturnsDetails />}
-                />
-                <Route
-                  path="/purchase-returns/view"
-                  element={<PurchaseReturnsDetails />}
-                />
-                {/* Opening Stock Inventory */}
-                <Route
-                  path="/opening-stock-inventory"
-                  element={<OpeningStockInventoryPage />}
-                />
-                <Route
-                  path="/opening-stock-inventory/:id"
-                  element={<OpeningStockInventoryDetails />}
-                />
-                <Route
-                  path="/opening-stock-inventory/create"
-                  element={<OpeningStockInventoryCreatePage />}
-                />
-                <Route
-                  path="/opening-stock-inventory/edit/:id"
-                  element={<OpeningStockInventoryEditPage isEdit={true} />}
-                />
-                {/* Damage Items */}
-                <Route path="/damage-items" element={<DamageItemsPage />} />
-                <Route
-                  path="/damage-items/:id"
-                  element={<DamageItemsDetails />}
-                />
-                <Route
-                  path="/damage-items/create"
-                  element={<DamageItemsCreatePage />}
-                />
-                <Route
-                  path="/damage-items/edit/:id"
-                  element={<DamageItemsEditPage isEdit={true} />}
-                />
-                {/* Expiry Items */}
-                <Route path="/expiry-items" element={<ExpiryItemsPage />} />
-                <Route
-                  path="/expiry-items/:id"
-                  element={<ExpiryItemsDetails />}
-                />
-                <Route
-                  path="/expiry-items/create"
-                  element={<ExpiryItemsCreatePage />}
-                />
-                <Route
-                  path="/expiry-items/:id/edit"
-                  element={<ExpiryItemsEditPage isEdit={true} />}
-                />
-                <Route
-                  path="/expiry-items/edit/:id"
-                  element={<ExpiryItemsEditPage isEdit={true} />}
-                />
-                <Route
-                  path="/expiry-items/view"
-                  element={<ExpiryItemsDetails />}
-                />
-                {/* Stock Transfer */}
-                <Route path="/stock-transfer" element={<StockTransferPage />} />
-                <Route
-                  path="/stock-transfer/:id"
-                  element={<StockTransferDetails />}
-                />
-                <Route
-                  path="/stock-transfer/create"
-                  element={<StockTransferCreatePage />}
-                />
-                <Route
-                  path="/stock-transfer/:id/edit"
-                  element={<StockTransferEditPage isEdit={true} />}
-                />
-                <Route
-                  path="/stock-transfer/edit/:id"
-                  element={<StockTransferEditPage isEdit={true} />}
-                />
-                <Route
-                  path="/stock-transfer/view"
-                  element={<StockTransferDetails />}
-                />
+
                 {/* Delivery Note */}
                 <Route
                   path="/delivery-notes/create"
@@ -5704,32 +5733,6 @@ function App() {
                   element={<PreAlertsEditPage isEdit={true} />}
                 />
                 <Route path="/pre-alerts/view" element={<PreAlertsDetails />} />
-
-                {/* Purchase Order Logistic */}
-                <Route
-                  path="/purchase-order-logistic"
-                  element={<PurchaseOrderLogisticPage />}
-                />
-                <Route
-                  path="/purchase-order-logistic/:id"
-                  element={<PurchaseOrderLogisticDetails />}
-                />
-                <Route
-                  path="/purchase-order-logistic/create"
-                  element={<PurchaseOrderLogisticCreatePage />}
-                />
-                <Route
-                  path="/purchase-order-logistic/edit/:id"
-                  element={<PurchaseOrderLogisticEditPage isEdit={true} />}
-                />
-                <Route
-                  path="/purchase-order-logistic/:id/edit"
-                  element={<PurchaseOrderLogisticEditPage isEdit={true} />}
-                />
-                <Route
-                  path="/purchase-order-logistic/view"
-                  element={<PurchaseOrderLogisticDetails />}
-                />
 
                 {/* Arrival Port */}
                 <Route path="/arrival-port" element={<ArrivalPortPage />} />
