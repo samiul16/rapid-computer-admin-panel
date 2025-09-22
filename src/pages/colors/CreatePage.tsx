@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import video from "@/assets/videos/test.mp4";
 import EditableInput from "@/components/common/EditableInput";
-import MobileEditableInput from "@/components/common/MobileEditableInput";
 import GenericPDF from "@/components/common/pdf";
 import { ResetFormModal } from "@/components/common/ResetFormModal";
 import { Button } from "@/components/ui/button";
@@ -12,27 +11,18 @@ import { pdf } from "@react-pdf/renderer";
 import { Check, Edit, Eye, Plus } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  useUserMasterPermissions,
-  usePermission,
-} from "@/hooks/usePermissions";
+import { useColorsPermissions, usePermission } from "@/hooks/usePermissions";
 import { useLanguageLabels } from "@/hooks/useLanguageLabels";
 import { useAppSelector } from "@/store/hooks";
 import MinimizablePageLayout from "@/components/MinimizablePageLayout";
 import { SwitchSelect } from "@/components/common/SwitchAutoComplete";
-import { Autocomplete } from "@/components/common/Autocomplete";
 
-type UserData = {
+type ColorData = {
   name: string;
-  mobileNumber: string;
-  email: string;
-  userType: "admin" | "super admin" | "user";
-  password: string;
-  confirmPassword: string;
-  otp?: string;
-  facebook?: string;
-  linkedin?: string;
-  instagram?: string;
+  code: string;
+  description: string;
+  hexCode: string;
+  status: "active" | "inactive" | "draft";
   isDefault: boolean;
   isStatusActive: boolean;
   isActive: boolean;
@@ -48,17 +38,12 @@ type Props = {
   isEdit?: boolean;
 };
 
-const initialData: UserData = {
-  name: "John Doe",
-  mobileNumber: "+1234567890",
-  email: "john.doe@example.com",
-  userType: "user",
-  password: "",
-  confirmPassword: "",
-  otp: "",
-  facebook: "",
-  linkedin: "",
-  instagram: "",
+const initialData: ColorData = {
+  name: "Primary Blue",
+  code: "BLU001",
+  description: "Main brand color used for primary actions and highlights",
+  hexCode: "#3B82F6",
+  status: "active",
   isDefault: false,
   isStatusActive: true,
   isActive: true,
@@ -70,7 +55,7 @@ const initialData: UserData = {
   isDeleted: false,
 };
 
-export default function UserFormPage({ isEdit = false }: Props) {
+export default function ColorFormPage({ isEdit = false }: Props) {
   const navigate = useNavigate();
   const labels = useLanguageLabels();
   const { isRTL } = useAppSelector((state) => state.language);
@@ -78,60 +63,31 @@ export default function UserFormPage({ isEdit = false }: Props) {
   const [keepCreating, setKeepCreating] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const [isDefaultState, setIsDefaultState] = useState<"Yes" | "No">("No");
-  const [statusState, setStatusState] = useState<"Active" | "Draft" | string>(
-    "Active"
-  );
   const [printEnabled, setPrintEnabled] = useState(false);
   const [pdfChecked, setPdfChecked] = useState(false);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [formKey, setFormKey] = useState(0);
 
   // Permission checks
-  const { canCreate, canView } = useUserMasterPermissions();
+  const { canCreate, canView } = useColorsPermissions();
 
   // Field-level permissions
-  const userName: boolean = usePermission("user-master", "create", "userName");
-  const mobileNumber: boolean = usePermission(
-    "user-master",
-    "create",
-    "mobileNumber"
-  );
-  const email: boolean = usePermission("user-master", "create", "email");
-  const userType: boolean = usePermission("user-master", "create", "userType");
-  const password: boolean = usePermission("user-master", "create", "password");
-  const confirmPassword: boolean = usePermission(
-    "user-master",
-    "create",
-    "confirmPassword"
-  );
-  const otp: boolean = usePermission("user-master", "create", "otp");
-  const facebook: boolean = usePermission("user-master", "create", "facebook");
-  const linkedin: boolean = usePermission("user-master", "create", "linkedin");
-  const instagram: boolean = usePermission(
-    "user-master",
-    "create",
-    "instagram"
-  );
-  const isDefault: boolean = usePermission(
-    "user-master",
-    "create",
-    "isDefault"
-  );
-  const canPdf: boolean = usePermission("user-master", "pdf");
-  const canPrint: boolean = usePermission("user-master", "print");
+  const name: boolean = usePermission("colors", "create", "name");
+  const code: boolean = usePermission("colors", "create", "code");
+  const description: boolean = usePermission("colors", "create", "description");
+  const hexCode: boolean = usePermission("colors", "create", "hexCode");
+  const status: boolean = usePermission("colors", "create", "status");
+  const isDefault: boolean = usePermission("colors", "create", "isDefault");
+  const canPdf: boolean = usePermission("colors", "pdf");
+  const canPrint: boolean = usePermission("colors", "print");
 
   // Form state
-  const [formData, setFormData] = useState<UserData>({
+  const [formData, setFormData] = useState<ColorData>({
     name: "",
-    mobileNumber: "",
-    email: "",
-    userType: "user",
-    password: "",
-    confirmPassword: "",
-    otp: "",
-    facebook: "",
-    linkedin: "",
-    instagram: "",
+    code: "",
+    description: "",
+    hexCode: "",
+    status: "active",
     isDefault: false,
     isStatusActive: true,
     isActive: true,
@@ -148,7 +104,6 @@ export default function UserFormPage({ isEdit = false }: Props) {
     if (isEdit && initialData) {
       setFormData(initialData);
       setIsDefaultState(initialData.isDefault ? "Yes" : "No");
-      setStatusState(initialData.isActive ? "Active" : "Draft");
     }
   }, [isEdit]);
 
@@ -162,9 +117,9 @@ export default function UserFormPage({ isEdit = false }: Props) {
       ),
       onClick: () => {
         if (isEdit) {
-          navigate("/user-master/create");
+          navigate("/colors/create");
         } else {
-          navigate("/user-master/edit/undefined");
+          navigate("/colors/edit/undefined");
         }
       },
       show: canCreate,
@@ -173,7 +128,7 @@ export default function UserFormPage({ isEdit = false }: Props) {
       label: "View",
       icon: <Eye className="w-5 h-5 text-green-600" />,
       onClick: () => {
-        navigate("/user-master/view");
+        navigate("/colors/view");
       },
       show: canView,
     },
@@ -206,16 +161,16 @@ export default function UserFormPage({ isEdit = false }: Props) {
       await handleExportPDF();
     }
     if (printEnabled) {
-      handlePrintUser(formData);
+      handlePrintColor(formData);
     }
 
     // keep switch functionality
     if (keepCreating) {
-      toastSuccess("User created successfully!");
+      toastSuccess("Color created successfully!");
       handleReset();
     } else {
-      toastSuccess("User created successfully!");
-      navigate("/user-master");
+      toastSuccess("Color created successfully!");
+      navigate("/colors");
     }
   };
 
@@ -226,15 +181,10 @@ export default function UserFormPage({ isEdit = false }: Props) {
   const handleReset = async () => {
     setFormData({
       name: "",
-      mobileNumber: "",
-      email: "",
-      userType: "user",
-      password: "",
-      confirmPassword: "",
-      otp: "",
-      facebook: "",
-      linkedin: "",
-      instagram: "",
+      code: "",
+      description: "",
+      hexCode: "",
+      status: "active",
       isDefault: false,
       isStatusActive: true,
       isActive: true,
@@ -246,7 +196,6 @@ export default function UserFormPage({ isEdit = false }: Props) {
       deletedAt: null,
     });
     setIsDefaultState("No");
-    setStatusState("Active");
 
     if (formRef.current) {
       formRef.current.reset();
@@ -261,15 +210,19 @@ export default function UserFormPage({ isEdit = false }: Props) {
     }, 100);
   };
 
-  const handlePrintUser = (userData: any) => {
+  const handlePrintColor = (colorData: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "User Details",
-        data: [userData],
+        title: "Color Details",
+        data: [colorData],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
-          name: "User Name",
-          isDefault: "Default User",
+          name: "Color Name",
+          code: "Color Code",
+          description: "Description",
+          hexCode: "Hex Code",
+          status: "Status",
+          isDefault: "Default Color",
           isActive: "Active Status",
           isDraft: "Draft Status",
           isDeleted: "Deleted Status",
@@ -299,15 +252,15 @@ export default function UserFormPage({ isEdit = false }: Props) {
       const blob = await pdf(
         <GenericPDF
           data={[formData]}
-          title="User Details"
-          subtitle="User Information"
+          title="Color Details"
+          subtitle="Color Information"
         />
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "user-details.pdf";
+      a.download = "color-details.pdf";
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
@@ -335,7 +288,7 @@ export default function UserFormPage({ isEdit = false }: Props) {
                 ...prev,
                 isDraft: true,
               }));
-              toastRestore("User saved as draft successfully");
+              toastRestore("Color saved as draft successfully");
             },
             show: canCreate,
           },
@@ -357,14 +310,14 @@ export default function UserFormPage({ isEdit = false }: Props) {
   return (
     <>
       <MinimizablePageLayout
-        moduleId="user-form-module"
-        moduleName={isEdit ? "Edit User Master" : "Adding User Master"}
+        moduleId="color-form-module"
+        moduleName={isEdit ? "Edit Color" : "Adding Color"}
         moduleRoute={
-          isEdit ? `/user-master/edit/${formData.name || "new"}` : "/user-master/create"
+          isEdit ? `/colors/edit/${formData.name || "new"}` : "/colors/create"
         }
         onMinimize={handleMinimize}
-        title={isEdit ? "Edit User Master" : "Add User Master"}
-        listPath="user-master"
+        title={isEdit ? "Edit Color" : "Add Color"}
+        listPath="colors"
         popoverOptions={popoverOptions}
         videoSrc={video}
         videoHeader="Tutorial video"
@@ -375,7 +328,7 @@ export default function UserFormPage({ isEdit = false }: Props) {
         printEnabled={printEnabled}
         onPrintToggle={canPrint ? handleSwitchChange : undefined}
         activePage="create"
-        module="user-master"
+        module="colors"
         additionalFooterButtons={
           canCreate ? (
             <div className="flex gap-4 max-[435px]:gap-2">
@@ -405,10 +358,10 @@ export default function UserFormPage({ isEdit = false }: Props) {
             onSubmit={handleSubmit}
             className="space-y-6 relative"
           >
-            {/* First Row: User Name and Mobile Number */}
+            {/* First Row: Color Name and Code */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
-              {/* User Name field - only show if user can create */}
-              {userName && (
+              {/* Color Name field - only show if user can create */}
+              {name && (
                 <div className="space-y-2">
                   <EditableInput
                     setRef={setRef("name")}
@@ -416,223 +369,76 @@ export default function UserFormPage({ isEdit = false }: Props) {
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    onNext={() => focusNextInput("mobileNumber")}
+                    onNext={() => focusNextInput("code")}
                     onCancel={() => setFormData({ ...formData, name: "" })}
-                    labelText="User Master Name"
-                    tooltipText="Enter the user's full name"
+                    labelText="Color Name"
+                    tooltipText="Enter the color name"
                     required
                   />
                 </div>
               )}
 
-              {/* Mobile Number field - only show if user can create */}
-              {mobileNumber && (
-                <div className="space-y-2">
-                  <MobileEditableInput
-                    setRef={setRef("mobileNumber")}
-                    id="mobileNumber"
-                    name="mobileNumber"
-                    value={formData.mobileNumber}
-                    onChange={handleChange}
-                    onNext={() => focusNextInput("email")}
-                    onCancel={() =>
-                      setFormData({ ...formData, mobileNumber: "" })
-                    }
-                    labelText="User Master Mobile Number"
-                    tooltipText="Enter the user's mobile number"
-                    isPhone={true}
-                    onPhoneChange={(value) => {
-                      setFormData((prev) => ({
-                        ...prev,
-                        mobileNumber: value || "",
-                      }));
-                    }}
-                    required
-                  />
-                </div>
-              )}
-
-              {/* Email field - only show if user can create */}
-              {email && (
+              {/* Color Code field - only show if user can create */}
+              {code && (
                 <div className="space-y-2">
                   <EditableInput
-                    setRef={setRef("email")}
-                    id="email"
-                    name="email"
-                    value={formData.email}
+                    setRef={setRef("code")}
+                    id="code"
+                    name="code"
+                    value={formData.code}
                     onChange={handleChange}
-                    onNext={() => focusNextInput("userType")}
-                    onCancel={() => setFormData({ ...formData, email: "" })}
-                    labelText="User Master Email"
-                    tooltipText="Enter the user's email address"
-                    type="email"
+                    onNext={() => focusNextInput("hexCode")}
+                    onCancel={() => setFormData({ ...formData, code: "" })}
+                    labelText="Color Code"
+                    tooltipText="Enter the color code (e.g., BLU001)"
                     required
                   />
                 </div>
               )}
 
-              {/* User Type field - only show if user can create */}
-              {userType && (
-                <div className="space-y-2 relative">
-                  <Autocomplete
-                    ref={(el: any) => setRef("userType")(el)}
-                    id="userType"
-                    name="userType"
-                    options={[
-                      {
-                        label: "Admin",
-                        value: "admin",
-                      },
-                      {
-                        label: "Super Admin",
-                        value: "super admin",
-                      },
-                      {
-                        label: "User",
-                        value: "user",
-                      },
-                    ]}
-                    value={formData.userType}
-                    onValueChange={(value: string) => {
-                      setFormData((prev) => ({
-                        ...prev,
-                        userType: value as "admin" | "super admin" | "user",
-                      }));
-                      focusNextInput("password");
-                    }}
-                    onEnterPress={() => {
-                      focusNextInput("password");
-                    }}
-                    placeholder="Select user type..."
-                    labelText="User Master Type"
-                    tooltipText="Select the user type"
-                    displayKey="label"
-                    valueKey="value"
-                    searchKey="label"
-                    isSelectableOnly={true}
-                    className="relative"
+              {/* Hex Code field - only show if user can create */}
+              {hexCode && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("hexCode")}
+                    id="hexCode"
+                    name="hexCode"
+                    value={formData.hexCode}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("description")}
+                    onCancel={() => setFormData({ ...formData, hexCode: "" })}
+                    labelText="Hex Code"
+                    tooltipText="Enter the hex color code (e.g., #3B82F6)"
+                    type="text"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Description field - only show if user can create */}
+              {description && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("description")}
+                    id="description"
+                    name="description"
+                    value={formData.description}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("status")}
+                    onCancel={() =>
+                      setFormData({ ...formData, description: "" })
+                    }
+                    labelText="Description"
+                    tooltipText="Enter a description for the color"
+                    type="text"
+                    required
                   />
                 </div>
               )}
             </div>
 
-            {/* Third Row: Password and Confirm Password */}
+            {/* Second Row: Status and Default */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
-              {/* Password field - only show if user can create */}
-              {password && (
-                <div className="space-y-2">
-                  <EditableInput
-                    setRef={setRef("password")}
-                    id="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    onNext={() => focusNextInput("confirmPassword")}
-                    onCancel={() => setFormData({ ...formData, password: "" })}
-                    labelText="Password"
-                    tooltipText="Enter the user's password"
-                    type="password"
-                    required
-                  />
-                </div>
-              )}
-
-              {/* Confirm Password field - only show if user can create */}
-              {confirmPassword && (
-                <div className="space-y-2">
-                  <EditableInput
-                    setRef={setRef("confirmPassword")}
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    onNext={() => focusNextInput("otp")}
-                    onCancel={() =>
-                      setFormData({ ...formData, confirmPassword: "" })
-                    }
-                    labelText="Confirm Password"
-                    tooltipText="Confirm the user's password"
-                    type="password"
-                    required
-                  />
-                </div>
-              )}
-
-              {/* OTP field - only show if user can create */}
-              {otp && (
-                <div className="space-y-2">
-                  <EditableInput
-                    setRef={setRef("otp")}
-                    id="otp"
-                    name="otp"
-                    value={formData.otp || ""}
-                    onChange={handleChange}
-                    onNext={() => focusNextInput("facebook")}
-                    onCancel={() => setFormData({ ...formData, otp: "" })}
-                    labelText="OTP"
-                    tooltipText="Enter OTP (optional)"
-                    type="text"
-                  />
-                </div>
-              )}
-
-              {/* Facebook field - only show if user can create */}
-              {facebook && (
-                <div className="space-y-2">
-                  <EditableInput
-                    setRef={setRef("facebook")}
-                    id="facebook"
-                    name="facebook"
-                    value={formData.facebook || ""}
-                    onChange={handleChange}
-                    onNext={() => focusNextInput("linkedin")}
-                    onCancel={() => setFormData({ ...formData, facebook: "" })}
-                    labelText="Facebook"
-                    tooltipText="Enter Facebook profile (optional)"
-                    type="text"
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Fifth Row: LinkedIn and Instagram */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
-              {/* LinkedIn field - only show if user can create */}
-              {linkedin && (
-                <div className="space-y-2">
-                  <EditableInput
-                    setRef={setRef("linkedin")}
-                    id="linkedin"
-                    name="linkedin"
-                    value={formData.linkedin || ""}
-                    onChange={handleChange}
-                    onNext={() => focusNextInput("instagram")}
-                    onCancel={() => setFormData({ ...formData, linkedin: "" })}
-                    labelText="LinkedIn"
-                    tooltipText="Enter LinkedIn profile (optional)"
-                    type="text"
-                  />
-                </div>
-              )}
-
-              {/* Instagram field - only show if user can create */}
-              {instagram && (
-                <div className="space-y-2">
-                  <EditableInput
-                    setRef={setRef("instagram")}
-                    id="instagram"
-                    name="instagram"
-                    value={formData.instagram || ""}
-                    onChange={handleChange}
-                    onNext={() => focusNextInput("isDefault")}
-                    onCancel={() => setFormData({ ...formData, instagram: "" })}
-                    labelText="Instagram"
-                    tooltipText="Enter Instagram profile (optional)"
-                    type="text"
-                  />
-                </div>
-              )}
-
               {/* Default field - only show if user can create */}
               {isDefault && (
                 <div className="space-y-2 relative">
@@ -645,12 +451,12 @@ export default function UserFormPage({ isEdit = false }: Props) {
                       {
                         label: labels.yes,
                         value: labels.yes,
-                        date: "Set default user",
+                        date: "Set default color",
                       },
                       {
                         label: labels.no,
                         value: labels.no,
-                        date: "Remove default user",
+                        date: "Remove default color",
                       },
                     ]}
                     value={isDefaultState === "Yes" ? labels.yes : labels.no}
@@ -665,66 +471,75 @@ export default function UserFormPage({ isEdit = false }: Props) {
                         ...prev,
                         isDefault: newValue,
                       }));
-                      focusNextInput("status");
                     }}
                     onEnterPress={() => {
                       if (
                         formData.isDefault === true ||
                         formData.isDefault === false
                       ) {
-                        focusNextInput("status");
+                        // Form submission or next action
                       }
                     }}
                     placeholder=" "
                     labelText="Default"
                     className="relative"
-                    tooltipText="Set as default user"
+                    tooltipText="Set as default color"
                   />
                 </div>
               )}
 
-              {/* Status field */}
-              <div className="space-y-2">
-                <SwitchSelect
-                  ref={(el: any) => setRef("status")(el)}
-                  id="status"
-                  name="status"
-                  labelText="Status"
-                  multiSelect={false} // Single select mode
-                  options={[
-                    {
-                      label: "Active",
-                      value: "Active",
-                      date: "Set active",
-                    },
-                    { label: "Draft", value: "Draft", date: "Set draft" },
-                  ]}
-                  value={statusState}
-                  onValueChange={(value: string | string[]) => {
-                    const stringValue = Array.isArray(value)
-                      ? value[0] || ""
-                      : value;
-                    setStatusState(stringValue);
-
-                    // Update your form data
-                    setFormData((prev) => ({
-                      ...prev,
-                      isDraft: stringValue === "Draft",
-                      isActive: stringValue === "Active",
-                    }));
-                  }}
-                  placeholder=""
-                  styles={{
-                    input: {
-                      borderColor: "var(--primary)",
-                      "&:focus": {
-                        borderColor: "var(--primary)",
+              {/* Status field - only show if user can create */}
+              {status && (
+                <div className="space-y-2">
+                  <SwitchSelect
+                    ref={(el: any) => setRef("statusSwitch")(el)}
+                    id="statusSwitch"
+                    name="statusSwitch"
+                    labelText="Status"
+                    multiSelect={false}
+                    options={[
+                      {
+                        label: "Active",
+                        value: "active",
+                        date: "Set active",
                       },
-                    },
-                  }}
-                  tooltipText="Set the user status"
-                />
-              </div>
+                      {
+                        label: "Inactive",
+                        value: "inactive",
+                        date: "Set inactive",
+                      },
+                      {
+                        label: "Draft",
+                        value: "draft",
+                        date: "Set draft",
+                      },
+                    ]}
+                    value={formData.status}
+                    onValueChange={(value: string | string[]) => {
+                      const stringValue = Array.isArray(value)
+                        ? value[0] || ""
+                        : value;
+
+                      setFormData((prev) => ({
+                        ...prev,
+                        status: stringValue as "active" | "inactive" | "draft",
+                        isDraft: stringValue === "draft",
+                        isActive: stringValue === "active",
+                      }));
+                    }}
+                    placeholder=""
+                    styles={{
+                      input: {
+                        borderColor: "var(--primary)",
+                        "&:focus": {
+                          borderColor: "var(--primary)",
+                        },
+                      },
+                    }}
+                    tooltipText="Set the color status"
+                  />
+                </div>
+              )}
             </div>
           </form>
         </div>
