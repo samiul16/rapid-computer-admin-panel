@@ -3,20 +3,13 @@ import FixedColumnDataTable from "@/components/common/country-page-table/FixedCo
 import useIsMobile from "@/hooks/useIsMobile";
 import { useUserMasterPermissions } from "@/hooks/usePermissions";
 
-// User interface to match the grid component
-interface User {
+// Lead interface to match the grid component
+interface Lead {
   id: string;
-  name: string;
-  mobileNumber: string;
-  email: string;
-  userType: "admin" | "super admin" | "user";
-  password: string;
-  confirmPassword: string;
-  otp?: string;
-  facebook?: string;
-  linkedin?: string;
-  instagram?: string;
-  status: "active" | "inactive" | "draft";
+  clientName: string;
+  service: string;
+  budget: number;
+  status: "active" | "archived" | "upcoming" | "draft";
   createdAt: string;
   updatedAt: string;
   draftedAt: string;
@@ -27,19 +20,12 @@ interface User {
   actionMessage: string;
 }
 
-const mockUsers: User[] = [
+const mockLeads: Lead[] = [
   {
     id: "1",
-    name: "John Doe",
-    mobileNumber: "+1234567890",
-    email: "john.doe@example.com",
-    userType: "admin",
-    password: "********",
-    confirmPassword: "********",
-    otp: "123456",
-    facebook: "john.doe.fb",
-    linkedin: "john-doe-linkedin",
-    instagram: "john_doe_insta",
+    clientName: "John Doe",
+    service: "Web Development",
+    budget: 50000,
     status: "active",
     createdAt: "2023-01-15",
     updatedAt: "2023-11-20",
@@ -52,19 +38,14 @@ const mockUsers: User[] = [
   },
   {
     id: "2",
-    name: "Jane Smith",
-    mobileNumber: "+1234567891",
-    email: "jane.smith@example.com",
-    userType: "super admin",
-    password: "********",
-    confirmPassword: "********",
-    facebook: "jane.smith.fb",
-    linkedin: "jane-smith-linkedin",
-    status: "active",
+    clientName: "Jane Smith",
+    service: "Mobile App Development",
+    budget: 80000,
+    status: "archived",
     createdAt: "2023-01-18",
     updatedAt: "2023-10-15",
     draftedAt: "2023-01-12",
-    isActive: true,
+    isActive: false,
     isDraft: false,
     isDeleted: false,
     isUpdated: false,
@@ -72,18 +53,14 @@ const mockUsers: User[] = [
   },
   {
     id: "3",
-    name: "Michael Johnson",
-    mobileNumber: "+1234567892",
-    email: "michael.johnson@example.com",
-    userType: "user",
-    password: "********",
-    confirmPassword: "********",
-    instagram: "michael_johnson_insta",
-    status: "active",
+    clientName: "Kamrul Islam",
+    service: "E-commerce Website",
+    budget: 60000,
+    status: "archived",
     createdAt: "2023-02-01",
     updatedAt: "2023-11-10",
     draftedAt: "2023-01-25",
-    isActive: true,
+    isActive: false,
     isDraft: false,
     isDeleted: false,
     isUpdated: false,
@@ -91,18 +68,14 @@ const mockUsers: User[] = [
   },
   {
     id: "4",
-    name: "Emily Davis",
-    mobileNumber: "+1234567893",
-    email: "emily.davis@example.com",
-    userType: "admin",
-    password: "********",
-    confirmPassword: "********",
-    linkedin: "emily-davis-linkedin",
-    status: "active",
+    clientName: "Shamima Akter",
+    service: "Digital Marketing",
+    budget: 45000,
+    status: "archived",
     createdAt: "2023-02-10",
     updatedAt: "2023-11-05",
     draftedAt: "2023-02-05",
-    isActive: true,
+    isActive: false,
     isDraft: false,
     isDeleted: false,
     isUpdated: false,
@@ -110,18 +83,14 @@ const mockUsers: User[] = [
   },
   {
     id: "5",
-    name: "David Wilson",
-    mobileNumber: "+1234567894",
-    email: "david.wilson@example.com",
-    userType: "user",
-    password: "********",
-    confirmPassword: "********",
-    facebook: "david.wilson.fb",
-    status: "active",
+    clientName: "Tanvir Ahmed",
+    service: "Cloud Infrastructure Setup",
+    budget: 120000,
+    status: "archived",
     createdAt: "2023-02-15",
     updatedAt: "2023-10-28",
     draftedAt: "2023-02-08",
-    isActive: true,
+    isActive: false,
     isDraft: false,
     isDeleted: false,
     isUpdated: false,
@@ -129,18 +98,14 @@ const mockUsers: User[] = [
   },
   {
     id: "6",
-    name: "Sarah Brown",
-    mobileNumber: "+1234567895",
-    email: "sarah.brown@example.com",
-    userType: "admin",
-    password: "********",
-    confirmPassword: "********",
-    instagram: "sarah_brown_insta",
-    status: "active",
+    clientName: "Farhana Rahman",
+    service: "UI/UX Design",
+    budget: 30000,
+    status: "archived",
     createdAt: "2023-03-01",
     updatedAt: "2023-11-15",
     draftedAt: "2023-02-20",
-    isActive: true,
+    isActive: false,
     isDraft: false,
     isDeleted: false,
     isUpdated: false,
@@ -148,17 +113,14 @@ const mockUsers: User[] = [
   },
   {
     id: "7",
-    name: "Robert Miller",
-    mobileNumber: "+1234567896",
-    email: "robert.miller@example.com",
-    userType: "user",
-    password: "********",
-    confirmPassword: "********",
-    status: "active",
+    clientName: "Rashed Khan",
+    service: "SEO Optimization",
+    budget: 25000,
+    status: "archived",
     createdAt: "2023-03-10",
     updatedAt: "2023-11-08",
     draftedAt: "2023-03-05",
-    isActive: true,
+    isActive: false,
     isDraft: false,
     isDeleted: false,
     isUpdated: false,
@@ -166,19 +128,14 @@ const mockUsers: User[] = [
   },
   {
     id: "8",
-    name: "Lisa Anderson",
-    mobileNumber: "+1234567897",
-    email: "lisa.anderson@example.com",
-    userType: "super admin",
-    password: "********",
-    confirmPassword: "********",
-    linkedin: "lisa-anderson-linkedin",
-    facebook: "lisa.anderson.fb",
-    status: "active",
+    clientName: "Mehnaz Sultana",
+    service: "Content Creation",
+    budget: 20000,
+    status: "archived",
     createdAt: "2023-03-20",
     updatedAt: "2023-10-22",
     draftedAt: "2023-03-15",
-    isActive: true,
+    isActive: false,
     isDraft: false,
     isDeleted: false,
     isUpdated: false,
@@ -186,18 +143,14 @@ const mockUsers: User[] = [
   },
   {
     id: "9",
-    name: "James Taylor",
-    mobileNumber: "+1234567898",
-    email: "james.taylor@example.com",
-    userType: "user",
-    password: "********",
-    confirmPassword: "********",
-    instagram: "james_taylor_insta",
-    status: "active",
+    clientName: "Sajib Chowdhury",
+    service: "Social Media Management",
+    budget: 28000,
+    status: "archived",
     createdAt: "2023-04-01",
     updatedAt: "2023-11-25",
     draftedAt: "2023-03-25",
-    isActive: true,
+    isActive: false,
     isDraft: false,
     isDeleted: false,
     isUpdated: false,
@@ -205,15 +158,10 @@ const mockUsers: User[] = [
   },
   {
     id: "10",
-    name: "Maria Garcia",
-    mobileNumber: "+1234567899",
-    email: "maria.garcia@example.com",
-    userType: "admin",
-    password: "********",
-    confirmPassword: "********",
-    facebook: "maria.garcia.fb",
-    linkedin: "maria-garcia-linkedin",
-    status: "active",
+    clientName: "Omar Faruque",
+    service: "Cybersecurity Audit",
+    budget: 90000,
+    status: "upcoming",
     createdAt: "2023-04-10",
     updatedAt: "2023-11-18",
     draftedAt: "2023-04-05",
@@ -225,50 +173,39 @@ const mockUsers: User[] = [
   },
   {
     id: "11",
-    name: "Christopher Martinez",
-    mobileNumber: "+1234567800",
-    email: "christopher.martinez@example.com",
-    userType: "user",
-    password: "********",
-    confirmPassword: "********",
-    status: "inactive",
+    clientName: "Sumaiya Haque",
+    service: "Email Marketing Campaign",
+    budget: 15000,
+    status: "draft",
     createdAt: "2023-04-15",
     updatedAt: "2023-09-10",
     draftedAt: "2023-04-10",
     isActive: false,
-    isDraft: false,
+    isDraft: true,
     isDeleted: false,
     isUpdated: false,
     actionMessage: "1 day ago",
   },
   {
     id: "12",
-    name: "Jennifer Thompson",
-    mobileNumber: "+1234567801",
-    email: "jennifer.thompson@example.com",
-    userType: "admin",
-    password: "********",
-    confirmPassword: "********",
-    instagram: "jennifer_thompson_insta",
-    status: "active",
+    clientName: "Imran Kabir",
+    service: "ERP System Integration",
+    budget: 110000,
+    status: "draft",
     createdAt: "2023-05-01",
     updatedAt: "2023-11-12",
     draftedAt: "2023-04-25",
-    isActive: true,
-    isDraft: false,
+    isActive: false,
+    isDraft: true,
     isDeleted: false,
     isUpdated: false,
     actionMessage: "1 day ago",
   },
   {
     id: "13",
-    name: "Daniel Rodriguez",
-    mobileNumber: "+1234567802",
-    email: "daniel.rodriguez@example.com",
-    userType: "user",
-    password: "********",
-    confirmPassword: "********",
-    linkedin: "daniel-rodriguez-linkedin",
+    clientName: "Nazmul Hasan",
+    service: "Database Management",
+    budget: 35000,
     status: "active",
     createdAt: "2023-05-10",
     updatedAt: "2023-10-30",
@@ -281,14 +218,10 @@ const mockUsers: User[] = [
   },
   {
     id: "14",
-    name: "Jessica White",
-    mobileNumber: "+1234567803",
-    email: "jessica.white@example.com",
-    userType: "super admin",
-    password: "********",
-    confirmPassword: "********",
-    facebook: "jessica.white.fb",
-    status: "active",
+    clientName: "Fatima Begum",
+    service: "Graphic Design",
+    budget: 22000,
+    status: "upcoming",
     createdAt: "2023-05-20",
     updatedAt: "2023-11-02",
     draftedAt: "2023-05-15",
@@ -300,32 +233,24 @@ const mockUsers: User[] = [
   },
   {
     id: "15",
-    name: "Matthew Lee",
-    mobileNumber: "+1234567804",
-    email: "matthew.lee@example.com",
-    userType: "user",
-    password: "********",
-    confirmPassword: "********",
-    status: "active",
+    clientName: "Rakibul Islam",
+    service: "Video Production",
+    budget: 40000,
+    status: "draft",
     createdAt: "2023-06-01",
     updatedAt: "2023-11-08",
     draftedAt: "2023-05-25",
-    isActive: true,
-    isDraft: false,
+    isActive: false,
+    isDraft: true,
     isDeleted: false,
     isUpdated: false,
     actionMessage: "1 day ago",
   },
   {
     id: "16",
-    name: "Ashley Harris",
-    mobileNumber: "+1234567805",
-    email: "ashley.harris@example.com",
-    userType: "admin",
-    password: "********",
-    confirmPassword: "********",
-    instagram: "ashley_harris_insta",
-    linkedin: "ashley-harris-linkedin",
+    clientName: "Taslima Khatun",
+    service: "Content Writing",
+    budget: 18000,
     status: "active",
     createdAt: "2023-06-10",
     updatedAt: "2023-10-25",
@@ -338,36 +263,13 @@ const mockUsers: User[] = [
   },
   {
     id: "17",
-    name: "Andrew Martinez",
-    mobileNumber: "+1234567806",
-    email: "andrew.martinez@example.com",
-    userType: "user",
-    password: "********",
-    confirmPassword: "********",
-    facebook: "andrew.martinez.fb",
-    status: "draft",
+    clientName: "Karim Uddin",
+    service: "Network Security",
+    budget: 75000,
+    status: "upcoming",
     createdAt: "2023-06-15",
     updatedAt: "2023-06-20",
     draftedAt: "2023-06-12",
-    isActive: false,
-    isDraft: true,
-    isDeleted: false,
-    isUpdated: false,
-    actionMessage: "1 day ago",
-  },
-  {
-    id: "18",
-    name: "Brandon Davis",
-    mobileNumber: "+1234567807",
-    email: "brandon.davis@example.com",
-    userType: "admin",
-    password: "********",
-    confirmPassword: "********",
-    linkedin: "brandon-davis-linkedin",
-    status: "active",
-    createdAt: "2023-07-01",
-    updatedAt: "2023-11-15",
-    draftedAt: "2023-06-25",
     isActive: true,
     isDraft: false,
     isDeleted: false,
@@ -375,14 +277,25 @@ const mockUsers: User[] = [
     actionMessage: "1 day ago",
   },
   {
+    id: "18",
+    clientName: "Nasrin Akter",
+    service: "App Testing",
+    budget: 30000,
+    status: "draft",
+    createdAt: "2023-07-01",
+    updatedAt: "2023-11-15",
+    draftedAt: "2023-06-25",
+    isActive: false,
+    isDraft: true,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "1 day ago",
+  },
+  {
     id: "19",
-    name: "Jonathan Rodriguez",
-    mobileNumber: "+1234567808",
-    email: "jonathan.rodriguez@example.com",
-    userType: "user",
-    password: "********",
-    confirmPassword: "********",
-    instagram: "jonathan_rodriguez_insta",
+    clientName: "Mizanur Rahman",
+    service: "Data Analysis",
+    budget: 45000,
     status: "active",
     createdAt: "2023-07-10",
     updatedAt: "2023-10-18",
@@ -395,18 +308,14 @@ const mockUsers: User[] = [
   },
   {
     id: "20",
-    name: "David Martinez",
-    mobileNumber: "+1234567809",
-    email: "david.martinez@example.com",
-    userType: "admin",
-    password: "********",
-    confirmPassword: "********",
-    linkedin: "david-martinez-linkedin",
-    status: "inactive",
+    clientName: "Rashida Begum",
+    service: "Customer Support",
+    budget: 25000,
+    status: "upcoming",
     createdAt: "2023-07-20",
     updatedAt: "2023-09-15",
     draftedAt: "2023-07-15",
-    isActive: false,
+    isActive: true,
     isDraft: false,
     isDeleted: false,
     isUpdated: false,
@@ -414,7 +323,7 @@ const mockUsers: User[] = [
   },
 ];
 
-export default function UsersDataTable({
+export default function LeadsDataTable({
   viewMode,
   setViewMode,
   dataTableFilter,
@@ -446,9 +355,9 @@ export default function UsersDataTable({
 
   const componentColumns = [
     {
-      accessorKey: "name",
-      title: "Name",
-      options: [...new Set(mockUsers.map((item) => item.name))],
+      accessorKey: "clientName",
+      title: "Client Name",
+      options: [...new Set(mockLeads.map((item) => item.clientName))],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
         const cellValue = row.getValue(columnId) as string;
@@ -457,19 +366,21 @@ export default function UsersDataTable({
         );
       },
       sortingFn: (row1: any, row2: any) => {
-        return row1.getValue("name").localeCompare(row2.getValue("name"));
+        return row1
+          .getValue("clientName")
+          .localeCompare(row2.getValue("clientName"));
       },
       size: isMobile ? 120 : 180,
       minSize: 120,
       meta: {
-        exportLabel: "Name",
+        exportLabel: "Client Name",
         readOnly: !canCreate,
       },
     },
     {
-      accessorKey: "email",
-      title: "Email",
-      options: [...new Set(mockUsers.map((item) => item.email))],
+      accessorKey: "service",
+      title: "Service",
+      options: [...new Set(mockLeads.map((item) => item.service))],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
         const cellValue = row.getValue(columnId) as string;
@@ -478,78 +389,35 @@ export default function UsersDataTable({
         );
       },
       sortingFn: (row1: any, row2: any) => {
-        return row1.getValue("email").localeCompare(row2.getValue("email"));
+        return row1.getValue("service").localeCompare(row2.getValue("service"));
       },
       size: isMobile ? 150 : 200,
       minSize: 150,
       meta: {
-        exportLabel: "Email",
+        exportLabel: "Service",
         readOnly: !canCreate,
       },
     },
     {
-      accessorKey: "mobileNumber",
-      title: "Mobile",
-      options: [...new Set(mockUsers.map((item) => item.mobileNumber))],
+      accessorKey: "budget",
+      title: "Budget",
+      options: [...new Set(mockLeads.map((item) => item.budget))],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as string;
-        return filterValue.some((filterVal: string) =>
-          cellValue.includes(filterVal)
-        );
+        const cellValue = row.getValue(columnId) as number;
+        return filterValue.some((filterVal: number) => cellValue === filterVal);
       },
       sortingFn: (row1: any, row2: any) => {
-        return row1
-          .getValue("mobileNumber")
-          .localeCompare(row2.getValue("mobileNumber"));
+        return row1.getValue("budget") - row2.getValue("budget");
       },
       size: isMobile ? 120 : 150,
       minSize: 120,
       meta: {
-        exportLabel: "Mobile Number",
+        exportLabel: "Budget",
         readOnly: !canCreate,
       },
     },
-    {
-      accessorKey: "userType",
-      title: "User Type",
-      options: [...new Set(mockUsers.map((item) => item.userType))],
-      filterFn: (row: any, columnId: any, filterValue: any) => {
-        if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as string;
-        return filterValue.includes(cellValue);
-      },
-      sortingFn: (row1: any, row2: any) => {
-        return row1
-          .getValue("userType")
-          .localeCompare(row2.getValue("userType"));
-      },
-      size: isMobile ? 100 : 130,
-      minSize: 100,
-      meta: {
-        exportLabel: "User Type",
-        readOnly: !canCreate,
-      },
-    },
-    // {
-    //   accessorKey: "status",
-    //   title: "Status",
-    //   options: [...new Set(mockUsers.map((item) => item.status))],
-    //   filterFn: (row: any, columnId: any, filterValue: any) => {
-    //     if (!filterValue || filterValue.length === 0) return true;
-    //     const cellValue = row.getValue(columnId) as string;
-    //     return filterValue.includes(cellValue);
-    //   },
-    //   sortingFn: (row1: any, row2: any) => {
-    //     return row1.getValue("status").localeCompare(row2.getValue("status"));
-    //   },
-    //   size: isMobile ? 80 : 180,
-    //   minSize: 80,
-    //   meta: {
-    //     exportLabel: "Status",
-    //     readOnly: !canCreate,
-    //   },
-    // },
+
     {
       accessorKey: "createdAt",
       title: "Created",
@@ -656,17 +524,17 @@ export default function UsersDataTable({
     },
   ];
 
-  const filteredData = mockUsers.filter((user) => {
+  const filteredData = mockLeads.filter((lead) => {
     if (dataTableFilter.status === "Active") {
-      return user.isActive;
+      return lead.isActive;
     } else if (dataTableFilter.status === "Inactive") {
-      return !user.isActive;
+      return !lead.isActive;
     } else if (dataTableFilter.status === "Draft") {
-      return user.isDraft;
+      return lead.isDraft;
     } else if (dataTableFilter.status === "Deleted") {
-      return user.isDeleted;
+      return lead.isDeleted;
     } else if (dataTableFilter.status === "Updated") {
-      return user.isUpdated;
+      return lead.isUpdated;
     }
     return true;
   });
@@ -678,8 +546,8 @@ export default function UsersDataTable({
       viewMode={viewMode}
       setViewMode={setViewMode}
       componentColumns={componentColumns}
-      fixedColumns={["name", "email"]} // Pin user name and email columns
-      pathName="user-master"
+      fixedColumns={["clientName", "service"]} // Pin client name and service columns
+      pathName="leads"
       setShowExport={setShowExport}
       showExport={showExport}
       setShowFilter={setShowFilter}
