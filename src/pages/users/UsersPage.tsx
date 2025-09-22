@@ -187,7 +187,7 @@ export default function CountryPage() {
 
   return (
     <PageLayout
-      title="users"
+      title="Users"
       createPath="/users/create"
       viewMode={viewMode}
       setViewMode={setViewMode}

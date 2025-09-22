@@ -162,9 +162,9 @@ export default function UserFormPage({ isEdit = false }: Props) {
       ),
       onClick: () => {
         if (isEdit) {
-          navigate("/users/create");
+          navigate("/user-master/create");
         } else {
-          navigate("/users/edit/undefined");
+          navigate("/user-master/edit/undefined");
         }
       },
       show: canCreate,
@@ -173,7 +173,7 @@ export default function UserFormPage({ isEdit = false }: Props) {
       label: "View",
       icon: <Eye className="w-5 h-5 text-green-600" />,
       onClick: () => {
-        navigate("/users/view");
+        navigate("/user-master/view");
       },
       show: canView,
     },
@@ -215,7 +215,7 @@ export default function UserFormPage({ isEdit = false }: Props) {
       handleReset();
     } else {
       toastSuccess("User created successfully!");
-      navigate("/users");
+      navigate("/user-master");
     }
   };
 
@@ -358,13 +358,13 @@ export default function UserFormPage({ isEdit = false }: Props) {
     <>
       <MinimizablePageLayout
         moduleId="user-form-module"
-        moduleName={isEdit ? "Edit User" : "Adding User"}
+        moduleName={isEdit ? "Edit User Master" : "Adding User Master"}
         moduleRoute={
-          isEdit ? `/users/edit/${formData.name || "new"}` : "/users/create"
+          isEdit ? `/user-master/edit/${formData.name || "new"}` : "/user-master/create"
         }
         onMinimize={handleMinimize}
-        title={isEdit ? "Edit User" : "Add User"}
-        listPath="users"
+        title={isEdit ? "Edit User Master" : "Add User Master"}
+        listPath="user-master"
         popoverOptions={popoverOptions}
         videoSrc={video}
         videoHeader="Tutorial video"
@@ -375,7 +375,7 @@ export default function UserFormPage({ isEdit = false }: Props) {
         printEnabled={printEnabled}
         onPrintToggle={canPrint ? handleSwitchChange : undefined}
         activePage="create"
-        module="users"
+        module="user-master"
         additionalFooterButtons={
           canCreate ? (
             <div className="flex gap-4 max-[435px]:gap-2">
@@ -418,7 +418,7 @@ export default function UserFormPage({ isEdit = false }: Props) {
                     onChange={handleChange}
                     onNext={() => focusNextInput("mobileNumber")}
                     onCancel={() => setFormData({ ...formData, name: "" })}
-                    labelText="User Name"
+                    labelText="User Master Name"
                     tooltipText="Enter the user's full name"
                     required
                   />
@@ -438,7 +438,7 @@ export default function UserFormPage({ isEdit = false }: Props) {
                     onCancel={() =>
                       setFormData({ ...formData, mobileNumber: "" })
                     }
-                    labelText="Mobile Number"
+                    labelText="User Master Mobile Number"
                     tooltipText="Enter the user's mobile number"
                     isPhone={true}
                     onPhoneChange={(value) => {
@@ -463,7 +463,7 @@ export default function UserFormPage({ isEdit = false }: Props) {
                     onChange={handleChange}
                     onNext={() => focusNextInput("userType")}
                     onCancel={() => setFormData({ ...formData, email: "" })}
-                    labelText="Email"
+                    labelText="User Master Email"
                     tooltipText="Enter the user's email address"
                     type="email"
                     required
@@ -504,7 +504,7 @@ export default function UserFormPage({ isEdit = false }: Props) {
                       focusNextInput("password");
                     }}
                     placeholder="Select user type..."
-                    labelText="User Type"
+                    labelText="User Master Type"
                     tooltipText="Select the user type"
                     displayKey="label"
                     valueKey="value"
