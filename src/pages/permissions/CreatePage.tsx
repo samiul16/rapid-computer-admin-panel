@@ -178,6 +178,8 @@ export default function PermissionsCreatePage() {
           ) : null
         }
         className="w-full"
+        isShowEdit={false}
+        isShowView={false}
       >
         <div dir={isRTL ? "rtl" : "ltr"} className="h-full">
           <form

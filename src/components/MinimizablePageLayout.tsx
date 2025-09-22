@@ -43,6 +43,8 @@ interface MinimizablePageLayoutProps {
   companyAutoComplete?: boolean;
   scrollBoxClassNames?: string;
   module?: string;
+  isShowEdit?: boolean;
+  isShowView?: boolean;
 }
 
 const MinimizablePageLayout: React.FC<MinimizablePageLayoutProps> = ({

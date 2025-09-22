@@ -48,6 +48,8 @@ interface PageLayoutProps {
   moduleName?: string;
   moduleRoute?: string;
   handleMinimize?: () => void;
+  isShowEdit?: boolean;
+  isShowView?: boolean;
 }
 
 export default function DPageLayout({
@@ -75,6 +77,8 @@ export default function DPageLayout({
   scrollBoxClassNames,
   module,
   handleMinimize,
+  isShowEdit = true,
+  isShowView = true,
 }: PageLayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -102,9 +106,15 @@ export default function DPageLayout({
       label: "Add",
       content: null,
     },
-    { value: "edit", label: "Edit", content: null },
-    { value: "view", label: "View", content: null },
   ];
+
+  if (isShowEdit) {
+    tabsData.push({ value: "edit", label: "Edit", content: null });
+  }
+
+  if (isShowView) {
+    tabsData.push({ value: "view", label: "View", content: null });
+  }
 
   const onTabChange = (value: string | undefined) => {
     console.log("Tab changed to:", value);
