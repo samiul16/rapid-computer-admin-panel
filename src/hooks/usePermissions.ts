@@ -6,6 +6,8 @@ import type {
   PermissionCheckers,
   CountriesPermissions,
   AuthState,
+  UsersPermissions,
+  UserMasterPermissions,
 } from "@/types/permissions.types";
 
 // Define your root state type
@@ -44,6 +46,42 @@ export const useCountriesPermissions = (): CountriesPermissions => {
       permissions,
       "countries"
     ) as unknown as CountriesPermissions;
+  }, [permissions]);
+
+  return permissionCheckers;
+};
+
+/**
+ * Typed hook specifically for users module
+ */
+export const useUsersPermissions = (): UsersPermissions => {
+  const permissions = useSelector((state: RootState) => {
+    return state.auth.user?.permissions;
+  });
+
+  const permissionCheckers = useMemo(() => {
+    return createPermissionCheckers(
+      permissions,
+      "users"
+    ) as unknown as UsersPermissions;
+  }, [permissions]);
+
+  return permissionCheckers;
+};
+
+/**
+ * Typed hook specifically for user-master module
+ */
+export const useUserMasterPermissions = (): UserMasterPermissions => {
+  const permissions = useSelector((state: RootState) => {
+    return state.auth.user?.permissions;
+  });
+
+  const permissionCheckers = useMemo(() => {
+    return createPermissionCheckers(
+      permissions,
+      "user-master"
+    ) as unknown as UserMasterPermissions;
   }, [permissions]);
 
   return permissionCheckers;

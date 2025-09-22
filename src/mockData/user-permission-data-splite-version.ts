@@ -70,6 +70,7 @@ import { initialProperties as vatReportsData } from "@/pages/vat-reports/config/
 import { initialProperties as teamMembersData } from "@/pages/team-members/config/ModuleLevelConfig";
 import { initialProperties as clientData } from "@/pages/client/config/ModuleLevelConfig";
 import { initialProperties as contactFormData } from "@/pages/contact-form/config/ModuleLevelConfig";
+import { initialProperties as categoryData } from "@/pages/category/config/ModuleLevelConfig";
 
 export const userPermissionDataSpliteVersion = {
   trainingPrograms: {
@@ -3689,6 +3690,65 @@ export const userPermissionDataSpliteVersion = {
     },
     fieldPermissions: {
       ...buildPermissions(supplierStatementData),
+
+      isDefault: {
+        view: true,
+        edit: true,
+        create: true,
+      },
+      isDraft: {
+        view: true,
+        edit: true,
+        create: true,
+      },
+      isActive: {
+        view: true,
+        edit: true,
+        create: true,
+      },
+      isDeleted: {
+        view: true,
+        edit: true,
+        create: true,
+      },
+      createdAt: {
+        view: true,
+        edit: false,
+        create: true,
+      },
+      updatedAt: {
+        view: true,
+        edit: false,
+        create: true,
+      },
+      draftedAt: {
+        view: true,
+        edit: false,
+        create: true,
+      },
+      deletedAt: {
+        view: true,
+        edit: false,
+        create: true,
+      },
+    },
+  },
+
+  category: {
+    formPermissions: {
+      create: true,
+      view: true,
+      edit: true,
+      delete: true,
+      restore: true,
+      export: true,
+      import: true,
+      pdf: true,
+      print: true,
+      history: true,
+    },
+    fieldPermissions: {
+      ...buildPermissions(categoryData),
 
       isDefault: {
         view: true,

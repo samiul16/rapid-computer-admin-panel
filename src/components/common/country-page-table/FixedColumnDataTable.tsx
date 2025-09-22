@@ -280,6 +280,7 @@ export default function CommonDataTable({
   showVisibility,
   isFilterOpen,
   setIsFilterOpen,
+  showImages = true,
 }: {
   viewMode: string;
   setViewMode: (viewMode: string) => void;
@@ -296,6 +297,7 @@ export default function CommonDataTable({
   showVisibility: boolean;
   isFilterOpen: boolean;
   setIsFilterOpen: (isFilterOpen: boolean) => void;
+  showImages?: boolean;
 }) {
   const [data, setData] = useState(columnData);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -553,6 +555,7 @@ export default function CommonDataTable({
               selectedCell={selectedCell}
               setSelectedCell={setSelectedCell}
               readOnly={componentColumn.meta?.readOnly}
+              showImages={showImages}
             />
           ),
           filterFn: componentColumn.filterFn,
@@ -1669,6 +1672,7 @@ function EditableCell({
   handleEdit,
   setSelectedCell,
   readOnly,
+  showImages,
 }: {
   info: any;
   editingCell: { rowId: string; columnId: string } | null;
@@ -1683,6 +1687,7 @@ function EditableCell({
     React.SetStateAction<{ rowIndex: number; columnId: string }>
   >;
   readOnly?: boolean;
+  showImages?: boolean;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [hasError, setHasError] = useState(false);
@@ -1870,15 +1875,17 @@ function EditableCell({
         )
       ) : info.column.id === "name" ? (
         <div className="flex items-center gap-2 rtl:flex-row-reverse">
-          <img
-            src={getFlagImage(info.row.original.code) || ""}
-            alt={`${info.getValue()} flag`}
-            className="w-5 h-4 object-contain flex-shrink-0"
-            loading="lazy"
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = "none";
-            }}
-          />
+          {showImages && (
+            <img
+              src={getFlagImage(info.row.original.code) || ""}
+              alt={`${info.getValue()} flag`}
+              className="w-5 h-4 object-contain flex-shrink-0"
+              loading="lazy"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = "none";
+              }}
+            />
+          )}
           <span className="truncate">{info.getValue()}</span>
         </div>
       ) : info.column.id === "callingCode" || info.column.id === "code" ? (
