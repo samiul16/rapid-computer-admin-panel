@@ -1498,6 +1498,12 @@ import BlogCreatePage from "./pages/blog/CreatePage";
 import BlogEditPage from "./pages/blog/EditPage";
 import BlogDetails from "./pages/blog/DetailsPage";
 
+// Category
+import CategoryPage from "./pages/category/CategoryPage";
+import CategoryCreatePage from "./pages/category/CreatePage";
+import CategoryEditPage from "./pages/category/EditPage";
+import CategoryDetails from "./pages/category/DetailsPage";
+
 function App() {
   const { i18n } = useTranslation();
   const isAuthenticated = useSelector(
@@ -1939,6 +1945,23 @@ function App() {
                 />
 
                 {/* {------------------------------------------------------} */}
+
+                {/* Category */}
+                <Route path="/category" element={<CategoryPage />} />
+                <Route path="/category/:id" element={<CategoryDetails />} />
+                <Route
+                  path="/category/create"
+                  element={<CategoryCreatePage />}
+                />
+                <Route
+                  path="/category/edit/:id"
+                  element={<CategoryEditPage isEdit={true} />}
+                />
+                <Route
+                  path="/category/:id/edit"
+                  element={<CategoryEditPage isEdit={true} />}
+                />
+                <Route path="/category/view" element={<CategoryDetails />} />
 
                 {/* Countries */}
                 <Route path="/countries" element={<CountryPage />} />

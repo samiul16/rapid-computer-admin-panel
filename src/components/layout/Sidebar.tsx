@@ -172,7 +172,7 @@ const Sidebar = ({
       key: "category",
       icon: List,
       label: t("sidebar.menu.category"),
-      path: "/categories",
+      path: "/category",
     },
 
     {
