@@ -679,7 +679,7 @@ export default function UsersDataTable({
       setViewMode={setViewMode}
       componentColumns={componentColumns}
       fixedColumns={["name", "email"]} // Pin user name and email columns
-      pathName="users"
+      pathName="user-master"
       setShowExport={setShowExport}
       showExport={showExport}
       setShowFilter={setShowFilter}

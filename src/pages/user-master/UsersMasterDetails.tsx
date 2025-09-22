@@ -152,7 +152,7 @@ export default function UserDetailsPage() {
   const handlePrintUser = (userData: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "User Details",
+        title: "User Master Details",
         data: [userData],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
@@ -199,7 +199,7 @@ export default function UserDetailsPage() {
       const blob = await pdf(
         <GenericPDF
           data={[userData]}
-          title="User Details"
+          title="User Master Details"
           subtitle="User Information"
         />
       ).toBlob();
@@ -252,9 +252,9 @@ export default function UserDetailsPage() {
     <>
       <MinimizablePageLayout
         moduleId="user-details-module"
-        moduleName="User Details"
+        moduleName="User Master Details"
         moduleRoute="/user-master/view"
-        title="Viewing User"
+        title="Viewing User Master"
         videoSrc={video}
         videoHeader="Tutorial video"
         listPath="user-master"
@@ -313,14 +313,14 @@ export default function UserDetailsPage() {
               disabled={false}
               className="w-[96%] bg-gray-100 rounded-xl"
               labelClassName="bg-gray-50 rounded-2xl"
-              labelText="User Master"
+              labelText="User Master Name"
               isShowTemplateIcon={false}
             />
           </div>
 
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">User Master Name</h3>
+              <h3 className="font-normal text-gray-600">User Name</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
               {displayValue(userData.name)}
@@ -329,9 +329,7 @@ export default function UserDetailsPage() {
 
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">
-                User Master Mobile Number
-              </h3>
+              <h3 className="font-normal text-gray-600">User Mobile Number</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
               {displayValue(userData.mobileNumber)}
@@ -340,7 +338,7 @@ export default function UserDetailsPage() {
 
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">User Master Email</h3>
+              <h3 className="font-normal text-gray-600">User Email</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
               {displayValue(userData.email)}
