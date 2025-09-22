@@ -10,14 +10,12 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/store";
 import {
-  Mail,
-  Phone,
-  Facebook,
-  Linkedin,
-  Instagram,
-  Shield,
-  User,
-  Crown,
+  DollarSign,
+  Briefcase,
+  CheckCircle,
+  Clock,
+  Archive,
+  FileText,
 } from "lucide-react";
 // import GridExportComponent from "./GridExportComponent";
 import GridFilterComponent from "./GridFilterComponent";
@@ -25,225 +23,177 @@ import useIsMobile from "@/hooks/useIsMobile";
 
 // import { usePermission } from "@/hooks/usePermissions";
 
-// User interface
-interface User {
+// Lead interface
+interface Lead {
   id: string;
-  name: string;
-  mobileNumber: string;
-  email: string;
-  userType: "admin" | "super admin" | "user";
-  password: string;
-  confirmPassword: string;
-  otp?: string;
-  facebook?: string;
-  linkedin?: string;
-  instagram?: string;
+  clientName: string;
+  service: string;
+  budget: number;
+  status: "active" | "archived" | "upcoming" | "draft";
+  isDeleted: boolean;
 }
 
 // Mock data - replace with real data from your API
-const users: User[] = [
+const leads: Lead[] = [
   {
     id: "1",
-    name: "John Doe",
-    mobileNumber: "+1234567890",
-    email: "john.doe@example.com",
-    userType: "admin",
-    password: "********",
-    confirmPassword: "********",
-    otp: "123456",
-    facebook: "john.doe.fb",
-    linkedin: "john-doe-linkedin",
-    instagram: "john_doe_insta",
+    clientName: "John Doe",
+    service: "Web Development",
+    budget: 50000,
+    status: "active",
+    isDeleted: false,
   },
   {
     id: "2",
-    name: "Jane Smith",
-    mobileNumber: "+1234567891",
-    email: "jane.smith@example.com",
-    userType: "super admin",
-    password: "********",
-    confirmPassword: "********",
-    facebook: "jane.smith.fb",
-    linkedin: "jane-smith-linkedin",
+    clientName: "Jane Smith",
+    service: "Mobile App Development",
+    budget: 80000,
+    status: "archived",
+    isDeleted: false,
   },
   {
     id: "3",
-    name: "Michael Johnson",
-    mobileNumber: "+1234567892",
-    email: "michael.johnson@example.com",
-    userType: "user",
-    password: "********",
-    confirmPassword: "********",
-    instagram: "michael_johnson_insta",
+    clientName: "Kamrul Islam",
+    service: "E-commerce Website",
+    budget: 60000,
+    status: "archived",
+    isDeleted: false,
   },
   {
     id: "4",
-    name: "Emily Davis",
-    mobileNumber: "+1234567893",
-    email: "emily.davis@example.com",
-    userType: "admin",
-    password: "********",
-    confirmPassword: "********",
-    linkedin: "emily-davis-linkedin",
+    clientName: "Shamima Akter",
+    service: "Digital Marketing",
+    budget: 45000,
+    status: "archived",
+    isDeleted: false,
   },
   {
     id: "5",
-    name: "David Wilson",
-    mobileNumber: "+1234567894",
-    email: "david.wilson@example.com",
-    userType: "user",
-    password: "********",
-    confirmPassword: "********",
-    facebook: "david.wilson.fb",
+    clientName: "Tanvir Ahmed",
+    service: "Cloud Infrastructure Setup",
+    budget: 120000,
+    status: "archived",
+    isDeleted: false,
   },
   {
     id: "6",
-    name: "Sarah Brown",
-    mobileNumber: "+1234567895",
-    email: "sarah.brown@example.com",
-    userType: "admin",
-    password: "********",
-    confirmPassword: "********",
-    instagram: "sarah_brown_insta",
+    clientName: "Farhana Rahman",
+    service: "UI/UX Design",
+    budget: 30000,
+    status: "archived",
+    isDeleted: false,
   },
   {
     id: "7",
-    name: "Robert Miller",
-    mobileNumber: "+1234567896",
-    email: "robert.miller@example.com",
-    userType: "user",
-    password: "********",
-    confirmPassword: "********",
+    clientName: "Rashed Khan",
+    service: "SEO Optimization",
+    budget: 25000,
+    status: "archived",
+    isDeleted: false,
   },
   {
     id: "8",
-    name: "Lisa Anderson",
-    mobileNumber: "+1234567897",
-    email: "lisa.anderson@example.com",
-    userType: "super admin",
-    password: "********",
-    confirmPassword: "********",
-    linkedin: "lisa-anderson-linkedin",
-    facebook: "lisa.anderson.fb",
+    clientName: "Mehnaz Sultana",
+    service: "Content Creation",
+    budget: 20000,
+    status: "archived",
+    isDeleted: false,
   },
   {
     id: "9",
-    name: "James Taylor",
-    mobileNumber: "+1234567898",
-    email: "james.taylor@example.com",
-    userType: "user",
-    password: "********",
-    confirmPassword: "********",
-    instagram: "james_taylor_insta",
+    clientName: "Sajib Chowdhury",
+    service: "Social Media Management",
+    budget: 28000,
+    status: "archived",
+    isDeleted: false,
   },
   {
     id: "10",
-    name: "Maria Garcia",
-    mobileNumber: "+1234567899",
-    email: "maria.garcia@example.com",
-    userType: "admin",
-    password: "********",
-    confirmPassword: "********",
-    facebook: "maria.garcia.fb",
-    linkedin: "maria-garcia-linkedin",
+    clientName: "Omar Faruque",
+    service: "Cybersecurity Audit",
+    budget: 90000,
+    status: "upcoming",
+    isDeleted: false,
   },
   {
     id: "11",
-    name: "Christopher Martinez",
-    mobileNumber: "+1234567800",
-    email: "christopher.martinez@example.com",
-    userType: "user",
-    password: "********",
-    confirmPassword: "********",
+    clientName: "Sumaiya Haque",
+    service: "Email Marketing Campaign",
+    budget: 15000,
+    status: "draft",
+    isDeleted: false,
   },
   {
     id: "12",
-    name: "Jennifer Thompson",
-    mobileNumber: "+1234567801",
-    email: "jennifer.thompson@example.com",
-    userType: "admin",
-    password: "********",
-    confirmPassword: "********",
-    instagram: "jennifer_thompson_insta",
+    clientName: "Imran Kabir",
+    service: "ERP System Integration",
+    budget: 110000,
+    status: "draft",
+    isDeleted: false,
   },
   {
     id: "13",
-    name: "Daniel Rodriguez",
-    mobileNumber: "+1234567802",
-    email: "daniel.rodriguez@example.com",
-    userType: "user",
-    password: "********",
-    confirmPassword: "********",
-    linkedin: "daniel-rodriguez-linkedin",
+    clientName: "Nazmul Hasan",
+    service: "Database Management",
+    budget: 35000,
+    status: "active",
+    isDeleted: false,
   },
   {
     id: "14",
-    name: "Jessica White",
-    mobileNumber: "+1234567803",
-    email: "jessica.white@example.com",
-    userType: "super admin",
-    password: "********",
-    confirmPassword: "********",
-    facebook: "jessica.white.fb",
+    clientName: "Fatima Begum",
+    service: "Graphic Design",
+    budget: 22000,
+    status: "upcoming",
+    isDeleted: false,
   },
   {
     id: "15",
-    name: "Matthew Lee",
-    mobileNumber: "+1234567804",
-    email: "matthew.lee@example.com",
-    userType: "user",
-    password: "********",
-    confirmPassword: "********",
+    clientName: "Rakibul Islam",
+    service: "Video Production",
+    budget: 40000,
+    status: "draft",
+    isDeleted: false,
   },
   {
     id: "16",
-    name: "Ashley Harris",
-    mobileNumber: "+1234567805",
-    email: "ashley.harris@example.com",
-    userType: "admin",
-    password: "********",
-    confirmPassword: "********",
-    instagram: "ashley_harris_insta",
-    linkedin: "ashley-harris-linkedin",
+    clientName: "Taslima Khatun",
+    service: "Content Writing",
+    budget: 18000,
+    status: "active",
+    isDeleted: false,
   },
   {
     id: "17",
-    name: "Daniel Garcia",
-    mobileNumber: "+1234567806",
-    email: "daniel.garcia@example.com",
-    userType: "user",
-    password: "********",
-    confirmPassword: "********",
+    clientName: "Karim Uddin",
+    service: "Network Security",
+    budget: 75000,
+    status: "upcoming",
+    isDeleted: false,
   },
   {
     id: "18",
-    name: "Andrew Martinez",
-    mobileNumber: "+1234567807",
-    email: "andrew.martinez@example.com",
-    userType: "admin",
-    password: "********",
-    confirmPassword: "********",
-    facebook: "andrew.martinez.fb",
+    clientName: "Nasrin Akter",
+    service: "App Testing",
+    budget: 30000,
+    status: "draft",
+    isDeleted: false,
   },
   {
     id: "19",
-    name: "Brandon Davis",
-    mobileNumber: "+1234567808",
-    email: "brandon.davis@example.com",
-    userType: "user",
-    password: "********",
-    confirmPassword: "********",
-    linkedin: "brandon-davis-linkedin",
+    clientName: "Mizanur Rahman",
+    service: "Data Analysis",
+    budget: 45000,
+    status: "active",
+    isDeleted: false,
   },
   {
     id: "20",
-    name: "Jonathan Rodriguez",
-    mobileNumber: "+1234567809",
-    email: "jonathan.rodriguez@example.com",
-    userType: "admin",
-    password: "********",
-    confirmPassword: "********",
-    instagram: "jonathan_rodriguez_insta",
+    clientName: "Rashida Begum",
+    service: "Customer Support",
+    budget: 25000,
+    status: "upcoming",
+    isDeleted: false,
   },
 ];
 
@@ -255,24 +205,24 @@ type Props = {
   isExportOpen: boolean;
 };
 
-export default function UsersGrid({
+export default function LeadsGrid({
   searchQuery,
   setIsFilterOpen,
   isFilterOpen,
   setIsExportOpen,
   isExportOpen,
 }: Props) {
-  console.log("Users grid rendered");
+  console.log("Leads grid rendered");
 
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { isRTL } = useSelector((state: RootState) => state.language);
   const isMobile = useIsMobile();
 
-  const [usersData, setUsersData] = useState(users);
-  // const canDelete: boolean = usePermission("users", "delete");
-  // const canRestore: boolean = usePermission("users", "restore");
-  // const canEdit: boolean = usePermission("users", "edit");
+  const [leadsData, setLeadsData] = useState(leads);
+  // const canDelete: boolean = usePermission("leads", "delete");
+  // const canRestore: boolean = usePermission("leads", "restore");
+  // const canEdit: boolean = usePermission("leads", "edit");
 
   // Infinite scroll states
   const [isLoading, setIsLoading] = useState(false);
@@ -300,6 +250,16 @@ export default function UsersGrid({
       "Lisa",
       "James",
       "Maria",
+      "Ahmed",
+      "Fatima",
+      "Hassan",
+      "Aisha",
+      "Omar",
+      "Zainab",
+      "Ali",
+      "Khadija",
+      "Yusuf",
+      "Amina",
     ];
     const lastNames = [
       "Smith",
@@ -312,12 +272,49 @@ export default function UsersGrid({
       "Davis",
       "Rodriguez",
       "Martinez",
+      "Hassan",
+      "Ahmed",
+      "Ali",
+      "Khan",
+      "Rahman",
+      "Islam",
+      "Chowdhury",
+      "Uddin",
+      "Begum",
+      "Akter",
     ];
 
-    const userTypes: User["userType"][] = ["admin", "super admin", "user"];
-    const domains = ["gmail.com", "yahoo.com", "hotmail.com", "company.com"];
+    const services = [
+      "Web Development",
+      "Mobile App Development",
+      "E-commerce Website",
+      "Digital Marketing",
+      "Cloud Infrastructure Setup",
+      "UI/UX Design",
+      "SEO Optimization",
+      "Content Creation",
+      "Social Media Management",
+      "Cybersecurity Audit",
+      "Email Marketing Campaign",
+      "ERP System Integration",
+      "Database Management",
+      "Graphic Design",
+      "Video Production",
+      "Content Writing",
+      "Network Security",
+      "App Testing",
+      "Data Analysis",
+      "Customer Support",
+    ];
 
-    const newItems: User[] = Array.from(
+    const statuses: Lead["status"][] = [
+      "active",
+      "archived",
+      "upcoming",
+      "draft",
+    ];
+
+    const newItems: Lead[] = Array.from(
       { length: ITEMS_PER_PAGE },
       (_, index) => {
         const firstName =
@@ -325,46 +322,30 @@ export default function UsersGrid({
         const lastName =
           lastNames[Math.floor(Math.random() * lastNames.length)];
         const fullName = `${firstName} ${lastName}`;
-        const email = `${firstName.toLowerCase()}.${lastName.toLowerCase()}@${
-          domains[Math.floor(Math.random() * domains.length)]
-        }`;
+        const service = services[Math.floor(Math.random() * services.length)];
+        const budget = Math.floor(Math.random() * 100000) + 10000; // 10k to 110k
 
         return {
           id: `${Date.now()}-${index}`,
-          name: fullName,
-          mobileNumber: `+123456${Math.floor(Math.random() * 10000)
-            .toString()
-            .padStart(4, "0")}`,
-          email: email,
-          userType: userTypes[Math.floor(Math.random() * userTypes.length)],
-          password: "********",
-          confirmPassword: "********",
-          facebook:
-            Math.random() > 0.5
-              ? `${firstName.toLowerCase()}.${lastName.toLowerCase()}.fb`
-              : undefined,
-          linkedin:
-            Math.random() > 0.5
-              ? `${firstName.toLowerCase()}-${lastName.toLowerCase()}-linkedin`
-              : undefined,
-          instagram:
-            Math.random() > 0.5
-              ? `${firstName.toLowerCase()}_${lastName.toLowerCase()}_insta`
-              : undefined,
+          clientName: fullName,
+          service: service,
+          budget: budget,
+          status: statuses[Math.floor(Math.random() * statuses.length)],
+          isDeleted: false,
         };
       }
     );
 
     // Stop loading more after reaching 50 items for demo
-    if (usersData.length >= 46) {
+    if (leadsData.length >= 46) {
       setHasMore(false);
     } else {
-      setUsersData((prev) => [...prev, ...newItems]);
+      setLeadsData((prev) => [...prev, ...newItems]);
       setPage((prev) => prev + 1);
     }
 
     setIsLoading(false);
-  }, [usersData.length, isLoading, hasMore]);
+  }, [leadsData.length, isLoading, hasMore]);
 
   // Infinite scroll handler
   const handleScroll = useCallback(() => {
@@ -388,23 +369,23 @@ export default function UsersGrid({
     return () => container.removeEventListener("scroll", handleScroll);
   }, [handleScroll]);
 
-  // Filter users based on search query (search across multiple fields)
-  const filteredUsers = usersData.filter(
-    (user) =>
-      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.mobileNumber.includes(searchQuery) ||
-      user.userType.toLowerCase().includes(searchQuery.toLowerCase())
+  // Filter leads based on search query (search across multiple fields)
+  const filteredLeads = leadsData.filter(
+    (lead) =>
+      lead.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      lead.service.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      lead.budget.toString().includes(searchQuery) ||
+      lead.status.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // const handleEditClick = (userId: string) => {
+  // const handleEditClick = (leadId: string) => {
   //   const viewMode = searchParams.get("view") || "grid";
-  //   navigate(`/users/edit/${userId}?fromView=${viewMode}`);
+  //   navigate(`/leads/edit/${leadId}?fromView=${viewMode}`);
   // };
 
-  const handleViewClick = (userId: string) => {
+  const handleViewClick = (leadId: string) => {
     const viewMode = searchParams.get("view") || "grid";
-    navigate(`/users/view/${userId}?fromView=${viewMode}`);
+    navigate(`/leads/view/${leadId}?fromView=${viewMode}`);
   };
 
   return (
@@ -435,33 +416,45 @@ export default function UsersGrid({
                 : "grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
             )}
           >
-            {filteredUsers.map((user, index) => {
-              // Function to get user type icon and color
-              const getUserTypeInfo = (userType: User["userType"]) => {
-                switch (userType) {
-                  case "super admin":
+            {filteredLeads.map((lead, index) => {
+              // Function to get status icon and color
+              const getStatusInfo = (status: Lead["status"]) => {
+                switch (status) {
+                  case "active":
                     return {
-                      icon: Crown,
-                      color: "text-purple-600",
-                      bgColor: "bg-purple-100",
+                      icon: CheckCircle,
+                      color: "text-green-600",
+                      bgColor: "bg-green-100",
                     };
-                  case "admin":
+                  case "upcoming":
                     return {
-                      icon: Shield,
+                      icon: Clock,
                       color: "text-blue-600",
                       bgColor: "bg-blue-100",
                     };
+                  case "draft":
+                    return {
+                      icon: FileText,
+                      color: "text-yellow-600",
+                      bgColor: "bg-yellow-100",
+                    };
+                  case "archived":
+                    return {
+                      icon: Archive,
+                      color: "text-gray-600",
+                      bgColor: "bg-gray-100",
+                    };
                   default:
                     return {
-                      icon: User,
+                      icon: CheckCircle,
                       color: "text-gray-600",
                       bgColor: "bg-gray-100",
                     };
                 }
               };
 
-              const userTypeInfo = getUserTypeInfo(user.userType);
-              const UserTypeIcon = userTypeInfo.icon;
+              const statusInfo = getStatusInfo(lead.status);
+              const StatusIcon = statusInfo.icon;
 
               return (
                 <Card
@@ -473,65 +466,51 @@ export default function UsersGrid({
                       ? "hover:shadow-lg hover:border-primary"
                       : "hover:scale-105 hover:z-50 hover:relative hover:border-primary min-w-[280px]"
                   )}
-                  onClick={() => handleViewClick(user.id)}
+                  onClick={() => handleViewClick(lead.id)}
                 >
-                  {/* User Header with Name and Type */}
+                  {/* Lead Header with Client Name and Status */}
                   <div className="flex items-center justify-between">
                     <CardTitle
                       className="text-lg font-semibold transition-colors flex-1"
                       style={{ fontSize: "18px" }}
                     >
-                      {user.name}
+                      {lead.clientName}
                     </CardTitle>
                     <div
                       className={cn(
                         "flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium",
-                        userTypeInfo.bgColor,
-                        userTypeInfo.color
+                        statusInfo.bgColor,
+                        statusInfo.color
                       )}
                     >
-                      <UserTypeIcon className="w-3 h-3" />
-                      <span className="capitalize">{user.userType}</span>
+                      <StatusIcon className="w-3 h-3" />
+                      <span className="capitalize">{lead.status}</span>
                     </div>
                   </div>
 
-                  {/* Contact Information */}
+                  {/* Service Information */}
                   <div className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
                     <div className="flex items-center gap-2">
-                      <Mail className="w-4 h-4 flex-shrink-0" />
-                      <span className="truncate">{user.email}</span>
+                      <Briefcase className="w-4 h-4 flex-shrink-0" />
+                      <span className="truncate">{lead.service}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Phone className="w-4 h-4 flex-shrink-0" />
-                      <span>{user.mobileNumber}</span>
+                      <DollarSign className="w-4 h-4 flex-shrink-0" />
+                      <span>${lead.budget.toLocaleString()}</span>
                     </div>
                   </div>
 
-                  {/* Social Media Links */}
-                  {(user.facebook || user.linkedin || user.instagram) && (
-                    <div className="flex items-center gap-3 pt-2 border-t border-gray-200 dark:border-gray-700">
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        Social:
-                      </span>
-                      <div className="flex gap-2">
-                        {user.facebook && (
-                          <div className="p-1 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors">
-                            <Facebook className="w-3 h-3" />
-                          </div>
-                        )}
-                        {user.linkedin && (
-                          <div className="p-1 rounded-full bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors">
-                            <Linkedin className="w-3 h-3" />
-                          </div>
-                        )}
-                        {user.instagram && (
-                          <div className="p-1 rounded-full bg-pink-50 text-pink-600 hover:bg-pink-100 transition-colors">
-                            <Instagram className="w-3 h-3" />
-                          </div>
-                        )}
+                  {/* Budget and Service Details */}
+                  <div className="flex items-center gap-3 pt-2 border-t border-gray-200 dark:border-gray-700">
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      Budget:
+                    </span>
+                    <div className="flex gap-2">
+                      <div className="px-2 py-1 rounded-full bg-green-50 text-green-600 text-xs font-medium">
+                        ${lead.budget.toLocaleString()}
                       </div>
                     </div>
-                  )}
+                  </div>
                 </Card>
               );
             })}
@@ -542,16 +521,16 @@ export default function UsersGrid({
             <div className="flex justify-center items-center py-8">
               <div className="flex items-center gap-2 text-blue-600">
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-                <span className="text-sm">Loading more users...</span>
+                <span className="text-sm">Loading more leads...</span>
               </div>
             </div>
           )}
 
           {/* End of data indicator */}
-          {!hasMore && filteredUsers.length > 12 && (
+          {!hasMore && filteredLeads.length > 12 && (
             <div className="flex justify-center items-center py-8">
               <span className="text-sm text-gray-500 dark:text-gray-400">
-                No more users to load
+                No more leads to load
               </span>
             </div>
           )}
@@ -586,8 +565,8 @@ export default function UsersGrid({
             >
               <GridFilterComponent
                 key={`filter-panel-${isFilterOpen}`}
-                data={users}
-                setFilteredData={setUsersData}
+                data={leads}
+                setFilteredData={setLeadsData}
                 setShowTabs={setIsFilterOpen}
                 defaultTab="filter"
               />
@@ -624,8 +603,8 @@ export default function UsersGrid({
             >
               <GridFilterComponent
                 key={`export-panel-${isExportOpen}`}
-                data={users}
-                setFilteredData={setUsersData}
+                data={leads}
+                setFilteredData={setLeadsData}
                 setShowTabs={setIsExportOpen}
                 defaultTab="export"
               />

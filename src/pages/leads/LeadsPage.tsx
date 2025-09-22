@@ -187,8 +187,8 @@ export default function CountryPage() {
 
   return (
     <PageLayout
-      title="Users Master"
-      createPath="/user-master/create"
+      title="Leads"
+      createPath="/lead/create"
       viewMode={viewMode}
       setViewMode={setViewMode}
       searchQuery={searchQuery}
@@ -201,7 +201,7 @@ export default function CountryPage() {
       showVisibility={showVisibility}
       setTimeLabel={setTimeLabel}
       tabsSection={tabsSection}
-      pathName="user-master"
+      pathName="lead"
     >
       {mainContent}
     </PageLayout>
