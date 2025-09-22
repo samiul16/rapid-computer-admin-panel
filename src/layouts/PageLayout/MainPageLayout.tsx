@@ -39,6 +39,7 @@ type PageLayoutProps = {
   children: React.ReactNode;
   tabsSection?: React.ReactNode;
   pathName?: string;
+  showCreateButton?: boolean;
 };
 
 const PageLayout = ({
@@ -56,6 +57,7 @@ const PageLayout = ({
   showVisibility,
   children,
   tabsSection,
+  showCreateButton = true,
 }: // pathName,
 PageLayoutProps) => {
   const navigate = useNavigate();
@@ -115,7 +117,7 @@ PageLayoutProps) => {
           className={`flex items-center gap-4 ${isRTL ? "order-1" : "order-2"}`}
         >
           {/* Create Button */}
-          {canCreate && (
+          {showCreateButton && canCreate && (
             <Tooltip
               label="New Country"
               position="top"
