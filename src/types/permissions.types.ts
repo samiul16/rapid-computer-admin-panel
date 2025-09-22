@@ -90,3 +90,35 @@ export interface CountriesPermissions {
   canCreateCreatedBy: boolean;
   canCreateNotes: boolean;
 }
+
+// Specific types for users module
+export interface UsersPermissions {
+  // Form permissions
+  canCreate: boolean;
+  canView: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
+  canExport: boolean;
+  canImport: boolean;
+
+  // Field permissions - View
+  canViewUserName: boolean;
+  canViewStatus: boolean;
+  canViewCreatedDate: boolean;
+  canViewUpdatedDate: boolean;
+  canViewDraftedDate: boolean;
+
+  // Field permissions - Edit
+  canEditUserName: boolean;
+  canEditStatus: boolean;
+  canEditCreatedDate: boolean;
+  canEditUpdatedDate: boolean;
+  canEditDraftedDate: boolean;
+
+  // Field permissions - Create
+  canCreateUserName: boolean;
+  canCreateStatus: boolean;
+  canCreateCreatedDate: boolean;
+  canCreateUpdatedDate: boolean;
+  canCreateDraftedDate: boolean;
+}

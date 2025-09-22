@@ -5,6 +5,52 @@ export const userPermission = {
   modules: {
     ...userPermissionDataSpliteVersion,
     ...userPermissionDataSpliteVersionThree,
+    users: {
+      formPermissions: {
+        create: true,
+        view: true,
+        edit: true,
+        delete: true,
+        restore: true,
+        export: true,
+        import: true,
+        pdf: true,
+        print: true,
+        history: true,
+      },
+      fieldPermissions: {
+        userName: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        status: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        createdDate: {
+          view: true,
+          edit: false,
+          create: true,
+        },
+        updatedDate: {
+          view: true,
+          edit: false,
+          create: true,
+        },
+        draftedDate: {
+          view: true,
+          edit: false,
+          create: true,
+        },
+        isDefault: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+      },
+    },
     countries: {
       formPermissions: {
         create: true,
