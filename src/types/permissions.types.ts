@@ -122,3 +122,61 @@ export interface UsersPermissions {
   canCreateUpdatedDate: boolean;
   canCreateDraftedDate: boolean;
 }
+
+export interface UserMasterPermissions {
+  // Form permissions
+  canCreate: boolean;
+  canView: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
+  canExport: boolean;
+  canImport: boolean;
+
+  // Field permissions - View
+  canViewUserName: boolean;
+  canViewMobileNumber: boolean;
+  canViewEmail: boolean;
+  canViewUserType: boolean;
+  canViewPassword: boolean;
+  canViewConfirmPassword: boolean;
+  canViewOtp: boolean;
+  canViewFacebook: boolean;
+  canViewLinkedin: boolean;
+  canViewInstagram: boolean;
+  canViewStatus: boolean;
+  canViewCreatedDate: boolean;
+  canViewUpdatedDate: boolean;
+  canViewDraftedDate: boolean;
+
+  // Field permissions - Edit
+  canEditUserName: boolean;
+  canEditMobileNumber: boolean;
+  canEditEmail: boolean;
+  canEditUserType: boolean;
+  canEditPassword: boolean;
+  canEditConfirmPassword: boolean;
+  canEditOtp: boolean;
+  canEditFacebook: boolean;
+  canEditLinkedin: boolean;
+  canEditInstagram: boolean;
+  canEditStatus: boolean;
+  canEditCreatedDate: boolean;
+  canEditUpdatedDate: boolean;
+  canEditDraftedDate: boolean;
+
+  // Field permissions - Create
+  canCreateUserName: boolean;
+  canCreateMobileNumber: boolean;
+  canCreateEmail: boolean;
+  canCreateUserType: boolean;
+  canCreatePassword: boolean;
+  canCreateConfirmPassword: boolean;
+  canCreateOtp: boolean;
+  canCreateFacebook: boolean;
+  canCreateLinkedin: boolean;
+  canCreateInstagram: boolean;
+  canCreateStatus: boolean;
+  canCreateCreatedDate: boolean;
+  canCreateUpdatedDate: boolean;
+  canCreateDraftedDate: boolean;
+}
