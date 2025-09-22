@@ -386,10 +386,10 @@ export default function ColorEditPage({ isEdit = true }: Props) {
     <>
       <MinimizablePageLayout
         moduleId={moduleId}
-        moduleName={`Edit Color Master`}
+        moduleName={`Edit Color`}
         moduleRoute={`/colors/edit/${id || "new"}`}
         onMinimize={handleMinimize}
-        title="Edit Color Master"
+        title="Edit Color"
         listPath="colors"
         popoverOptions={popoverOptions}
         videoSrc={video}
@@ -509,7 +509,7 @@ export default function ColorEditPage({ isEdit = true }: Props) {
             </div>
 
             {/* Second Row: Status, Default */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-8 relative">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
               {/* Status field - only show if user can edit */}
               {status && (
                 <div className="space-y-2">
@@ -615,10 +615,7 @@ export default function ColorEditPage({ isEdit = true }: Props) {
                   />
                 </div>
               )}
-            </div>
 
-            {/* Actions Row */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
               {/* Actions */}
               <div className="space-y-2">
                 <ActionsAutocomplete

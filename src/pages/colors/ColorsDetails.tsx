@@ -17,37 +17,37 @@ import { ResetFormModal } from "@/components/common/ResetFormModal";
 import { usePermission } from "@/hooks/usePermissions";
 import MinimizablePageLayout from "@/components/MinimizablePageLayout";
 
-const MOCK_USERS = [
+const MOCK_COLORS = [
   {
     id: "1",
-    name: "John Doe",
-    mobileNumber: "+1234567890",
-    email: "john.doe@example.com",
-    userType: "admin",
+    name: "Ocean Blue",
+    code: "BLU001",
+    description: "A beautiful ocean blue color",
+    hexCode: "#3B82F6",
     status: "Active",
   },
   {
     id: "2",
-    name: "Sarah Smith",
-    mobileNumber: "+1987654321",
-    email: "sarah.smith@example.com",
-    userType: "super admin",
+    name: "Forest Green",
+    code: "GRN002",
+    description: "Deep forest green color",
+    hexCode: "#059669",
     status: "Active",
   },
   {
     id: "3",
-    name: "Mike Johnson",
-    mobileNumber: "+1555123456",
-    email: "mike.johnson@example.com",
-    userType: "user",
+    name: "Sunset Orange",
+    code: "ORG003",
+    description: "Warm sunset orange color",
+    hexCode: "#F97316",
     status: "Draft",
   },
   {
     id: "4",
-    name: "Emily Davis",
-    mobileNumber: "+1444333222",
-    email: "emily.davis@example.com",
-    userType: "user",
+    name: "Royal Purple",
+    code: "PUR004",
+    description: "Rich royal purple color",
+    hexCode: "#7C3AED",
     status: "InActive",
   },
 ];
@@ -66,13 +66,13 @@ export type HistoryEntry = {
   print: boolean;
 };
 
-export default function UserDetailsPage() {
+export default function ColorDetailsPage() {
   // const { t } = useTranslation();
   const navigate = useNavigate();
 
   const [keepChanges, setKeepChanges] = useState(false);
   const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState("1");
+  const [selectedColor, setSelectedColor] = useState("1");
   const location = useLocation();
   const isViewPage = location.pathname.includes("/view");
   const [pdfChecked, setPdfChecked] = useState(false);
@@ -83,32 +83,24 @@ export default function UserDetailsPage() {
   // const { canCreate, canView, canEdit, canDelete } = useUserMasterPermissions();
 
   // Field-level permissions
-  const canPdf: boolean = usePermission("user-master", "pdf");
-  const canPrint: boolean = usePermission("user-master", "print");
-  const canSeeHistory: boolean = usePermission("user-master", "history");
+  const canPdf: boolean = usePermission("colors", "pdf");
+  const canPrint: boolean = usePermission("colors", "print");
+  const canSeeHistory: boolean = usePermission("colors", "history");
 
-  let userData = {
-    id: selectedUser,
-    name: MOCK_USERS.find((u) => u.id === selectedUser)?.name || "John Doe",
-    mobileNumber:
-      MOCK_USERS.find((u) => u.id === selectedUser)?.mobileNumber ||
-      "+1234567890",
-    email:
-      MOCK_USERS.find((u) => u.id === selectedUser)?.email ||
-      "john.doe@example.com",
-    userType:
-      MOCK_USERS.find((u) => u.id === selectedUser)?.userType || "admin",
-    password: "••••••••",
-    confirmPassword: "••••••••",
-    otp: "123456",
-    facebook: "https://facebook.com/johndoe",
-    linkedin: "https://linkedin.com/in/johndoe",
-    instagram: "https://instagram.com/johndoe",
+  let colorData = {
+    id: selectedColor,
+    name: MOCK_COLORS.find((c) => c.id === selectedColor)?.name || "Ocean Blue",
+    code: MOCK_COLORS.find((c) => c.id === selectedColor)?.code || "BLU001",
+    description:
+      MOCK_COLORS.find((c) => c.id === selectedColor)?.description ||
+      "A beautiful ocean blue color",
+    hexCode:
+      MOCK_COLORS.find((c) => c.id === selectedColor)?.hexCode || "#3B82F6",
     isDefault: true,
     isActive: true,
     isDraft: false,
     isDeleted: false,
-    status: MOCK_USERS.find((u) => u.id === selectedUser)?.status || "Active",
+    status: MOCK_COLORS.find((c) => c.id === selectedColor)?.status || "Active",
     createdAt: "2023-05-15T10:30:00Z",
     updatedAt: "2025-01-15T14:30:00Z",
     draftedAt: "2025-05-20T14:45:00Z",
@@ -124,18 +116,12 @@ export default function UserDetailsPage() {
     }
     console.log("isViewPage", isViewPage);
     if (isViewPage) {
-      userData = {
-        id: selectedUser,
+      colorData = {
+        id: selectedColor,
         name: "",
-        mobileNumber: "",
-        email: "",
-        userType: "user",
-        password: "",
-        confirmPassword: "",
-        otp: "",
-        facebook: "",
-        linkedin: "",
-        instagram: "",
+        code: "",
+        description: "",
+        hexCode: "",
         isDefault: true,
         isActive: true,
         isDraft: false,
@@ -149,24 +135,18 @@ export default function UserDetailsPage() {
     }
   }, []);
 
-  const handlePrintUser = (userData: any) => {
+  const handlePrintColor = (colorData: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "User Master Details",
-        data: [userData],
+        title: "Color Master Details",
+        data: [colorData],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
-          name: "User Master Name",
-          mobileNumber: "User Master Mobile Number",
-          email: "User Master Email",
-          userType: "User Master Type",
-          password: "Password",
-          confirmPassword: "Confirm Password",
-          otp: "OTP",
-          facebook: "Facebook",
-          linkedin: "LinkedIn",
-          instagram: "Instagram",
-          isDefault: "Default User",
+          name: "Color Name",
+          code: "Color Code",
+          description: "Description",
+          hexCode: "Hex Code",
+          isDefault: "Default Color",
           isActive: "Active Status",
           isDraft: "Draft Status",
           isDeleted: "Deleted Status",
@@ -195,19 +175,19 @@ export default function UserDetailsPage() {
   const handleExportPDF = async () => {
     console.log("Export PDF clicked");
     try {
-      console.log("userData on pdf click", userData);
+      console.log("colorData on pdf click", colorData);
       const blob = await pdf(
         <GenericPDF
-          data={[userData]}
-          title="User Master Details"
-          subtitle="User Information"
+          data={[colorData]}
+          title="Color Master Details"
+          subtitle="Color Information"
         />
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "user-details.pdf";
+      a.download = "color-details.pdf";
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
@@ -251,25 +231,25 @@ export default function UserDetailsPage() {
   return (
     <>
       <MinimizablePageLayout
-        moduleId="user-details-module"
-        moduleName="User Master Details"
-        moduleRoute="/user-master/view"
-        title="Viewing User Master"
+        moduleId="color-details-module"
+        moduleName="Color Details"
+        moduleRoute="/colors/view"
+        title="Viewing Color"
         videoSrc={video}
         videoHeader="Tutorial video"
-        listPath="user-master"
+        listPath="colors"
         activePage="view"
-        module="user-master"
+        module="colors"
         popoverOptions={[
           {
             label: "Create",
             icon: <Plus className="w-5 h-5 text-green-600" />,
-            onClick: () => navigate("/user-master/create"),
+            onClick: () => navigate("/colors/create"),
           },
           {
             label: "Edit",
             icon: <Edit className="w-5 h-5 text-blue-600" />,
-            onClick: () => navigate("/user-master/edit/1"),
+            onClick: () => navigate("/colors/edit/1"),
           },
         ]}
         keepChanges={keepChanges}
@@ -293,19 +273,19 @@ export default function UserDetailsPage() {
                   handleExportPDF();
                 }
                 if (printEnabled) {
-                  handlePrintUser(userData);
+                  handlePrintColor(colorData);
                 }
               }
             : undefined
         }
       >
-        {/* Row 1: User Selection, Name, Mobile Number, Email */}
+        {/* Row 1: Color Selection, Name, Code, Description */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
           <div className="mt-1">
             <Autocomplete
-              options={MOCK_USERS}
-              value={selectedUser}
-              onValueChange={setSelectedUser}
+              options={MOCK_COLORS}
+              value={selectedColor}
+              onValueChange={setSelectedColor}
               placeholder=" "
               displayKey="name"
               valueKey="id"
@@ -313,95 +293,56 @@ export default function UserDetailsPage() {
               disabled={false}
               className="w-[96%] bg-gray-100 rounded-xl"
               labelClassName="bg-gray-50 rounded-2xl"
-              labelText="User Master Name"
+              labelText="Color Master Name"
               isShowTemplateIcon={false}
             />
           </div>
 
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">User Name</h3>
+              <h3 className="font-normal text-gray-600">Color Name</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(userData.name)}
+              {displayValue(colorData.name)}
             </div>
           </div>
 
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">User Mobile Number</h3>
+              <h3 className="font-normal text-gray-600">Color Code</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(userData.mobileNumber)}
+              {displayValue(colorData.code)}
             </div>
           </div>
 
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">User Email</h3>
+              <h3 className="font-normal text-gray-600">Description</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(userData.email)}
-            </div>
-          </div>
-        </div>
-
-        {/* Row 2: User Type, Password, OTP, Facebook */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-          <div className="">
-            <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">User Master Type</h3>
-            </div>
-            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(userData.userType)}
-            </div>
-          </div>
-
-          <div className="">
-            <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Password</h3>
-            </div>
-            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(userData.password)}
-            </div>
-          </div>
-
-          <div className="">
-            <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">OTP</h3>
-            </div>
-            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(userData.otp)}
-            </div>
-          </div>
-
-          <div className="">
-            <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Facebook</h3>
-            </div>
-            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(userData.facebook)}
+              {displayValue(colorData.description)}
             </div>
           </div>
         </div>
 
-        {/* Row 3: LinkedIn, Instagram, Default, Status */}
+        {/* Row 2: Hex Code, Status, Default */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">LinkedIn</h3>
+              <h3 className="font-normal text-gray-600">Hex Code</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(userData.linkedin)}
+              {displayValue(colorData.hexCode)}
             </div>
           </div>
 
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Instagram</h3>
+              <h3 className="font-normal text-gray-600">Status</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(userData.instagram)}
+              {displayValue(colorData.status)}
             </div>
           </div>
 
@@ -411,7 +352,7 @@ export default function UserDetailsPage() {
                 <span className="text-[15px] text-gray-600">Default</span>
               </div>
               <div className="">
-                {userData.isDefault ? (
+                {colorData.isDefault ? (
                   <span className="text-black text-[15px]">Yes</span>
                 ) : (
                   <span className="text-black text-[15px]">No</span>
@@ -422,15 +363,19 @@ export default function UserDetailsPage() {
 
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Status</h3>
+              <h3 className="font-normal text-gray-600">Color Preview</h3>
             </div>
-            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(userData.status)}
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white flex items-center gap-2">
+              <div
+                className="w-6 h-6 rounded border border-gray-300"
+                style={{ backgroundColor: colorData.hexCode || "#3B82F6" }}
+              ></div>
+              <span>{displayValue(colorData.hexCode)}</span>
             </div>
           </div>
         </div>
 
-        {/* Row 4: Action, Created At, Updated At, Drafted At */}
+        {/* Row 3: Action, Created At, Updated At, Drafted At */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
           <div className="">
             <h3 className="font-normal mb-1 text-gray-600">Action</h3>
@@ -448,10 +393,10 @@ export default function UserDetailsPage() {
         columnData={mockHistoryData}
         title="History"
         statusInfo={{
-          created: getRelativeTime(userData.createdAt),
-          updated: getRelativeTime(userData.updatedAt),
-          drafted: getRelativeTime(userData.draftedAt),
-          deleted: getRelativeTime(userData.deletedAt),
+          created: getRelativeTime(colorData.createdAt),
+          updated: getRelativeTime(colorData.updatedAt),
+          drafted: getRelativeTime(colorData.draftedAt),
+          deleted: getRelativeTime(colorData.deletedAt),
         }}
       />
 
