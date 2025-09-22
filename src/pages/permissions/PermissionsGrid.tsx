@@ -1,109 +1,103 @@
 import { Card, CardTitle } from "@/components/ui/card";
-import { toastDelete, toastRestore } from "@/lib/toast";
-import { Tooltip } from "@mantine/core"; // Import Tooltip from Mantine
-import { RefreshCw, Trash2 } from "lucide-react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEdit } from "@fortawesome/free-solid-svg-icons";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
-import { useNavigate } from "react-router-dom";
-import GridExportComponent from "./GridExportComponent";
-import GridFilterComponent from "./GridFilterComponent";
-import { usePermission } from "@/hooks/usePermissions";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/store";
+import GridFilterComponent from "@/pages/Country/GridFilterComponent";
+import useIsMobile from "@/hooks/useIsMobile";
+import { Shield, User } from "lucide-react";
 
-// Mock data - replace with real data from your API
+// Updated mock data structure
+type PermissionModule = {
+  moduleName: string;
+  permissionNumber: number;
+};
 
 type PermissionsGridDataType = {
   id: string;
-  code: string;
-  name: string;
-  Role: string;
+  userName: string;
+  modules: PermissionModule[];
+  status: "Active" | "Inactive" | "Draft";
   isDeleted: boolean;
 };
 
 const mockPermissionsData: PermissionsGridDataType[] = [
   {
     id: "1",
-    code: "USR001",
-    name: "Alice Rahman",
-    Role: "Admin",
+    userName: "Alice Rahman",
+    modules: [
+      { moduleName: "Users", permissionNumber: 15 },
+      { moduleName: "Countries", permissionNumber: 8 },
+      { moduleName: "Reports", permissionNumber: 12 },
+    ],
+    status: "Active",
     isDeleted: false,
   },
   {
     id: "2",
-    code: "USR002",
-    name: "Bashir Khan",
-    Role: "Editor",
+    userName: "Bashir Khan",
+    modules: [
+      { moduleName: "Users", permissionNumber: 5 },
+      { moduleName: "Countries", permissionNumber: 3 },
+    ],
+    status: "Active",
     isDeleted: false,
   },
   {
     id: "3",
-    code: "USR003",
-    name: "Chinmoy Das",
-    Role: "Viewer",
+    userName: "Chinmoy Das",
+    modules: [{ moduleName: "Reports", permissionNumber: 2 }],
+    status: "Inactive",
     isDeleted: true,
   },
   {
     id: "4",
-    code: "USR004",
-    name: "Dola Akter",
-    Role: "Admin",
+    userName: "Dola Akter",
+    modules: [
+      { moduleName: "Users", permissionNumber: 20 },
+      { moduleName: "Countries", permissionNumber: 15 },
+      { moduleName: "Reports", permissionNumber: 18 },
+      { moduleName: "Settings", permissionNumber: 10 },
+    ],
+    status: "Active",
     isDeleted: false,
   },
   {
     id: "5",
-    code: "USR005",
-    name: "Ehsan Haque",
-    Role: "Editor",
+    userName: "Ehsan Haque",
+    modules: [
+      { moduleName: "Users", permissionNumber: 8 },
+      { moduleName: "Countries", permissionNumber: 6 },
+    ],
+    status: "Draft",
     isDeleted: true,
   },
   {
     id: "6",
-    code: "USR006",
-    name: "Farzana Mitu",
-    Role: "Viewer",
+    userName: "Farzana Mitu",
+    modules: [{ moduleName: "Reports", permissionNumber: 4 }],
+    status: "Active",
     isDeleted: false,
   },
   {
     id: "7",
-    code: "USR007",
-    name: "Gias Uddin",
-    Role: "Admin",
+    userName: "Gias Uddin",
+    modules: [
+      { moduleName: "Users", permissionNumber: 25 },
+      { moduleName: "Countries", permissionNumber: 20 },
+      { moduleName: "Reports", permissionNumber: 22 },
+      { moduleName: "Settings", permissionNumber: 15 },
+      { moduleName: "Analytics", permissionNumber: 12 },
+    ],
+    status: "Active",
     isDeleted: false,
   },
   {
     id: "8",
-    code: "USR008",
-    name: "Hafsa Noor",
-    Role: "Viewer",
-    isDeleted: false,
-  },
-  {
-    id: "9",
-    code: "USR009",
-    name: "Ehsan Haque",
-    Role: "Editor",
-    isDeleted: true,
-  },
-  {
-    id: "10",
-    code: "USR010",
-    name: "Farzana Mitu",
-    Role: "Viewer",
-    isDeleted: false,
-  },
-  {
-    id: "11",
-    code: "USR011",
-    name: "Gias Uddin",
-    Role: "Admin",
-    isDeleted: false,
-  },
-  {
-    id: "12",
-    code: "USR012",
-    name: "Hafsa Noor",
-    Role: "Viewer",
+    userName: "Hafsa Noor",
+    modules: [{ moduleName: "Reports", permissionNumber: 3 }],
+    status: "Inactive",
     isDeleted: false,
   },
 ];
@@ -123,15 +117,17 @@ export default function PermissionsGrid({
   setIsExportOpen,
   isExportOpen,
 }: Props) {
-  console.log("Countries grid rendered");
+  console.log("Permissions grid rendered");
 
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { isRTL } = useSelector((state: RootState) => state.language);
+  const isMobile = useIsMobile();
 
-  const [gridData, setGridData] =
-    useState<PermissionsGridDataType[]>(mockPermissionsData);
-  const canDelete: boolean = usePermission("permissions", "delete");
-  const canRestore: boolean = usePermission("permissions", "restore");
-  const canEdit: boolean = usePermission("permissions", "edit");
+  const [permissionsData, setPermissionsData] = useState(mockPermissionsData);
+  // const canDelete: boolean = usePermission("permissions", "delete");
+  // const canRestore: boolean = usePermission("permissions", "restore");
+  // const canEdit: boolean = usePermission("permissions", "edit");
 
   // Infinite scroll states
   const [isLoading, setIsLoading] = useState(false);
@@ -140,7 +136,6 @@ export default function PermissionsGrid({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const ITEMS_PER_PAGE = 4;
 
-  // ... (keep all your existing functions: loadMoreData, handleScroll, etc.)
   // Simulate API call to load more data
   const loadMoreData = useCallback(async () => {
     if (isLoading || !hasMore) return;
@@ -149,24 +144,44 @@ export default function PermissionsGrid({
 
     await new Promise((resolve) => setTimeout(resolve, 800));
 
+    const moduleNames = [
+      "Users",
+      "Countries",
+      "Reports",
+      "Settings",
+      "Analytics",
+    ];
+    const statuses: ("Active" | "Inactive" | "Draft")[] = [
+      "Active",
+      "Inactive",
+      "Draft",
+    ];
+
     const newItems = Array.from({ length: ITEMS_PER_PAGE }, (_, index) => ({
       id: `${Date.now()}-${index}`,
-      name: `User Name ${gridData.length + index + 1}`,
-      code: `USR${(gridData.length + index + 1).toString().padStart(2, "0")}`,
-      Role: "Admin",
+      userName: `User ${permissionsData.length + index + 1}`,
+      modules: Array.from(
+        { length: Math.floor(Math.random() * 4) + 1 },
+        () => ({
+          moduleName:
+            moduleNames[Math.floor(Math.random() * moduleNames.length)],
+          permissionNumber: Math.floor(Math.random() * 25) + 1,
+        })
+      ),
+      status: statuses[Math.floor(Math.random() * statuses.length)],
       isDeleted: false,
     }));
 
     // Stop loading more after reaching 50 items for demo
-    if (gridData.length >= 46) {
+    if (permissionsData.length >= 46) {
       setHasMore(false);
     } else {
-      setGridData((prev) => [...prev, ...newItems]);
+      setPermissionsData((prev) => [...prev, ...newItems]);
       setPage((prev) => prev + 1);
     }
 
     setIsLoading(false);
-  }, [gridData.length, isLoading, hasMore]);
+  }, [permissionsData.length, isLoading, hasMore]);
 
   // Infinite scroll handler
   const handleScroll = useCallback(() => {
@@ -190,193 +205,140 @@ export default function PermissionsGrid({
     return () => container.removeEventListener("scroll", handleScroll);
   }, [handleScroll]);
 
-  const handleDeleteClick = (countryId: string) => {
-    setGridData((prevCountries) =>
-      prevCountries.map((country) =>
-        country.id === countryId
-          ? {
-              ...country,
-              isDeleted: country.isDeleted === true ? false : true,
-            }
-          : country
+  // Filter permissions based on search query
+  const filteredPermissions = permissionsData.filter(
+    (user) =>
+      user.userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.modules.some((module) =>
+        module.moduleName.toLowerCase().includes(searchQuery.toLowerCase())
       )
-    );
-  };
-
-  const handleRestoreClick = (countryId: string) => {
-    setGridData((prevCountries) =>
-      prevCountries.map((country) =>
-        country.id === countryId
-          ? {
-              ...country,
-              isDeleted: country.isDeleted === true ? false : true,
-            }
-          : country
-      )
-    );
-  };
-
-  // Filter countries based on search query
-  const filteredGridData = gridData.filter(
-    (item) =>
-      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.code.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const handleViewClick = (userId: string) => {
+    const viewMode = searchParams.get("view") || "grid";
+    navigate(`/permissions/view/${userId}?fromView=${viewMode}`);
+  };
+
+  // Calculate total permissions for a user
+  const getTotalPermissions = (modules: PermissionModule[]) => {
+    return modules.reduce(
+      (total, module) => total + module.permissionNumber,
+      0
+    );
+  };
 
   return (
     <div
       className={cn(
-        "px-4 py-3 h-full flex flex-col bg-white dark:bg-gray-900 parent relative rounded-lg"
+        "h-full flex flex-col bg-white dark:bg-gray-900 parent relative rounded-lg overflow-hidden"
       )}
     >
-      {/* Floating Label - Left Top */}
-      <div
-        className={cn(
-          "absolute -top-4 left-6 rtl:left-auto rtl:right-6 py-1 rounded-md z-40! bg-white w-fit"
-        )}
-      >
-        <span
-          className={cn(
-            "text-md font-semibold tracking-wide capitalize text-gray-600"
-          )}
-        >
-          Total {gridData.length} User
-        </span>
-      </div>
-
       {/* Main content area */}
-      <div className="flex flex-1 overflow-hidden mt-2">
-        {/* Cards container */}
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* Cards container with animated width */}
         <div
           ref={scrollContainerRef}
-          className="overflow-y-auto scroll-smooth smooth-scroll pr-4"
+          className={cn(
+            "overflow-y-auto grid-scroll transition-all duration-300 ease-in-out",
+            isRTL ? "" : ""
+          )}
           style={{
             width: isFilterOpen || isExportOpen ? "calc(100% - 320px)" : "100%",
           }}
         >
-          <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 pb-4 p-2">
-            {filteredGridData.map((item, index) => (
+          <div
+            className={cn(
+              "grid gap-6 pb-4 p-5",
+              // Mobile: 1 column, Tablet: 2 columns, Desktop: 3-4 columns
+              isMobile
+                ? "grid-cols-1"
+                : "grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
+            )}
+          >
+            {filteredPermissions.map((user, index) => (
               <Card
                 key={index}
-                className="transition-all hover:border-primary/90 hover:shadow-lg hover:translate-y-[-5px] relative group dark:bg-gray-800 p-4 duration-200"
+                className={cn(
+                  "transition-all relative group dark:bg-gray-800 duration-200 w-full shadow-[2px_3px_8px_0_rgba(0,0,0,0.10)] border-[#E2E4EB] border border-solid rounded-[12px] flex p-5 flex-col items-start gap-5 cursor-pointer",
+                  // Different hover effects for mobile vs desktop
+                  isMobile
+                    ? "hover:shadow-lg hover:border-primary"
+                    : "hover:scale-110 hover:z-50 hover:relative hover:border-primary min-w-[250px]"
+                )}
+                onClick={() => handleViewClick(user.id)}
               >
-                {/* Top Row - Grid with 3 columns: Title | Icons | Flag */}
-                <div className="grid grid-cols-2 items-center gap-2 mb-4">
-                  {/* Left - Title */}
+                {/* Top Row - User Name and Avatar */}
+                <div className="grid grid-cols-2 items-center gap-2 w-full mt-[-8px]">
+                  {/* Left - User Name */}
                   <CardTitle
-                    className="text-lg font-semibold cursor-pointer hover:text-primary transition-colors truncate"
-                    onClick={() => navigate(`/permissions/1`)}
+                    className="text-base font-normal transition-colors truncate"
+                    style={{ fontSize: "18px" }}
                   >
-                    {item.name}
+                    {user.userName}
                   </CardTitle>
 
-                  {/* Right - Flag */}
-                  <div className="flex items-end flex-col">
-                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                      Code
-                    </div>
-                    <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                      {item.code}
+                  {/* Right - Avatar */}
+                  <div className="flex justify-end">
+                    <div className="h-12 w-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-lg shadow-md">
+                      <User className="h-6 w-6" />
                     </div>
                   </div>
                 </div>
 
-                {/* Bottom Row  */}
-                <div className="grid grid-cols-2 items-center gap-4 pt-2 dark:border-gray-700">
-                  <div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                      Role
+                {/* Middle Row - Total Permissions and Status */}
+                <div className="grid grid-cols-2 gap-2 w-full">
+                  {/* Total Permissions - Left */}
+                  <div className="min-w-0">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      Total Permissions
                     </div>
-                    <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                      {item.Role}
+                    <div className="text-sm font-normal text-gray-900 dark:text-gray-100 truncate">
+                      {getTotalPermissions(user.modules)}
                     </div>
                   </div>
 
-                  {/* Middle - Action Icons */}
-                  <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    {/* Delete/Restore */}
-                    <Tooltip
-                      label={
-                        item.isDeleted && canRestore
-                          ? "Restore"
-                          : canDelete
-                          ? "Delete"
-                          : ""
-                      }
-                      position="top"
-                      arrowSize={8}
-                      withArrow
-                      styles={{
-                        tooltip: {
-                          fontSize: "14px",
-                          padding: "8px 12px",
-                          backgroundColor: "#374151",
-                          color: "white",
-                          borderRadius: "6px",
-                          fontWeight: "500",
-                          boxShadow:
-                            "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-                        },
-                        arrow: {
-                          backgroundColor: "#374151",
-                        },
-                      }}
-                    >
-                      <button
-                        disabled={item.isDeleted && !canRestore}
-                        className={`cursor-pointer p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
-                          item.isDeleted ? "text-blue-500" : "text-red-500"
-                        }`}
-                        onClick={() => {
-                          if (canRestore && item.isDeleted) {
-                            handleRestoreClick(item.id);
-                            toastRestore("Country restored successfully");
-                          } else {
-                            if (canDelete) {
-                              handleDeleteClick(item.id);
-                              toastDelete("Country deleted successfully");
-                            }
-                          }
-                        }}
-                      >
-                        {item.isDeleted && canRestore ? (
-                          <RefreshCw className="h-4 w-4" />
-                        ) : (
-                          canDelete && <Trash2 className="h-4 w-4" />
+                  {/* Status - Right */}
+                  <div className="text-right min-w-0">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      Status
+                    </div>
+                    <div className="text-sm font-normal text-gray-900 dark:text-gray-100 truncate">
+                      <span
+                        className={cn(
+                          "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium",
+                          user.status === "Active" &&
+                            "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+                          user.status === "Inactive" &&
+                            "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200",
+                          user.status === "Draft" &&
+                            "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
                         )}
-                      </button>
-                    </Tooltip>
-
-                    {/* Edit */}
-                    {canEdit && (
-                      <Tooltip
-                        label="Edit"
-                        position="top"
-                        arrowSize={8}
-                        withArrow
-                        styles={{
-                          tooltip: {
-                            fontSize: "14px",
-                            padding: "8px 12px",
-                            backgroundColor: "#374151",
-                            color: "white",
-                            borderRadius: "6px",
-                            fontWeight: "500",
-                            boxShadow:
-                              "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-                          },
-                          arrow: {
-                            backgroundColor: "#374151",
-                          },
-                        }}
                       >
-                        <div
-                          className="cursor-pointer p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-blue-500 flex items-center justify-center w-8 h-8"
-                          onClick={() => navigate(`/permissions/edit/1`)}
-                        >
-                          <FontAwesomeIcon icon={faEdit} className="h-4 w-4" />
-                        </div>
-                      </Tooltip>
+                        {user.status}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Modules Section */}
+                <div className="w-full min-w-0">
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                    Modules ({user.modules.length})
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {user.modules.slice(0, 3).map((module, moduleIndex) => (
+                      <span
+                        key={moduleIndex}
+                        className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200 rounded-md text-xs font-medium"
+                      >
+                        <Shield className="h-3 w-3" />
+                        {module.moduleName} ({module.permissionNumber})
+                      </span>
+                    ))}
+                    {user.modules.length > 3 && (
+                      <span className="inline-flex items-center px-2 py-1 bg-gray-50 text-gray-600 dark:bg-gray-800 dark:text-gray-300 rounded-md text-xs">
+                        +{user.modules.length - 3} more
+                      </span>
                     )}
                   </div>
                 </div>
@@ -389,45 +351,110 @@ export default function PermissionsGrid({
             <div className="flex justify-center items-center py-8">
               <div className="flex items-center gap-2 text-blue-600">
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-                <span className="text-sm">Loading more countries...</span>
+                <span className="text-sm">Loading more users...</span>
               </div>
             </div>
           )}
 
           {/* End of data indicator */}
-          {!hasMore && filteredGridData.length > 12 && (
+          {!hasMore && filteredPermissions.length > 12 && (
             <div className="flex justify-center items-center py-8">
               <span className="text-sm text-gray-500 dark:text-gray-400">
-                No more countries to load
+                No more users to load
               </span>
             </div>
           )}
         </div>
 
-        {/* Filter component - Right side only */}
-        {isFilterOpen && (
-          <div className="w-80 flex-shrink-0 border-l border-gray-200 dark:border-gray-700 pl-4">
-            <div className="h-full flex flex-col">
+        {/* Animated Filter Panel */}
+        <div
+          className={cn(
+            "absolute top-0 h-full transition-all duration-300 ease-in-out transform z-10",
+            isRTL ? "left-0" : "right-0",
+            isFilterOpen
+              ? "translate-x-0 opacity-100 visible"
+              : isRTL
+              ? "-translate-x-full opacity-0 invisible"
+              : "translate-x-full opacity-0 invisible"
+          )}
+          style={{
+            width: isMobile ? "100%" : "320px", // Full width on mobile
+          }}
+        >
+          <div
+            className={cn(
+              "h-full",
+              isMobile ? "pb-4 mt-1" : "p-2" // Less padding on mobile
+            )}
+          >
+            <div
+              className={cn(
+                "w-full flex-shrink-0 border rounded-[20px] border-gray-200 dark:border-gray-700 h-full bg-white dark:bg-gray-800 shadow-2xl transition-all duration-300 ease-in-out",
+                isFilterOpen ? "scale-100 opacity-100" : "scale-95 opacity-0"
+              )}
+            >
               <GridFilterComponent
-                data={gridData}
-                setFilteredData={setGridData}
-                setShowFilter={setIsFilterOpen}
+                key={`filter-panel-${isFilterOpen}`}
+                data={mockPermissionsData}
+                setFilteredData={setPermissionsData}
+                setShowTabs={setIsFilterOpen}
+                defaultTab="filter"
               />
             </div>
           </div>
-        )}
+        </div>
 
-        {/* Export component - Right side only */}
-        {isExportOpen && (
-          <div className="w-80 flex-shrink-0 border-l border-gray-200 dark:border-gray-700 pl-4">
-            <div className="h-full flex flex-col">
-              <GridExportComponent
-                data={gridData}
-                setFilteredData={setGridData}
-                setIsExportOpen={setIsExportOpen}
+        {/* Animated Export Panel */}
+        <div
+          className={cn(
+            "absolute top-0 h-full transition-all duration-300 ease-in-out transform z-10",
+            isRTL ? "left-0" : "right-0",
+            isExportOpen
+              ? "translate-x-0 opacity-100"
+              : isRTL
+              ? "-translate-x-full opacity-0"
+              : "translate-x-full opacity-0"
+          )}
+          style={{
+            width: isMobile ? "100%" : "320px", // Full width on mobile
+          }}
+        >
+          <div
+            className={cn(
+              "h-full",
+              isMobile ? "pb-4 mt-1" : "p-2" // Less padding on mobile
+            )}
+          >
+            <div
+              className={cn(
+                "w-full flex-shrink-0 border rounded-[20px] border-gray-200 dark:border-gray-700 h-full bg-white dark:bg-gray-800 shadow-2xl transition-all duration-300 ease-in-out",
+                isExportOpen ? "opacity-100" : "opacity-0"
+              )}
+            >
+              <GridFilterComponent
+                key={`export-panel-${isExportOpen}`}
+                data={mockPermissionsData}
+                setFilteredData={setPermissionsData}
+                setShowTabs={setIsFilterOpen}
+                defaultTab="export"
               />
             </div>
           </div>
+        </div>
+
+        {/* Backdrop overlay for mobile/smaller screens */}
+        {(isFilterOpen || isExportOpen) && (
+          <div
+            className={cn(
+              "fixed inset-0 bg-black bg-opacity-30 transition-opacity duration-300 ease-in-out z-5",
+              isMobile ? "" : "md:hidden", // Always show overlay on mobile
+              isFilterOpen || isExportOpen ? "opacity-100" : "opacity-0"
+            )}
+            onClick={() => {
+              setIsFilterOpen(false);
+              setIsExportOpen(false);
+            }}
+          />
         )}
       </div>
     </div>

@@ -113,3 +113,18 @@ export const useHasModuleAccess = (moduleName: string): boolean => {
     return !!permissions?.modules?.[moduleName];
   }, [permissions, moduleName]);
 };
+
+export const usePermissionsPermissions = (): CountriesPermissions => {
+  const permissions = useSelector((state: RootState) => {
+    return state.auth.user?.permissions;
+  });
+
+  const permissionCheckers = useMemo(() => {
+    return createPermissionCheckers(
+      permissions,
+      "countries"
+    ) as unknown as CountriesPermissions;
+  }, [permissions]);
+
+  return permissionCheckers;
+};
