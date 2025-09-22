@@ -122,12 +122,6 @@ const Sidebar = ({
       path: "/leads",
     },
     {
-      key: "lead",
-      icon: TabletSmartphone,
-      label: t("sidebar.menu.leads"),
-      path: "/lead",
-    },
-    {
       key: "lead-sources",
       icon: Users,
       label: t("sidebar.menu.leadSources"),

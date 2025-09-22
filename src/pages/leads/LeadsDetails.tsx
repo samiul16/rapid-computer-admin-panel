@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useEffect, useRef, useState } from "react";
-// import { useTranslation } from "react-i18next";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Autocomplete } from "@/components/common/Autocomplete";
 import HistoryDataTable from "@/components/common/HistoryDataTableNew";
 import { mockHistoryData } from "@/mockData/country-mockdata";
 import video from "@/assets/videos/test.mp4";
@@ -12,45 +11,10 @@ import { PrintCommonLayout } from "@/lib/printContents/PrintCommonLayout";
 import { toastError } from "@/lib/toast";
 import GenericPDF from "@/components/common/pdf";
 import { pdf } from "@react-pdf/renderer";
+import MinimizablePageLayout from "@/components/MinimizablePageLayout";
 import { Edit, Plus } from "lucide-react";
 import { ResetFormModal } from "@/components/common/ResetFormModal";
 import { usePermission } from "@/hooks/usePermissions";
-import MinimizablePageLayout from "@/components/MinimizablePageLayout";
-
-const MOCK_USERS = [
-  {
-    id: "1",
-    name: "John Doe",
-    mobileNumber: "+1234567890",
-    email: "john.doe@example.com",
-    userType: "admin",
-    status: "Active",
-  },
-  {
-    id: "2",
-    name: "Sarah Smith",
-    mobileNumber: "+1987654321",
-    email: "sarah.smith@example.com",
-    userType: "super admin",
-    status: "Active",
-  },
-  {
-    id: "3",
-    name: "Mike Johnson",
-    mobileNumber: "+1555123456",
-    email: "mike.johnson@example.com",
-    userType: "user",
-    status: "Draft",
-  },
-  {
-    id: "4",
-    name: "Emily Davis",
-    mobileNumber: "+1444333222",
-    email: "emily.davis@example.com",
-    userType: "user",
-    status: "InActive",
-  },
-];
 
 // Type definition for TypeScript
 export type HistoryEntry = {
@@ -66,51 +30,70 @@ export type HistoryEntry = {
   print: boolean;
 };
 
-export default function UserDetailsPage() {
-  // const { t } = useTranslation();
+export default function LeadsDetailsPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const [keepChanges, setKeepChanges] = useState(false);
   const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState("1");
   const location = useLocation();
   const isViewPage = location.pathname.includes("/view");
   const [pdfChecked, setPdfChecked] = useState(false);
   const [printEnabled, setPrintEnabled] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
 
-  // Permission checks
-  // const { canCreate, canView, canEdit, canDelete } = useUserMasterPermissions();
+  // get permission
+  const canPdf: boolean = usePermission("taxRates", "pdf");
+  const canEdit: boolean = usePermission("taxRates", "edit");
+  const canDelete: boolean = usePermission("taxRates", "delete");
+  const canCreate: boolean = usePermission("taxRates", "create");
+  const canView: boolean = usePermission("taxRates", "view");
+  const canPrint: boolean = usePermission("taxRates", "print");
+  const canSeeHistory: boolean = usePermission("taxRates", "history");
 
-  // Field-level permissions
-  const canPdf: boolean = usePermission("user-master", "pdf");
-  const canPrint: boolean = usePermission("user-master", "print");
-  const canSeeHistory: boolean = usePermission("user-master", "history");
+  console.log("canCreate", canCreate);
+  console.log("canView", canView);
+  console.log("canEdit", canEdit);
+  console.log("canDelete", canDelete);
 
-  let userData = {
-    id: selectedUser,
-    name: MOCK_USERS.find((u) => u.id === selectedUser)?.name || "John Doe",
-    mobileNumber:
-      MOCK_USERS.find((u) => u.id === selectedUser)?.mobileNumber ||
-      "+1234567890",
-    email:
-      MOCK_USERS.find((u) => u.id === selectedUser)?.email ||
-      "john.doe@example.com",
-    userType:
-      MOCK_USERS.find((u) => u.id === selectedUser)?.userType || "admin",
-    password: "••••••••",
-    confirmPassword: "••••••••",
-    otp: "123456",
-    facebook: "https://facebook.com/johndoe",
-    linkedin: "https://linkedin.com/in/johndoe",
-    instagram: "https://instagram.com/johndoe",
+  let LeadsData = {
+    clientName: "Global Tech Solutions Ltd.",
+    productGroup: "Electronics",
+    service: "Inventory",
+    budget: 150000,
+    priority: "High",
+    startDate: "2025-08-01",
+    assignee: "John Doe",
+    contact: "+971 50 123 4567",
+    position: "Procurement Manager",
+    source: "Web",
+    employees: "150",
+    branches: "Main Branch",
+    business: "B2B Electronics Wholesale",
+    automation: true,
+    status: "Open",
+    language: "English",
+    mobile: "+971 50 765 4321",
+    whatsapp: "+971 50 765 4321",
+    email: "contact@globaltech.com",
+    fax: "+971 4 123 4568",
+    country: "Dubai",
+    state: "State 1",
+    city: "City 1",
+    area: "Area 2",
+    website: "https://www.globaltech.com",
+    facebook: "https://facebook.com/globaltech",
+    instagram: "https://instagram.com/globaltech",
+    linkedin: "https://linkedin.com/company/globaltech",
+    location: "Building 12, Tech Park, Dubai, UAE",
+    notes:
+      "Client requires bulk delivery every quarter and integration with ERP system.",
     isDefault: true,
     isActive: true,
     isDraft: false,
-    isDeleted: false,
-    status: MOCK_USERS.find((u) => u.id === selectedUser)?.status || "Active",
+    isDeleted: true,
     createdAt: "2023-05-15T10:30:00Z",
-    updatedAt: "2025-01-15T14:30:00Z",
+    updatedAt: "",
     draftedAt: "2025-05-20T14:45:00Z",
     deletedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(),
   };
@@ -124,23 +107,42 @@ export default function UserDetailsPage() {
     }
     console.log("isViewPage", isViewPage);
     if (isViewPage) {
-      userData = {
-        id: selectedUser,
-        name: "",
-        mobileNumber: "",
-        email: "",
-        userType: "user",
-        password: "",
-        confirmPassword: "",
-        otp: "",
-        facebook: "",
-        linkedin: "",
-        instagram: "",
+      LeadsData = {
+        clientName: "Global Tech Solutions Ltd.",
+        productGroup: "Electronics",
+        service: "Inventory",
+        budget: 150000,
+        priority: "High",
+        startDate: "2025-08-01",
+        assignee: "John Doe",
+        contact: "+971 50 123 4567",
+        position: "Procurement Manager",
+        source: "Web",
+        employees: "150",
+        branches: "Main Branch",
+        business: "B2B Electronics Wholesale",
+        automation: true,
+        status: "Open",
+        language: "English",
+        mobile: "+971 50 765 4321",
+        whatsapp: "+971 50 765 4321",
+        email: "contact@globaltech.com",
+        fax: "+971 4 123 4568",
+        country: "Dubai",
+        state: "State 1",
+        city: "City 1",
+        area: "Area 2",
+        website: "https://www.globaltech.com",
+        facebook: "https://facebook.com/globaltech",
+        instagram: "https://instagram.com/globaltech",
+        linkedin: "https://linkedin.com/company/globaltech",
+        location: "Building 12, Tech Park, Dubai, UAE",
+        notes:
+          "Client requires bulk delivery every quarter and integration with ERP system.",
         isDefault: true,
         isActive: true,
         isDraft: false,
         isDeleted: false,
-        status: "Active",
         createdAt: "",
         updatedAt: "",
         draftedAt: "",
@@ -149,28 +151,18 @@ export default function UserDetailsPage() {
     }
   }, []);
 
-  const handlePrintUser = (userData: any) => {
+  const handlePrintTaxRates = (LeadsData: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "User Master Details",
-        data: [userData],
+        title: "Tax Rates Details",
+        data: [LeadsData],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
-          name: "User Master Name",
-          mobileNumber: "User Master Mobile Number",
-          email: "User Master Email",
-          userType: "User Master Type",
-          password: "Password",
-          confirmPassword: "Confirm Password",
-          otp: "OTP",
-          facebook: "Facebook",
-          linkedin: "LinkedIn",
-          instagram: "Instagram",
-          isDefault: "Default User",
+          isDefault: "Default",
           isActive: "Active Status",
           isDraft: "Draft Status",
           isDeleted: "Deleted Status",
-          status: "Status",
+          flag: "Flag",
           createdAt: "Created At",
           updatedAt: "Updated At",
           draftedAt: "Drafted At",
@@ -186,29 +178,42 @@ export default function UserDetailsPage() {
 
   const handleSwitchChange = (checked: boolean) => {
     setPrintEnabled(checked);
+    // Remove auto-print on toggle
+    // if (checked) {
+    //   setTimeout(() => handlePrintTaxRates(LeadsData), 100);
+    // }
   };
 
   const handlePDFSwitchChange = (pdfChecked: boolean) => {
     setPdfChecked(pdfChecked);
+    // Remove auto-download on toggle
+    // if (pdfChecked) {
+    //   setTimeout(() => handleExportPDF(), 100);
+    // }
   };
 
   const handleExportPDF = async () => {
     console.log("Export PDF clicked");
     try {
-      console.log("userData on pdf click", userData);
+      console.log("LeadsData on pdf click", LeadsData);
       const blob = await pdf(
         <GenericPDF
-          data={[userData]}
-          title="User Master Details"
-          subtitle="User Information"
+          data={[LeadsData]}
+          title="Tax Rates Details"
+          subtitle="Tax Rates Information"
         />
       ).toBlob();
 
+      console.log("blob", blob);
+
       const url = URL.createObjectURL(blob);
+      console.log("url", url);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "user-details.pdf";
+      a.download = "TaxRates-details.pdf";
       a.click();
+      console.log("a", a);
+      console.log("url", url);
       URL.revokeObjectURL(url);
     } catch (error) {
       console.log(error);
@@ -248,28 +253,37 @@ export default function UserDetailsPage() {
     return value === undefined || value === null || value === "" ? "–" : value;
   };
 
+  // Create minimize handler
+  const handleMinimize = useCallback(() => {
+    return {
+      LeadsData,
+      hasChanges: false,
+      scrollPosition: window.scrollY,
+    };
+  }, [LeadsData]);
+
   return (
     <>
       <MinimizablePageLayout
-        moduleId="user-details-module"
-        moduleName="User Master Details"
-        moduleRoute="/user-master/view"
-        title="Viewing User Master"
+        moduleId="leads-details-module"
+        moduleName="View Leads Details"
+        moduleRoute="/leads/view"
+        onMinimize={handleMinimize}
+        title={t("button.viewingLeads")}
         videoSrc={video}
         videoHeader="Tutorial video"
-        listPath="user-master"
+        listPath="leads"
         activePage="view"
-        module="user-master"
         popoverOptions={[
           {
             label: "Create",
             icon: <Plus className="w-5 h-5 text-green-600" />,
-            onClick: () => navigate("/user-master/create"),
+            onClick: () => navigate("/leads/create"),
           },
           {
             label: "Edit",
             icon: <Edit className="w-5 h-5 text-blue-600" />,
-            onClick: () => navigate("/user-master/edit/1"),
+            onClick: () => navigate("/leads/edit/1"),
           },
         ]}
         keepChanges={keepChanges}
@@ -293,149 +307,278 @@ export default function UserDetailsPage() {
                   handleExportPDF();
                 }
                 if (printEnabled) {
-                  handlePrintUser(userData);
+                  handlePrintTaxRates(LeadsData);
                 }
               }
             : undefined
         }
+        module="leads"
       >
-        {/* Row 1: User Selection, Name, Mobile Number, Email */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-          <div className="mt-1">
-            <Autocomplete
-              options={MOCK_USERS}
-              value={selectedUser}
-              onValueChange={setSelectedUser}
-              placeholder=" "
-              displayKey="name"
-              valueKey="id"
-              searchKey="name"
-              disabled={false}
-              className="w-[96%] bg-gray-100 rounded-xl"
-              labelClassName="bg-gray-50 rounded-2xl"
-              labelText="User Master Name"
-              isShowTemplateIcon={false}
-            />
-          </div>
-
-          <div className="">
-            <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">User Name</h3>
-            </div>
-            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(userData.name)}
-            </div>
-          </div>
-
-          <div className="">
-            <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">User Mobile Number</h3>
-            </div>
-            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(userData.mobileNumber)}
-            </div>
-          </div>
-
-          <div className="">
-            <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">User Email</h3>
-            </div>
-            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(userData.email)}
-            </div>
-          </div>
-        </div>
-
-        {/* Row 2: User Type, Password, OTP, Facebook */}
+        {/* Row 1 */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
           <div className="">
-            <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">User Master Type</h3>
-            </div>
-            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(userData.userType)}
+            <h3 className="font-normal mb-1 text-gray-600">Client Name</h3>
+            <div className="w-full py-1 text-gray-900 font-bold text-md dark:text-white">
+              {displayValue(LeadsData.clientName)}
             </div>
           </div>
 
           <div className="">
-            <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Password</h3>
-            </div>
-            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(userData.password)}
+            <h3 className="font-normal mb-1 text-gray-600">Product Group</h3>
+            <div className="w-full py-1 text-gray-900 font-bold text-md dark:text-white">
+              {displayValue(LeadsData.productGroup)}
             </div>
           </div>
 
           <div className="">
-            <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">OTP</h3>
-            </div>
-            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(userData.otp)}
+            <h3 className="font-normal mb-1 text-gray-600">Service</h3>
+            <div className="w-full py-1 text-gray-900 font-bold text-md dark:text-white">
+              {displayValue(LeadsData.service)}
             </div>
           </div>
 
           <div className="">
-            <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Facebook</h3>
-            </div>
-            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(userData.facebook)}
-            </div>
-          </div>
-        </div>
-
-        {/* Row 3: LinkedIn, Instagram, Default, Status */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-          <div className="">
-            <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">LinkedIn</h3>
-            </div>
-            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(userData.linkedin)}
+            <h3 className="font-normal mb-1 text-gray-600">Budget</h3>
+            <div className="w-full py-1 text-gray-900 font-bold text-md dark:text-white">
+              {displayValue(LeadsData.budget)}
             </div>
           </div>
 
           <div className="">
-            <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Instagram</h3>
-            </div>
-            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(userData.instagram)}
+            <h3 className="font-normal mb-1 text-gray-600">Priority</h3>
+            <div className="w-full py-1 text-gray-900 font-bold text-md dark:text-white">
+              {displayValue(LeadsData.priority)}
             </div>
           </div>
 
+          <div className="">
+            <h3 className="font-normal mb-1 text-gray-600">Start Date</h3>
+            <div className="w-full py-1 text-gray-900 font-bold text-md dark:text-white">
+              {displayValue(LeadsData.startDate)}
+            </div>
+          </div>
+
+          <div className="">
+            <h3 className="font-normal mb-1 text-gray-600">Assignee</h3>
+            <div className="w-full py-1 text-gray-900 font-bold text-md dark:text-white">
+              {displayValue(LeadsData.assignee)}
+            </div>
+          </div>
+
+          <div className="">
+            <h3 className="font-normal mb-1 text-gray-600">Contact</h3>
+            <div className="w-full py-1 text-gray-900 font-bold text-md dark:text-white">
+              {displayValue(LeadsData.contact)}
+            </div>
+          </div>
+
+          <div className="">
+            <h3 className="font-normal mb-1 text-gray-600">Position</h3>
+            <div className="w-full py-1 text-gray-900 font-bold text-md dark:text-white">
+              {displayValue(LeadsData.position)}
+            </div>
+          </div>
+
+          <div className="">
+            <h3 className="font-normal mb-1 text-gray-600">Source</h3>
+            <div className="w-full py-1 text-gray-900 font-bold text-md dark:text-white">
+              {displayValue(LeadsData.source)}
+            </div>
+          </div>
+
+          <div className="">
+            <h3 className="font-normal mb-1 text-gray-600">Employees</h3>
+            <div className="w-full py-1 text-gray-900 font-bold text-md dark:text-white">
+              {displayValue(LeadsData.employees)}
+            </div>
+          </div>
+
+          <div className="">
+            <h3 className="font-normal mb-1 text-gray-600">Branches</h3>
+            <div className="w-full py-1 text-gray-900 font-bold text-md dark:text-white">
+              {displayValue(LeadsData.branches)}
+            </div>
+          </div>
+
+          <div className="">
+            <h3 className="font-normal mb-1 text-gray-600">Business</h3>
+            <div className="w-full py-1 text-gray-900 font-bold text-md dark:text-white">
+              {displayValue(LeadsData.business)}
+            </div>
+          </div>
+
+          <div className="">
+            <h3 className="font-normal mb-1 text-gray-600">Automation</h3>
+            <div className="w-full py-1 text-gray-900 font-bold text-md dark:text-white">
+              {displayValue(LeadsData.automation ? "Yes" : "No")}
+            </div>
+          </div>
+
+          <div className="">
+            <h3 className="font-normal mb-1 text-gray-600">Status</h3>
+            <div className="w-full py-1 text-gray-900 font-bold text-md dark:text-white">
+              {displayValue(LeadsData.status)}
+            </div>
+          </div>
+
+          <div className="">
+            <h3 className="font-normal mb-1 text-gray-600">Language</h3>
+            <div className="w-full py-1 text-gray-900 font-bold text-md dark:text-white">
+              {displayValue(LeadsData.language)}
+            </div>
+          </div>
+
+          <div className="">
+            <h3 className="font-normal mb-1 text-gray-600">Mobile</h3>
+            <div className="w-full py-1 text-gray-900 font-bold text-md dark:text-white">
+              {displayValue(LeadsData.mobile)}
+            </div>
+          </div>
+
+          <div className="">
+            <h3 className="font-normal mb-1 text-gray-600">WhatsApp</h3>
+            <div className="w-full py-1 text-gray-900 font-bold text-md dark:text-white">
+              {displayValue(LeadsData.whatsapp)}
+            </div>
+          </div>
+
+          <div className="">
+            <h3 className="font-normal mb-1 text-gray-600">Email</h3>
+            <div className="w-full py-1 text-gray-900 font-bold text-md dark:text-white">
+              {displayValue(LeadsData.email)}
+            </div>
+          </div>
+
+          <div className="">
+            <h3 className="font-normal mb-1 text-gray-600">Fax</h3>
+            <div className="w-full py-1 text-gray-900 font-bold text-md dark:text-white">
+              {displayValue(LeadsData.fax)}
+            </div>
+          </div>
+
+          <div className="">
+            <h3 className="font-normal mb-1 text-gray-600">Country</h3>
+            <div className="w-full py-1 text-gray-900 font-bold text-md dark:text-white">
+              {displayValue(LeadsData.country)}
+            </div>
+          </div>
+
+          <div className="">
+            <h3 className="font-normal mb-1 text-gray-600">State</h3>
+            <div className="w-full py-1 text-gray-900 font-bold text-md dark:text-white">
+              {displayValue(LeadsData.state)}
+            </div>
+          </div>
+
+          <div className="">
+            <h3 className="font-normal mb-1 text-gray-600">City</h3>
+            <div className="w-full py-1 text-gray-900 font-bold text-md dark:text-white">
+              {displayValue(LeadsData.city)}
+            </div>
+          </div>
+
+          <div className="">
+            <h3 className="font-normal mb-1 text-gray-600">Area</h3>
+            <div className="w-full py-1 text-gray-900 font-bold text-md dark:text-white">
+              {displayValue(LeadsData.area)}
+            </div>
+          </div>
+
+          <div className="">
+            <h3 className="font-normal mb-1 text-gray-600">Website</h3>
+            <div className="w-full py-1 text-gray-900 font-bold text-md dark:text-white">
+              {displayValue(LeadsData.website)}
+            </div>
+          </div>
+
+          <div className="">
+            <h3 className="font-normal mb-1 text-gray-600">Facebook</h3>
+            <div className="w-full py-1 text-gray-900 font-bold text-md dark:text-white">
+              {displayValue(LeadsData.facebook)}
+            </div>
+          </div>
+
+          <div className="">
+            <h3 className="font-normal mb-1 text-gray-600">Instagram</h3>
+            <div className="w-full py-1 text-gray-900 font-bold text-md dark:text-white">
+              {displayValue(LeadsData.instagram)}
+            </div>
+          </div>
+
+          <div className="">
+            <h3 className="font-normal mb-1 text-gray-600">LinkedIn</h3>
+            <div className="w-full py-1 text-gray-900 font-bold text-md dark:text-white">
+              {displayValue(LeadsData.linkedin)}
+            </div>
+          </div>
+
+          <div className="">
+            <h3 className="font-normal mb-1 text-gray-600">Location</h3>
+            <div className="w-full py-1 text-gray-900 font-bold text-md dark:text-white">
+              {displayValue(LeadsData.location)}
+            </div>
+          </div>
+
+          <div className="">
+            <h3 className="font-normal mb-1 text-gray-600">Notes</h3>
+            <div className="w-full py-1 text-gray-900 font-bold text-md dark:text-white">
+              {displayValue(LeadsData.notes)}
+            </div>
+          </div>
+
+          {/* Default Label */}
           <div className="">
             <div className="flex flex-col">
               <div className="">
                 <span className="text-[15px] text-gray-600">Default</span>
               </div>
               <div className="">
-                {userData.isDefault ? (
-                  <span className="text-black text-[15px]">Yes</span>
+                {LeadsData.isDefault ? (
+                  <span className="text-black font-bold text-[15px]">Yes</span>
                 ) : (
-                  <span className="text-black text-[15px]">No</span>
+                  <span className="text-black font-bold text-[15px]">No</span>
                 )}
               </div>
             </div>
           </div>
-
-          <div className="">
-            <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Status</h3>
+          {/* InActive Label */}
+          <div className="flex flex-col">
+            <div className="">
+              <span className="text-[15px] text-gray-600">Inactive</span>
             </div>
-            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(userData.status)}
+            <div className="">
+              {!LeadsData.isActive ? (
+                <span className="text-black font-bold text-[15px]">Yes</span>
+              ) : (
+                <span className="text-black font-bold text-[15px]">No</span>
+              )}
             </div>
           </div>
-        </div>
+          {/* Draft Label */}
+          <div className="flex flex-col">
+            <div className="">
+              <span className="text-[15px] text-gray-600">Draft</span>
+            </div>
+            <div className="">
+              {LeadsData.isDraft ? (
+                <span className="text-black font-bold text-[15px]">Yes</span>
+              ) : (
+                <span className="text-black font-bold text-[15px]">No</span>
+              )}
+            </div>
+          </div>
 
-        {/* Row 4: Action, Created At, Updated At, Drafted At */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-          <div className="">
-            <h3 className="font-normal mb-1 text-gray-600">Action</h3>
-            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              Updated
+          {/* Deleted Label */}
+          <div className="flex flex-col">
+            <div className="">
+              <span className="text-[15px] text-gray-600">Deleted</span>
+            </div>
+            <div className="">
+              {LeadsData.isDeleted ? (
+                <span className="text-black font-bold text-[15px]">Yes</span>
+              ) : (
+                <span className="text-black font-bold text-[15px]">No</span>
+              )}
             </div>
           </div>
         </div>
@@ -448,10 +591,10 @@ export default function UserDetailsPage() {
         columnData={mockHistoryData}
         title="History"
         statusInfo={{
-          created: getRelativeTime(userData.createdAt),
-          updated: getRelativeTime(userData.updatedAt),
-          drafted: getRelativeTime(userData.draftedAt),
-          deleted: getRelativeTime(userData.deletedAt),
+          created: getRelativeTime(LeadsData.createdAt),
+          updated: getRelativeTime(LeadsData.updatedAt),
+          drafted: getRelativeTime(LeadsData.draftedAt),
+          deleted: getRelativeTime(LeadsData.deletedAt),
         }}
       />
 

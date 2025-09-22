@@ -1,165 +1,212 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import video from "@/assets/videos/test.mp4";
 import EditableInput from "@/components/common/EditableInput";
-import MobileEditableInput from "@/components/common/MobileEditableInput";
+import MinimizablePageLayout from "@/components/MinimizablePageLayout";
 import GenericPDF from "@/components/common/pdf";
 import { ResetFormModal } from "@/components/common/ResetFormModal";
 import { Button } from "@/components/ui/button";
 import { PrintCommonLayout } from "@/lib/printContents/PrintCommonLayout";
 import { printHtmlContent } from "@/lib/printHtmlContent";
-import { toastError, toastRestore, toastSuccess } from "@/lib/toast";
+import { Modal } from "@mantine/core";
 import { pdf } from "@react-pdf/renderer";
-import { Check, Eye, Plus } from "lucide-react";
+import { Check, Edit, Eye, Plus } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import {
-  useUserMasterPermissions,
-  usePermission,
-} from "@/hooks/usePermissions";
-// import { useLanguageLabels } from "@/hooks/useLanguageLabels";
-import { useAppSelector } from "@/store/hooks";
-import MinimizablePageLayout from "@/components/MinimizablePageLayout";
-import { useMinimizedModuleData } from "@/hooks/useMinimizedModuleData";
+import { useNavigate } from "react-router-dom";
+import { toastError, toastRestore, toastSuccess } from "@/lib/toast";
+import { Autocomplete } from "@/components/common/Autocomplete";
 import { SwitchSelect } from "@/components/common/SwitchAutoComplete";
 import { ActionsAutocomplete } from "@/components/common/ActionsAutocomplete";
-import { Autocomplete } from "@/components/common/Autocomplete";
+import { usePermission } from "@/hooks/usePermissions";
+import { useLanguageLabels } from "@/hooks/useLanguageLabels";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/store";
 
-type UserData = {
-  name: string;
-  mobileNumber: string;
+type LeadsData = {
+  clientName: string;
+  productGroup: string;
+  service: string;
+  budget: number;
+  priority: string;
+  startDate: string;
+  assignee: string;
+  contact: string;
+  position: string;
+  source: string;
+  employees: string;
+  branches: string;
+  business: string;
+  automation: boolean;
+  status: string;
+  language: string;
+  mobile: string;
+  whatsapp: string;
   email: string;
-  userType: "admin" | "super admin" | "user";
-  password: string;
-  confirmPassword: string;
-  otp?: string;
-  facebook?: string;
-  linkedin?: string;
-  instagram?: string;
+  fax: string;
+  country: string;
+  state: string;
+  city: string;
+  area: string;
+  website: string;
+  facebook: string;
+  instagram: string;
+  linkedin: string;
+  location: string;
+  notes: string;
   isDefault: boolean;
-  isStatusActive: boolean;
   isActive: boolean;
   isDraft: boolean;
-  isDeleted: boolean;
+  rating: number;
   createdAt: Date | null;
   draftedAt: Date | null;
   updatedAt: Date | null;
   deletedAt: Date | null;
-};
-
-type UserModuleData = {
-  formData: UserData;
-  hasChanges: boolean;
-  scrollPosition: number;
+  isDeleted: boolean;
 };
 
 type Props = {
   isEdit?: boolean;
 };
 
-const initialData: UserData = {
-  name: "John Doe",
-  mobileNumber: "+1234567890",
-  email: "john.doe@example.com",
-  userType: "user",
-  password: "",
-  confirmPassword: "",
-  otp: "",
-  facebook: "",
-  linkedin: "",
-  instagram: "",
+const initialData: LeadsData = {
+  clientName: "Global Tech Solutions Ltd.",
+  productGroup: "Electronics",
+  service: "Inventory",
+  budget: 150000,
+  priority: "High",
+  startDate: "2025-08-01",
+  assignee: "John Doe",
+  contact: "+971 50 123 4567",
+  position: "Procurement Manager",
+  source: "Web",
+  employees: "150",
+  branches: "Main Branch",
+  business: "B2B Electronics Wholesale",
+  automation: true,
+  status: "Open",
+  language: "English",
+  mobile: "+971 50 765 4321",
+  whatsapp: "+971 50 765 4321",
+  email: "contact@globaltech.com",
+  fax: "+971 4 123 4568",
+  country: "Dubai",
+  state: "State 1",
+  city: "City 1",
+  area: "Area 2",
+  website: "https://www.globaltech.com",
+  facebook: "https://facebook.com/globaltech",
+  instagram: "https://instagram.com/globaltech",
+  linkedin: "https://linkedin.com/company/globaltech",
+  location: "Building 12, Tech Park, Dubai, UAE",
+  notes:
+    "Client requires bulk delivery every quarter and integration with ERP system.",
   isDefault: false,
-  isStatusActive: true,
   isActive: true,
   isDraft: false,
-  isDeleted: false,
+  rating: 3,
   createdAt: new Date(),
   draftedAt: null,
   updatedAt: new Date(),
   deletedAt: null,
+  isDeleted: false,
 };
 
-export default function UserEditPage({ isEdit = true }: Props) {
+const productGroups = ["Electronics", "Clothing", "Furniture", "Books"];
+const services = ["Ledger", "Accounts", "Inventory", "Sales", "HR"];
+const priorities = ["Low", "Medium", "High"];
+const assignees = ["John Doe", "Jane Smith", "Bob Johnson"];
+const sources = ["Web", "Email", "Phone", "Social Media"];
+const branches = ["Main Branch", "Branch 1", "Branch 2", "Branch 3"];
+const statuses = ["Open", "In Progress", "Closed"];
+const languages = ["English", "Arabic", "Bangla", "German", "Italian"];
+const countriesNames = [
+  "Dubai",
+  "Saudi Arabia",
+  "Qatar",
+  "Kuwait",
+  "Bahrain",
+  "India",
+  "Pakistan",
+];
+const states = ["State 1", "State 2", "State 3"];
+const cities = ["City 1", "City 2", "City 3"];
+const areas = ["Area 1", "Area 2", "Area 3"];
+
+export default function LeadsEditPage({ isEdit = false }: Props) {
   const navigate = useNavigate();
-  const { id } = useParams();
-  // const labels = useLanguageLabels();
-  const { isRTL } = useAppSelector((state) => state.language);
-
-  // Get module ID for this edit page
-  const moduleId = `user-edit-module-${id || "new"}`;
-
-  // Use the custom hook for minimized module data
-  const {
-    moduleData,
-    hasMinimizedData,
-    resetModuleData,
-    getModuleScrollPosition,
-  } = useMinimizedModuleData<UserModuleData>(moduleId);
-
+  const labels = useLanguageLabels();
+  const { isRTL } = useSelector((state: RootState) => state.language);
   const [keepCreating, setKeepCreating] = useState(false);
+  // const [imagePreview, setImagePreview] = useState<string | null>(
+  //   "https://randomuser.me/api/portraits/men/32.jpg"
+  // );
+  // const [isDragging, setIsDragging] = useState(false);
+  // const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // const fileInputRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
   const [isDefaultState, setIsDefaultState] = useState<"Yes" | "No" | string>(
     "No"
   );
-  const [statusState, setStatusState] = useState<"Active" | "Draft" | string>(
-    "Active"
-  );
+
+  const [statusState, setStatusState] = useState<
+    "Active" | "InActive" | "Draft" | string
+  >("Active");
+  const [selectedAction, setSelectedAction] = useState<string>("");
+
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [printEnabled, setPrintEnabled] = useState(false);
   const [pdfChecked, setPdfChecked] = useState(false);
-  const [formKey, setFormKey] = useState(0);
-  const [isRestoredFromMinimized, setIsRestoredFromMinimized] = useState(false);
-  const [shouldRestoreFromMinimized, setShouldRestoreFromMinimized] =
-    useState(false);
-  const [selectedAction, setSelectedAction] = useState<string>("");
-
-  // Permission checks
-  const { canCreate, canView } = useUserMasterPermissions();
-
-  // Field-level permissions
-  const userName: boolean = usePermission("user-master", "edit", "userName");
-  const mobileNumber: boolean = usePermission(
-    "user-master",
-    "edit",
-    "mobileNumber"
-  );
-  const email: boolean = usePermission("user-master", "edit", "email");
-  const userType: boolean = usePermission("user-master", "edit", "userType");
-  const password: boolean = usePermission("user-master", "edit", "password");
-  const confirmPassword: boolean = usePermission(
-    "user-master",
-    "edit",
-    "confirmPassword"
-  );
-  const otp: boolean = usePermission("user-master", "edit", "otp");
-  const facebook: boolean = usePermission("user-master", "edit", "facebook");
-  const linkedin: boolean = usePermission("user-master", "edit", "linkedin");
-  const instagram: boolean = usePermission("user-master", "edit", "instagram");
-  const isDefault: boolean = usePermission("user-master", "edit", "isDefault");
-  const canPdf: boolean = usePermission("user-master", "pdf");
-  const canPrint: boolean = usePermission("user-master", "print");
 
   // Form state
-  const [formData, setFormData] = useState<UserData>({
-    name: "",
-    mobileNumber: "",
-    email: "",
-    userType: "user",
-    password: "",
-    confirmPassword: "",
-    otp: "",
-    facebook: "",
-    linkedin: "",
-    instagram: "",
+  const [formData, setFormData] = useState<LeadsData>({
+    clientName: "Global Tech Solutions Ltd.",
+    productGroup: "Electronics",
+    service: "Inventory",
+    budget: 150000,
+    priority: "High",
+    startDate: "2025-08-01",
+    assignee: "John Doe",
+    contact: "+971 50 123 4567",
+    position: "Procurement Manager",
+    source: "Web",
+    employees: "150",
+    branches: "Main Branch",
+    business: "B2B Electronics Wholesale",
+    automation: true,
+    status: "Open",
+    language: "English",
+    mobile: "+971 50 765 4321",
+    whatsapp: "+971 50 765 4321",
+    email: "contact@globaltech.com",
+    fax: "+971 4 123 4568",
+    country: "Dubai",
+    state: "State 1",
+    city: "City 1",
+    area: "Area 2",
+    website: "https://www.globaltech.com",
+    facebook: "https://facebook.com/globaltech",
+    instagram: "https://instagram.com/globaltech",
+    linkedin: "https://linkedin.com/company/globaltech",
+    location: "Building 12, Tech Park, Dubai, UAE",
+    notes:
+      "Client requires bulk delivery every quarter and integration with ERP system.",
     isDefault: false,
-    isStatusActive: true,
     isActive: true,
     isDraft: false,
     isDeleted: false,
+    rating: 3,
     createdAt: null,
     draftedAt: null,
     updatedAt: null,
     deletedAt: null,
   });
+
+  // get permission
+  const canPdf: boolean = usePermission("leads", "pdf");
+  const canPrint: boolean = usePermission("leads", "print");
+  const canEdit: boolean = usePermission("leads", "edit");
+  const isDefault: boolean = usePermission("leads", "create", "isDefault");
 
   // focus next input field
   const inputRefs = useRef<Record<string, HTMLElement | null>>({});
@@ -170,151 +217,102 @@ export default function UserEditPage({ isEdit = true }: Props) {
     inputRefs.current[nextField]?.focus();
   };
 
-  // Check for restore flag from taskbar
-  useEffect(() => {
-    const shouldRestore = localStorage.getItem(`restore-${moduleId}`);
-    if (shouldRestore === "true") {
-      setShouldRestoreFromMinimized(true);
-      localStorage.removeItem(`restore-${moduleId}`);
-    }
-  }, [moduleId]);
-
-  // Restore logic using the custom hook
-  useEffect(() => {
-    const shouldAutoRestore =
-      shouldRestoreFromMinimized ||
-      (hasMinimizedData &&
-        moduleData?.formData &&
-        !isRestoredFromMinimized &&
-        !formData.name);
-
-    if (hasMinimizedData && moduleData?.formData && shouldAutoRestore) {
-      setFormData(moduleData.formData);
-
-      // Restore UI states based on form data
-      setIsDefaultState(moduleData.formData.isDefault ? "Yes" : "No");
-      if (moduleData.formData.isDeleted) {
-        setStatusState("Delete");
-      } else if (moduleData.formData.isDraft) {
-        setStatusState("Draft");
-      } else {
-        setStatusState("Active");
-      }
-
-      setIsRestoredFromMinimized(true);
-      setShouldRestoreFromMinimized(false);
-
-      // Restore scroll position
-      const scrollPosition = getModuleScrollPosition(moduleId);
-      if (scrollPosition) {
-        setTimeout(() => {
-          window.scrollTo(0, scrollPosition);
-        }, 200);
-      }
-    }
-  }, [
-    hasMinimizedData,
-    moduleData,
-    isRestoredFromMinimized,
-    shouldRestoreFromMinimized,
-    formData.name,
-    moduleId,
-    getModuleScrollPosition,
-  ]);
-
   // Initialize with edit data if available
   useEffect(() => {
-    if (
-      isEdit &&
-      initialData &&
-      !hasMinimizedData &&
-      !isRestoredFromMinimized
-    ) {
-      setFormData(initialData);
-      setIsDefaultState(initialData.isDefault ? "Yes" : "No");
-      if (initialData.isDeleted) {
-        setStatusState("Delete");
-      } else if (initialData.isDraft) {
-        setStatusState("Draft");
-      } else {
-        setStatusState("Active");
-      }
+    if (isEdit && initialData) {
+      setFormData({
+        ...initialData,
+        // picture: initialData.picture || "",
+      });
+      // setImagePreview(
+      //   initialData.picture || "https://randomuser.me/api/portraits/men/32.jpg"
+      // );
+      setIsDefaultState(initialData.isDefault ? labels.yes : labels.no);
     }
-  }, [isEdit, hasMinimizedData, isRestoredFromMinimized, moduleId]);
+  }, [isEdit, labels]);
 
   // Handle form field changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
-    const newFormData = {
+    setFormData({
       ...formData,
       [name]: type === "checkbox" ? checked : value,
-    };
-    setFormData(newFormData);
+    });
   };
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Form submitted:", formData);
+    // Normal submit logic here (API call)
 
     if (pdfChecked) {
       await handleExportPDF();
     }
     if (printEnabled) {
-      handlePrintUser(formData);
+      handlePrintLeads(formData);
     }
-
-    // keep switch functionality
     if (keepCreating) {
-      toastSuccess("User updated successfully!");
       handleReset();
+      focusNextInput("title");
     } else {
-      toastSuccess("User updated successfully!");
-      navigate("/user-master");
+      navigate("/leads");
     }
+    toastSuccess("Leads Edited successfully");
   };
 
-  // Update handleReset function to use the custom hook
-  const handleReset = async () => {
+  const [formKey, setFormKey] = useState(0);
+
+  // Update handleReset function
+  const handleReset = () => {
     setFormData({
-      name: "",
-      mobileNumber: "",
+      clientName: "",
+      productGroup: "",
+      service: "",
+      budget: 0,
+      priority: "",
+      startDate: "",
+      assignee: "",
+      contact: "",
+      position: "",
+      source: "",
+      employees: "",
+      branches: "",
+      business: "",
+      automation: false,
+      status: "",
+      language: "",
+      mobile: "",
+      whatsapp: "",
       email: "",
-      userType: "user",
-      password: "",
-      confirmPassword: "",
-      otp: "",
+      fax: "",
+      country: "",
+      state: "",
+      city: "",
+      area: "",
+      website: "",
       facebook: "",
-      linkedin: "",
       instagram: "",
+      linkedin: "",
+      location: "",
+      notes: "",
       isDefault: false,
-      isStatusActive: true,
       isActive: true,
       isDraft: false,
       isDeleted: false,
+      rating: 3,
       createdAt: new Date(),
       draftedAt: null,
       updatedAt: new Date(),
       deletedAt: null,
     });
-    setIsDefaultState("No");
-    setStatusState("Active");
-    setIsRestoredFromMinimized(false);
-
+    setIsDefaultState(labels.no);
     if (formRef.current) {
       formRef.current.reset();
     }
 
     // Force re-render of all inputs by changing key
     setFormKey((prev) => prev + 1);
-
-    // Reset form data using the custom hook
-    if (hasMinimizedData) {
-      try {
-        await resetModuleData(moduleId);
-      } catch (error) {
-        console.error("Error resetting form data:", error);
-      }
-    }
 
     // Focus the first input field after reset
     setTimeout(() => {
@@ -326,18 +324,23 @@ export default function UserEditPage({ isEdit = true }: Props) {
     setIsResetModalOpen(true);
   };
 
-  const handlePrintUser = (userData: any) => {
+  const handlePrintLeads = (LeadsData: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "User Details",
-        data: [userData],
+        title: "Leads Details",
+        data: [LeadsData],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
-          name: "User Name",
-          isDefault: "Default User",
+          clientName: "Client Name",
+          productGroup: "Product Group",
+          service: "Service",
+          email: "Email",
+          phone: "Phone",
+          isDefault: labels.default,
           isActive: "Active Status",
-          isDraft: "Draft Status",
+          isDraft: labels.draft,
           isDeleted: "Deleted Status",
+          rating: "Rating",
           createdAt: "Created At",
           updatedAt: "Updated At",
           draftedAt: "Drafted At",
@@ -360,19 +363,21 @@ export default function UserEditPage({ isEdit = true }: Props) {
   };
 
   const handleExportPDF = async () => {
+    console.log("Export PDF clicked");
     try {
+      console.log("LeadsData on pdf click", formData);
       const blob = await pdf(
         <GenericPDF
           data={[formData]}
-          title="User Details"
-          subtitle="User Information"
+          title="Leads Details"
+          subtitle="Leads Information"
         />
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "user-details.pdf";
+      a.download = "Leads-details.pdf";
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
@@ -383,20 +388,26 @@ export default function UserEditPage({ isEdit = true }: Props) {
 
   const [popoverOptions, setPopoverOptions] = useState([
     {
-      label: "Create",
-      icon: <Plus className="w-5 h-5 text-green-500" />,
+      label: isEdit ? "Create" : "Edit",
+      icon: isEdit ? (
+        <Plus className="w-5 h-5 text-green-500" />
+      ) : (
+        <Edit className="w-5 h-5 text-blue-500" />
+      ),
       onClick: () => {
-        navigate("/user-master/create");
+        if (isEdit) {
+          navigate("/leads/create");
+        } else {
+          navigate("/leads/edit/undefined");
+        }
       },
-      show: canCreate,
     },
     {
       label: "View",
       icon: <Eye className="w-5 h-5 text-green-600" />,
       onClick: () => {
-        navigate("/user-master/view");
+        navigate("/leads/view");
       },
-      show: canView,
     },
   ]);
 
@@ -410,25 +421,24 @@ export default function UserEditPage({ isEdit = true }: Props) {
         return [
           ...filteredOptions,
           {
-            label: "Draft",
+            label: labels.draft,
             icon: <Check className="text-green-500" />,
             onClick: () => {
               setFormData((prev) => ({
                 ...prev,
                 isDraft: true,
               }));
-              toastRestore("User saved as draft successfully");
+              toastRestore("Leads saved as draft successfully");
             },
-            show: canCreate,
           },
         ];
       }
       return filteredOptions;
     });
-  }, [formData.isDraft, canCreate]);
+  }, [formData.isDraft, labels]);
 
-  // Create minimize handler using the custom hook
-  const handleMinimize = useCallback((): UserModuleData => {
+  // Create minimize handler
+  const handleMinimize = useCallback(() => {
     return {
       formData,
       hasChanges: true,
@@ -439,42 +449,40 @@ export default function UserEditPage({ isEdit = true }: Props) {
   return (
     <>
       <MinimizablePageLayout
-        moduleId={moduleId}
-        moduleName={`Edit User Master`}
-        moduleRoute={`/user-master/edit/${id || "new"}`}
+        moduleId="leads-edit-module"
+        moduleName="Edit Leads"
+        moduleRoute="/leads/edit"
         onMinimize={handleMinimize}
-        title="Edit User Master"
-        listPath="user-master"
-        popoverOptions={popoverOptions}
+        title={isEdit ? labels.editingLeads : labels.creatingLeads}
         videoSrc={video}
         videoHeader="Tutorial video"
+        listPath="leads"
+        activePage="edit"
+        popoverOptions={popoverOptions}
         keepChanges={keepCreating}
         onKeepChangesChange={setKeepCreating}
         pdfChecked={pdfChecked}
         onPdfToggle={canPdf ? handlePDFSwitchChange : undefined}
         printEnabled={printEnabled}
         onPrintToggle={canPrint ? handleSwitchChange : undefined}
-        activePage="edit"
-        module="user-master"
+        module="leads"
         additionalFooterButtons={
-          canCreate ? (
-            <div className="flex gap-4 max-[435px]:gap-2">
-              <Button
-                variant="outline"
-                className="gap-2 hover:bg-primary/90 bg-white rounded-full border-primary w-28 max-[435px]:w-20 font-semibold! text-primary!"
-                onClick={handleResetClick}
-              >
-                Reset
-              </Button>
-              <Button
-                variant="outline"
-                className="gap-2 hover:bg-primary/90 bg-white rounded-full border-primary w-28 max-[435px]:w-20 font-semibold! text-primary!"
-                onClick={handleSubmit}
-              >
-                Submit
-              </Button>
-            </div>
-          ) : null
+          <div className="flex gap-4 max-[435px]:gap-2">
+            <Button
+              variant="outline"
+              className="gap-2 hover:bg-primary/90! bg-white dark:bg-gray-900 rounded-full border-primary w-28 max-[435px]:w-20 font-semibold! text-primary!"
+              onClick={handleResetClick}
+            >
+              {labels.reset}
+            </Button>
+            <Button
+              variant="outline"
+              className="gap-2 hover:bg-primary/90 bg-white dark:bg-gray-900 rounded-full border-primary w-28 max-[435px]:w-20 font-semibold! text-primary!"
+              onClick={handleSubmit}
+            >
+              {labels.submit}
+            </Button>
+          </div>
         }
         className="w-full"
       >
@@ -485,237 +493,804 @@ export default function UserEditPage({ isEdit = true }: Props) {
             onSubmit={handleSubmit}
             className="space-y-6"
           >
-            {/* First Row: User Name, Mobile Number, Email, User Type */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
-              {/* User Name field - only show if user can edit */}
-              {userName && (
-                <div className="space-y-2">
+            {/* First Row: Code, Calling Code, Country */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 my-8">
+              {canEdit && (
+                <div className="md:col-span-3 space-y-2">
                   <EditableInput
-                    setRef={setRef("name")}
-                    id="name"
-                    name="name"
-                    value={formData.name}
+                    setRef={setRef("clientName")}
+                    id="clientName"
+                    name="clientName"
+                    value={formData.clientName}
                     onChange={handleChange}
-                    onNext={() => focusNextInput("mobileNumber")}
-                    onCancel={() => setFormData({ ...formData, name: "" })}
-                    labelText="User Master Name"
-                    tooltipText="Enter the user's full name"
-                    required
-                  />
-                </div>
-              )}
-
-              {/* Mobile Number field - only show if user can edit */}
-              {mobileNumber && (
-                <div className="space-y-2">
-                  <MobileEditableInput
-                    setRef={setRef("mobileNumber")}
-                    id="mobileNumber"
-                    name="mobileNumber"
-                    value={formData.mobileNumber}
-                    onChange={handleChange}
-                    onNext={() => focusNextInput("email")}
+                    onNext={() => focusNextInput("productGroup")}
                     onCancel={() =>
-                      setFormData({ ...formData, mobileNumber: "" })
+                      setFormData({ ...formData, clientName: "" })
                     }
-                    labelText="User Master Mobile Number"
-                    tooltipText="Enter the user's mobile number"
-                    isPhone={true}
-                    onPhoneChange={(value) => {
-                      setFormData((prev) => ({
-                        ...prev,
-                        mobileNumber: value || "",
-                      }));
-                    }}
+                    labelText={labels.clientNamerTooltip}
+                    tooltipText={labels.clientNamerTooltip}
                     required
                   />
                 </div>
               )}
-
-              {/* Email field - only show if user can edit */}
-              {email && (
-                <div className="space-y-2">
-                  <EditableInput
-                    setRef={setRef("email")}
-                    id="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    onNext={() => focusNextInput("userType")}
-                    onCancel={() => setFormData({ ...formData, email: "" })}
-                    labelText="User Master Email"
-                    tooltipText="Enter the user's email address"
-                    type="email"
-                    required
-                  />
-                </div>
-              )}
-
-              {/* User Type field - only show if user can edit */}
-              {userType && (
-                <div className="space-y-2 relative">
+              {/* auto-complete */}
+              {canEdit && (
+                <div className="md:col-span-3 space-y-2">
                   <Autocomplete
-                    ref={(el: any) => setRef("userType")(el)}
-                    id="userType"
-                    name="userType"
-                    options={[
-                      {
-                        label: "Admin",
-                        value: "admin",
-                      },
-                      {
-                        label: "Super Admin",
-                        value: "super admin",
-                      },
-                      {
-                        label: "User",
-                        value: "user",
-                      },
-                    ]}
-                    value={formData.userType}
+                    ref={(el: any) => setRef("productGroup")(el)}
+                    id="productGroup"
+                    name="productGroup"
+                    allowCustomInput={true}
+                    options={productGroups}
+                    value={formData.productGroup}
                     onValueChange={(value: string) => {
-                      setFormData((prev) => ({
-                        ...prev,
-                        userType: value as "admin" | "super admin" | "user",
-                      }));
-                      focusNextInput("password");
+                      setFormData({ ...formData, productGroup: value });
+                      if (value) {
+                        focusNextInput("service");
+                      }
                     }}
                     onEnterPress={() => {
-                      focusNextInput("password");
+                      if (formData.productGroup) {
+                        focusNextInput("service");
+                      }
                     }}
-                    placeholder="Select user type..."
-                    labelText="User Master Type"
-                    tooltipText="Select the user type"
-                    displayKey="label"
-                    valueKey="value"
-                    searchKey="label"
-                    isSelectableOnly={true}
+                    placeholder=" "
+                    labelText={labels.productGroupTooltip}
                     className="relative"
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Second Row: Password, Confirm Password, OTP, Facebook */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
-              {/* Password field - only show if user can edit */}
-              {password && (
-                <div className="space-y-2">
-                  <EditableInput
-                    setRef={setRef("password")}
-                    id="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    onNext={() => focusNextInput("confirmPassword")}
-                    onCancel={() => setFormData({ ...formData, password: "" })}
-                    labelText="Password"
-                    tooltipText="Enter the user's password"
-                    type="password"
-                    required
+                    styles={{
+                      input: {
+                        borderColor: "var(--primary)",
+                        "&:focus": {
+                          borderColor: "var(--primary)",
+                        },
+                      },
+                    }}
                   />
                 </div>
               )}
 
-              {/* Confirm Password field - only show if user can edit */}
-              {confirmPassword && (
-                <div className="space-y-2">
-                  <EditableInput
-                    setRef={setRef("confirmPassword")}
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    onNext={() => focusNextInput("otp")}
-                    onCancel={() =>
-                      setFormData({ ...formData, confirmPassword: "" })
+              {canEdit && (
+                <div className="md:col-span-3 space-y-2">
+                  <Autocomplete
+                    ref={(el: any) => setRef("service")(el)}
+                    id="service"
+                    name="service"
+                    allowCustomInput={true}
+                    options={services}
+                    value={formData.service}
+                    onValueChange={(value: string) => {
+                      setFormData({ ...formData, service: value });
+                      if (value) {
+                        focusNextInput("budget");
+                      }
+                    }}
+                    onEnterPress={() => {
+                      if (formData.service) {
+                        focusNextInput("budget");
+                      }
+                    }}
+                    placeholder=" "
+                    labelText={labels.serviceTooltip}
+                    className="relative"
+                    styles={{
+                      input: {
+                        borderColor: "var(--primary)",
+                        "&:focus": {
+                          borderColor: "var(--primary)",
+                        },
+                      },
+                    }}
+                  />
+                </div>
+              )}
+
+              {canEdit && (
+                <div className="md:col-span-3 space-y-2">
+                  <div className="relative">
+                    <EditableInput
+                      setRef={setRef("budget")}
+                      id="budget"
+                      name="budget"
+                      value={formData.budget ? formData.budget.toString() : ""}
+                      onChange={handleChange}
+                      onNext={() => focusNextInput("priority")}
+                      onCancel={() => setFormData({ ...formData, budget: 0 })}
+                      labelText={labels.budgetTooltip}
+                      tooltipText={labels.budgetTooltip}
+                      required
+                      type="number"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {canEdit && (
+                <div className="md:col-span-3 space-y-2">
+                  <Autocomplete
+                    ref={(el: any) => setRef("priority")(el)}
+                    id="priority"
+                    name="priority"
+                    allowCustomInput={true}
+                    options={priorities}
+                    value={formData.priority}
+                    onValueChange={(value: string) => {
+                      setFormData({ ...formData, priority: value });
+                      if (value) {
+                        focusNextInput("startDate");
+                      }
+                    }}
+                    onEnterPress={() => {
+                      if (formData.priority) {
+                        focusNextInput("startDate");
+                      }
+                    }}
+                    placeholder=" "
+                    labelText={labels.priorityTooltip}
+                    className="relative"
+                    styles={{
+                      input: {
+                        borderColor: "var(--primary)",
+                        "&:focus": {
+                          borderColor: "var(--primary)",
+                        },
+                      },
+                    }}
+                  />
+                </div>
+              )}
+
+              {canEdit && (
+                <div className="md:col-span-3 space-y-2">
+                  <div className="relative">
+                    <EditableInput
+                      setRef={setRef("startDate")}
+                      id="startDate"
+                      name="startDate"
+                      value={formData.startDate}
+                      onChange={handleChange}
+                      onNext={() => focusNextInput("assignee")}
+                      onCancel={() =>
+                        setFormData({ ...formData, startDate: "" })
+                      }
+                      labelText={labels.startDateTooltip}
+                      tooltipText={labels.startDateTooltip}
+                      required
+                      type="date"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {canEdit && (
+                <div className="md:col-span-3 space-y-2">
+                  <Autocomplete
+                    ref={(el: any) => setRef("assignee")(el)}
+                    id="assignee"
+                    name="assignee"
+                    allowCustomInput={true}
+                    options={assignees}
+                    value={formData.assignee}
+                    onValueChange={(value: string) => {
+                      setFormData({ ...formData, assignee: value });
+                      if (value) {
+                        focusNextInput("contact");
+                      }
+                    }}
+                    onEnterPress={() => {
+                      if (formData.assignee) {
+                        focusNextInput("contact");
+                      }
+                    }}
+                    placeholder=" "
+                    labelText={labels.assigneeTooltip}
+                    className="relative"
+                    styles={{
+                      input: {
+                        borderColor: "var(--primary)",
+                        "&:focus": {
+                          borderColor: "var(--primary)",
+                        },
+                      },
+                    }}
+                  />
+                </div>
+              )}
+
+              {canEdit && (
+                <div className="md:col-span-3 space-y-2">
+                  <div className="relative">
+                    <EditableInput
+                      setRef={setRef("contact")}
+                      id="contact"
+                      name="contact"
+                      value={formData.contact}
+                      onChange={handleChange}
+                      onNext={() => focusNextInput("position")}
+                      onCancel={() => setFormData({ ...formData, contact: "" })}
+                      labelText={labels.contactTooltip}
+                      tooltipText={labels.contactTooltip}
+                      required
+                    />
+                  </div>
+                </div>
+              )}
+
+              {canEdit && (
+                <div className="md:col-span-3 space-y-2">
+                  <div className="relative">
+                    <EditableInput
+                      setRef={setRef("position")}
+                      id="position"
+                      name="position"
+                      value={formData.position}
+                      onChange={handleChange}
+                      onNext={() => focusNextInput("source")}
+                      onCancel={() =>
+                        setFormData({ ...formData, position: "" })
+                      }
+                      labelText={labels.positionTooltip}
+                      tooltipText={labels.positionTooltip}
+                      required
+                    />
+                  </div>
+                </div>
+              )}
+
+              {canEdit && (
+                <div className="md:col-span-3 space-y-2">
+                  <Autocomplete
+                    ref={(el: any) => setRef("source")(el)}
+                    id="source"
+                    name="source"
+                    allowCustomInput={true}
+                    options={sources}
+                    value={formData.source}
+                    onValueChange={(value: string) => {
+                      setFormData({ ...formData, source: value });
+                      if (value) {
+                        focusNextInput("employees");
+                      }
+                    }}
+                    onEnterPress={() => {
+                      if (formData.source) {
+                        focusNextInput("employees");
+                      }
+                    }}
+                    placeholder=" "
+                    labelText={labels.sourceTooltip}
+                    className="relative"
+                    styles={{
+                      input: {
+                        borderColor: "var(--primary)",
+                        "&:focus": {
+                          borderColor: "var(--primary)",
+                        },
+                      },
+                    }}
+                  />
+                </div>
+              )}
+
+              {canEdit && (
+                <div className="md:col-span-3 space-y-2">
+                  <div className="relative">
+                    <EditableInput
+                      setRef={setRef("employees")}
+                      id="employees"
+                      name="employees"
+                      value={formData.employees}
+                      onChange={handleChange}
+                      onNext={() => focusNextInput("branches")}
+                      onCancel={() =>
+                        setFormData({ ...formData, employees: "" })
+                      }
+                      labelText={labels.employeesTooltip}
+                      tooltipText={labels.employeesTooltip}
+                      required
+                    />
+                  </div>
+                </div>
+              )}
+
+              {canEdit && (
+                <div className="md:col-span-3 space-y-2">
+                  <Autocomplete
+                    ref={(el: any) => setRef("branches")(el)}
+                    id="branches"
+                    name="branches"
+                    allowCustomInput={true}
+                    options={branches}
+                    value={formData.branches}
+                    onValueChange={(value: string) => {
+                      setFormData({ ...formData, branches: value });
+                      if (value) {
+                        focusNextInput("automation");
+                      }
+                    }}
+                    onEnterPress={() => {
+                      if (formData.branches) {
+                        focusNextInput("automation");
+                      }
+                    }}
+                    placeholder=" "
+                    labelText={labels.branchesTooltip}
+                    className="relative"
+                    styles={{
+                      input: {
+                        borderColor: "var(--primary)",
+                        "&:focus": {
+                          borderColor: "var(--primary)",
+                        },
+                      },
+                    }}
+                  />
+                </div>
+              )}
+
+              {canEdit && (
+                <div className="md:col-span-3 space-y-2 relative">
+                  <Autocomplete
+                    ref={(el: any) => setRef("automation")(el)}
+                    id="automation"
+                    name="automation"
+                    options={[labels.no, labels.yes]}
+                    value={
+                      formData.automation === true ? labels.yes : labels.no
                     }
-                    labelText="Confirm Password"
-                    tooltipText="Confirm the user's password"
-                    type="password"
-                    required
+                    labelClassName="rounded-lg"
+                    isSelectableOnly={true}
+                    onValueChange={(value: string) => {
+                      const isYes = value === labels.yes;
+                      setIsDefaultState(isYes ? "Yes" : "No");
+                      const newValue = isYes;
+                      setFormData((prev) => ({
+                        ...prev,
+                        automation: newValue,
+                      }));
+                      focusNextInput("status");
+                    }}
+                    onEnterPress={() => {
+                      if (
+                        formData.automation === true ||
+                        formData.automation === false
+                      ) {
+                        focusNextInput("status");
+                      }
+                    }}
+                    placeholder=" "
+                    labelText={labels.automationTooltip}
+                    className="relative"
+                    styles={{
+                      input: {
+                        borderColor: "var(--primary)",
+                        "&:focus": {
+                          borderColor: "var(--primary)",
+                        },
+                      },
+                    }}
                   />
                 </div>
               )}
 
-              {/* OTP field - only show if user can edit */}
-              {otp && (
-                <div className="space-y-2">
-                  <EditableInput
-                    setRef={setRef("otp")}
-                    id="otp"
-                    name="otp"
-                    value={formData.otp || ""}
-                    onChange={handleChange}
-                    onNext={() => focusNextInput("facebook")}
-                    onCancel={() => setFormData({ ...formData, otp: "" })}
-                    labelText="OTP"
-                    tooltipText="Enter OTP (optional)"
-                    type="text"
+              {canEdit && (
+                <div className="md:col-span-3 space-y-2">
+                  <Autocomplete
+                    ref={(el: any) => setRef("status")(el)}
+                    id="status"
+                    name="status"
+                    allowCustomInput={true}
+                    options={statuses}
+                    value={formData.status}
+                    onValueChange={(value: string) => {
+                      setFormData({ ...formData, status: value });
+                      if (value) {
+                        focusNextInput("language");
+                      }
+                    }}
+                    onEnterPress={() => {
+                      if (formData.status) {
+                        focusNextInput("language");
+                      }
+                    }}
+                    placeholder=" "
+                    labelText={labels.statusTooltip}
+                    className="relative"
+                    styles={{
+                      input: {
+                        borderColor: "var(--primary)",
+                        "&:focus": {
+                          borderColor: "var(--primary)",
+                        },
+                      },
+                    }}
+                  />
+                </div>
+              )}
+              {canEdit && (
+                <div className="md:col-span-3 space-y-2">
+                  <Autocomplete
+                    ref={(el: any) => setRef("language")(el)}
+                    id="language"
+                    name="language"
+                    allowCustomInput={true}
+                    options={languages}
+                    value={formData.language}
+                    onValueChange={(value: string) => {
+                      setFormData({ ...formData, language: value });
+                      if (value) {
+                        focusNextInput("mobile");
+                      }
+                    }}
+                    onEnterPress={() => {
+                      if (formData.language) {
+                        focusNextInput("mobile");
+                      }
+                    }}
+                    placeholder=" "
+                    labelText={labels.languageTooltip}
+                    className="relative"
+                    styles={{
+                      input: {
+                        borderColor: "var(--primary)",
+                        "&:focus": {
+                          borderColor: "var(--primary)",
+                        },
+                      },
+                    }}
                   />
                 </div>
               )}
 
-              {/* Facebook field - only show if user can edit */}
-              {facebook && (
-                <div className="space-y-2">
-                  <EditableInput
-                    setRef={setRef("facebook")}
-                    id="facebook"
-                    name="facebook"
-                    value={formData.facebook || ""}
-                    onChange={handleChange}
-                    onNext={() => focusNextInput("linkedin")}
-                    onCancel={() => setFormData({ ...formData, facebook: "" })}
-                    labelText="Facebook"
-                    tooltipText="Enter Facebook profile (optional)"
-                    type="text"
+              <div className="md:col-span-12 space-y-2 my-8 pt-4">
+                <h1 className="text-2xl font-bold text-primary">
+                  Contact Details
+                </h1>
+              </div>
+
+              {canEdit && (
+                <div className="md:col-span-3 space-y-2">
+                  <div className="relative">
+                    <EditableInput
+                      setRef={setRef("mobile")}
+                      id="mobile"
+                      name="mobile"
+                      value={formData.mobile}
+                      onChange={handleChange}
+                      onNext={() => focusNextInput("whatsapp")}
+                      onCancel={() => setFormData({ ...formData, mobile: "" })}
+                      labelText={labels.mobileTooltip}
+                      tooltipText={labels.mobileTooltip}
+                      required
+                    />
+                  </div>
+                </div>
+              )}
+              {canEdit && (
+                <div className="md:col-span-3 space-y-2">
+                  <div className="relative">
+                    <EditableInput
+                      setRef={setRef("whatsapp")}
+                      id="whatsapp"
+                      name="whatsapp"
+                      value={formData.whatsapp}
+                      onChange={handleChange}
+                      onNext={() => focusNextInput("fax")}
+                      onCancel={() =>
+                        setFormData({ ...formData, whatsapp: "" })
+                      }
+                      labelText={labels.whatsappTooltip}
+                      tooltipText={labels.whatsappTooltip}
+                      required
+                    />
+                  </div>
+                </div>
+              )}
+              {canEdit && (
+                <div className="md:col-span-3 space-y-2">
+                  <div className="relative">
+                    <EditableInput
+                      setRef={setRef("fax")}
+                      id="fax"
+                      name="fax"
+                      value={formData.fax}
+                      onChange={handleChange}
+                      onNext={() => focusNextInput("email")}
+                      onCancel={() => setFormData({ ...formData, fax: "" })}
+                      labelText={labels.faxTooltip}
+                      tooltipText={labels.faxTooltip}
+                      required
+                    />
+                  </div>
+                </div>
+              )}
+              {canEdit && (
+                <div className="md:col-span-3 space-y-2">
+                  <div className="relative">
+                    <EditableInput
+                      setRef={setRef("email")}
+                      id="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      onNext={() => focusNextInput("country")}
+                      onCancel={() => setFormData({ ...formData, email: "" })}
+                      labelText={labels.emailTooltip}
+                      tooltipText={labels.emailTooltip}
+                      required
+                    />
+                  </div>
+                </div>
+              )}
+
+              {canEdit && (
+                <div className="md:col-span-3 space-y-2">
+                  <Autocomplete
+                    ref={(el: any) => setRef("country")(el)}
+                    id="country"
+                    name="country"
+                    allowCustomInput={true}
+                    options={countriesNames}
+                    value={formData.country}
+                    onValueChange={(value: string) => {
+                      setFormData({ ...formData, country: value });
+                      if (value) {
+                        focusNextInput("state");
+                      }
+                    }}
+                    onEnterPress={() => {
+                      if (formData.country) {
+                        focusNextInput("state");
+                      }
+                    }}
+                    placeholder=" "
+                    labelText={labels.countryNameTooltip}
+                    className="relative"
+                    styles={{
+                      input: {
+                        borderColor: "var(--primary)",
+                        "&:focus": {
+                          borderColor: "var(--primary)",
+                        },
+                      },
+                    }}
                   />
                 </div>
               )}
-            </div>
-
-            {/* Third Row: LinkedIn, Instagram, Default, Status */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
-              {/* LinkedIn field - only show if user can edit */}
-              {linkedin && (
-                <div className="space-y-2">
-                  <EditableInput
-                    setRef={setRef("linkedin")}
-                    id="linkedin"
-                    name="linkedin"
-                    value={formData.linkedin || ""}
-                    onChange={handleChange}
-                    onNext={() => focusNextInput("instagram")}
-                    onCancel={() => setFormData({ ...formData, linkedin: "" })}
-                    labelText="LinkedIn"
-                    tooltipText="Enter LinkedIn profile (optional)"
-                    type="text"
+              {canEdit && (
+                <div className="md:col-span-3 space-y-2">
+                  <Autocomplete
+                    ref={(el: any) => setRef("state")(el)}
+                    id="state"
+                    name="state"
+                    allowCustomInput={true}
+                    options={states}
+                    value={formData.state}
+                    onValueChange={(value: string) => {
+                      setFormData({ ...formData, state: value });
+                      if (value) {
+                        focusNextInput("state");
+                      }
+                    }}
+                    onEnterPress={() => {
+                      if (formData.state) {
+                        focusNextInput("city");
+                      }
+                    }}
+                    placeholder=" "
+                    labelText={labels.stateTooltip}
+                    className="relative"
+                    styles={{
+                      input: {
+                        borderColor: "var(--primary)",
+                        "&:focus": {
+                          borderColor: "var(--primary)",
+                        },
+                      },
+                    }}
                   />
                 </div>
               )}
 
-              {/* Instagram field - only show if user can edit */}
-              {instagram && (
-                <div className="space-y-2">
-                  <EditableInput
-                    setRef={setRef("instagram")}
-                    id="instagram"
-                    name="instagram"
-                    value={formData.instagram || ""}
-                    onChange={handleChange}
-                    onNext={() => focusNextInput("isDefault")}
-                    onCancel={() => setFormData({ ...formData, instagram: "" })}
-                    labelText="Instagram"
-                    tooltipText="Enter Instagram profile (optional)"
-                    type="text"
+              {canEdit && (
+                <div className="md:col-span-3 space-y-2">
+                  <Autocomplete
+                    ref={(el: any) => setRef("city")(el)}
+                    id="city"
+                    name="city"
+                    allowCustomInput={true}
+                    options={cities}
+                    value={formData.city}
+                    onValueChange={(value: string) => {
+                      setFormData({ ...formData, city: value });
+                      if (value) {
+                        focusNextInput("area");
+                      }
+                    }}
+                    onEnterPress={() => {
+                      if (formData.city) {
+                        focusNextInput("area");
+                      }
+                    }}
+                    placeholder=" "
+                    labelText={labels.cityTooltip}
+                    className="relative"
+                    styles={{
+                      input: {
+                        borderColor: "var(--primary)",
+                        "&:focus": {
+                          borderColor: "var(--primary)",
+                        },
+                      },
+                    }}
                   />
                 </div>
               )}
 
-              {/* Default field - only show if user can edit */}
+              {canEdit && (
+                <div className="md:col-span-3 space-y-2">
+                  <Autocomplete
+                    ref={(el: any) => setRef("area")(el)}
+                    id="area"
+                    name="area"
+                    allowCustomInput={true}
+                    options={areas}
+                    value={formData.area}
+                    onValueChange={(value: string) => {
+                      setFormData({ ...formData, area: value });
+                      if (value) {
+                        focusNextInput("website");
+                      }
+                    }}
+                    onEnterPress={() => {
+                      if (formData.area) {
+                        focusNextInput("website");
+                      }
+                    }}
+                    placeholder=" "
+                    labelText={labels.areaTooltip}
+                    className="relative"
+                    styles={{
+                      input: {
+                        borderColor: "var(--primary)",
+                        "&:focus": {
+                          borderColor: "var(--primary)",
+                        },
+                      },
+                    }}
+                  />
+                </div>
+              )}
+
+              <div className="md:col-span-12 space-y-2 my-8 pt-4">
+                <h1 className="text-2xl font-bold text-primary">
+                  Important Links
+                </h1>
+              </div>
+
+              {canEdit && (
+                <div className="md:col-span-3 space-y-2">
+                  <div className="relative">
+                    <EditableInput
+                      setRef={setRef("website")}
+                      id="website"
+                      name="website"
+                      value={formData.website}
+                      onChange={handleChange}
+                      onNext={() => focusNextInput("facebook")}
+                      onCancel={() => setFormData({ ...formData, website: "" })}
+                      labelText={labels.websiteTooltip}
+                      tooltipText={labels.websiteTooltip}
+                      required
+                    />
+                  </div>
+                </div>
+              )}
+
+              {canEdit && (
+                <div className="md:col-span-3 space-y-2">
+                  <div className="relative">
+                    <EditableInput
+                      setRef={setRef("facebook")}
+                      id="facebook"
+                      name="facebook"
+                      value={formData.facebook}
+                      onChange={handleChange}
+                      onNext={() => focusNextInput("instagram")}
+                      onCancel={() =>
+                        setFormData({ ...formData, facebook: "" })
+                      }
+                      labelText={labels.facebookTooltip}
+                      tooltipText={labels.facebookTooltip}
+                      required
+                    />
+                  </div>
+                </div>
+              )}
+
+              {canEdit && (
+                <div className="md:col-span-3 space-y-2">
+                  <div className="relative">
+                    <EditableInput
+                      setRef={setRef("instagram")}
+                      id="instagram"
+                      name="instagram"
+                      value={formData.instagram}
+                      onChange={handleChange}
+                      onNext={() => focusNextInput("linkedin")}
+                      onCancel={() =>
+                        setFormData({ ...formData, instagram: "" })
+                      }
+                      labelText={labels.instagramTooltip}
+                      tooltipText={labels.instagramTooltip}
+                      required
+                    />
+                  </div>
+                </div>
+              )}
+
+              {canEdit && (
+                <div className="md:col-span-3 space-y-2">
+                  <div className="relative">
+                    <EditableInput
+                      setRef={setRef("linkedin")}
+                      id="linkedin"
+                      name="linkedin"
+                      value={formData.linkedin}
+                      onChange={handleChange}
+                      onNext={() => focusNextInput("location")}
+                      onCancel={() =>
+                        setFormData({ ...formData, linkedin: "" })
+                      }
+                      labelText={labels.linkedinTooltip}
+                      tooltipText={labels.linkedinTooltip}
+                      required
+                    />
+                  </div>
+                </div>
+              )}
+
+              {canEdit && (
+                <div className="md:col-span-3 space-y-2">
+                  <div className="relative">
+                    <EditableInput
+                      setRef={setRef("location")}
+                      id="location"
+                      name="location"
+                      value={formData.location}
+                      onChange={handleChange}
+                      onNext={() => focusNextInput("notes")}
+                      onCancel={() =>
+                        setFormData({ ...formData, location: "" })
+                      }
+                      labelText={labels.locationTooltip}
+                      tooltipText={labels.locationTooltip}
+                      required
+                    />
+                  </div>
+                </div>
+              )}
+
+              {canEdit && (
+                <div className="md:col-span-3 space-y-2">
+                  <div className="relative">
+                    <EditableInput
+                      setRef={setRef("notes")}
+                      id="notes"
+                      name="notes"
+                      value={formData.notes}
+                      onChange={handleChange}
+                      onNext={() => focusNextInput("isDefault")}
+                      onCancel={() => setFormData({ ...formData, notes: "" })}
+                      labelText={labels.notesTooltip}
+                      tooltipText={labels.notesTooltip}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Default field - only show if user can create */}
               {isDefault && (
-                <div className="space-y-2 relative">
+                <div className="md:col-span-3 space-y-2 relative">
                   <SwitchSelect
                     ref={(el: any) => setRef("isDefault")(el)}
                     id="isDefault"
@@ -723,48 +1298,48 @@ export default function UserEditPage({ isEdit = true }: Props) {
                     multiSelect={false}
                     options={[
                       {
-                        label: "Yes",
-                        value: "Yes",
-                        date: "Set default user",
+                        label: labels.yes,
+                        value: labels.yes,
+                        date: "Set default leads",
                       },
                       {
-                        label: "No",
-                        value: "No",
-                        date: "Remove default user",
+                        label: labels.no,
+                        value: labels.no,
+                        date: "Remove default leads",
                       },
                     ]}
-                    value={isDefaultState === "Yes" ? "Yes" : "No"}
+                    value={isDefaultState === "Yes" ? labels.yes : labels.no}
                     labelClassName="rounded-lg"
                     onValueChange={(value: string | string[]) => {
                       const isYes = Array.isArray(value)
-                        ? value[0] === "Yes"
-                        : value === "Yes";
+                        ? value[0] === labels.yes
+                        : value === labels.yes;
                       setIsDefaultState(isYes ? "Yes" : "No");
                       const newValue = isYes;
                       setFormData((prev) => ({
                         ...prev,
                         isDefault: newValue,
                       }));
-                      focusNextInput("status");
+                      focusNextInput("isDraft");
                     }}
                     onEnterPress={() => {
                       if (
                         formData.isDefault === true ||
                         formData.isDefault === false
                       ) {
-                        focusNextInput("status");
+                        focusNextInput("isDraft");
                       }
                     }}
                     placeholder=" "
                     labelText="Default"
                     className="relative"
-                    tooltipText="Set as default user"
+                    tooltipText="Set as default leads"
                   />
                 </div>
               )}
 
               {/* Status field */}
-              <div className="space-y-2">
+              <div className="md:col-span-3 space-y-2">
                 <SwitchSelect
                   ref={(el: any) => setRef("status")(el)}
                   id="status"
@@ -810,12 +1385,12 @@ export default function UserEditPage({ isEdit = true }: Props) {
                       },
                     },
                   }}
-                  tooltipText="Set the user status"
+                  tooltipText="Set the leads status"
                 />
               </div>
             </div>
 
-            {/* Actions Row */}
+            {/* Status and Actions Row */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
               {/* Actions */}
               <div className="space-y-2">
@@ -867,7 +1442,7 @@ export default function UserEditPage({ isEdit = true }: Props) {
                       },
                     },
                   }}
-                  tooltipText="User Action History"
+                  tooltipText="Leads Action History"
                 />
               </div>
             </div>
@@ -879,11 +1454,22 @@ export default function UserEditPage({ isEdit = true }: Props) {
         opened={isResetModalOpen}
         onClose={() => setIsResetModalOpen(false)}
         onConfirm={handleReset}
-        title="Reset Form"
-        message="Are you sure you want to reset the form?"
-        confirmText="Reset"
-        cancelText="Cancel"
+        title={labels.resetForm}
+        message={labels.resetFormMessage}
+        confirmText={labels.resetFormConfirm}
+        cancelText={labels.cancel}
       />
+
+      {/* Options Modal */}
+      <Modal
+        opened={isOptionModalOpen}
+        onClose={() => setIsOptionModalOpen(false)}
+        title="Options"
+        size="xl"
+        overlayProps={{ backgroundOpacity: 0.55, blur: 3 }}
+      >
+        <div className="pt-5 pb-14 px-5">Modal Content</div>
+      </Modal>
     </>
   );
 }

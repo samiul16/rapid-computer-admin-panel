@@ -584,12 +584,6 @@ import CommissionCreatePage from "./pages/Commission/CreatePage";
 import CommissionEditPage from "./pages/Commission/EditPage";
 
 // Leads
-import LeadsPage from "./pages/new-leads/LeadsPage";
-import LeadsDetailsPage from "./pages/new-leads/LeadsDetailsPage";
-import LeadsEditPage from "./pages/new-leads/EditPage";
-import LeadsCreatePage from "./pages/new-leads/CreatePage";
-
-// Leads
 import NewLeadsPage from "./pages/leads/LeadsPage";
 import NewLeadsDetailsPage from "./pages/leads/LeadsDetails";
 import NewLeadsEditPage from "./pages/leads/EditPage";
@@ -1639,16 +1633,6 @@ function App() {
                 {/* Users Location */}
                 <Route path="/users-location" element={<UsersLocationPage />} />
 
-                {/* leads => leads */}
-                <Route path="/leads" element={<LeadsPage />} />
-                <Route path="/leads/:id" element={<LeadsDetailsPage />} />
-                <Route path="/leads/create" element={<LeadsCreatePage />} />
-                <Route
-                  path="/leads/edit/:id"
-                  element={<LeadsEditPage isEdit={true} />}
-                />
-                <Route path="/leads/view" element={<LeadsDetailsPage />} />
-
                 {/* Lead Sources */}
                 <Route path="/lead-sources" element={<LeadSourcesPage />} />
                 <Route
@@ -2014,14 +1998,18 @@ function App() {
                 />
 
                 {/* Leads */}
-                <Route path="/lead" element={<NewLeadsPage />} />
-                <Route path="/lead/:id" element={<NewLeadsDetailsPage />} />
-                <Route path="/lead/create" element={<NewLeadsCreatePage />} />
+                <Route path="/leads" element={<NewLeadsPage />} />
+                <Route path="/leads/:id" element={<NewLeadsDetailsPage />} />
+                <Route path="/leads/create" element={<NewLeadsCreatePage />} />
                 <Route
-                  path="/lead/edit/:id"
+                  path="/leads/edit/:id"
                   element={<NewLeadsEditPage isEdit={true} />}
                 />
-                <Route path="/lead/view" element={<NewLeadsDetailsPage />} />
+                <Route
+                  path="/leads/:id/edit"
+                  element={<NewLeadsEditPage isEdit={true} />}
+                />
+                <Route path="/leads/view" element={<NewLeadsDetailsPage />} />
 
                 {/* Assets Master */}
                 <Route path="/assets-master" element={<AssetsMasterPage />} />
@@ -5939,16 +5927,6 @@ function App() {
                   element={<CheckoutEditPage isEdit={true} />}
                 />
                 <Route path="/checkout/view" element={<CheckoutDetails />} />
-
-                {/* Leads */}
-                <Route path="/leads" element={<LeadsPage />} />
-                <Route path="/leads/:id" element={<LeadsDetailsPage />} />
-                <Route path="/leads/create" element={<LeadsCreatePage />} />
-                <Route
-                  path="/leads/edit/:id"
-                  element={<LeadsEditPage isEdit={true} />}
-                />
-                <Route path="/leads/view" element={<LeadsDetailsPage />} />
 
                 {/* House Keepers */}
                 <Route path="/house-keepers" element={<HouseKeepersPage />} />

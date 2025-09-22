@@ -376,7 +376,7 @@ export const ActionsAutocomplete = forwardRef<
         {isOpen &&
           createPortal(
             <div
-              className="fixed bg-white border border-gray-300 rounded-md shadow-lg max-h-80 overflow-x-auto overflow-y-scroll grid-scroll"
+              className="fixed bg-white border border-gray-300 rounded-md shadow-lg max-h-80 overflow-x-auto overflow-y-scroll grid-scroll z-40"
               style={{
                 top: dropdownPosition.top,
                 left: dropdownPosition.left,
