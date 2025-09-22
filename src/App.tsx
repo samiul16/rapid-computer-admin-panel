@@ -20,10 +20,10 @@ import UserCreatePage from "./pages/users/CreatePage";
 import UserEditPage from "./pages/users/EditPage";
 
 // user master
+import UserMasterPage from "./pages/user-master/UsersMasterPage";
+import UserMasterDetails from "./pages/user-master/UsersMasterDetails";
 import UserMasterCreatePage from "./pages/user-master/CreatePage";
 import UserMasterEditPage from "./pages/user-master/EditPage";
-import UserMasterDetails from "./pages/user-master/UserMasterDetailsPage";
-import UserMasterPage from "./pages/user-master/UserMasterPage";
 
 // cities
 import CityPage from "./pages/city/CitiesPage";
@@ -1608,29 +1608,6 @@ function App() {
 
                 {/* Users */}
 
-                {/* Users Master */}
-                <Route path="/user-master" element={<UserMasterPage />} />
-                <Route
-                  path="/user-master/:id"
-                  element={<UserMasterDetails />}
-                />
-                <Route
-                  path="/user-master/create"
-                  element={<UserMasterCreatePage isEdit={false} />}
-                />
-                <Route
-                  path="/user-master/:id/edit"
-                  element={<UserMasterCreatePage isEdit={true} />}
-                />
-                <Route
-                  path="/user-master/edit/:id"
-                  element={<UserMasterEditPage isEdit={true} />}
-                />
-                <Route
-                  path="/user-master/view"
-                  element={<UserMasterDetails />}
-                />
-
                 {/* Permissions */}
                 <Route path="/permissions" element={<PermissionsPage />} />
                 <Route
@@ -2006,6 +1983,29 @@ function App() {
                   element={<UserEditPage isEdit={true} />}
                 />
                 <Route path="/users/view" element={<UserDetailsPage />} />
+
+                {/* Users Master */}
+                <Route path="/user-master" element={<UserMasterPage />} />
+                <Route
+                  path="/user-master/:id"
+                  element={<UserMasterDetails />}
+                />
+                <Route
+                  path="/user-master/create"
+                  element={<UserMasterCreatePage isEdit={false} />}
+                />
+                <Route
+                  path="/user-master/:id/edit"
+                  element={<UserMasterCreatePage isEdit={true} />}
+                />
+                <Route
+                  path="/user-master/edit/:id"
+                  element={<UserMasterEditPage isEdit={true} />}
+                />
+                <Route
+                  path="/user-master/view"
+                  element={<UserMasterDetails />}
+                />
 
                 {/* Assets Master */}
                 <Route path="/assets-master" element={<AssetsMasterPage />} />

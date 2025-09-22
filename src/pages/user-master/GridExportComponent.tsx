@@ -16,6 +16,7 @@ import { exportToExcel } from "@/lib/exportToExcel";
 import { pdf } from "@react-pdf/renderer";
 import PDF from "@/components/common/pdf";
 import { toastError } from "@/lib/toast";
+import { Tooltip } from "@mantine/core";
 
 interface SimpleFilterProps {
   data: any[];
@@ -117,11 +118,13 @@ export default function SimpleFilterComponent({
               is_drafted: false,
             },
           ]}
-          title="User Master Details"
-          subtitle="User Master Information Report"
+          title="Country Details"
+          subtitle="Country Information Report"
         />
       ).toBlob();
+
       console.log("blob", blob);
+
       const url = URL.createObjectURL(blob);
       console.log("url", url);
       const a = document.createElement("a");
@@ -196,47 +199,135 @@ export default function SimpleFilterComponent({
 
         {/* Right Section - Export Options */}
         <div className="w-20 border-l bg-gray-50 dark:bg-gray-800 flex flex-col items-center py-3 gap-2 flex-shrink-0">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="w-14 h-14 rounded-full bg-gray-100 border-2 border-primary hover:scale-110 transition-all"
-            title="Print"
-            onClick={() => console.log("Print clicked")}
+          <Tooltip
+            label="Print"
+            position="top"
+            arrowSize={8}
+            withArrow
+            styles={{
+              tooltip: {
+                fontSize: "14px",
+                padding: "8px 12px",
+                backgroundColor: "#374151",
+                color: "white",
+                borderRadius: "6px",
+                fontWeight: "500",
+                boxShadow:
+                  "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+              },
+              arrow: {
+                backgroundColor: "#374151",
+              },
+            }}
           >
-            <Printer className="h-5 w-5 text-primary group-hover:text-white transition-colors" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="w-14 h-14 rounded-full bg-gray-100 dark:hover:bg-gray-700 border-2 border-primary hover:scale-110 transition-all"
-            title="Export to Excel"
-            onClick={() => handleExcel()}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="w-14 h-14 rounded-full bg-gray-100 border-2 border-primary hover:scale-110 transition-all"
+              title="Print"
+              onClick={() => console.log("Print clicked")}
+            >
+              <Printer className="h-5 w-5 text-primary group-hover:text-white transition-colors" />
+            </Button>
+          </Tooltip>
+          <Tooltip
+            label="Export to Excel"
+            position="top"
+            arrowSize={8}
+            withArrow
+            styles={{
+              tooltip: {
+                fontSize: "14px",
+                padding: "8px 12px",
+                backgroundColor: "#374151",
+                color: "white",
+                borderRadius: "6px",
+                fontWeight: "500",
+                boxShadow:
+                  "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+              },
+              arrow: {
+                backgroundColor: "#374151",
+              },
+            }}
           >
-            <FileSpreadsheet className="h-5 w-5 text-primary" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="w-14 h-14 rounded-full bg-gray-100 dark:hover:bg-gray-700 border-2 border-primary hover:scale-110 transition-all"
-            title="Export to PDF"
-            onClick={() => handleExport()}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="w-14 h-14 rounded-full bg-gray-100 dark:hover:bg-gray-700 border-2 border-primary hover:scale-110 transition-all"
+              title="Export to Excel"
+              onClick={() => handleExcel()}
+            >
+              <FileSpreadsheet className="h-5 w-5 text-primary" />
+            </Button>
+          </Tooltip>
+          <Tooltip
+            label="Export to PDF"
+            position="top"
+            arrowSize={8}
+            withArrow
+            styles={{
+              tooltip: {
+                fontSize: "14px",
+                padding: "8px 12px",
+                backgroundColor: "#374151",
+                color: "white",
+                borderRadius: "6px",
+                fontWeight: "500",
+                boxShadow:
+                  "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+              },
+              arrow: {
+                backgroundColor: "#374151",
+              },
+            }}
           >
-            <FileText className="h-5 w-5 text-primary" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="w-14 h-14 rounded-full bg-gray-100 dark:hover:bg-gray-700 border-2 border-primary hover:scale-110 transition-all"
-            title="Export to CSV"
-            onClick={() => handleCSV()}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="w-14 h-14 rounded-full bg-gray-100 dark:hover:bg-gray-700 border-2 border-primary hover:scale-110 transition-all"
+              title="Export to PDF"
+              onClick={() => handleExport()}
+            >
+              <FileText className="h-5 w-5 text-primary" />
+            </Button>
+          </Tooltip>
+          <Tooltip
+            label="Export to CSV"
+            position="top"
+            arrowSize={8}
+            withArrow
+            styles={{
+              tooltip: {
+                fontSize: "14px",
+                padding: "8px 12px",
+                backgroundColor: "#374151",
+                color: "white",
+                borderRadius: "6px",
+                fontWeight: "500",
+                boxShadow:
+                  "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+              },
+              arrow: {
+                backgroundColor: "#374151",
+              },
+            }}
           >
-            <Download className="h-5 w-5 text-primary" />
-          </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="w-14 h-14 rounded-full bg-gray-100 dark:hover:bg-gray-700 border-2 border-primary hover:scale-110 transition-all"
+              title="Export to CSV"
+              onClick={() => handleCSV()}
+            >
+              <Download className="h-5 w-5 text-primary" />
+            </Button>
+          </Tooltip>
         </div>
       </div>
 
       {/* Bottom Bar - Full Width */}
-      <div className="border-t px-3 py-2 flex-shrink-0">
+      <div className="border-t px-3 py-2 flex-shrink-0 mb-2">
         <div className="flex justify-between">
           <Button
             variant="outline"

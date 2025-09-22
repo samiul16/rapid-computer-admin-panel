@@ -1,82 +1,117 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useRef, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { useTranslation } from "react-i18next";
-import { Check, Edit, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useSelector } from "react-redux";
-import type { RootState } from "@/store";
-
-import PhoneInput from "react-phone-number-input";
-import "react-phone-number-input/style.css";
-
-import EditableInput from "@/components/common/EditableInput";
-import { Autocomplete } from "@/components/common/Autocomplete";
 import video from "@/assets/videos/test.mp4";
+import EditableInput from "@/components/common/EditableInput";
 import GenericPDF from "@/components/common/pdf";
-import { printHtmlContent } from "@/lib/printHtmlContent";
-import { toastError, toastSuccess } from "@/lib/toast";
-import { pdf } from "@react-pdf/renderer";
-import { PrintCommonLayout } from "@/lib/printContents/PrintCommonLayout";
-import LanguageTranslatorModal from "@/components/common/LanguageTranslatorModel";
-import PageLayout from "@/components/common/PageLayout";
 import { ResetFormModal } from "@/components/common/ResetFormModal";
-import { usePermission } from "@/hooks/usePermissions";
-import type { UserMasterData } from "@/types/userMaster.types";
-import {
-  initialUserMasterData,
-  mockUserMasterData,
-} from "@/mockData/userMaster-mockdata";
+import { Button } from "@/components/ui/button";
+import { PrintCommonLayout } from "@/lib/printContents/PrintCommonLayout";
+import { printHtmlContent } from "@/lib/printHtmlContent";
+import { toastError, toastRestore, toastSuccess } from "@/lib/toast";
+import { pdf } from "@react-pdf/renderer";
+import { Check, Eye, Plus } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useUsersPermissions, usePermission } from "@/hooks/usePermissions";
+// import { useLanguageLabels } from "@/hooks/useLanguageLabels";
+import { useAppSelector } from "@/store/hooks";
+import MinimizablePageLayout from "@/components/MinimizablePageLayout";
+import { useMinimizedModuleData } from "@/hooks/useMinimizedModuleData";
+import { SwitchSelect } from "@/components/common/SwitchAutoComplete";
+import { ActionsAutocomplete } from "@/components/common/ActionsAutocomplete";
+
+type UserData = {
+  name: string;
+  isDefault: boolean;
+  isStatusActive: boolean;
+  isActive: boolean;
+  isDraft: boolean;
+  isDeleted: boolean;
+  createdAt: Date | null;
+  draftedAt: Date | null;
+  updatedAt: Date | null;
+  deletedAt: Date | null;
+};
+
+type UserModuleData = {
+  formData: UserData;
+  hasChanges: boolean;
+  scrollPosition: number;
+};
 
 type Props = {
   isEdit?: boolean;
 };
 
-export default function UserMasterEditPage({ isEdit = true }: Props) {
-  const { id } = useParams<{ id: string }>();
-  const { t } = useTranslation();
+const initialData: UserData = {
+  name: "John Doe",
+  isDefault: false,
+  isStatusActive: true,
+  isActive: true,
+  isDraft: false,
+  isDeleted: false,
+  createdAt: new Date(),
+  draftedAt: null,
+  updatedAt: new Date(),
+  deletedAt: null,
+};
+
+export default function UserEditPage({ isEdit = true }: Props) {
   const navigate = useNavigate();
-  const { isRTL } = useSelector((state: RootState) => state.language);
+  const { id } = useParams();
+  // const labels = useLanguageLabels();
+  const { isRTL } = useAppSelector((state) => state.language);
+
+  // Get module ID for this edit page
+  const moduleId = `user-edit-module-${id || "new"}`;
+
+  // Use the custom hook for minimized module data
+  const {
+    moduleData,
+    hasMinimizedData,
+    resetModuleData,
+    getModuleScrollPosition,
+  } = useMinimizedModuleData<UserModuleData>(moduleId);
 
   const [keepCreating, setKeepCreating] = useState(false);
-  const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const [isDefaultState, setIsDefaultState] = useState<"Yes" | "No" | string>(
+    "No"
+  );
+  const [statusState, setStatusState] = useState<"Active" | "Draft" | string>(
+    "Active"
+  );
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
-
-  // Permission checks
-  const canCreate: boolean = usePermission("userMaster", "create");
-  const canView: boolean = usePermission("userMaster", "view");
-
-  // Field-level permissions
-  const name: boolean = usePermission("userMaster", "edit", "name");
-  const mobileNumber: boolean = usePermission(
-    "userMaster",
-    "edit",
-    "mobileNumber"
-  );
-  const email: boolean = usePermission("userMaster", "edit", "email");
-  const password: boolean = usePermission("userMaster", "edit", "password");
-  const confirmPassword: boolean = usePermission(
-    "userMaster",
-    "edit",
-    "confirmPassword"
-  );
-  const otp: boolean = usePermission("userMaster", "edit", "otp");
-  const facebook: boolean = usePermission("userMaster", "edit", "facebook");
-  const linkedin: boolean = usePermission("userMaster", "edit", "linkedin");
-  const instagram: boolean = usePermission("userMaster", "edit", "instagram");
-
-  const userType: boolean = usePermission("userMaster", "edit", "userType");
-
-  const canPdf: boolean = usePermission("userMaster", "pdf");
-  const canPrint: boolean = usePermission("userMaster", "print");
-
-  console.log("canCreate", canCreate);
-  console.log("canView", canView);
-  console.log("canPdf", canPdf);
-  console.log("canPrint", canPrint);
-
   const [printEnabled, setPrintEnabled] = useState(false);
   const [pdfChecked, setPdfChecked] = useState(false);
+  const [formKey, setFormKey] = useState(0);
+  const [isRestoredFromMinimized, setIsRestoredFromMinimized] = useState(false);
+  const [shouldRestoreFromMinimized, setShouldRestoreFromMinimized] =
+    useState(false);
+  const [isStatusActive] = useState<boolean>(true);
+  const [selectedAction, setSelectedAction] = useState<string>("");
+
+  // Permission checks
+  const { canCreate, canView } = useUsersPermissions();
+
+  // Field-level permissions
+  const userName: boolean = usePermission("users", "edit", "userName");
+  const isDefault: boolean = usePermission("users", "edit", "isDefault");
+  const canPdf: boolean = usePermission("users", "pdf");
+  const canPrint: boolean = usePermission("users", "print");
+
+  // Form state
+  const [formData, setFormData] = useState<UserData>({
+    name: "",
+    isDefault: false,
+    isStatusActive: true,
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    createdAt: null,
+    draftedAt: null,
+    updatedAt: null,
+    deletedAt: null,
+  });
 
   // focus next input field
   const inputRefs = useRef<Record<string, HTMLElement | null>>({});
@@ -87,122 +122,161 @@ export default function UserMasterEditPage({ isEdit = true }: Props) {
     inputRefs.current[nextField]?.focus();
   };
 
-  // Form state
-  const [formData, setFormData] = useState<UserMasterData>(
-    initialUserMasterData
-  );
+  // Check for restore flag from taskbar
+  useEffect(() => {
+    const shouldRestore = localStorage.getItem(`restore-${moduleId}`);
+    if (shouldRestore === "true") {
+      setShouldRestoreFromMinimized(true);
+      localStorage.removeItem(`restore-${moduleId}`);
+    }
+  }, [moduleId]);
 
-  // User type options
-  const userTypeOptions = [
-    { value: "super_admin", label: "Super Admin" },
-    { value: "admin", label: "Admin" },
-    { value: "super_user", label: "Super User" },
-    { value: "user", label: "User" },
-  ];
+  // Restore logic using the custom hook
+  useEffect(() => {
+    const shouldAutoRestore =
+      shouldRestoreFromMinimized ||
+      (hasMinimizedData &&
+        moduleData?.formData &&
+        !isRestoredFromMinimized &&
+        !formData.name);
 
-  const [popoverOptions, setPopoverOptions] = useState([
-    {
-      label: isEdit ? "Create" : "Edit",
-      icon: isEdit ? (
-        <Plus className="w-5 h-5 text-green-500" />
-      ) : (
-        <Edit className="w-5 h-5 text-blue-500" />
-      ),
-      onClick: () => {
-        if (isEdit) {
-          navigate("/user-master/create");
-        } else {
-          navigate("/user-master/edit/undefined");
-        }
-      },
-      show: canCreate,
-    },
-    {
-      label: "View",
-      icon: <Check className="w-5 h-5 text-green-600" />,
-      onClick: () => {
-        navigate("/user-master/view");
-      },
-      show: canView,
-    },
+    if (hasMinimizedData && moduleData?.formData && shouldAutoRestore) {
+      setFormData(moduleData.formData);
+
+      // Restore UI states based on form data
+      setIsDefaultState(moduleData.formData.isDefault ? "Yes" : "No");
+      if (moduleData.formData.isDeleted) {
+        setStatusState("Delete");
+      } else if (moduleData.formData.isDraft) {
+        setStatusState("Draft");
+      } else {
+        setStatusState("Active");
+      }
+
+      setIsRestoredFromMinimized(true);
+      setShouldRestoreFromMinimized(false);
+
+      // Restore scroll position
+      const scrollPosition = getModuleScrollPosition(moduleId);
+      if (scrollPosition) {
+        setTimeout(() => {
+          window.scrollTo(0, scrollPosition);
+        }, 200);
+      }
+    }
+  }, [
+    hasMinimizedData,
+    moduleData,
+    isRestoredFromMinimized,
+    shouldRestoreFromMinimized,
+    formData.name,
+    moduleId,
+    getModuleScrollPosition,
   ]);
 
   // Initialize with edit data if available
   useEffect(() => {
-    if (id && id !== "undefined") {
-      // Use first mock data for edit
-      const fetchedData = mockUserMasterData[0] || initialUserMasterData;
-      setFormData({
-        ...fetchedData,
-      });
-    } else if (isEdit && mockUserMasterData.length > 0) {
-      setFormData({
-        ...mockUserMasterData[0],
-      });
+    if (
+      isEdit &&
+      initialData &&
+      !hasMinimizedData &&
+      !isRestoredFromMinimized
+    ) {
+      setFormData(initialData);
+      setIsDefaultState(initialData.isDefault ? "Yes" : "No");
+      if (initialData.isDeleted) {
+        setStatusState("Delete");
+      } else if (initialData.isDraft) {
+        setStatusState("Draft");
+      } else {
+        setStatusState("Active");
+      }
     }
-  }, [isEdit, id]);
+  }, [isEdit, hasMinimizedData, isRestoredFromMinimized, moduleId]);
+
+  // Handle form field changes
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type, checked } = e.target;
+    const newFormData = {
+      ...formData,
+      [name]: type === "checkbox" ? checked : value,
+    };
+    setFormData(newFormData);
+  };
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
 
     if (pdfChecked) {
       await handleExportPDF();
     }
     if (printEnabled) {
-      handlePrintUserMaster(formData);
+      handlePrintUser(formData);
     }
 
+    // keep switch functionality
     if (keepCreating) {
-      toastSuccess("User Master updated successfully!");
+      toastSuccess("User updated successfully!");
       handleReset();
     } else {
-      toastSuccess("User Master updated successfully!");
-      navigate("/user-master");
+      toastSuccess("User updated successfully!");
+      navigate("/users");
     }
+  };
+
+  // Update handleReset function to use the custom hook
+  const handleReset = async () => {
+    setFormData({
+      name: "",
+      isDefault: false,
+      isStatusActive: true,
+      isActive: true,
+      isDraft: false,
+      isDeleted: false,
+      createdAt: new Date(),
+      draftedAt: null,
+      updatedAt: new Date(),
+      deletedAt: null,
+    });
+    setIsDefaultState("No");
+    setStatusState("Active");
+    setIsRestoredFromMinimized(false);
+
+    if (formRef.current) {
+      formRef.current.reset();
+    }
+
+    // Force re-render of all inputs by changing key
+    setFormKey((prev) => prev + 1);
+
+    // Reset form data using the custom hook
+    if (hasMinimizedData) {
+      try {
+        await resetModuleData(moduleId);
+      } catch (error) {
+        console.error("Error resetting form data:", error);
+      }
+    }
+
+    // Focus the first input field after reset
+    setTimeout(() => {
+      inputRefs.current["name"]?.focus();
+    }, 100);
   };
 
   const handleResetClick = () => {
     setIsResetModalOpen(true);
   };
 
-  const [formKey, setFormKey] = useState(0);
-
-  // Handle form reset
-  const handleReset = () => {
-    setFormData(initialUserMasterData);
-    if (formRef.current) {
-      formRef.current.reset();
-    }
-    setFormKey((prev) => prev + 1);
-
-    setTimeout(() => {
-      inputRefs.current["name"]?.focus();
-    }, 100);
-  };
-
-  const handlePrintUserMaster = (userMasterData: any) => {
+  const handlePrintUser = (userData: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "User Master Details",
-        data: [userMasterData],
+        title: "User Details",
+        data: [userData],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
           name: "User Name",
-          mobileNumber: "Mobile Number",
-          email: "Email",
-          password: "Password",
-          confirmPassword: "Confirm Password",
-          otp: "OTP",
-          facebook: "Facebook",
-          linkedin: "LinkedIn",
-          instagram: "Instagram",
-          code: "Code",
-          state: "State",
-          country: "Country",
-          userType: "User Type",
-          status: "Status",
           isDefault: "Default User",
           isActive: "Active Status",
           isDraft: "Draft Status",
@@ -229,21 +303,19 @@ export default function UserMasterEditPage({ isEdit = true }: Props) {
   };
 
   const handleExportPDF = async () => {
-    console.log("Export PDF clicked");
     try {
-      console.log("userMasterData on pdf click", formData);
       const blob = await pdf(
         <GenericPDF
           data={[formData]}
-          title="User Master Details"
-          subtitle="User Master Report"
+          title="User Details"
+          subtitle="User Information"
         />
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "user-master-details.pdf";
+      a.download = "user-details.pdf";
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
@@ -252,9 +324,24 @@ export default function UserMasterEditPage({ isEdit = true }: Props) {
     }
   };
 
-  const handleSaveTranslations = (translationData: any) => {
-    console.log("Saved translations:", translationData);
-  };
+  const [popoverOptions, setPopoverOptions] = useState([
+    {
+      label: "Create",
+      icon: <Plus className="w-5 h-5 text-green-500" />,
+      onClick: () => {
+        navigate("/users/create");
+      },
+      show: canCreate,
+    },
+    {
+      label: "View",
+      icon: <Eye className="w-5 h-5 text-green-600" />,
+      onClick: () => {
+        navigate("/users/view");
+      },
+      show: canView,
+    },
+  ]);
 
   useEffect(() => {
     setPopoverOptions((prevOptions) => {
@@ -262,36 +349,48 @@ export default function UserMasterEditPage({ isEdit = true }: Props) {
         (opt) => opt.label !== "Draft"
       );
 
-      return [
-        ...filteredOptions,
-        {
-          label: "Draft",
-          icon: <Check className="text-green-500" />,
-          onClick: () => {
-            setFormData((prev) => ({
-              ...prev,
-              isDraft: true,
-            }));
-            toastSuccess("User Master saved as draft successfully");
+      if (!formData.isDraft) {
+        return [
+          ...filteredOptions,
+          {
+            label: "Draft",
+            icon: <Check className="text-green-500" />,
+            onClick: () => {
+              setFormData((prev) => ({
+                ...prev,
+                isDraft: true,
+              }));
+              toastRestore("User saved as draft successfully");
+            },
+            show: canCreate,
           },
-          show: canCreate,
-        },
-      ];
+        ];
+      }
+      return filteredOptions;
     });
-  }, [canCreate]);
+  }, [formData.isDraft, canCreate]);
 
-  const formRef = useRef<HTMLFormElement>(null);
+  // Create minimize handler using the custom hook
+  const handleMinimize = useCallback((): UserModuleData => {
+    return {
+      formData,
+      hasChanges: true,
+      scrollPosition: window.scrollY,
+    };
+  }, [formData]);
 
   return (
     <>
-      <PageLayout
-        title={
-          isEdit ? t("form.editingUserMaster") : t("form.creatingUserMaster")
-        }
-        videoSrc={video}
-        videoHeader="Rapid ERP Video"
-        listPath="/user-master"
+      <MinimizablePageLayout
+        moduleId={moduleId}
+        moduleName={`Edit User`}
+        moduleRoute={`/users/edit/${id || "new"}`}
+        onMinimize={handleMinimize}
+        title="Edit User"
+        listPath="users"
         popoverOptions={popoverOptions}
+        videoSrc={video}
+        videoHeader="Tutorial video"
         keepChanges={keepCreating}
         onKeepChangesChange={setKeepCreating}
         pdfChecked={pdfChecked}
@@ -299,23 +398,21 @@ export default function UserMasterEditPage({ isEdit = true }: Props) {
         printEnabled={printEnabled}
         onPrintToggle={canPrint ? handleSwitchChange : undefined}
         activePage="edit"
+        module="users"
         additionalFooterButtons={
           canCreate ? (
-            <div className="flex gap-4 items-center">
+            <div className="flex gap-4 max-[435px]:gap-2">
               <Button
                 variant="outline"
-                className="gap-2 text-primary bg-sky-200 hover:bg-primary rounded-full border-primary w-32 font-semibold!"
+                className="gap-2 hover:bg-primary/90 bg-white rounded-full border-primary w-28 max-[435px]:w-20 font-semibold! text-primary!"
                 onClick={handleResetClick}
               >
                 Reset
               </Button>
               <Button
-                ref={(el) => setRef("submitButton")(el as HTMLButtonElement)}
-                id="submitButton"
-                name="submitButton"
                 variant="outline"
-                className={`gap-2 text-primary rounded-full border-primary w-32 bg-sky-200 hover:bg-primary font-semibold!`}
-                onClick={() => formRef.current?.requestSubmit()}
+                className="gap-2 hover:bg-primary/90 bg-white rounded-full border-primary w-28 max-[435px]:w-20 font-semibold! text-primary!"
+                onClick={handleSubmit}
               >
                 Submit
               </Button>
@@ -329,126 +426,121 @@ export default function UserMasterEditPage({ isEdit = true }: Props) {
             ref={formRef}
             key={formKey}
             onSubmit={handleSubmit}
-            className="space-y-6 relative"
+            className="space-y-6"
           >
-            {/* First Row: Name, Mobile Number, Email, User Type */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
-              {/* Name field */}
-              {name && (
+            {/* First Row: User Name and Default */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-8">
+              {/* User Name field - only show if user can edit */}
+              {userName && (
                 <div className="space-y-2">
                   <EditableInput
                     setRef={setRef("name")}
                     id="name"
                     name="name"
                     value={formData.name}
-                    onChange={(e) => {
-                      setFormData({ ...formData, name: e.target.value });
-                      if (e.target.value) {
-                        focusNextInput("mobileNumber");
-                      }
-                    }}
-                    onNext={() => {
-                      if (formData.name) {
-                        focusNextInput("mobileNumber");
-                      }
-                    }}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("isDefault")}
                     onCancel={() => setFormData({ ...formData, name: "" })}
-                    labelText="Name"
-                    tooltipText="Enter user name"
+                    labelText="User Name"
+                    tooltipText="Enter the user's full name"
                     required
                   />
                 </div>
               )}
 
-              {/* Mobile Number field */}
-              {mobileNumber && (
-                <div className="space-y-2">
-                  <h3 className="font-medium mb-1">
-                    Mobile Number <span className="text-red-500">*</span>
-                  </h3>
-                  <div className="phone-input-wrapper">
-                    <PhoneInput
-                      international
-                      defaultCountry="US"
-                      value={formData.mobileNumber}
-                      onChange={(value) => {
-                        setFormData({ ...formData, mobileNumber: value || "" });
-                        if (value) {
-                          focusNextInput("email");
-                        }
-                      }}
-                      className="w-full"
-                      inputClassName="!w-full !h-10 !px-3 !border !border-gray-300 !rounded-md !focus:border-primary !focus:outline-none !focus:ring-1 !focus:ring-primary !text-sm"
-                      placeholder="Enter mobile number"
-                      style={
-                        {
-                          "--PhoneInput-color--focus": "var(--primary)",
-                        } as React.CSSProperties
-                      }
-                      onKeyDown={(e: React.KeyboardEvent) => {
-                        if (e.key === "Enter" && formData.mobileNumber) {
-                          focusNextInput("email");
-                        }
-                      }}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Email field */}
-              {email && (
-                <div className="space-y-2">
-                  <EditableInput
-                    setRef={setRef("email")}
-                    id="email"
-                    name="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => {
-                      setFormData({ ...formData, email: e.target.value });
-                      if (e.target.value) {
-                        focusNextInput("password");
-                      }
-                    }}
-                    onNext={() => {
-                      if (formData.email) {
-                        focusNextInput("password");
-                      }
-                    }}
-                    onCancel={() => setFormData({ ...formData, email: "" })}
-                    labelText="Email"
-                    tooltipText="Enter email address"
-                    required
-                  />
-                </div>
-              )}
-
-              {/* User Type field */}
-              {userType && (
-                <div className="space-y-2">
-                  <Autocomplete
-                    ref={(el: any) => setRef("userType")(el)}
-                    id="userType"
-                    name="userType"
-                    options={userTypeOptions}
-                    value={formData.userType || ""}
-                    onValueChange={(value: string) => {
-                      setFormData({ ...formData, userType: value });
-                      if (value) {
-                        focusNextInput("password");
-                      }
+              {/* Default field - only show if user can edit */}
+              {isDefault && (
+                <div className="space-y-2 relative">
+                  <SwitchSelect
+                    ref={(el: any) => setRef("isDefault")(el)}
+                    id="isDefault"
+                    name="isDefault"
+                    multiSelect={false}
+                    options={[
+                      {
+                        label: "Yes",
+                        value: "Yes",
+                        date: "Set default user",
+                      },
+                      {
+                        label: "No",
+                        value: "No",
+                        date: "Remove default user",
+                      },
+                    ]}
+                    value={isDefaultState === "Yes" ? "Yes" : "No"}
+                    labelClassName="rounded-lg"
+                    onValueChange={(value: string | string[]) => {
+                      const isYes = Array.isArray(value)
+                        ? value[0] === "Yes"
+                        : value === "Yes";
+                      setIsDefaultState(isYes ? "Yes" : "No");
+                      const newValue = isYes;
+                      setFormData((prev) => ({
+                        ...prev,
+                        isDefault: newValue,
+                      }));
+                      focusNextInput("status");
                     }}
                     onEnterPress={() => {
-                      if (formData.userType) {
-                        focusNextInput("password");
+                      if (
+                        formData.isDefault === true ||
+                        formData.isDefault === false
+                      ) {
+                        focusNextInput("status");
                       }
                     }}
                     placeholder=" "
-                    labelText="User Type"
-                    displayKey="label"
-                    valueKey="value"
-                    searchKey="label"
+                    labelText="Default"
                     className="relative"
+                    tooltipText="Set as default user"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Status and Actions Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-8 relative">
+              {isStatusActive && (
+                <div className="space-y-2">
+                  <SwitchSelect
+                    ref={(el: any) => setRef("status")(el)}
+                    id="status"
+                    name="status"
+                    labelText="Status"
+                    multiSelect={false}
+                    options={[
+                      {
+                        label: "Active",
+                        value: "Active",
+                        date: "Set active",
+                      },
+                      {
+                        label: "InActive",
+                        value: "InActive",
+                        date: "Set inactive",
+                      },
+                      {
+                        label: "Draft",
+                        value: "Draft",
+                        date: "Set draft",
+                      },
+                    ]}
+                    value={statusState}
+                    onValueChange={(value: string | string[]) => {
+                      const stringValue = Array.isArray(value)
+                        ? value[0] || ""
+                        : value;
+                      setStatusState(stringValue);
+
+                      // Update your form data
+                      setFormData((prev) => ({
+                        ...prev,
+                        isDraft: stringValue === "Draft",
+                        isActive: stringValue === "Active",
+                      }));
+                    }}
+                    placeholder=""
                     styles={{
                       input: {
                         borderColor: "var(--primary)",
@@ -457,213 +549,77 @@ export default function UserMasterEditPage({ isEdit = true }: Props) {
                         },
                       },
                     }}
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Second Row: Password, Confirm Password, OTP, (empty) */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {/* Password field */}
-              {password && (
-                <div className="space-y-2">
-                  <EditableInput
-                    setRef={setRef("password")}
-                    id="password"
-                    name="password"
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) => {
-                      setFormData({ ...formData, password: e.target.value });
-                      if (e.target.value) {
-                        focusNextInput("confirmPassword");
-                      }
-                    }}
-                    onNext={() => {
-                      if (formData.password) {
-                        focusNextInput("confirmPassword");
-                      }
-                    }}
-                    onCancel={() => setFormData({ ...formData, password: "" })}
-                    labelText="Password"
-                    tooltipText="Enter password"
-                    required
+                    tooltipText="Set the user status"
                   />
                 </div>
               )}
 
-              {/* Confirm Password field */}
-              {confirmPassword && (
-                <div className="space-y-2">
-                  <EditableInput
-                    setRef={setRef("confirmPassword")}
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    type="password"
-                    value={formData.confirmPassword}
-                    onChange={(e) => {
-                      setFormData({
-                        ...formData,
-                        confirmPassword: e.target.value,
-                      });
-                      if (e.target.value) {
-                        focusNextInput("otp");
-                      }
-                    }}
-                    onNext={() => {
-                      if (formData.confirmPassword) {
-                        focusNextInput("otp");
-                      }
-                    }}
-                    onCancel={() =>
-                      setFormData({ ...formData, confirmPassword: "" })
-                    }
-                    labelText="Confirm Password"
-                    tooltipText="Enter confirm password"
-                    required
-                  />
-                </div>
-              )}
-
-              {/* OTP field */}
-              {otp && (
-                <div className="space-y-2">
-                  <EditableInput
-                    setRef={setRef("otp")}
-                    id="otp"
-                    name="otp"
-                    value={formData.otp}
-                    onChange={(e) => {
-                      setFormData({ ...formData, otp: e.target.value });
-                      if (e.target.value) {
-                        focusNextInput("facebook");
-                      }
-                    }}
-                    onNext={() => {
-                      if (formData.otp) {
-                        focusNextInput("facebook");
-                      }
-                    }}
-                    onCancel={() => setFormData({ ...formData, otp: "" })}
-                    labelText="OTP"
-                    tooltipText="Enter OTP"
-                    maxLength={6}
-                  />
-                </div>
-              )}
-
-              {facebook && (
-                <div className="space-y-2">
-                  <EditableInput
-                    setRef={setRef("facebook")}
-                    id="facebook"
-                    name="facebook"
-                    value={formData.facebook}
-                    onChange={(e) => {
-                      setFormData({ ...formData, facebook: e.target.value });
-                      if (e.target.value) {
-                        focusNextInput("linkedin");
-                      }
-                    }}
-                    onNext={() => {
-                      if (formData.facebook) {
-                        focusNextInput("linkedin");
-                      }
-                    }}
-                    onCancel={() => setFormData({ ...formData, facebook: "" })}
-                    labelText="Facebook"
-                    tooltipText="Enter Facebook URL"
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Third Row: Social Media Links */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {/* Facebook field */}
-
-              {/* LinkedIn field */}
-              {linkedin && (
-                <div className="space-y-2">
-                  <EditableInput
-                    setRef={setRef("linkedin")}
-                    id="linkedin"
-                    name="linkedin"
-                    value={formData.linkedin}
-                    onChange={(e) => {
-                      setFormData({ ...formData, linkedin: e.target.value });
-                      if (e.target.value) {
-                        focusNextInput("instagram");
-                      }
-                    }}
-                    onNext={() => {
-                      if (formData.linkedin) {
-                        focusNextInput("instagram");
-                      }
-                    }}
-                    onCancel={() => setFormData({ ...formData, linkedin: "" })}
-                    labelText="LinkedIn"
-                    tooltipText="Enter LinkedIn URL"
-                  />
-                </div>
-              )}
-
-              {/* Instagram field */}
-              {instagram && (
-                <div className="space-y-2">
-                  <EditableInput
-                    setRef={setRef("instagram")}
-                    id="instagram"
-                    name="instagram"
-                    value={formData.instagram}
-                    onChange={(e) => {
-                      setFormData({ ...formData, instagram: e.target.value });
-                      if (e.target.value) {
-                        focusNextInput("code");
-                      }
-                    }}
-                    onNext={() => {
-                      if (formData.instagram) {
-                        focusNextInput("code");
-                      }
-                    }}
-                    onCancel={() => setFormData({ ...formData, instagram: "" })}
-                    labelText="Instagram"
-                    tooltipText="Enter Instagram URL"
-                  />
-                </div>
-              )}
-
-              <div></div>
+              {/* Actions */}
+              <div className="space-y-2">
+                <ActionsAutocomplete
+                  ref={(el: any) => setRef("actions")(el)}
+                  id="actions"
+                  name="actions"
+                  labelText="Action"
+                  value={selectedAction}
+                  actions={[
+                    {
+                      action: "Created",
+                      user: "John",
+                      role: "Super User",
+                      date: "06 Aug 2025",
+                      value: "created",
+                    },
+                    {
+                      action: "Updated",
+                      user: "Sarah",
+                      role: "Admin",
+                      date: "08 Aug 2025",
+                      value: "updated",
+                    },
+                    {
+                      action: "Inactive",
+                      user: "Mike",
+                      role: "Admin",
+                      date: "08 Aug 2025",
+                      value: "inactive",
+                    },
+                    {
+                      action: "Drafted",
+                      user: "John",
+                      role: "Super User",
+                      date: "07 Aug 2025",
+                      value: "drafted",
+                    },
+                  ]}
+                  placeholder=""
+                  onValueChange={(value: string) => {
+                    setSelectedAction(value);
+                  }}
+                  styles={{
+                    input: {
+                      borderColor: "var(--primary)",
+                      "&:focus": {
+                        borderColor: "var(--primary)",
+                      },
+                    },
+                  }}
+                  tooltipText="User Action History"
+                />
+              </div>
             </div>
           </form>
         </div>
-      </PageLayout>
+      </MinimizablePageLayout>
 
       <ResetFormModal
         opened={isResetModalOpen}
         onClose={() => setIsResetModalOpen(false)}
         onConfirm={handleReset}
         title="Reset Form"
-        message="Are you sure you want to reset the form? All entered data will be lost."
+        message="Are you sure you want to reset the form?"
         confirmText="Reset"
         cancelText="Cancel"
-      />
-
-      {/* Language Translator Modal */}
-      <LanguageTranslatorModal
-        isOpen={isLanguageModalOpen}
-        onClose={() => setIsLanguageModalOpen(false)}
-        onSave={handleSaveTranslations}
-        initialData={[
-          {
-            id: 1,
-            english: formData.state || "State Name",
-            arabic: "",
-            bangla: "",
-          },
-        ]}
-        title="Language Translator"
       />
     </>
   );
