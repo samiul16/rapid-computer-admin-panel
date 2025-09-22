@@ -31,7 +31,7 @@ export default function FilterComponent({
     );
 
   useEffect(() => {
-    if (filterableColumns.length > 0 && !isInitialized) {
+    if (filterableColumns && filterableColumns.length > 0 && !isInitialized) {
       filterableColumns.forEach((col: any) => {
         const allValues = [...col.getFacetedUniqueValues().keys()];
         if (allValues.length > 0) {
@@ -76,6 +76,7 @@ export default function FilterComponent({
       <div className="flex-1 overflow-y-auto px-3 py-3 space-y-4 grid-scroll [&::-webkit-scrollbar-track]:!m-0">
         {filterableColumns
           .filter((col: any) => {
+            console.log("Column before getFacetedUniqueValues", col);
             const values = [...col.getFacetedUniqueValues().keys()].map((v) =>
               String(v)
             );
@@ -97,7 +98,7 @@ export default function FilterComponent({
                 String(key).toLowerCase().includes(search.toLowerCase())
             );
 
-            const isParentChecked = selected.length > 0;
+            const isParentChecked = selected && selected.length > 0;
 
             return (
               <div key={col.id}>

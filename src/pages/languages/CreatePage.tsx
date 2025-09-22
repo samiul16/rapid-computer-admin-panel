@@ -2,7 +2,6 @@
 import video from "@/assets/videos/test.mp4";
 import { Autocomplete } from "@/components/common/Autocomplete";
 import EditableInput from "@/components/common/EditableInput";
-import PageLayout from "@/components/common/PageLayout";
 import GenericPDF from "@/components/common/pdf";
 import { ResetFormModal } from "@/components/common/ResetFormModal";
 import { Button } from "@/components/ui/button";
@@ -12,12 +11,16 @@ import { toastError, toastRestore, toastSuccess } from "@/lib/toast";
 import { Modal } from "@mantine/core";
 import { pdf } from "@react-pdf/renderer";
 import { Check, Edit, Eye, Plus } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePermission } from "@/hooks/usePermissions";
-import { useSelector } from "react-redux";
-import type { RootState } from "@/store";
+import { useLanguageLabels } from "@/hooks/useLanguageLabels";
+import { useAppSelector } from "@/store/hooks";
 import { LanguageInputDropdown } from "@/components/LanguageInputDropdown";
+import MinimizablePageLayout from "@/components/MinimizablePageLayout";
+import { useLanguageFormData } from "@/hooks/useLanguageFormData";
+import { SwitchSelect } from "@/components/common/SwitchAutoComplete";
+import { TemplateContent } from "@/components/common/TemplateContent";
 
 type LanguageData = {
   id?: string;
@@ -30,6 +33,10 @@ type LanguageData = {
   createdAt?: Date | null;
   updatedAt?: Date | null;
   deletedAt?: Date | null;
+  language_ar?: string;
+  language_hi?: string;
+  language_ur?: string;
+  language_bn?: string;
 };
 
 type Props = {
@@ -50,19 +57,33 @@ const initialData: LanguageData = {
 
 export default function LanguageFormPage({ isEdit = false }: Props) {
   const navigate = useNavigate();
-  const { isRTL } = useSelector((state: RootState) => state.language);
+  const labels = useLanguageLabels();
+  const { isRTL } = useAppSelector((state) => state.language);
 
+  // Use the custom hook for minimized module data
+  const {
+    moduleData,
+    hasMinimizedData,
+    resetModuleData,
+    getModuleScrollPosition,
+  } = useLanguageFormData();
+
+  const [showTemplates, setShowTemplates] = useState(false);
   const [keepCreating, setKeepCreating] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
   const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
   const [isDefaultState, setIsDefaultState] = useState<"Yes" | "No">("No");
-  const [isActiveState, setIsActiveState] = useState<"Yes" | "No">("Yes");
-
+  const [statusState, setStatusState] = useState<
+    "Active" | "Inactive" | string
+  >("Active");
   const [printEnabled, setPrintEnabled] = useState(false);
   const [pdfChecked, setPdfChecked] = useState(false);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [languageValues, setLanguageValues] = useState<Record<string, string>>(
     {}
   );
+  const [formKey, setFormKey] = useState(0);
+  const [isRestoredFromMinimized, setIsRestoredFromMinimized] = useState(false);
 
   // Permission checks
   const canCreate: boolean = usePermission("languages", "create");
@@ -80,16 +101,6 @@ export default function LanguageFormPage({ isEdit = false }: Props) {
   const isActive: boolean = usePermission("languages", "create", "status");
   const canPdf: boolean = usePermission("languages", "pdf");
   const canPrint: boolean = usePermission("languages", "print");
-
-  console.log("canCreate", canCreate);
-  console.log("canView", canView);
-  console.log("canPdf", canPdf);
-  console.log("canPrint", canPrint);
-  console.log("seq", seq);
-  console.log("languageCode", languageCode);
-  console.log("languageName", languageName);
-  console.log("isDefault", isDefault);
-  console.log("isActive", isActive);
 
   // Language codes for autocomplete
   const languageCodes = [
@@ -114,13 +125,77 @@ export default function LanguageFormPage({ isEdit = false }: Props) {
     seq: 1,
     code: "",
     language: "",
-    default: isDefaultState === "Yes",
+    default: false,
     status: "active",
     isDeleted: false,
     createdAt: null,
     updatedAt: null,
     deletedAt: null,
   });
+
+  // Simplified restore logic using the custom hook
+  useEffect(() => {
+    // Auto-restore if:
+    // 1. Has minimized data
+    // 2. Haven't already restored
+    // 3. Current form is empty (to avoid overwriting user input)
+    const shouldAutoRestore =
+      hasMinimizedData &&
+      moduleData?.formData &&
+      !isRestoredFromMinimized &&
+      !formData.language &&
+      !formData.code;
+
+    if (shouldAutoRestore) {
+      const savedFormData = moduleData.formData;
+
+      // Restore all the data
+      setFormData({
+        ...(savedFormData as any),
+        status: (savedFormData as any)?.status || "active",
+      });
+
+      if (moduleData.languageValues) {
+        setLanguageValues(moduleData.languageValues);
+      }
+
+      setIsDefaultState(savedFormData.default ? "Yes" : "No");
+      setStatusState(savedFormData.status === "active" ? "Active" : "Inactive");
+
+      setIsRestoredFromMinimized(true);
+
+      // Restore scroll position
+      const scrollPosition = getModuleScrollPosition("language-form-module");
+      if (scrollPosition) {
+        setTimeout(() => {
+          window.scrollTo(0, scrollPosition);
+        }, 200);
+      }
+    }
+  }, [
+    hasMinimizedData,
+    moduleData,
+    isRestoredFromMinimized,
+    formData.language,
+    formData.code,
+    getModuleScrollPosition,
+  ]);
+
+  // Initialize with edit data if available (but only if not restoring from minimized)
+  useEffect(() => {
+    if (
+      isEdit &&
+      initialData &&
+      !hasMinimizedData &&
+      !isRestoredFromMinimized
+    ) {
+      setFormData({
+        ...initialData,
+      });
+      setIsDefaultState(initialData.default ? "Yes" : "No");
+      setStatusState(initialData.status === "active" ? "Active" : "Inactive");
+    }
+  }, [isEdit, hasMinimizedData, isRestoredFromMinimized]);
 
   const [popoverOptions, setPopoverOptions] = useState([
     {
@@ -158,30 +233,19 @@ export default function LanguageFormPage({ isEdit = false }: Props) {
     inputRefs.current[nextField]?.focus();
   };
 
-  // Initialize with edit data if available
-  useEffect(() => {
-    if (isEdit && initialData) {
-      setFormData({
-        ...initialData,
-      });
-      setIsDefaultState(initialData.default ? "Yes" : "No");
-      setIsActiveState(initialData.status === "active" ? "Yes" : "No");
-    }
-  }, [isEdit, initialData]);
-
   // Handle form field changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
-    setFormData({
+    const newFormData = {
       ...formData,
       [name]: type === "checkbox" ? checked : value,
-    });
+    };
+    setFormData(newFormData);
   };
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
 
     if (pdfChecked) {
       await handleExportPDF();
@@ -190,6 +254,7 @@ export default function LanguageFormPage({ isEdit = false }: Props) {
       handlePrintLanguage(formData);
     }
 
+    // keep switch functionality
     if (keepCreating) {
       toastSuccess("Language created successfully!");
       handleReset();
@@ -203,9 +268,8 @@ export default function LanguageFormPage({ isEdit = false }: Props) {
     setIsResetModalOpen(true);
   };
 
-  const [formKey, setFormKey] = useState(0);
-
-  const handleReset = () => {
+  // Update handleReset function to use the custom hook
+  const handleReset = async () => {
     setFormData({
       seq: 1,
       code: "",
@@ -218,16 +282,30 @@ export default function LanguageFormPage({ isEdit = false }: Props) {
       deletedAt: null,
     });
     setIsDefaultState("No");
-    setIsActiveState("Yes");
+    setStatusState("Active");
+    setLanguageValues({});
+    setIsRestoredFromMinimized(false);
 
     if (formRef.current) {
       formRef.current.reset();
     }
 
+    // Force re-render of all inputs by changing key
     setFormKey((prev) => prev + 1);
 
+    // Reset module data using the custom hook
+    if (hasMinimizedData) {
+      try {
+        await resetModuleData("language-form-module");
+        console.log("Form data reset in Redux");
+      } catch (error) {
+        console.error("Error resetting form data:", error);
+      }
+    }
+
+    // Focus the first input field after reset
     setTimeout(() => {
-      inputRefs.current["code"]?.focus();
+      inputRefs.current["seq"]?.focus();
     }, 100);
   };
 
@@ -265,9 +343,7 @@ export default function LanguageFormPage({ isEdit = false }: Props) {
   };
 
   const handleExportPDF = async () => {
-    console.log("Export PDF clicked");
     try {
-      console.log("languageData on pdf click", formData);
       const blob = await pdf(
         <GenericPDF
           data={[formData]}
@@ -290,38 +366,59 @@ export default function LanguageFormPage({ isEdit = false }: Props) {
 
   useEffect(() => {
     setPopoverOptions((prevOptions) => {
+      // Filter out any existing draft option first
       const filteredOptions = prevOptions.filter(
         (opt) => opt.label !== "Draft"
       );
 
-      return [
-        ...filteredOptions,
-        {
-          label: "Draft",
-          icon: <Check className="text-green-500" />,
-          onClick: () => {
-            setFormData((prev) => ({
-              ...prev,
-              status: "inactive",
-            }));
-            toastRestore("Language saved as draft successfully");
+      // Add draft option only if not already inactive
+      if (formData.status !== "inactive") {
+        return [
+          ...filteredOptions,
+          {
+            label: "Draft",
+            icon: <Check className="text-green-500" />,
+            onClick: () => {
+              setFormData((prev) => ({
+                ...prev,
+                status: "inactive",
+              }));
+              toastRestore("Language saved as draft successfully");
+            },
+            show: canCreate,
           },
-          show: canCreate,
-        },
-      ];
+        ];
+      }
+      return filteredOptions;
     });
-  }, [canCreate]);
+  }, [formData.status, canCreate]);
 
-  const formRef = useRef<HTMLFormElement>(null);
+  // Create minimize handler using the custom hook
+  const handleMinimize = useCallback((): any => {
+    return {
+      formData,
+      hasChanges: true,
+      scrollPosition: window.scrollY,
+      languageValues,
+    };
+  }, [formData, languageValues]);
 
   return (
     <>
-      <PageLayout
-        title={isEdit ? "Editing Language" : "Creating Language"}
-        videoSrc={video}
-        videoHeader="Tutorial video"
+      <MinimizablePageLayout
+        moduleId="language-form-module"
+        moduleName={isEdit ? "Edit Language" : "Adding Language"}
+        moduleRoute={
+          isEdit
+            ? `/languages/edit/${formData.code || "new"}`
+            : "/languages/create"
+        }
+        onMinimize={handleMinimize}
+        title={isEdit ? labels.editingLanguage : labels.addingLanguage}
         listPath="languages"
         popoverOptions={popoverOptions}
+        videoSrc={video}
+        videoHeader="Tutorial video"
         keepChanges={keepCreating}
         onKeepChangesChange={setKeepCreating}
         pdfChecked={pdfChecked}
@@ -329,25 +426,23 @@ export default function LanguageFormPage({ isEdit = false }: Props) {
         printEnabled={printEnabled}
         onPrintToggle={canPrint ? handleSwitchChange : undefined}
         activePage="create"
+        module="languages"
         additionalFooterButtons={
           canCreate ? (
-            <div className="flex gap-4 items-center">
+            <div className="flex gap-4 max-[435px]:gap-2">
               <Button
                 variant="outline"
-                className="gap-2 text-primary bg-sky-200 hover:bg-primary rounded-full border-primary w-32 font-semibold!"
+                className="gap-2 hover:bg-primary/90! bg-white dark:bg-gray-900 rounded-full border-primary w-28 max-[435px]:w-20 font-semibold! text-primary!"
                 onClick={handleResetClick}
               >
-                Reset
+                {labels.reset}
               </Button>
               <Button
-                ref={(el) => setRef("submitButton")(el as HTMLButtonElement)}
-                id="submitButton"
-                name="submitButton"
                 variant="outline"
-                className={`gap-2 text-primary rounded-full border-primary w-32 bg-sky-200 hover:bg-primary font-semibold!`}
-                onClick={() => formRef.current?.requestSubmit()}
+                className="gap-2 hover:bg-primary/90 bg-white dark:bg-gray-900 rounded-full border-primary w-28 max-[435px]:w-20 font-semibold! text-primary!"
+                onClick={handleSubmit}
               >
-                Submit
+                {labels.submit}
               </Button>
             </div>
           ) : null
@@ -361,11 +456,11 @@ export default function LanguageFormPage({ isEdit = false }: Props) {
             onSubmit={handleSubmit}
             className="space-y-6 relative"
           >
-            {/* First Row: Sequence, Code, Language Name, Default, Status */}
+            {/* First Row: Sequence, Code, Language Name, Default */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
               {/* Sequence field */}
               {seq && (
-                <div className=" space-y-2">
+                <div className="space-y-2">
                   <EditableInput
                     setRef={setRef("seq")}
                     id="seq"
@@ -383,14 +478,14 @@ export default function LanguageFormPage({ isEdit = false }: Props) {
                     }}
                     onNext={() => focusNextInput("code")}
                     onCancel={() => setFormData({ ...formData, seq: 1 })}
-                    labelText="Sequence"
-                    tooltipText="Enter sequence number"
+                    labelText={labels.sequence}
+                    tooltipText={labels.sequenceTooltip}
                     required
                   />
                 </div>
               )}
 
-              {/* Language Code field */}
+              {/* Language Code field with Template Support */}
               {languageCode && (
                 <div className="space-y-2">
                   <Autocomplete
@@ -412,8 +507,10 @@ export default function LanguageFormPage({ isEdit = false }: Props) {
                       }
                     }}
                     placeholder=" "
-                    labelText="Code"
+                    labelText={labels.code}
                     className="relative"
+                    tooltipText={labels.languageCodeTooltip}
+                    userLang={isRTL ? "ar" : "en"}
                     styles={{
                       input: {
                         borderColor: "var(--primary)",
@@ -422,6 +519,9 @@ export default function LanguageFormPage({ isEdit = false }: Props) {
                         },
                       },
                     }}
+                    setShowTemplates={setShowTemplates}
+                    showTemplates={showTemplates}
+                    isShowTemplateIcon={true}
                   />
                 </div>
               )}
@@ -440,8 +540,8 @@ export default function LanguageFormPage({ isEdit = false }: Props) {
                       onCancel={() =>
                         setFormData({ ...formData, language: "" })
                       }
-                      labelText="Language"
-                      tooltipText="Enter the language name"
+                      labelText={labels.language}
+                      tooltipText={labels.languageNameTooltip}
                       required
                     />
 
@@ -468,81 +568,96 @@ export default function LanguageFormPage({ isEdit = false }: Props) {
                 </div>
               )}
 
-              {/* Default field */}
+              {/* Default field - Updated to use SwitchSelect like country */}
               {isDefault && (
                 <div className="space-y-2 relative">
-                  <Autocomplete
+                  <SwitchSelect
                     ref={(el: any) => setRef("isDefault")(el)}
                     id="isDefault"
                     name="isDefault"
-                    options={["No", "Yes"]}
-                    value={isDefaultState === "Yes" ? "Yes" : "No"}
+                    multiSelect={false}
+                    options={[
+                      {
+                        label: labels.yes,
+                        value: labels.yes,
+                        date: "Set default language",
+                      },
+                      {
+                        label: labels.no,
+                        value: labels.no,
+                        date: "Remove default language",
+                      },
+                    ]}
+                    value={isDefaultState === "Yes" ? labels.yes : labels.no}
                     labelClassName="rounded-lg"
-                    isSelectableOnly={true}
-                    onValueChange={(value: string) => {
-                      const isYes = value === "Yes";
+                    onValueChange={(value: string | string[]) => {
+                      const isYes = Array.isArray(value)
+                        ? value[0] === labels.yes
+                        : value === labels.yes;
                       setIsDefaultState(isYes ? "Yes" : "No");
+                      const newValue = isYes;
                       setFormData((prev) => ({
                         ...prev,
-                        default: isYes,
+                        default: newValue,
                       }));
-                      focusNextInput("isActive");
+                      focusNextInput("status");
                     }}
                     onEnterPress={() => {
                       if (
                         formData.default === true ||
                         formData.default === false
                       ) {
-                        focusNextInput("isActive");
+                        focusNextInput("status");
                       }
                     }}
                     placeholder=" "
-                    labelText="Default Language"
+                    labelText={labels.defaultLanguage}
                     className="relative"
-                    styles={{
-                      input: {
-                        borderColor: "var(--primary)",
-                        "&:focus": {
-                          borderColor: "var(--primary)",
-                        },
-                      },
-                    }}
+                    tooltipText={labels.defaultLanguageTooltip}
                   />
                 </div>
               )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
-              {/* Status field */}
+            {/* Second Row: Status */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 my-8 relative">
+              {/* Status field - Updated to use SwitchSelect like country */}
               {isActive && (
-                <div className="space-y-2 relative">
-                  <Autocomplete
-                    ref={(el: any) => setRef("isActive")(el)}
-                    id="isActive"
-                    name="isActive"
-                    options={["Yes", "No"]}
-                    value={isActiveState === "Yes" ? "Yes" : "No"}
-                    labelClassName="rounded-lg"
-                    isSelectableOnly={true}
-                    onValueChange={(value: string) => {
-                      const isYes = value === "Yes";
-                      setIsActiveState(isYes ? "Yes" : "No");
+                <div className="md:col-span-3 space-y-2">
+                  <SwitchSelect
+                    ref={(el: any) => setRef("status")(el)}
+                    id="status"
+                    name="status"
+                    labelText="Status"
+                    multiSelect={false}
+                    options={[
+                      {
+                        label: "Active",
+                        value: "Active",
+                        date: "Set active",
+                      },
+                      {
+                        label: "Inactive",
+                        value: "Inactive",
+                        date: "Set inactive",
+                      },
+                    ]}
+                    value={statusState}
+                    onValueChange={(value: string | string[]) => {
+                      const stringValue = Array.isArray(value)
+                        ? value[0] || ""
+                        : value;
+                      console.log("switch value", stringValue);
+                      setStatusState(stringValue);
+
+                      // Update your form data
                       setFormData((prev) => ({
                         ...prev,
-                        status: isYes ? "active" : "inactive",
+                        status:
+                          stringValue === "Active" ? "active" : "inactive",
                       }));
                     }}
-                    onEnterPress={() => {
-                      if (
-                        formData.status === "active" ||
-                        formData.status === "inactive"
-                      ) {
-                        focusNextInput("submitButton");
-                      }
-                    }}
-                    placeholder=" "
-                    labelText="Status"
-                    className="relative"
+                    placeholder=""
                     styles={{
                       input: {
                         borderColor: "var(--primary)",
@@ -551,22 +666,23 @@ export default function LanguageFormPage({ isEdit = false }: Props) {
                         },
                       },
                     }}
+                    tooltipText={labels.statusTooltip}
                   />
                 </div>
               )}
             </div>
           </form>
         </div>
-      </PageLayout>
+      </MinimizablePageLayout>
 
       <ResetFormModal
         opened={isResetModalOpen}
         onClose={() => setIsResetModalOpen(false)}
         onConfirm={handleReset}
-        title="Reset Form"
-        message="Are you sure you want to reset the form? All entered data will be lost."
-        confirmText="Reset"
-        cancelText="Cancel"
+        title={labels.resetForm}
+        message={labels.resetFormMessage}
+        confirmText={labels.resetFormConfirm}
+        cancelText={labels.cancel}
       />
 
       {/* Options Modal */}
@@ -578,6 +694,50 @@ export default function LanguageFormPage({ isEdit = false }: Props) {
         overlayProps={{ backgroundOpacity: 0.55, blur: 3 }}
       >
         <div className="pt-5 pb-14 px-5">Modal Content</div>
+      </Modal>
+
+      {/* Templates Modal */}
+      <Modal
+        opened={showTemplates}
+        onClose={() => setShowTemplates(false)}
+        size="xl"
+        radius={20}
+        overlayProps={{ backgroundOpacity: 0.25, blur: 1 }}
+        withCloseButton={false}
+        centered
+      >
+        <TemplateContent
+          headers={[
+            { key: "code", label: "Code" },
+            { key: "name", label: "Name" },
+          ]}
+          data={[
+            { code: "en", name: "English" },
+            { code: "es", name: "Spanish" },
+            { code: "fr", name: "French" },
+            { code: "de", name: "German" },
+            { code: "it", name: "Italian" },
+            { code: "pt", name: "Portuguese" },
+            { code: "ru", name: "Russian" },
+            { code: "zh", name: "Chinese" },
+            { code: "ja", name: "Japanese" },
+            { code: "ko", name: "Korean" },
+            { code: "ar", name: "Arabic" },
+            { code: "hi", name: "Hindi" },
+            { code: "ur", name: "Urdu" },
+            { code: "bn", name: "Bengali" },
+          ]}
+          onSelect={(selectedData: any) => {
+            console.log("Selected:", selectedData);
+            setShowTemplates(false);
+            setFormData((prev) => ({
+              ...prev,
+              code: selectedData.code,
+              language: selectedData.name,
+            }));
+          }}
+          onClose={() => setShowTemplates(false)}
+        />
       </Modal>
     </>
   );

@@ -99,6 +99,21 @@ export interface LanguageLabels {
   creatingAsset: string;
   editingAsset: string;
 
+  // languages module
+  language: string;
+  status: string;
+  editingLanguage: string;
+  addingLanguage: string;
+  sequence: string;
+  sequenceTooltip: string;
+  languageCodeTooltip: string;
+  languageNameTooltip: string;
+  defaultLanguage: string;
+  language_ar: string;
+  language_hi: string;
+  language_ur: string;
+  language_bn: string;
+
   // Holiday module
   holidayNameTooltip: string;
   holidayFromDateTooltip: string;
@@ -539,6 +554,22 @@ export const LANGUAGE_LABELS: Record<string, LanguageLabels> = {
     // tax rates
     taxRateTooltip: "Tax Rate(%)",
 
+    // languages
+    language: "Language",
+    status: "Status",
+    editingLanguage: "Editing Language",
+    addingLanguage: "Adding Language",
+    sequence: "Sequence",
+    sequenceTooltip:
+      "Enter the display order sequence number for this language",
+    languageCodeTooltip: "Enter the ISO language code (e.g., en, ar, hi)",
+    languageNameTooltip: "Enter the full name of the language",
+    defaultLanguage: "Default",
+    language_ar: "Language (Arabic)",
+    language_hi: "Language (Hindi)",
+    language_ur: "Language (Urdu)",
+    language_bn: "Language (Bengali)",
+
     // candidateList
     candidateList: "Candidate List",
     creatingCandidateList: "Creating Candidate List",
@@ -951,6 +982,20 @@ export const LANGUAGE_LABELS: Record<string, LanguageLabels> = {
     insuranceEmployeeDesignationTooltip: "Designation",
     insuranceEmployeeBranchTooltip: "Branch",
     insuranceDetailsTooltip: "Description",
+
+    language: "اللغة",
+    status: "الحالة",
+    editingLanguage: "تحرير اللغة",
+    addingLanguage: "إضافة لغة",
+    sequence: "التسلسل",
+    sequenceTooltip: "أدخل رقم تسلسل العرض لهذه اللغة",
+    languageCodeTooltip: "أدخل رمز اللغة ISO (مثل en, ar, hi)",
+    languageNameTooltip: "أدخل الاسم الكامل للغة",
+    defaultLanguage: "اللغة الافتراضية",
+    language_ar: "اللغة (العربية)",
+    language_hi: "اللغة (الهندية)",
+    language_ur: "اللغة (الأردية)",
+    language_bn: "اللغة (البنغالية)",
 
     // certificates
     certificatesNumberTooltip: "Certificate Number",
@@ -1367,6 +1412,20 @@ export const LANGUAGE_LABELS: Record<string, LanguageLabels> = {
     insuranceEmployeeDesignationTooltip: "Designation",
     insuranceEmployeeBranchTooltip: "Branch",
     insuranceDetailsTooltip: "Description",
+
+    language: "भाषा",
+    status: "स्थिति",
+    editingLanguage: "भाषा संपादित करना",
+    addingLanguage: "भाषा जोड़ना",
+    sequence: "क्रम",
+    sequenceTooltip: "इस भाषा के लिए प्रदर्शन क्रम संख्या दर्ज करें",
+    languageCodeTooltip: "ISO भाषा कोड दर्ज करें (जैसे en, ar, hi)",
+    languageNameTooltip: "भाषा का पूरा नाम दर्ज करें",
+    defaultLanguage: "डिफ़ॉल्ट भाषा",
+    language_ar: "भाषा (अरबी)",
+    language_hi: "भाषा (हिंदी)",
+    language_ur: "भाषा (उर्दू)",
+    language_bn: "भाषा (बंगाली)",
 
     // certificates
     certificatesNumberTooltip: "Certificate Number",
@@ -1837,6 +1896,20 @@ export const LANGUAGE_LABELS: Record<string, LanguageLabels> = {
     designationTooltip: "Designation",
     commissionTooltip: "Commission",
 
+    language: "زبان",
+    status: "حالت",
+    editingLanguage: "زبان میں تبدیلی",
+    addingLanguage: "زبان شامل کرنا",
+    sequence: "ترتیب",
+    sequenceTooltip: "اس زبان کے لیے ڈسپلے آرڈر کا نمبر داخل کریں",
+    languageCodeTooltip: "ISO زبان کا کوڈ داخل کریں (جیسے en, ar, hi)",
+    languageNameTooltip: "زبان کا مکمل نام داخل کریں",
+    defaultLanguage: "ڈیفالٹ زبان",
+    language_ar: "زبان (عربی)",
+    language_hi: "زبان (ہندی)",
+    language_ur: "زبان (اردو)",
+    language_bn: "زبان (بنگالی)",
+
     // leads
     leads: "لیڈز",
     creatingLeads: "لیڈز بنا رہے ہیں",
@@ -2253,6 +2326,20 @@ export const LANGUAGE_LABELS: Record<string, LanguageLabels> = {
     editingCommission: "Editing Commission",
     designationTooltip: "Designation",
     commissionTooltip: "Commission",
+
+    language: "ভাষা",
+    status: "অবস্থা",
+    editingLanguage: "ভাষা সম্পাদনা",
+    addingLanguage: "ভাষা যোগ করা",
+    sequence: "ক্রম",
+    sequenceTooltip: "এই ভাষার জন্য প্রদর্শন ক্রম নম্বর প্রবেশ করান",
+    languageCodeTooltip: "ISO ভাষা কোড প্রবেশ করান (যেমন en, ar, hi)",
+    languageNameTooltip: "ভাষার পূর্ণ নাম প্রবেশ করান",
+    defaultLanguage: "ডিফল্ট ভাষা",
+    language_ar: "ভাষা (আরবি)",
+    language_hi: "ভাষা (হিন্দি)",
+    language_ur: "ভাষা (উর্দু)",
+    language_bn: "ভাষা (বাংলা)",
 
     // leads
     leads: "লিডস",
