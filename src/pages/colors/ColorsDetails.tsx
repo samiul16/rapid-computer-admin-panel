@@ -293,7 +293,7 @@ export default function ColorDetailsPage() {
               disabled={false}
               className="w-[96%] bg-gray-100 rounded-xl"
               labelClassName="bg-gray-50 rounded-2xl"
-              labelText="Color Master Name"
+              labelText="Color Name"
               isShowTemplateIcon={false}
             />
           </div>
