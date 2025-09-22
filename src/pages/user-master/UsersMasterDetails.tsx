@@ -15,14 +15,41 @@ import { pdf } from "@react-pdf/renderer";
 import { Edit, Plus } from "lucide-react";
 import { ResetFormModal } from "@/components/common/ResetFormModal";
 import { usePermission } from "@/hooks/usePermissions";
-// useUsersPermissions
 import MinimizablePageLayout from "@/components/MinimizablePageLayout";
 
 const MOCK_USERS = [
-  { id: "1", name: "John Doe", status: "Active" },
-  { id: "2", name: "Sarah Smith", status: "Active" },
-  { id: "3", name: "Mike Johnson", status: "Draft" },
-  { id: "4", name: "Emily Davis", status: "InActive" },
+  {
+    id: "1",
+    name: "John Doe",
+    mobileNumber: "+1234567890",
+    email: "john.doe@example.com",
+    userType: "admin",
+    status: "Active",
+  },
+  {
+    id: "2",
+    name: "Sarah Smith",
+    mobileNumber: "+1987654321",
+    email: "sarah.smith@example.com",
+    userType: "super admin",
+    status: "Active",
+  },
+  {
+    id: "3",
+    name: "Mike Johnson",
+    mobileNumber: "+1555123456",
+    email: "mike.johnson@example.com",
+    userType: "user",
+    status: "Draft",
+  },
+  {
+    id: "4",
+    name: "Emily Davis",
+    mobileNumber: "+1444333222",
+    email: "emily.davis@example.com",
+    userType: "user",
+    status: "InActive",
+  },
 ];
 
 // Type definition for TypeScript
@@ -52,27 +79,38 @@ export default function UserDetailsPage() {
   const [printEnabled, setPrintEnabled] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
 
-  // const { canCreate, canView, canEdit, canDelete } = useUsersPermissions();
+  // Permission checks
+  // const { canCreate, canView, canEdit, canDelete } = useUserMasterPermissions();
 
-  // get permission
-  // const canCreate2: boolean = usePermission("users", "create");
-  // const canEdit2: boolean = usePermission("users", "edit");
-  // const canDelete2: boolean = usePermission("users", "delete");
-  // const canExport2: boolean = usePermission("users", "export");
-  const canPdf: boolean = usePermission("users", "pdf");
-  const canPrint: boolean = usePermission("users", "print");
-  const canSeeHistory: boolean = usePermission("users", "history");
+  // Field-level permissions
+  const canPdf: boolean = usePermission("user-master", "pdf");
+  const canPrint: boolean = usePermission("user-master", "print");
+  const canSeeHistory: boolean = usePermission("user-master", "history");
 
   let userData = {
     id: selectedUser,
     name: MOCK_USERS.find((u) => u.id === selectedUser)?.name || "John Doe",
+    mobileNumber:
+      MOCK_USERS.find((u) => u.id === selectedUser)?.mobileNumber ||
+      "+1234567890",
+    email:
+      MOCK_USERS.find((u) => u.id === selectedUser)?.email ||
+      "john.doe@example.com",
+    userType:
+      MOCK_USERS.find((u) => u.id === selectedUser)?.userType || "admin",
+    password: "••••••••",
+    confirmPassword: "••••••••",
+    otp: "123456",
+    facebook: "https://facebook.com/johndoe",
+    linkedin: "https://linkedin.com/in/johndoe",
+    instagram: "https://instagram.com/johndoe",
     isDefault: true,
     isActive: true,
     isDraft: false,
     isDeleted: false,
     status: MOCK_USERS.find((u) => u.id === selectedUser)?.status || "Active",
     createdAt: "2023-05-15T10:30:00Z",
-    updatedAt: "",
+    updatedAt: "2025-01-15T14:30:00Z",
     draftedAt: "2025-05-20T14:45:00Z",
     deletedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(),
   };
@@ -89,6 +127,15 @@ export default function UserDetailsPage() {
       userData = {
         id: selectedUser,
         name: "",
+        mobileNumber: "",
+        email: "",
+        userType: "user",
+        password: "",
+        confirmPassword: "",
+        otp: "",
+        facebook: "",
+        linkedin: "",
+        instagram: "",
         isDefault: true,
         isActive: true,
         isDraft: false,
@@ -109,7 +156,16 @@ export default function UserDetailsPage() {
         data: [userData],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
-          name: "User Name",
+          name: "User Master Name",
+          mobileNumber: "User Master Mobile Number",
+          email: "User Master Email",
+          userType: "User Master Type",
+          password: "Password",
+          confirmPassword: "Confirm Password",
+          otp: "OTP",
+          facebook: "Facebook",
+          linkedin: "LinkedIn",
+          instagram: "Instagram",
           isDefault: "Default User",
           isActive: "Active Status",
           isDraft: "Draft Status",
@@ -197,23 +253,23 @@ export default function UserDetailsPage() {
       <MinimizablePageLayout
         moduleId="user-details-module"
         moduleName="User Details"
-        moduleRoute="/users/view"
+        moduleRoute="/user-master/view"
         title="Viewing User"
         videoSrc={video}
         videoHeader="Tutorial video"
-        listPath="users"
+        listPath="user-master"
         activePage="view"
-        module="users"
+        module="user-master"
         popoverOptions={[
           {
             label: "Create",
             icon: <Plus className="w-5 h-5 text-green-600" />,
-            onClick: () => navigate("/users/create"),
+            onClick: () => navigate("/user-master/create"),
           },
           {
             label: "Edit",
             icon: <Edit className="w-5 h-5 text-blue-600" />,
-            onClick: () => navigate("/users/edit/1"),
+            onClick: () => navigate("/user-master/edit/1"),
           },
         ]}
         keepChanges={keepChanges}
@@ -243,7 +299,7 @@ export default function UserDetailsPage() {
             : undefined
         }
       >
-        {/* Row 1 */}
+        {/* Row 1: User Selection, Name, Mobile Number, Email */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
           <div className="mt-1">
             <Autocomplete
@@ -257,21 +313,100 @@ export default function UserDetailsPage() {
               disabled={false}
               className="w-[96%] bg-gray-100 rounded-xl"
               labelClassName="bg-gray-50 rounded-2xl"
-              labelText="User"
+              labelText="User Master"
               isShowTemplateIcon={false}
             />
           </div>
 
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Status</h3>
+              <h3 className="font-normal text-gray-600">User Master Name</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(userData.status)}
+              {displayValue(userData.name)}
             </div>
           </div>
 
-          {/* Default Label */}
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">
+                User Master Mobile Number
+              </h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(userData.mobileNumber)}
+            </div>
+          </div>
+
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">User Master Email</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(userData.email)}
+            </div>
+          </div>
+        </div>
+
+        {/* Row 2: User Type, Password, OTP, Facebook */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">User Master Type</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(userData.userType)}
+            </div>
+          </div>
+
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">Password</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(userData.password)}
+            </div>
+          </div>
+
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">OTP</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(userData.otp)}
+            </div>
+          </div>
+
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">Facebook</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(userData.facebook)}
+            </div>
+          </div>
+        </div>
+
+        {/* Row 3: LinkedIn, Instagram, Default, Status */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">LinkedIn</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(userData.linkedin)}
+            </div>
+          </div>
+
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">Instagram</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(userData.instagram)}
+            </div>
+          </div>
+
           <div className="">
             <div className="flex flex-col">
               <div className="">
@@ -287,6 +422,18 @@ export default function UserDetailsPage() {
             </div>
           </div>
 
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">Status</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(userData.status)}
+            </div>
+          </div>
+        </div>
+
+        {/* Row 4: Action, Created At, Updated At, Drafted At */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
           <div className="">
             <h3 className="font-normal mb-1 text-gray-600">Action</h3>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
