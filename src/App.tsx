@@ -183,9 +183,9 @@ import StoreDetails from "./pages/store/StoreDetails";
 import StorePage from "./pages/store/StorePage";
 
 // Colors
-import ColorsCreatePage from "./pages/colors/ColorsCreatePage";
+import ColorsCreatePage from "./pages/colors/CreatePage";
 import ColorsDetails from "./pages/colors/ColorsDetails";
-import ColorsEditPage from "./pages/colors/ColorsEditPage";
+import ColorsEditPage from "./pages/colors/EditPage";
 import ColorsPage from "./pages/colors/ColorsPage";
 
 // Sizes

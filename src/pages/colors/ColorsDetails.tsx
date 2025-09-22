@@ -1,38 +1,54 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { Trash2, Undo } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
+// import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Autocomplete, Modal } from "@mantine/core";
-import HistoryDataTable from "./HistoryDataTable";
+import { Autocomplete } from "@/components/common/Autocomplete";
+import HistoryDataTable from "@/components/common/HistoryDataTableNew";
+import { mockHistoryData } from "@/mockData/country-mockdata";
 import video from "@/assets/videos/test.mp4";
 import { printHtmlContent } from "@/lib/printHtmlContent";
 import { PrintCommonLayout } from "@/lib/printContents/PrintCommonLayout";
 import { toastError } from "@/lib/toast";
+import GenericPDF from "@/components/common/pdf";
 import { pdf } from "@react-pdf/renderer";
-import PageLayout from "@/components/common/PageLayout";
-import PDF from "@/components/common/pdf";
-import { mockColorHistoryData } from "@/mockData/colors-history-mockdata";
+import { Edit, Plus } from "lucide-react";
+import { ResetFormModal } from "@/components/common/ResetFormModal";
+import { usePermission } from "@/hooks/usePermissions";
+import MinimizablePageLayout from "@/components/MinimizablePageLayout";
 
-const MOCK_DATA = [
+const MOCK_USERS = [
   {
-    name: "Red",
-    code: "RED",
-    hexCode: "#FF0000",
-    description: "Primary red color used for danger or delete actions",
-
-    isDefault: false,
-    isActive: true,
-    isDraft: false,
-
-    createdAt: new Date(),
-    draftedAt: null,
-    updatedAt: new Date(),
-    deletedAt: null,
-    isDeleted: false,
+    id: "1",
+    name: "John Doe",
+    mobileNumber: "+1234567890",
+    email: "john.doe@example.com",
+    userType: "admin",
+    status: "Active",
+  },
+  {
+    id: "2",
+    name: "Sarah Smith",
+    mobileNumber: "+1987654321",
+    email: "sarah.smith@example.com",
+    userType: "super admin",
+    status: "Active",
+  },
+  {
+    id: "3",
+    name: "Mike Johnson",
+    mobileNumber: "+1555123456",
+    email: "mike.johnson@example.com",
+    userType: "user",
+    status: "Draft",
+  },
+  {
+    id: "4",
+    name: "Emily Davis",
+    mobileNumber: "+1444333222",
+    email: "emily.davis@example.com",
+    userType: "user",
+    status: "InActive",
   },
 ];
 
@@ -50,35 +66,53 @@ export type HistoryEntry = {
   print: boolean;
 };
 
-const MOCK_DATA_SELECT = MOCK_DATA.map((item) => item.code);
-
-export default function ColorsDetails() {
-  const { t } = useTranslation();
+export default function UserDetailsPage() {
+  // const { t } = useTranslation();
   const navigate = useNavigate();
 
   const [keepChanges, setKeepChanges] = useState(false);
   const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
-  const [selectedColor, setSelectedColor] = useState("RED");
+  const [selectedUser, setSelectedUser] = useState("1");
   const location = useLocation();
   const isViewPage = location.pathname.includes("/view");
   const [pdfChecked, setPdfChecked] = useState(false);
   const [printEnabled, setPrintEnabled] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
 
-  let viewData = {
-    name: "Red",
-    code: "RED",
-    hexCode: "#FF0000",
-    description: "Primary red color used for danger or delete actions",
+  // Permission checks
+  // const { canCreate, canView, canEdit, canDelete } = useUserMasterPermissions();
 
-    isDefault: false,
+  // Field-level permissions
+  const canPdf: boolean = usePermission("user-master", "pdf");
+  const canPrint: boolean = usePermission("user-master", "print");
+  const canSeeHistory: boolean = usePermission("user-master", "history");
+
+  let userData = {
+    id: selectedUser,
+    name: MOCK_USERS.find((u) => u.id === selectedUser)?.name || "John Doe",
+    mobileNumber:
+      MOCK_USERS.find((u) => u.id === selectedUser)?.mobileNumber ||
+      "+1234567890",
+    email:
+      MOCK_USERS.find((u) => u.id === selectedUser)?.email ||
+      "john.doe@example.com",
+    userType:
+      MOCK_USERS.find((u) => u.id === selectedUser)?.userType || "admin",
+    password: "••••••••",
+    confirmPassword: "••••••••",
+    otp: "123456",
+    facebook: "https://facebook.com/johndoe",
+    linkedin: "https://linkedin.com/in/johndoe",
+    instagram: "https://instagram.com/johndoe",
+    isDefault: true,
     isActive: true,
     isDraft: false,
-
-    createdAt: new Date(),
-    draftedAt: null,
-    updatedAt: new Date(),
-    deletedAt: null,
     isDeleted: false,
+    status: MOCK_USERS.find((u) => u.id === selectedUser)?.status || "Active",
+    createdAt: "2023-05-15T10:30:00Z",
+    updatedAt: "2025-01-15T14:30:00Z",
+    draftedAt: "2025-05-20T14:45:00Z",
+    deletedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(),
   };
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -90,34 +124,57 @@ export default function ColorsDetails() {
     }
     console.log("isViewPage", isViewPage);
     if (isViewPage) {
-      viewData = {
+      userData = {
+        id: selectedUser,
         name: "",
-        code: "",
-        hexCode: "",
-        description: "",
-
+        mobileNumber: "",
+        email: "",
+        userType: "user",
+        password: "",
+        confirmPassword: "",
+        otp: "",
+        facebook: "",
+        linkedin: "",
+        instagram: "",
         isDefault: true,
         isActive: true,
         isDraft: false,
         isDeleted: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        draftedAt: null,
-        deletedAt: null,
+        status: "Active",
+        createdAt: "",
+        updatedAt: "",
+        draftedAt: "",
+        deletedAt: "",
       };
     }
   }, []);
 
-  const handlePrintCountry = (printData: any) => {
+  const handlePrintUser = (userData: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "Color Report",
-        data: printData,
+        title: "User Master Details",
+        data: [userData],
+        excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
-          name: "Name",
-          code: "Code",
-          hexCode: "Hex Code",
-          description: "Description",
+          name: "User Master Name",
+          mobileNumber: "User Master Mobile Number",
+          email: "User Master Email",
+          userType: "User Master Type",
+          password: "Password",
+          confirmPassword: "Confirm Password",
+          otp: "OTP",
+          facebook: "Facebook",
+          linkedin: "LinkedIn",
+          instagram: "Instagram",
+          isDefault: "Default User",
+          isActive: "Active Status",
+          isDraft: "Draft Status",
+          isDeleted: "Deleted Status",
+          status: "Status",
+          createdAt: "Created At",
+          updatedAt: "Updated At",
+          draftedAt: "Drafted At",
+          deletedAt: "Deleted At",
         },
       });
       printHtmlContent(html);
@@ -129,42 +186,29 @@ export default function ColorsDetails() {
 
   const handleSwitchChange = (checked: boolean) => {
     setPrintEnabled(checked);
-    if (checked) {
-      // Small delay to allow switch animation to complete
-      setTimeout(() => handlePrintCountry(viewData), 100);
-    }
   };
 
   const handlePDFSwitchChange = (pdfChecked: boolean) => {
     setPdfChecked(pdfChecked);
-    if (pdfChecked) {
-      // Small delay to allow switch animation to complete
-      setTimeout(() => handleExportPDF(), 100);
-    }
   };
 
   const handleExportPDF = async () => {
     console.log("Export PDF clicked");
     try {
-      console.log("viewData on pdf click", viewData);
+      console.log("userData on pdf click", userData);
       const blob = await pdf(
-        <PDF
-          data={[viewData]}
-          title="Color Details"
-          subtitle="Color Information Report"
+        <GenericPDF
+          data={[userData]}
+          title="User Master Details"
+          subtitle="User Information"
         />
       ).toBlob();
 
-      console.log("blob", blob);
-
       const url = URL.createObjectURL(blob);
-      console.log("url", url);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "color-details.pdf";
+      a.download = "user-details.pdf";
       a.click();
-      console.log("a", a);
-      console.log("url", url);
       URL.revokeObjectURL(url);
     } catch (error) {
       console.log(error);
@@ -172,11 +216,8 @@ export default function ColorsDetails() {
     }
   };
 
-  const handleDeleteRestore = () =>
-    console.log(viewData.isDeleted ? "Restoring..." : "Deleting...");
-
   const getRelativeTime = (dateString: string | null) => {
-    if (!dateString) return "--/--/----";
+    if (!dateString) return "–";
 
     const date = new Date(dateString);
     const now = new Date();
@@ -203,191 +244,227 @@ export default function ColorsDetails() {
     }
   };
 
+  const displayValue = (value: any) => {
+    return value === undefined || value === null || value === "" ? "–" : value;
+  };
+
   return (
     <>
-      <PageLayout
-        title={t("button.viewingColor")}
+      <MinimizablePageLayout
+        moduleId="user-details-module"
+        moduleName="User Master Details"
+        moduleRoute="/user-master/view"
+        title="Viewing User Master"
         videoSrc={video}
-        videoHeader="Rapid ERP Video"
-        onListClick={() => navigate("/colors")}
-        listText="List"
-        listPath="/colors"
+        videoHeader="Tutorial video"
+        listPath="user-master"
+        activePage="view"
+        module="user-master"
         popoverOptions={[
           {
             label: "Create",
-            onClick: () => navigate("/colors/create"),
+            icon: <Plus className="w-5 h-5 text-green-600" />,
+            onClick: () => navigate("/user-master/create"),
           },
           {
             label: "Edit",
-            onClick: () => navigate("/colors/edit/1"),
+            icon: <Edit className="w-5 h-5 text-blue-600" />,
+            onClick: () => navigate("/user-master/edit/1"),
           },
         ]}
         keepChanges={keepChanges}
         onKeepChangesChange={setKeepChanges}
         pdfChecked={pdfChecked}
-        onPdfToggle={handlePDFSwitchChange}
+        onPdfToggle={canPdf ? handlePDFSwitchChange : undefined}
         printEnabled={printEnabled}
-        onPrintToggle={handleSwitchChange}
-        onHistoryClick={() => setIsOptionModalOpen(true)}
+        onPrintToggle={canPrint ? handleSwitchChange : undefined}
+        onHistoryClick={
+          canSeeHistory ? () => setIsOptionModalOpen(true) : undefined
+        }
+        onExport={
+          canPdf && canPrint
+            ? () => {
+                if (!pdfChecked && !printEnabled) {
+                  setShowExportModal(true);
+                  return;
+                }
+
+                if (pdfChecked) {
+                  handleExportPDF();
+                }
+                if (printEnabled) {
+                  handlePrintUser(userData);
+                }
+              }
+            : undefined
+        }
       >
-        {/* Row 1 */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-          <div className="md:col-span-3">
-            <h3 className="font-medium mb-1">Code</h3>
+        {/* Row 1: User Selection, Name, Mobile Number, Email */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+          <div className="mt-1">
             <Autocomplete
-              data={MOCK_DATA_SELECT}
-              value={selectedColor}
-              onChange={setSelectedColor}
-              placeholder="Select a Code..."
-              display="code"
+              options={MOCK_USERS}
+              value={selectedUser}
+              onValueChange={setSelectedUser}
+              placeholder=" "
+              displayKey="name"
+              valueKey="id"
+              searchKey="name"
               disabled={false}
-              className="w-full"
-              styles={{
-                input: {
-                  "&:focus": {
-                    borderColor: "var(--primary)",
-                  },
-                },
-              }}
+              className="w-[96%] bg-gray-100 rounded-xl"
+              labelClassName="bg-gray-50 rounded-2xl"
+              labelText="User Master Name"
+              isShowTemplateIcon={false}
             />
           </div>
-          <div className="md:col-span-3">
-            <h3 className="font-medium mb-1">Color Name</h3>
-            <div className="w-full px-1 py-1 text-gray-500 font-normal text-md">
-              {viewData.name}
+
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">User Name</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(userData.name)}
             </div>
           </div>
-          <div className="md:col-span-3">
-            <h3 className="font-medium mb-1">Hex Code</h3>
-            <div className="w-full px-1 py-1 text-gray-500 font-normal text-md">
-              {viewData.hexCode}
+
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">User Mobile Number</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(userData.mobileNumber)}
             </div>
           </div>
-          <div className="md:col-span-3">
-            <h3 className="font-medium mb-1">Description</h3>
-            <div className="w-full px-1 py-1 text-gray-500 font-normal text-md">
-              {viewData.description}
+
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">User Email</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(userData.email)}
             </div>
           </div>
         </div>
 
-        {/* Row 2 */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-          {/* Default Switch */}
-          <div className="md:col-span-3">
-            <h3 className="font-medium mb-1">Default</h3>
-            <Switch
-              checked={viewData.isDefault}
-              disabled
-              className={` data-[state=unchecked]:bg-gray-600`}
-            />
+        {/* Row 2: User Type, Password, OTP, Facebook */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">User Master Type</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(userData.userType)}
+            </div>
           </div>
 
-          {/* Active Switch */}
-          <div className="md:col-span-3">
-            <h3 className="font-medium mb-1">Active</h3>
-            <Switch
-              checked={viewData.isActive}
-              disabled
-              className={`data-[state=unchecked]:bg-gray-600`}
-            />
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">Password</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(userData.password)}
+            </div>
           </div>
 
-          {/* Draft Switch */}
-          <div className="md:col-span-3">
-            <h3 className="font-medium mb-1">Draft</h3>
-            <Switch
-              checked={viewData.isDraft}
-              disabled
-              className={`data-[state=unchecked]:bg-gray-600`}
-            />
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">OTP</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(userData.otp)}
+            </div>
           </div>
 
-          {/* Delete/Restore Button */}
-          <div className="md:col-span-3">
-            <h3 className="font-medium mb-1">
-              {viewData.isDeleted ? "Restore" : "Delete"}
-            </h3>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleDeleteRestore}
-              disabled={viewData.isDeleted}
-              className="disabled:cursor-not-allowed disabled:text-gray-400"
-            >
-              {viewData.isDeleted ? (
-                <Undo size={20} className="text-blue-500" />
-              ) : (
-                <Trash2 size={20} className="text-red-600" />
-              )}
-            </Button>
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">Facebook</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(userData.facebook)}
+            </div>
           </div>
         </div>
 
-        {/* Row 3 */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-          <div className="md:col-span-3">
-            <h3 className="font-medium mb-1">Created</h3>
-            <p className="text-gray-500 text-md font-normal">
-              {getRelativeTime(viewData.createdAt?.toString() || "")}
-            </p>
+        {/* Row 3: LinkedIn, Instagram, Default, Status */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">LinkedIn</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(userData.linkedin)}
+            </div>
           </div>
-          <div className="md:col-span-3">
-            <h3 className="font-medium mb-1">Updated</h3>
-            <p className="text-gray-500 text-md font-normal">
-              {getRelativeTime(viewData.updatedAt?.toString() || "")}
-            </p>
+
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">Instagram</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(userData.instagram)}
+            </div>
           </div>
-          <div className="md:col-span-3">
-            <h3 className="font-medium mb-1">Drafted</h3>
-            <p className="text-gray-500 text-md font-normal">
-              {getRelativeTime(viewData.draftedAt || "")}
-            </p>
+
+          <div className="">
+            <div className="flex flex-col">
+              <div className="">
+                <span className="text-[15px] text-gray-600">Default</span>
+              </div>
+              <div className="">
+                {userData.isDefault ? (
+                  <span className="text-black text-[15px]">Yes</span>
+                ) : (
+                  <span className="text-black text-[15px]">No</span>
+                )}
+              </div>
+            </div>
           </div>
-          <div className="md:col-span-3">
-            <h3 className="font-medium mb-1">Deleted</h3>
-            <p className="text-gray-500 text-md font-normal">
-              {getRelativeTime(viewData.deletedAt || "")}
-            </p>
+
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">Status</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(userData.status)}
+            </div>
           </div>
         </div>
-      </PageLayout>
+
+        {/* Row 4: Action, Created At, Updated At, Drafted At */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+          <div className="">
+            <h3 className="font-normal mb-1 text-gray-600">Action</h3>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              Updated
+            </div>
+          </div>
+        </div>
+      </MinimizablePageLayout>
 
       {/* History Modal */}
-      <Modal
-        opened={isOptionModalOpen}
-        onClose={() => setIsOptionModalOpen(false)}
-        size="50%"
-        overlayProps={{ backgroundOpacity: 0.55, blur: 3 }}
-        withCloseButton={false}
-        styles={{
-          body: {
-            height: "720px", // Fixed height in pixels
-            overflow: "hidden",
-            padding: 4,
-          },
-          content: {
-            // height: "80vh", // Fixed height - 80% of viewport height
-            display: "flex",
-            flexDirection: "column",
-          },
-          header: {
-            flexShrink: 0,
-          },
+      <HistoryDataTable
+        isOptionModalOpen={isOptionModalOpen}
+        setIsOptionModalOpen={setIsOptionModalOpen}
+        columnData={mockHistoryData}
+        title="History"
+        statusInfo={{
+          created: getRelativeTime(userData.createdAt),
+          updated: getRelativeTime(userData.updatedAt),
+          drafted: getRelativeTime(userData.draftedAt),
+          deleted: getRelativeTime(userData.deletedAt),
         }}
-      >
-        <Modal.Header>
-          <Modal.Title>
-            <span className="text-lg font-semibold text-blue-600">
-              Color History
-            </span>
-          </Modal.Title>
-          <Modal.CloseButton />
-        </Modal.Header>
-        <Modal.Body>
-          <HistoryDataTable columnData={mockColorHistoryData} />
-        </Modal.Body>
-      </Modal>
+      />
+
+      {/* Export Warning Modal */}
+      <ResetFormModal
+        opened={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        onConfirm={() => setShowExportModal(false)}
+        title="Export Options Required"
+        message="Please select PDF/Print options before exporting. You need to enable at least one to export the data."
+        confirmText="OK"
+        cancelText="Cancel"
+      />
     </>
   );
 }
