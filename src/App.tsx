@@ -14,16 +14,16 @@ import CountryNewPage from "./pages/Country/CountryPage";
 import CountryFormPage from "./pages/Country/CreatePage";
 
 // users
+import UserPage from "./pages/users/UsersPage";
+import UserDetailsPage from "./pages/users/UsersDetails";
 import UserCreatePage from "./pages/users/CreatePage";
 import UserEditPage from "./pages/users/EditPage";
-import UserDetailsPage from "./pages/users/UserDetailsPage";
-import UsersPage from "./pages/users/UsersPage";
 
 // user master
+import UserMasterPage from "./pages/user-master/UsersMasterPage";
+import UserMasterDetails from "./pages/user-master/UsersMasterDetails";
 import UserMasterCreatePage from "./pages/user-master/CreatePage";
 import UserMasterEditPage from "./pages/user-master/EditPage";
-import UserMasterDetails from "./pages/user-master/UserMasterDetailsPage";
-import UserMasterPage from "./pages/user-master/UserMasterPage";
 
 // cities
 import CityPage from "./pages/city/CitiesPage";
@@ -1498,6 +1498,12 @@ import BlogCreatePage from "./pages/blog/CreatePage";
 import BlogEditPage from "./pages/blog/EditPage";
 import BlogDetails from "./pages/blog/DetailsPage";
 
+// Category
+import CategoryPage from "./pages/category/CategoryPage";
+import CategoryCreatePage from "./pages/category/CreatePage";
+import CategoryEditPage from "./pages/category/EditPage";
+import CategoryDetails from "./pages/category/DetailsPage";
+
 function App() {
   const { i18n } = useTranslation();
   const isAuthenticated = useSelector(
@@ -1601,43 +1607,6 @@ function App() {
                 <Route path="/search" element={<Dashboard />} />
 
                 {/* Users */}
-                <Route path="/users" element={<UsersPage />} />
-                <Route path="/users/:id" element={<UserDetailsPage />} />
-                <Route
-                  path="/users/create"
-                  element={<UserCreatePage isEdit={false} />}
-                />
-                <Route
-                  path="/users/:id/edit"
-                  element={<UserCreatePage isEdit={true} />}
-                />
-                <Route
-                  path="/users/edit/:id"
-                  element={<UserEditPage isEdit={true} />}
-                />
-                <Route path="/users/view" element={<UserDetailsPage />} />
-                {/* Users Master */}
-                <Route path="/user-master" element={<UserMasterPage />} />
-                <Route
-                  path="/user-master/:id"
-                  element={<UserMasterDetails />}
-                />
-                <Route
-                  path="/user-master/create"
-                  element={<UserMasterCreatePage isEdit={false} />}
-                />
-                <Route
-                  path="/user-master/:id/edit"
-                  element={<UserMasterCreatePage isEdit={true} />}
-                />
-                <Route
-                  path="/user-master/edit/:id"
-                  element={<UserMasterEditPage isEdit={true} />}
-                />
-                <Route
-                  path="/user-master/view"
-                  element={<UserMasterDetails />}
-                />
 
                 {/* Permissions */}
                 <Route path="/permissions" element={<PermissionsPage />} />
@@ -1954,6 +1923,23 @@ function App() {
 
                 {/* {------------------------------------------------------} */}
 
+                {/* Category */}
+                <Route path="/category" element={<CategoryPage />} />
+                <Route path="/category/:id" element={<CategoryDetails />} />
+                <Route
+                  path="/category/create"
+                  element={<CategoryCreatePage />}
+                />
+                <Route
+                  path="/category/edit/:id"
+                  element={<CategoryEditPage isEdit={true} />}
+                />
+                <Route
+                  path="/category/:id/edit"
+                  element={<CategoryEditPage isEdit={true} />}
+                />
+                <Route path="/category/view" element={<CategoryDetails />} />
+
                 {/* Countries */}
                 <Route path="/countries" element={<CountryPage />} />
                 <Route path="/countries/:id" element={<CountryDetails />} />
@@ -1984,6 +1970,43 @@ function App() {
                   path="/assets-category/edit/:id"
                   element={<AssetsEditPage isEdit={true} />}
                 />
+
+                {/* Users */}
+                <Route path="/users" element={<UserPage />} />
+                <Route path="/users/:id" element={<UserDetailsPage />} />
+                <Route
+                  path="/users/create"
+                  element={<UserCreatePage isEdit={false} />}
+                />
+                <Route
+                  path="/users/edit/:id"
+                  element={<UserEditPage isEdit={true} />}
+                />
+                <Route path="/users/view" element={<UserDetailsPage />} />
+
+                {/* Users Master */}
+                <Route path="/user-master" element={<UserMasterPage />} />
+                <Route
+                  path="/user-master/:id"
+                  element={<UserMasterDetails />}
+                />
+                <Route
+                  path="/user-master/create"
+                  element={<UserMasterCreatePage isEdit={false} />}
+                />
+                <Route
+                  path="/user-master/:id/edit"
+                  element={<UserMasterCreatePage isEdit={true} />}
+                />
+                <Route
+                  path="/user-master/edit/:id"
+                  element={<UserMasterEditPage isEdit={true} />}
+                />
+                <Route
+                  path="/user-master/view"
+                  element={<UserMasterDetails />}
+                />
+
                 {/* Assets Master */}
                 <Route path="/assets-master" element={<AssetsMasterPage />} />
                 <Route

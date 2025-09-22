@@ -8,8 +8,8 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import PageLayout from "@/layouts/PageLayout/MainPageLayout"; // Update path as needed
-import CountryGrid from "./UsersGrid";
-import CountryDataTable2 from "./UsersDataTable";
+import CountryGrid from "./UsersMasterGrid";
+import CountryDataTable2 from "./UsersMasterDataTable";
 import TabsCounter from "./components/TabsCounter";
 // import MaterialTableTabs from "@/components/common/MaterialTableTabs";
 import CounterTabs from "@/components/CounterTabs";
@@ -187,8 +187,8 @@ export default function CountryPage() {
 
   return (
     <PageLayout
-      title="Users"
-      createPath="/users/create"
+      title="Users Master"
+      createPath="/user-master/create"
       viewMode={viewMode}
       setViewMode={setViewMode}
       searchQuery={searchQuery}
@@ -201,7 +201,7 @@ export default function CountryPage() {
       showVisibility={showVisibility}
       setTimeLabel={setTimeLabel}
       tabsSection={tabsSection}
-      pathName="users"
+      pathName="user-master"
     >
       {mainContent}
     </PageLayout>

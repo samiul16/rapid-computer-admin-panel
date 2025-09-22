@@ -5,6 +5,143 @@ export const userPermission = {
   modules: {
     ...userPermissionDataSpliteVersion,
     ...userPermissionDataSpliteVersionThree,
+    users: {
+      formPermissions: {
+        create: true,
+        view: true,
+        edit: true,
+        delete: true,
+        restore: true,
+        export: true,
+        import: true,
+        pdf: true,
+        print: true,
+        history: true,
+      },
+      fieldPermissions: {
+        userName: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        status: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        createdDate: {
+          view: true,
+          edit: false,
+          create: true,
+        },
+        updatedDate: {
+          view: true,
+          edit: false,
+          create: true,
+        },
+        draftedDate: {
+          view: true,
+          edit: false,
+          create: true,
+        },
+        isDefault: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+      },
+    },
+    "user-master": {
+      formPermissions: {
+        create: true,
+        view: true,
+        edit: true,
+        delete: true,
+        restore: true,
+        export: true,
+        import: true,
+        pdf: true,
+        print: true,
+        history: true,
+      },
+      fieldPermissions: {
+        userName: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        mobileNumber: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        email: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        userType: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        password: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        confirmPassword: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        otp: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        facebook: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        linkedin: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        instagram: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        status: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        createdDate: {
+          view: true,
+          edit: false,
+          create: true,
+        },
+        updatedDate: {
+          view: true,
+          edit: false,
+          create: true,
+        },
+        draftedDate: {
+          view: true,
+          edit: false,
+          create: true,
+        },
+        isDefault: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+      },
+    },
     countries: {
       formPermissions: {
         create: true,
