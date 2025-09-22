@@ -39,6 +39,23 @@ export interface CountryFormData {
   isDeleted: boolean;
 }
 
+export interface LanguageFormData {
+  id?: string;
+  seq: number;
+  code: string;
+  language: string;
+  default: boolean;
+  status: "active" | "inactive";
+  isDeleted: boolean;
+  createdAt?: Date | null;
+  updatedAt?: Date | null;
+  deletedAt?: Date | null;
+  language_ar?: string;
+  language_hi?: string;
+  language_ur?: string;
+  language_bn?: string;
+}
+
 export interface CountryModuleData extends ModuleData {
   formData: CountryFormData;
   hasChanges: boolean;
@@ -51,4 +68,11 @@ export interface TaskAssignModuleData extends ModuleData {
   hasChanges: boolean;
   scrollPosition?: number;
   countryLanguageValues?: Record<string, string>;
+}
+
+export interface LanguageModuleData extends ModuleData {
+  formData: LanguageFormData;
+  hasChanges: boolean;
+  scrollPosition?: number;
+  languageLanguageValues?: Record<string, string>;
 }

@@ -160,6 +160,8 @@ export default function LanguagesDataTable({
   showFilter,
   setShowVisibility,
   showVisibility,
+  isFilterOpen,
+  setIsFilterOpen,
 }: {
   viewMode: string;
   setViewMode: (viewMode: string) => void;
@@ -171,6 +173,8 @@ export default function LanguagesDataTable({
   showFilter: boolean;
   setShowVisibility: (showVisibility: boolean) => void;
   showVisibility: boolean;
+  isFilterOpen: boolean;
+  setIsFilterOpen: (isFilterOpen: boolean) => void;
 }) {
   const { canCreate } = useCountriesPermissions();
 
@@ -241,25 +245,6 @@ export default function LanguagesDataTable({
         readOnly: !canCreate,
       },
     },
-    {
-      accessorKey: "status",
-      title: "Status",
-      options: [...new Set(mockLanguages.map((item) => item.status))],
-      filterFn: (row: any, columnId: any, filterValue: any) => {
-        if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as string;
-        return filterValue.includes(cellValue);
-      },
-      sortingFn: (row1: any, row2: any) => {
-        return row1.getValue("status").localeCompare(row2.getValue("status"));
-      },
-      size: 120,
-      minSize: 100,
-      meta: {
-        exportLabel: "status",
-        readOnly: !canCreate,
-      },
-    },
   ];
 
   const filteredData = mockLanguages.filter((language) => {
@@ -288,6 +273,8 @@ export default function LanguagesDataTable({
       showFilter={showFilter}
       setShowVisibility={setShowVisibility}
       showVisibility={showVisibility}
+      isFilterOpen={isFilterOpen}
+      setIsFilterOpen={setIsFilterOpen}
     />
   );
 }
