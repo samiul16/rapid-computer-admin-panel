@@ -589,6 +589,12 @@ import LeadsDetailsPage from "./pages/new-leads/LeadsDetailsPage";
 import LeadsEditPage from "./pages/new-leads/EditPage";
 import LeadsCreatePage from "./pages/new-leads/CreatePage";
 
+// Leads
+import NewLeadsPage from "./pages/leads/LeadsPage";
+import NewLeadsDetailsPage from "./pages/leads/LeadsDetails";
+import NewLeadsEditPage from "./pages/leads/EditPage";
+import NewLeadsCreatePage from "./pages/leads/CreatePage";
+
 // Booking Type
 import BookingTypePage from "./pages/BookingType/BookingTypePage";
 import BookingTypeDetailsPage from "./pages/BookingType/BookingTypeDetailsPage";
@@ -2006,6 +2012,16 @@ function App() {
                   path="/user-master/view"
                   element={<UserMasterDetails />}
                 />
+
+                {/* Leads */}
+                <Route path="/lead" element={<NewLeadsPage />} />
+                <Route path="/lead/:id" element={<NewLeadsDetailsPage />} />
+                <Route path="/lead/create" element={<NewLeadsCreatePage />} />
+                <Route
+                  path="/lead/edit/:id"
+                  element={<NewLeadsEditPage isEdit={true} />}
+                />
+                <Route path="/lead/view" element={<NewLeadsDetailsPage />} />
 
                 {/* Assets Master */}
                 <Route path="/assets-master" element={<AssetsMasterPage />} />
