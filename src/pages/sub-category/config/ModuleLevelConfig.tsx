@@ -69,12 +69,11 @@ export const fixedColumnsValues: (keyof ModuleFieldsType)[] = ["slNo"];
 
 // column key and title for data table view
 export const tableViewColumnSchema: TableViewDataTableColumnConfig[] = [
-  { key: "slNo", title: "SL.NO" },
+  { key: "slNo", title: "SL.NO", size: 80, minSize: 80 },
   { key: "name", title: "Name" },
   { key: "groups", title: "Groups" },
   { key: "categories", title: "Categories" },
   { key: "description", title: "Description" },
-  { key: "status", title: "Status" },
 ];
 
 // dont change variable name "MOCK_TABLE_DATA"
@@ -202,6 +201,8 @@ type FieldConfig = {
   nextFocus?: string;
   tooltip?: string;
   required?: boolean;
+  disabled?: boolean;
+  showTemplate?: boolean;
 };
 
 export const initialDataWithValue: ModuleCreateEditPageTypes = {
@@ -237,6 +238,7 @@ export const formFields: FieldConfig[] = [
     nextFocus: "groups",
     tooltip: "Enter sub-category name",
     required: true,
+    showTemplate: true,
   },
   {
     name: "groups",
@@ -249,10 +251,12 @@ export const formFields: FieldConfig[] = [
   {
     name: "categories",
     label: "Categories",
-    component: "input",
+    component: "autocomplete",
     nextFocus: "description",
     tooltip: "Enter category name",
     required: true,
+    options: ["Gadgets", "Clothing", "Books", "Home Decor", "Sports"],
+    showTemplate: true,
   },
   {
     name: "description",
@@ -260,14 +264,6 @@ export const formFields: FieldConfig[] = [
     component: "input",
     nextFocus: "status",
     tooltip: "Enter description",
-    required: true,
-  },
-  {
-    name: "status",
-    label: "Status",
-    component: "autocomplete",
-    options: ["Active", "Inactive", "Draft", "Completed", "Cancelled"],
-    tooltip: "Select status",
     required: true,
   },
 ];

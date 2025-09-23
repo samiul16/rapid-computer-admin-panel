@@ -54,6 +54,25 @@ export interface CategoryFormData {
   isDeleted?: boolean;
 }
 
+export interface SubCategoryFormData {
+  slNo: string;
+  groups: string;
+  status: string;
+  name: string;
+  label: string;
+  categories: string;
+  description: string;
+  type?: React.HTMLInputTypeAttribute;
+  component: "autocomplete" | "input" | "mutiselect";
+  placeholder?: string;
+  options?: string[];
+  nextFocus?: string;
+  tooltip?: string;
+  required?: boolean;
+  isDraft?: boolean;
+  isDefault?: boolean;
+}
+
 export interface LanguageFormData {
   id?: string;
   seq: number;

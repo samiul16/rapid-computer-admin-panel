@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import FixedColumnDataTable from "@/components/common/FixedColumnDataTable";
+import FixedColumnDataTable from "@/components/common/country-page-table/FixedColumnDataTable";
 
 const mockOpeningStocks = [
   {
@@ -288,10 +288,22 @@ export default function OpeningStockDataTable({
   viewMode,
   setViewMode,
   dataTableFilter,
+  setIsExportOpen,
+  isExportOpen,
+  setIsFilterOpen,
+  isFilterOpen,
+  setShowVisibility,
+  showVisibility,
 }: {
   viewMode: string;
   setViewMode: (viewMode: string) => void;
   dataTableFilter: any;
+  setIsExportOpen: (isExportOpen: boolean) => void;
+  isExportOpen: boolean;
+  setIsFilterOpen: (isFilterOpen: boolean) => void;
+  isFilterOpen: boolean;
+  setShowVisibility: (showVisibility: boolean) => void;
+  showVisibility: boolean;
 }) {
   const componentColumns = [
     {
@@ -507,24 +519,6 @@ export default function OpeningStockDataTable({
       },
     },
     {
-      accessorKey: "status",
-      title: "Overall Status",
-      options: ["active", "inactive", "draft"],
-      filterFn: (row: any, columnId: any, filterValue: any) => {
-        if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as string;
-        return filterValue.includes(cellValue);
-      },
-      sortingFn: (row1: any, row2: any) => {
-        return row1.getValue("status").localeCompare(row2.getValue("status"));
-      },
-      size: 120,
-      minSize: 100,
-      meta: {
-        exportLabel: "Overall Status",
-      },
-    },
-    {
       accessorKey: "createdAt",
       title: "Created Date",
       options: [],
@@ -606,6 +600,16 @@ export default function OpeningStockDataTable({
       viewMode={viewMode}
       setViewMode={setViewMode}
       fixedColumns={[]}
+      searchQuery={dataTableFilter.searchQuery}
+      pathName={location.pathname}
+      setShowExport={setIsExportOpen}
+      showExport={isExportOpen}
+      setShowFilter={setIsFilterOpen}
+      showFilter={isFilterOpen}
+      setShowVisibility={setShowVisibility}
+      showVisibility={showVisibility}
+      isFilterOpen={false}
+      setIsFilterOpen={setIsFilterOpen}
     />
   );
 }
