@@ -496,7 +496,7 @@ export default function BrandEditPage({ isEdit = true }: Props) {
                     options={[
                       {
                         label: "Active",
-                        value: "Active",
+                        value: "active",
                         date: "Set active country",
                       },
                       {

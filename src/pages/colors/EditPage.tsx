@@ -522,7 +522,7 @@ export default function ColorEditPage({ isEdit = true }: Props) {
                     options={[
                       {
                         label: "Active",
-                        value: "Active",
+                        value: "active",
                         date: "Set active",
                       },
                       {
