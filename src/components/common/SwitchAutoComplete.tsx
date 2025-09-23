@@ -369,15 +369,17 @@ export const SwitchSelect = forwardRef<
                 tooltip: {
                   fontSize: "14px",
                   padding: "8px 12px",
-                  backgroundColor: "#374151",
-                  color: "white",
+                  backgroundColor: "white",
+                  color: "var(--primary)",
+                  border: "1px solid var(--primary)",
                   borderRadius: "6px",
-                  fontWeight: "500",
+                  fontWeight: "600",
                   boxShadow:
                     "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
                 },
                 arrow: {
-                  backgroundColor: "#374151",
+                  backgroundColor: "white",
+                  border: "1px solid var(--primary)",
                 },
               }}
             >
@@ -508,11 +510,11 @@ export const SwitchSelect = forwardRef<
                             onMouseEnter={() => setHighlightedIndex(index)}
                           >
                             <div className="flex-1 inline-flex flex-col justify-start items-start gap-1">
-                              <div className="self-stretch flex items-center text-black/80 dark:text-white text-base font-medium font-['Inter'] leading-tight">
+                              <div className="self-stretch flex items-center text-black/80 dark:text-white text-base font-medium leading-tight">
                                 {optionLabel}
                               </div>
                               {optionDate && (
-                                <div className="self-stretch flex items-center text-black/50 dark:text-white text-xs font-normal font-['Inter'] leading-tight">
+                                <div className="self-stretch flex items-center text-black/50 dark:text-white text-xs font-normal leading-tight">
                                   {optionDate}
                                 </div>
                               )}

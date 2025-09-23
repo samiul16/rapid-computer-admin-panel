@@ -19,11 +19,10 @@ import { useMinimizedModuleData } from "@/hooks/useMinimizedModuleData";
 import { SwitchSelect } from "@/components/common/SwitchAutoComplete";
 import { ActionsAutocomplete } from "@/components/common/ActionsAutocomplete";
 
-type ColorData = {
+type BrandData = {
   name: string;
   code: string;
   description: string;
-  hexCode: string;
   status: "active" | "inactive" | "draft" | "deleted";
   isDefault: boolean;
   isActive: boolean;
@@ -35,8 +34,8 @@ type ColorData = {
   deletedAt: Date | null;
 };
 
-type ColorModuleData = {
-  formData: ColorData;
+type BrandModuleData = {
+  formData: BrandData;
   hasChanges: boolean;
   scrollPosition: number;
 };
@@ -45,11 +44,10 @@ type Props = {
   isEdit?: boolean;
 };
 
-const initialData: ColorData = {
-  name: "Ocean Blue",
-  code: "BLU001",
-  description: "A beautiful ocean blue color",
-  hexCode: "#3B82F6",
+const initialData: BrandData = {
+  name: "Apex",
+  code: "BRD001",
+  description: "Premium performance brand",
   status: "active",
   isDefault: false,
   isActive: true,
@@ -61,14 +59,14 @@ const initialData: ColorData = {
   deletedAt: null,
 };
 
-export default function ColorEditPage({ isEdit = true }: Props) {
+export default function BrandEditPage({ isEdit = true }: Props) {
   const navigate = useNavigate();
   const { id } = useParams();
   // const labels = useLanguageLabels();
   const { isRTL } = useAppSelector((state) => state.language);
 
   // Get module ID for this edit page
-  const moduleId = `color-edit-module-${id || "new"}`;
+  const moduleId = `brand-edit-module-${id || "new"}`;
 
   // Use the custom hook for minimized module data
   const {
@@ -76,7 +74,7 @@ export default function ColorEditPage({ isEdit = true }: Props) {
     hasMinimizedData,
     resetModuleData,
     getModuleScrollPosition,
-  } = useMinimizedModuleData<ColorModuleData>(moduleId);
+  } = useMinimizedModuleData<BrandModuleData>(moduleId);
 
   const [keepCreating, setKeepCreating] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
@@ -97,21 +95,19 @@ export default function ColorEditPage({ isEdit = true }: Props) {
   const { canCreate, canView } = useColorsPermissions();
 
   // Field-level permissions
-  const name: boolean = usePermission("colors", "edit", "name");
-  const code: boolean = usePermission("colors", "edit", "code");
-  const description: boolean = usePermission("colors", "edit", "description");
-  const hexCode: boolean = usePermission("colors", "edit", "hexCode");
-  const status: boolean = usePermission("colors", "edit", "status");
-  const isDefault: boolean = usePermission("colors", "edit", "isDefault");
-  const canPdf: boolean = usePermission("colors", "pdf");
-  const canPrint: boolean = usePermission("colors", "print");
+  const name: boolean = usePermission("brands", "edit", "name");
+  const code: boolean = usePermission("brands", "edit", "code");
+  const description: boolean = usePermission("brands", "edit", "description");
+  const status: boolean = usePermission("brands", "edit", "status");
+  const isDefault: boolean = usePermission("brands", "edit", "isDefault");
+  const canPdf: boolean = usePermission("brands", "pdf");
+  const canPrint: boolean = usePermission("brands", "print");
 
   // Form state
-  const [formData, setFormData] = useState<ColorData>({
+  const [formData, setFormData] = useState<BrandData>({
     name: "",
     code: "",
     description: "",
-    hexCode: "",
     status: "active",
     isDefault: false,
     isActive: true,
@@ -187,6 +183,7 @@ export default function ColorEditPage({ isEdit = true }: Props) {
     ) {
       setFormData(initialData);
       setIsDefaultState(initialData.isDefault ? "Yes" : "No");
+      setIsDefaultState(initialData.isDefault ? "Yes" : "No");
     }
   }, [isEdit, hasMinimizedData, isRestoredFromMinimized, moduleId]);
 
@@ -208,16 +205,16 @@ export default function ColorEditPage({ isEdit = true }: Props) {
       await handleExportPDF();
     }
     if (printEnabled) {
-      handlePrintColor(formData);
+      handlePrintBrand(formData);
     }
 
     // keep switch functionality
     if (keepCreating) {
-      toastSuccess("Color updated successfully!");
+      toastSuccess("Brand updated successfully!");
       handleReset();
     } else {
-      toastSuccess("Color updated successfully!");
-      navigate("/colors");
+      toastSuccess("Brand updated successfully!");
+      navigate("/brands");
     }
   };
 
@@ -227,7 +224,6 @@ export default function ColorEditPage({ isEdit = true }: Props) {
       name: "",
       code: "",
       description: "",
-      hexCode: "",
       status: "active",
       isDefault: false,
       isActive: true,
@@ -268,19 +264,18 @@ export default function ColorEditPage({ isEdit = true }: Props) {
     setIsResetModalOpen(true);
   };
 
-  const handlePrintColor = (colorData: any) => {
+  const handlePrintBrand = (brandData: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "Color Details",
-        data: [colorData],
+        title: "Brand Details",
+        data: [brandData],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
-          name: "Color Name",
-          code: "Color Code",
+          name: "Brand Name",
+          code: "Brand Code",
           description: "Description",
-          hexCode: "Hex Code",
           status: "Status",
-          isDefault: "Default Color",
+          isDefault: "Default Brand",
           isActive: "Active Status",
           isDraft: "Draft Status",
           isDeleted: "Deleted Status",
@@ -310,15 +305,15 @@ export default function ColorEditPage({ isEdit = true }: Props) {
       const blob = await pdf(
         <GenericPDF
           data={[formData]}
-          title="Color Details"
-          subtitle="Color Information"
+          title="Brand Details"
+          subtitle="Brand Information"
         />
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "color-details.pdf";
+      a.download = "brand-details.pdf";
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
@@ -332,7 +327,7 @@ export default function ColorEditPage({ isEdit = true }: Props) {
       label: "Create",
       icon: <Plus className="w-5 h-5 text-green-500" />,
       onClick: () => {
-        navigate("/colors/create");
+        navigate("/brands/create");
       },
       show: canCreate,
     },
@@ -340,7 +335,7 @@ export default function ColorEditPage({ isEdit = true }: Props) {
       label: "View",
       icon: <Eye className="w-5 h-5 text-green-600" />,
       onClick: () => {
-        navigate("/colors/view");
+        navigate("/brands/view");
       },
       show: canView,
     },
@@ -374,7 +369,7 @@ export default function ColorEditPage({ isEdit = true }: Props) {
   }, [formData.isDraft, canCreate]);
 
   // Create minimize handler using the custom hook
-  const handleMinimize = useCallback((): ColorModuleData => {
+  const handleMinimize = useCallback((): BrandModuleData => {
     return {
       formData,
       hasChanges: true,
@@ -386,11 +381,11 @@ export default function ColorEditPage({ isEdit = true }: Props) {
     <>
       <MinimizablePageLayout
         moduleId={moduleId}
-        moduleName={`Edit Color`}
-        moduleRoute={`/colors/edit/${id || "new"}`}
+        moduleName={`Edit Brand`}
+        moduleRoute={`/brands/edit/${id || "new"}`}
         onMinimize={handleMinimize}
-        title="Edit Color"
-        listPath="colors"
+        title="Edit Brand"
+        listPath="brands"
         popoverOptions={popoverOptions}
         videoSrc={video}
         videoHeader="Tutorial video"
@@ -401,7 +396,7 @@ export default function ColorEditPage({ isEdit = true }: Props) {
         printEnabled={printEnabled}
         onPrintToggle={canPrint ? handleSwitchChange : undefined}
         activePage="edit"
-        module="colors"
+        module="brands"
         additionalFooterButtons={
           canCreate ? (
             <div className="flex gap-4 max-[435px]:gap-2">
@@ -431,9 +426,9 @@ export default function ColorEditPage({ isEdit = true }: Props) {
             onSubmit={handleSubmit}
             className="space-y-6"
           >
-            {/* First Row: Color Name, Code, Description, Hex Code */}
+            {/* First Row: Brand Name, Code, Description */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
-              {/* Color Name field - only show if user can edit */}
+              {/* Brand Name field - only show if user can edit */}
               {name && (
                 <div className="space-y-2">
                   <EditableInput
@@ -444,14 +439,14 @@ export default function ColorEditPage({ isEdit = true }: Props) {
                     onChange={handleChange}
                     onNext={() => focusNextInput("code")}
                     onCancel={() => setFormData({ ...formData, name: "" })}
-                    labelText="Color Name"
-                    tooltipText="Enter the color name"
+                    labelText="Brand Name"
+                    tooltipText="Enter the brand name"
                     required
                   />
                 </div>
               )}
 
-              {/* Color Code field - only show if user can edit */}
+              {/* Brand Code field - only show if user can edit */}
               {code && (
                 <div className="space-y-2">
                   <EditableInput
@@ -462,8 +457,8 @@ export default function ColorEditPage({ isEdit = true }: Props) {
                     onChange={handleChange}
                     onNext={() => focusNextInput("description")}
                     onCancel={() => setFormData({ ...formData, code: "" })}
-                    labelText="Color Code"
-                    tooltipText="Enter the color code (e.g., BLU001)"
+                    labelText="Brand Code"
+                    tooltipText="Enter the brand code (e.g., BRD001)"
                     required
                   />
                 </div>
@@ -478,38 +473,17 @@ export default function ColorEditPage({ isEdit = true }: Props) {
                     name="description"
                     value={formData.description}
                     onChange={handleChange}
-                    onNext={() => focusNextInput("hexCode")}
+                    onNext={() => focusNextInput("status")}
                     onCancel={() =>
                       setFormData({ ...formData, description: "" })
                     }
                     labelText="Description"
-                    tooltipText="Enter color description"
+                    tooltipText="Enter brand description"
                     required
                   />
                 </div>
               )}
 
-              {/* Hex Code field - only show if user can edit */}
-              {hexCode && (
-                <div className="space-y-2">
-                  <EditableInput
-                    setRef={setRef("hexCode")}
-                    id="hexCode"
-                    name="hexCode"
-                    value={formData.hexCode}
-                    onChange={handleChange}
-                    onNext={() => focusNextInput("status")}
-                    onCancel={() => setFormData({ ...formData, hexCode: "" })}
-                    labelText="Hex Code"
-                    tooltipText="Enter hex color code (e.g., #3B82F6)"
-                    required
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Second Row: Status, Default */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
               {/* Status field - only show if user can edit */}
               {status && (
                 <div className="space-y-2">
@@ -518,27 +492,27 @@ export default function ColorEditPage({ isEdit = true }: Props) {
                     id="status"
                     name="status"
                     labelText="Status"
-                    multiSelect={false}
+                    multiSelect={false} // Single select mode
                     options={[
                       {
                         label: "Active",
                         value: "active",
-                        date: "Set active",
+                        date: "Set active country",
                       },
                       {
                         label: "Inactive",
-                        value: "Inactive",
-                        date: "Set inactive",
+                        value: "InActive",
+                        date: "Set inactive country",
                       },
                       {
                         label: "Draft",
                         value: "Draft",
-                        date: "Set draft",
+                        date: "Set draft country",
                       },
                       {
                         label: "Delete",
                         value: "Delete",
-                        date: "Set delete",
+                        date: "Set delete country",
                       },
                     ]}
                     value={formData.status}
@@ -546,7 +520,7 @@ export default function ColorEditPage({ isEdit = true }: Props) {
                       const stringValue = Array.isArray(value)
                         ? value[0] || ""
                         : value;
-
+                      console.log("switch value", stringValue);
                       setFormData((prev) => ({
                         ...prev,
                         status: stringValue as
@@ -554,9 +528,9 @@ export default function ColorEditPage({ isEdit = true }: Props) {
                           | "inactive"
                           | "draft"
                           | "deleted",
+                        isDeleted: stringValue === "deleted",
                         isDraft: stringValue === "Draft",
                         isActive: stringValue === "Active",
-                        isDeleted: stringValue === "Delete",
                       }));
 
                       // Update your form data
@@ -566,10 +540,6 @@ export default function ColorEditPage({ isEdit = true }: Props) {
                         isDraft: stringValue === "Draft",
                         isActive: stringValue === "Active",
                       }));
-                      focusNextInput("isDefault");
-                    }}
-                    onEnterPress={() => {
-                      focusNextInput("isDefault");
                     }}
                     placeholder=""
                     styles={{
@@ -580,11 +550,14 @@ export default function ColorEditPage({ isEdit = true }: Props) {
                         },
                       },
                     }}
-                    tooltipText="Set the color status"
+                    tooltipText="Set the brand status"
                   />
                 </div>
               )}
+            </div>
 
+            {/* Second Row: Status, Default */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
               {/* Default field - only show if user can edit */}
               {isDefault && (
                 <div className="space-y-2 relative">
@@ -597,12 +570,12 @@ export default function ColorEditPage({ isEdit = true }: Props) {
                       {
                         label: "Yes",
                         value: "Yes",
-                        date: "Set default color",
+                        date: "Set default brand",
                       },
                       {
                         label: "No",
                         value: "No",
-                        date: "Remove default color",
+                        date: "Remove default brand",
                       },
                     ]}
                     value={isDefaultState === "Yes" ? "Yes" : "No"}
@@ -629,7 +602,7 @@ export default function ColorEditPage({ isEdit = true }: Props) {
                     placeholder=" "
                     labelText="Default"
                     className="relative"
-                    tooltipText="Set as default color"
+                    tooltipText="Set as default brand"
                   />
                 </div>
               )}
@@ -684,7 +657,7 @@ export default function ColorEditPage({ isEdit = true }: Props) {
                       },
                     },
                   }}
-                  tooltipText="Color Action History"
+                  tooltipText="Brand Action History"
                 />
               </div>
             </div>

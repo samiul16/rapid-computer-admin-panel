@@ -314,15 +314,17 @@ export const ActionsAutocomplete = forwardRef<
                 tooltip: {
                   fontSize: "14px",
                   padding: "8px 12px",
-                  backgroundColor: "#374151",
-                  color: "white",
+                  backgroundColor: "white",
+                  color: "var(--primary)",
+                  border: "1px solid var(--primary)",
                   borderRadius: "6px",
-                  fontWeight: "500",
+                  fontWeight: "600",
                   boxShadow:
                     "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
                 },
                 arrow: {
-                  backgroundColor: "#374151",
+                  backgroundColor: "white",
+                  border: "1px solid var(--primary)",
                 },
               }}
             >

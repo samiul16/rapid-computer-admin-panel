@@ -101,7 +101,7 @@ export default function UserEditPage({ isEdit = true }: Props) {
     "No"
   );
   const [statusState, setStatusState] = useState<"Active" | "Draft" | string>(
-    "Active"
+    "active"
   );
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [printEnabled, setPrintEnabled] = useState(false);
@@ -778,7 +778,7 @@ export default function UserEditPage({ isEdit = true }: Props) {
                       date: "Set active",
                     },
                     {
-                      label: "InActive",
+                      label: "Inactive",
                       value: "InActive",
                       date: "Set inactive",
                     },
@@ -786,6 +786,11 @@ export default function UserEditPage({ isEdit = true }: Props) {
                       label: "Draft",
                       value: "Draft",
                       date: "Set draft",
+                    },
+                    {
+                      label: "Delete",
+                      value: "Delete",
+                      date: "Set delete",
                     },
                   ]}
                   value={statusState}
@@ -799,6 +804,7 @@ export default function UserEditPage({ isEdit = true }: Props) {
                       ...prev,
                       isDraft: stringValue === "Draft",
                       isActive: stringValue === "Active",
+                      isDeleted: stringValue === "Delete",
                     }));
                   }}
                   placeholder=""

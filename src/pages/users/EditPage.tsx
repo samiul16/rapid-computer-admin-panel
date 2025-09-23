@@ -240,7 +240,7 @@ export default function UserEditPage({ isEdit = true }: Props) {
       deletedAt: null,
     });
     setIsDefaultState("No");
-    setStatusState("Active");
+    setStatusState("active");
     setIsRestoredFromMinimized(false);
 
     if (formRef.current) {
@@ -516,7 +516,7 @@ export default function UserEditPage({ isEdit = true }: Props) {
                         date: "Set active",
                       },
                       {
-                        label: "InActive",
+                        label: "Inactive",
                         value: "InActive",
                         date: "Set inactive",
                       },
@@ -524,6 +524,11 @@ export default function UserEditPage({ isEdit = true }: Props) {
                         label: "Draft",
                         value: "Draft",
                         date: "Set draft",
+                      },
+                      {
+                        label: "Delete",
+                        value: "Delete",
+                        date: "Set delete",
                       },
                     ]}
                     value={statusState}
@@ -536,6 +541,7 @@ export default function UserEditPage({ isEdit = true }: Props) {
                       // Update your form data
                       setFormData((prev) => ({
                         ...prev,
+                        isDeleted: stringValue === "Delete",
                         isDraft: stringValue === "Draft",
                         isActive: stringValue === "Active",
                       }));

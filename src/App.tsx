@@ -159,10 +159,10 @@ import TaxDetails from "./pages/tax/TaxDetails";
 import TaxPage from "./pages/tax/TaxPage";
 
 // Brand
-import BrandCreatePage from "./pages/brands/BrandCreatePage";
-import BrandDetails from "./pages/brands/BrandDetails";
-import BrandEditPage from "./pages/brands/BrandEditPage";
-import BrandPage from "./pages/brands/BrandPage";
+import BrandCreatePage from "./pages/brands/CreatePage";
+import BrandDetails from "./pages/brands/BrandsDetails";
+import BrandEditPage from "./pages/brands/EditPage";
+import BrandPage from "./pages/brands/BrandsPage";
 
 // Deliverymen
 import DeliverymenCreatePage from "./pages/deliverymen/DeliverymenCreatePage";
