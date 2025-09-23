@@ -51,7 +51,7 @@ const DynamicInputTableRow: React.FC<DynamicInputTableRowProps> = React.memo(
         key={formData.SN}
       >
         {/* Serial Number */}
-        <div className="w-full flex items-center justify-center px-2 text-sm font-medium">
+        <div className="w-full flex items-center justify-center px-2 text-sm font-medium -mt-4">
           {formData.SN}
         </div>
 
@@ -85,6 +85,7 @@ const DynamicInputTableRow: React.FC<DynamicInputTableRowProps> = React.memo(
                 "&:focus": {
                   borderColor: "var(--primary)",
                 },
+                borderRadius: "0.5rem",
               },
               dropdown: {
                 fontSize: "12px",
@@ -205,7 +206,7 @@ const DynamicInputTableRow: React.FC<DynamicInputTableRowProps> = React.memo(
             variant="subtle"
             type="button"
             size="sm"
-            className="cursor-pointer w-8 h-8 p-0 flex justify-center items-center hover:bg-red-50 rounded"
+            className="cursor-pointer w-8 h-8 p-0 flex justify-center items-center hover:bg-red-200! rounded-full! -mt-4"
             onClick={() => handleRemoveRow(rowIdx)}
           >
             <X size={16} className="text-red-500" />

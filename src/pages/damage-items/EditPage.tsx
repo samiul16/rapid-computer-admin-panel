@@ -19,11 +19,14 @@ import { useMinimizedModuleData } from "@/hooks/useMinimizedModuleData";
 import { SwitchSelect } from "@/components/common/SwitchAutoComplete";
 import { ActionsAutocomplete } from "@/components/common/ActionsAutocomplete";
 
-type BrandData = {
-  name: string;
-  code: string;
-  description: string;
-  status: "active" | "inactive" | "draft" | "deleted";
+type DamageItemData = {
+  itemId: string;
+  quantityDamaged: number;
+  documentDate: Date | null;
+  reportedBy: string;
+  location: string;
+  damageType: string;
+  status: "Active" | "Inactive" | "Draft" | "Deleted";
   isDefault: boolean;
   isActive: boolean;
   isDraft: boolean;
@@ -34,8 +37,8 @@ type BrandData = {
   deletedAt: Date | null;
 };
 
-type BrandModuleData = {
-  formData: BrandData;
+type DamageItemModuleData = {
+  formData: DamageItemData;
   hasChanges: boolean;
   scrollPosition: number;
 };
@@ -44,11 +47,14 @@ type Props = {
   isEdit?: boolean;
 };
 
-const initialData: BrandData = {
-  name: "Apex",
-  code: "BRD001",
-  description: "Premium performance brand",
-  status: "active",
+const initialData: DamageItemData = {
+  itemId: "ITM-0001",
+  quantityDamaged: 2,
+  documentDate: new Date(),
+  reportedBy: "John Doe",
+  location: "Warehouse A",
+  damageType: "Broken",
+  status: "Active",
   isDefault: false,
   isActive: true,
   isDraft: false,
@@ -59,14 +65,14 @@ const initialData: BrandData = {
   deletedAt: null,
 };
 
-export default function BrandEditPage({ isEdit = true }: Props) {
+export default function DamageItemEditPage({ isEdit = true }: Props) {
   const navigate = useNavigate();
   const { id } = useParams();
   // const labels = useLanguageLabels();
   const { isRTL } = useAppSelector((state) => state.language);
 
   // Get module ID for this edit page
-  const moduleId = `brand-edit-module-${id || "new"}`;
+  const moduleId = `damage-item-edit-module-${id || "new"}`;
 
   // Use the custom hook for minimized module data
   const {
@@ -74,7 +80,7 @@ export default function BrandEditPage({ isEdit = true }: Props) {
     hasMinimizedData,
     resetModuleData,
     getModuleScrollPosition,
-  } = useMinimizedModuleData<BrandModuleData>(moduleId);
+  } = useMinimizedModuleData<DamageItemModuleData>(moduleId);
 
   const [keepCreating, setKeepCreating] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
@@ -95,20 +101,50 @@ export default function BrandEditPage({ isEdit = true }: Props) {
   const { canCreate, canView } = useColorsPermissions();
 
   // Field-level permissions
-  const name: boolean = usePermission("brands", "edit", "name");
-  const code: boolean = usePermission("brands", "edit", "code");
-  const description: boolean = usePermission("brands", "edit", "description");
-  const status: boolean = usePermission("brands", "edit", "status");
-  const isDefault: boolean = usePermission("brands", "edit", "isDefault");
-  const canPdf: boolean = usePermission("brands", "pdf");
-  const canPrint: boolean = usePermission("brands", "print");
+  const itemIdPerm: boolean = usePermission("damage-items", "edit", "itemId");
+  const quantityDamagedPerm: boolean = usePermission(
+    "damage-items",
+    "edit",
+    "quantityDamaged"
+  );
+  const documentDatePerm: boolean = usePermission(
+    "damage-items",
+    "edit",
+    "documentDate"
+  );
+  const reportedByPerm: boolean = usePermission(
+    "damage-items",
+    "edit",
+    "reportedBy"
+  );
+  const locationPerm: boolean = usePermission(
+    "damage-items",
+    "edit",
+    "location"
+  );
+  const damageTypePerm: boolean = usePermission(
+    "damage-items",
+    "edit",
+    "damageType"
+  );
+  const statusPerm: boolean = usePermission("damage-items", "edit", "status");
+  const isDefaultPerm: boolean = usePermission(
+    "damage-items",
+    "edit",
+    "isDefault"
+  );
+  const canPdf: boolean = usePermission("damage-items", "pdf");
+  const canPrint: boolean = usePermission("damage-items", "print");
 
   // Form state
-  const [formData, setFormData] = useState<BrandData>({
-    name: "",
-    code: "",
-    description: "",
-    status: "active",
+  const [formData, setFormData] = useState<DamageItemData>({
+    itemId: "",
+    quantityDamaged: 0,
+    documentDate: new Date(),
+    reportedBy: "",
+    location: "",
+    damageType: "",
+    status: "Active",
     isDefault: false,
     isActive: true,
     isDraft: false,
@@ -144,7 +180,7 @@ export default function BrandEditPage({ isEdit = true }: Props) {
       (hasMinimizedData &&
         moduleData?.formData &&
         !isRestoredFromMinimized &&
-        !formData.name);
+        !formData.itemId);
 
     if (hasMinimizedData && moduleData?.formData && shouldAutoRestore) {
       setFormData(moduleData.formData);
@@ -168,7 +204,7 @@ export default function BrandEditPage({ isEdit = true }: Props) {
     moduleData,
     isRestoredFromMinimized,
     shouldRestoreFromMinimized,
-    formData.name,
+    formData.itemId,
     moduleId,
     getModuleScrollPosition,
   ]);
@@ -183,7 +219,6 @@ export default function BrandEditPage({ isEdit = true }: Props) {
     ) {
       setFormData(initialData);
       setIsDefaultState(initialData.isDefault ? "Yes" : "No");
-      setIsDefaultState(initialData.isDefault ? "Yes" : "No");
     }
   }, [isEdit, hasMinimizedData, isRestoredFromMinimized, moduleId]);
 
@@ -192,7 +227,12 @@ export default function BrandEditPage({ isEdit = true }: Props) {
     const { name, value, type, checked } = e.target;
     const newFormData = {
       ...formData,
-      [name]: type === "checkbox" ? checked : value,
+      [name]:
+        type === "checkbox"
+          ? checked
+          : type === "number"
+          ? Number(value)
+          : value,
     };
     setFormData(newFormData);
   };
@@ -205,26 +245,29 @@ export default function BrandEditPage({ isEdit = true }: Props) {
       await handleExportPDF();
     }
     if (printEnabled) {
-      handlePrintBrand(formData);
+      handlePrintDamageItem(formData);
     }
 
     // keep switch functionality
     if (keepCreating) {
-      toastSuccess("Brand updated successfully!");
+      toastSuccess("Damage item updated successfully!");
       handleReset();
     } else {
-      toastSuccess("Brand updated successfully!");
-      navigate("/brands");
+      toastSuccess("Damage item updated successfully!");
+      navigate("/damage-items");
     }
   };
 
   // Update handleReset function to use the custom hook
   const handleReset = async () => {
     setFormData({
-      name: "",
-      code: "",
-      description: "",
-      status: "active",
+      itemId: "",
+      quantityDamaged: 0,
+      documentDate: new Date(),
+      reportedBy: "",
+      location: "",
+      damageType: "",
+      status: "Active",
       isDefault: false,
       isActive: true,
       isDraft: false,
@@ -256,7 +299,7 @@ export default function BrandEditPage({ isEdit = true }: Props) {
 
     // Focus the first input field after reset
     setTimeout(() => {
-      inputRefs.current["name"]?.focus();
+      inputRefs.current["itemId"]?.focus();
     }, 100);
   };
 
@@ -264,18 +307,21 @@ export default function BrandEditPage({ isEdit = true }: Props) {
     setIsResetModalOpen(true);
   };
 
-  const handlePrintBrand = (brandData: any) => {
+  const handlePrintDamageItem = (damageData: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "Brand Details",
-        data: [brandData],
+        title: "Damage Item Details",
+        data: [damageData],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
-          name: "Brand Name",
-          code: "Brand Code",
-          description: "Description",
+          itemId: "Item ID",
+          quantityDamaged: "Quantity Damaged",
+          documentDate: "Document Date",
+          reportedBy: "Reported By",
+          location: "Location",
+          damageType: "Damage Type",
           status: "Status",
-          isDefault: "Default Brand",
+          isDefault: "Default",
           isActive: "Active Status",
           isDraft: "Draft Status",
           isDeleted: "Deleted Status",
@@ -305,15 +351,15 @@ export default function BrandEditPage({ isEdit = true }: Props) {
       const blob = await pdf(
         <GenericPDF
           data={[formData]}
-          title="Brand Details"
-          subtitle="Brand Information"
+          title="Damage Item Details"
+          subtitle="Damage Item Information"
         />
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "brand-details.pdf";
+      a.download = "damage-item-details.pdf";
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
@@ -369,7 +415,7 @@ export default function BrandEditPage({ isEdit = true }: Props) {
   }, [formData.isDraft, canCreate]);
 
   // Create minimize handler using the custom hook
-  const handleMinimize = useCallback((): BrandModuleData => {
+  const handleMinimize = useCallback((): DamageItemModuleData => {
     return {
       formData,
       hasChanges: true,
@@ -381,11 +427,11 @@ export default function BrandEditPage({ isEdit = true }: Props) {
     <>
       <MinimizablePageLayout
         moduleId={moduleId}
-        moduleName={`Edit Brand`}
-        moduleRoute={`/brands/edit/${id || "new"}`}
+        moduleName={`Edit Damage Item`}
+        moduleRoute={`/damage-items/edit/${id || "new"}`}
         onMinimize={handleMinimize}
-        title="Edit Brand"
-        listPath="brands"
+        title="Edit Damage Item"
+        listPath="damage-items"
         popoverOptions={popoverOptions}
         videoSrc={video}
         videoHeader="Tutorial video"
@@ -396,7 +442,7 @@ export default function BrandEditPage({ isEdit = true }: Props) {
         printEnabled={printEnabled}
         onPrintToggle={canPrint ? handleSwitchChange : undefined}
         activePage="edit"
-        module="brands"
+        module="damage-items"
         additionalFooterButtons={
           canCreate ? (
             <div className="flex gap-4 max-[435px]:gap-2">
@@ -426,66 +472,110 @@ export default function BrandEditPage({ isEdit = true }: Props) {
             onSubmit={handleSubmit}
             className="space-y-6"
           >
-            {/* First Row: Brand Name, Code, Description */}
+            {/* First Row: Item ID, Quantity Damaged, Document Date, Reported By */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
-              {/* Brand Name field - only show if user can edit */}
-              {name && (
+              {/* Item ID */}
+              {itemIdPerm && (
                 <div className="space-y-2">
                   <EditableInput
-                    setRef={setRef("name")}
-                    id="name"
-                    name="name"
-                    value={formData.name}
+                    setRef={setRef("itemId")}
+                    id="itemId"
+                    name="itemId"
+                    value={formData.itemId}
                     onChange={handleChange}
-                    onNext={() => focusNextInput("code")}
-                    onCancel={() => setFormData({ ...formData, name: "" })}
-                    labelText="Brand Name"
-                    tooltipText="Enter the brand name"
+                    onNext={() => focusNextInput("quantityDamaged")}
+                    onCancel={() => setFormData({ ...formData, itemId: "" })}
+                    labelText="Item ID"
+                    tooltipText="Enter the Item ID"
                     required
                   />
                 </div>
               )}
 
-              {/* Brand Code field - only show if user can edit */}
-              {code && (
+              {/* Quantity Damaged */}
+              {quantityDamagedPerm && (
                 <div className="space-y-2">
                   <EditableInput
-                    setRef={setRef("code")}
-                    id="code"
-                    name="code"
-                    value={formData.code}
+                    setRef={setRef("quantityDamaged")}
+                    id="quantityDamaged"
+                    name="quantityDamaged"
+                    type="number"
+                    value={String(formData.quantityDamaged)}
                     onChange={handleChange}
-                    onNext={() => focusNextInput("description")}
-                    onCancel={() => setFormData({ ...formData, code: "" })}
-                    labelText="Brand Code"
-                    tooltipText="Enter the brand code (e.g., BRD001)"
-                    required
-                  />
-                </div>
-              )}
-
-              {/* Description field - only show if user can edit */}
-              {description && (
-                <div className="space-y-2">
-                  <EditableInput
-                    setRef={setRef("description")}
-                    id="description"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    onNext={() => focusNextInput("status")}
+                    onNext={() => focusNextInput("documentDate")}
                     onCancel={() =>
-                      setFormData({ ...formData, description: "" })
+                      setFormData({ ...formData, quantityDamaged: 0 })
                     }
-                    labelText="Description"
-                    tooltipText="Enter brand description"
+                    labelText="Quantity Damaged"
+                    tooltipText="Enter the damaged quantity"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Document Date (native) */}
+              {documentDatePerm && (
+                <div className="space-y-2">
+                  <div className="relative">
+                    <input
+                      ref={(el) => setRef("documentDate")(el as any)}
+                      type="date"
+                      id="documentDate"
+                      name="documentDate"
+                      value={
+                        formData.documentDate
+                          ? formData.documentDate.toISOString().split("T")[0]
+                          : ""
+                      }
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        const val = e.target.value;
+                        setFormData((prev) => ({
+                          ...prev,
+                          documentDate: val ? new Date(val) : null,
+                        }));
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          focusNextInput("reportedBy");
+                        }
+                      }}
+                      required
+                      className="block px-2.5 pb-2.5 pt-4 w-full text-sm text-gray-900 rounded-[12px] border border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-[#70D3FC80] focus:outline-none focus:ring-0 focus:border-[#70D3FC80] peer h-[50px] focus:border"
+                      placeholder=" "
+                    />
+                    <label
+                      htmlFor="documentDate"
+                      className="absolute text-base text-gray-800 dark:text-gray-400 duration-300 transform -translate-y-4 scale-75 top-1 z-10 origin-[0] bg-white dark:bg-gray-900 px-2 peer-focus:px-2 peer-focus:text-primary peer-focus:dark:text-primary peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-1 peer-focus:scale-75 peer-focus:-translate-y-4 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto start-1 transition-all rounded-lg"
+                    >
+                      Document Date
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {/* Reported By */}
+              {reportedByPerm && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("reportedBy")}
+                    id="reportedBy"
+                    name="reportedBy"
+                    value={formData.reportedBy}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("location")}
+                    onCancel={() =>
+                      setFormData({ ...formData, reportedBy: "" })
+                    }
+                    labelText="Reported By"
+                    tooltipText="Enter reporter name"
                     required
                   />
                 </div>
               )}
 
               {/* Status field - only show if user can edit */}
-              {status && (
+              {statusPerm && (
                 <div className="space-y-2">
                   <SwitchSelect
                     ref={(el: any) => setRef("status")(el)}
@@ -496,23 +586,23 @@ export default function BrandEditPage({ isEdit = true }: Props) {
                     options={[
                       {
                         label: "Active",
-                        value: "active",
-                        date: "Set active country",
+                        value: "Active",
+                        date: "Set active",
                       },
                       {
                         label: "Inactive",
-                        value: "InActive",
-                        date: "Set inactive country",
+                        value: "Inactive",
+                        date: "Set inactive",
                       },
                       {
                         label: "Draft",
                         value: "Draft",
-                        date: "Set draft country",
+                        date: "Set draft",
                       },
                       {
-                        label: "Delete",
-                        value: "Delete",
-                        date: "Set delete country",
+                        label: "Deleted",
+                        value: "Deleted",
+                        date: "Set deleted",
                       },
                     ]}
                     value={formData.status}
@@ -520,23 +610,14 @@ export default function BrandEditPage({ isEdit = true }: Props) {
                       const stringValue = Array.isArray(value)
                         ? value[0] || ""
                         : value;
-                      console.log("switch value", stringValue);
                       setFormData((prev) => ({
                         ...prev,
                         status: stringValue as
-                          | "active"
-                          | "inactive"
-                          | "draft"
-                          | "deleted",
-                        isDeleted: stringValue === "deleted",
-                        isDraft: stringValue === "Draft",
-                        isActive: stringValue === "Active",
-                      }));
-
-                      // Update your form data
-                      setFormData((prev) => ({
-                        ...prev,
-                        isDeleted: stringValue === "Delete",
+                          | "Active"
+                          | "Inactive"
+                          | "Draft"
+                          | "Deleted",
+                        isDeleted: stringValue === "Deleted",
                         isDraft: stringValue === "Draft",
                         isActive: stringValue === "Active",
                       }));
@@ -550,16 +631,54 @@ export default function BrandEditPage({ isEdit = true }: Props) {
                         },
                       },
                     }}
-                    tooltipText="Set the brand status"
+                    tooltipText="Set the damage item status"
                   />
                 </div>
               )}
             </div>
 
-            {/* Second Row: Status, Default */}
+            {/* Second Row: Location, Damage Type, Default, Actions */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
+              {/* Location */}
+              {locationPerm && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("location")}
+                    id="location"
+                    name="location"
+                    value={formData.location}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("damageType")}
+                    onCancel={() => setFormData({ ...formData, location: "" })}
+                    labelText="Location"
+                    tooltipText="Enter the location"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Damage Type */}
+              {damageTypePerm && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("damageType")}
+                    id="damageType"
+                    name="damageType"
+                    value={formData.damageType}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("isDefault")}
+                    onCancel={() =>
+                      setFormData({ ...formData, damageType: "" })
+                    }
+                    labelText="Damage Type"
+                    tooltipText="Enter the type of damage"
+                    required
+                  />
+                </div>
+              )}
+
               {/* Default field - only show if user can edit */}
-              {isDefault && (
+              {isDefaultPerm && (
                 <div className="space-y-2 relative">
                   <SwitchSelect
                     ref={(el: any) => setRef("isDefault")(el)}
@@ -570,12 +689,12 @@ export default function BrandEditPage({ isEdit = true }: Props) {
                       {
                         label: "Yes",
                         value: "Yes",
-                        date: "Set default brand",
+                        date: "Set default",
                       },
                       {
                         label: "No",
                         value: "No",
-                        date: "Remove default brand",
+                        date: "Unset default",
                       },
                     ]}
                     value={isDefaultState === "Yes" ? "Yes" : "No"}
@@ -602,7 +721,7 @@ export default function BrandEditPage({ isEdit = true }: Props) {
                     placeholder=" "
                     labelText="Default"
                     className="relative"
-                    tooltipText="Set as default brand"
+                    tooltipText="Mark as default damage item"
                   />
                 </div>
               )}
@@ -657,7 +776,7 @@ export default function BrandEditPage({ isEdit = true }: Props) {
                       },
                     },
                   }}
-                  tooltipText="Brand Action History"
+                  tooltipText="Damage Item Action History"
                 />
               </div>
             </div>
