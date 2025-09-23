@@ -9,6 +9,7 @@ import type {
   UsersPermissions,
   UserMasterPermissions,
   ColorsPermissions,
+  LeadSourcesPermissions,
 } from "@/types/permissions.types";
 
 // Define your root state type
@@ -101,6 +102,24 @@ export const useColorsPermissions = (): ColorsPermissions => {
       permissions,
       "colors"
     ) as unknown as ColorsPermissions;
+  }, [permissions]);
+
+  return permissionCheckers;
+};
+
+/**
+ * Typed hook specifically for lead-sources module
+ */
+export const useLeadSourcesPermissions = (): LeadSourcesPermissions => {
+  const permissions = useSelector((state: RootState) => {
+    return state.auth.user?.permissions;
+  });
+
+  const permissionCheckers = useMemo(() => {
+    return createPermissionCheckers(
+      permissions,
+      "lead-sources"
+    ) as unknown as LeadSourcesPermissions;
   }, [permissions]);
 
   return permissionCheckers;

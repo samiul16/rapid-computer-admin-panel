@@ -221,3 +221,35 @@ export interface ColorsPermissions {
   canCreateUpdatedDate: boolean;
   canCreateDraftedDate: boolean;
 }
+
+// Specific types for lead-sources module
+export interface LeadSourcesPermissions {
+  // Form permissions
+  canCreate: boolean;
+  canView: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
+  canExport: boolean;
+  canImport: boolean;
+
+  // Field permissions - View
+  canViewName: boolean;
+  canViewStatus: boolean;
+  canViewCreatedDate: boolean;
+  canViewUpdatedDate: boolean;
+  canViewDraftedDate: boolean;
+
+  // Field permissions - Edit
+  canEditName: boolean;
+  canEditStatus: boolean;
+  canEditCreatedDate: boolean;
+  canEditUpdatedDate: boolean;
+  canEditDraftedDate: boolean;
+
+  // Field permissions - Create
+  canCreateName: boolean;
+  canCreateStatus: boolean;
+  canCreateCreatedDate: boolean;
+  canCreateUpdatedDate: boolean;
+  canCreateDraftedDate: boolean;
+}
