@@ -17,14 +17,13 @@ import { useAppSelector } from "@/store/hooks";
 import MinimizablePageLayout from "@/components/MinimizablePageLayout";
 import { SwitchSelect } from "@/components/common/SwitchAutoComplete";
 
-type ColorData = {
+type SizeData = {
   name: string;
   code: string;
+  value: string;
   description: string;
-  hexCode: string;
   status: "active" | "inactive" | "draft";
   isDefault: boolean;
-  isStatusActive: boolean;
   isActive: boolean;
   isDraft: boolean;
   createdAt: Date | null;
@@ -38,14 +37,13 @@ type Props = {
   isEdit?: boolean;
 };
 
-const initialData: ColorData = {
-  name: "Primary Blue",
-  code: "BLU001",
-  description: "Main brand color used for primary actions and highlights",
-  hexCode: "#3B82F6",
+const initialData: SizeData = {
+  name: "Small",
+  code: "SZ001",
+  value: "S",
+  description: "Standard small size suitable for compact items",
   status: "active",
   isDefault: false,
-  isStatusActive: true,
   isActive: true,
   isDraft: false,
   createdAt: new Date(),
@@ -55,41 +53,40 @@ const initialData: ColorData = {
   isDeleted: false,
 };
 
-export default function ColorFormPage({ isEdit = false }: Props) {
+export default function SizeFormPage({ isEdit = false }: Props) {
   const navigate = useNavigate();
   const labels = useLanguageLabels();
   const { isRTL } = useAppSelector((state) => state.language);
 
   const [keepCreating, setKeepCreating] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
-  const [isDefaultState, setIsDefaultState] = useState<"Yes" | "No">("No");
   const [printEnabled, setPrintEnabled] = useState(false);
   const [pdfChecked, setPdfChecked] = useState(false);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [formKey, setFormKey] = useState(0);
+  const [isDefaultState, setIsDefaultState] = useState<"Yes" | "No">("No");
 
   // Permission checks
   const { canCreate, canView } = useColorsPermissions();
 
   // Field-level permissions
-  const name: boolean = usePermission("colors", "create", "name");
-  const code: boolean = usePermission("colors", "create", "code");
-  const description: boolean = usePermission("colors", "create", "description");
-  const hexCode: boolean = usePermission("colors", "create", "hexCode");
-  const status: boolean = usePermission("colors", "create", "status");
-  const isDefault: boolean = usePermission("colors", "create", "isDefault");
-  const canPdf: boolean = usePermission("colors", "pdf");
-  const canPrint: boolean = usePermission("colors", "print");
+  const name: boolean = usePermission("sizes", "create", "name");
+  const code: boolean = usePermission("sizes", "create", "code");
+  const valuePerm: boolean = usePermission("sizes", "create", "value");
+  const description: boolean = usePermission("sizes", "create", "description");
+  const status: boolean = usePermission("sizes", "create", "status");
+  const isDefault: boolean = usePermission("sizes", "create", "isDefault");
+  const canPdf: boolean = usePermission("sizes", "pdf");
+  const canPrint: boolean = usePermission("sizes", "print");
 
   // Form state
-  const [formData, setFormData] = useState<ColorData>({
+  const [formData, setFormData] = useState<SizeData>({
     name: "",
     code: "",
+    value: "",
     description: "",
-    hexCode: "",
     status: "active",
     isDefault: false,
-    isStatusActive: true,
     isActive: true,
     isDraft: false,
     isDeleted: false,
@@ -117,9 +114,9 @@ export default function ColorFormPage({ isEdit = false }: Props) {
       ),
       onClick: () => {
         if (isEdit) {
-          navigate("/colors/create");
+          navigate("/sizes/create");
         } else {
-          navigate("/colors/edit/undefined");
+          navigate("/sizes/edit/undefined");
         }
       },
       show: canCreate,
@@ -128,7 +125,7 @@ export default function ColorFormPage({ isEdit = false }: Props) {
       label: "View",
       icon: <Eye className="w-5 h-5 text-green-600" />,
       onClick: () => {
-        navigate("/colors/view");
+        navigate("/sizes/view");
       },
       show: canView,
     },
@@ -161,16 +158,16 @@ export default function ColorFormPage({ isEdit = false }: Props) {
       await handleExportPDF();
     }
     if (printEnabled) {
-      handlePrintColor(formData);
+      handlePrintSize(formData);
     }
 
     // keep switch functionality
     if (keepCreating) {
-      toastSuccess("Color created successfully!");
+      toastSuccess("Size created successfully!");
       handleReset();
     } else {
-      toastSuccess("Color created successfully!");
-      navigate("/colors");
+      toastSuccess("Size created successfully!");
+      navigate("/sizes");
     }
   };
 
@@ -182,11 +179,10 @@ export default function ColorFormPage({ isEdit = false }: Props) {
     setFormData({
       name: "",
       code: "",
+      value: "",
       description: "",
-      hexCode: "",
       status: "active",
       isDefault: false,
-      isStatusActive: true,
       isActive: true,
       isDraft: false,
       isDeleted: false,
@@ -210,19 +206,18 @@ export default function ColorFormPage({ isEdit = false }: Props) {
     }, 100);
   };
 
-  const handlePrintColor = (colorData: any) => {
+  const handlePrintSize = (sizeData: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "Color Details",
-        data: [colorData],
+        title: "Size Details",
+        data: [sizeData],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
-          name: "Color Name",
-          code: "Color Code",
+          name: "Size Name",
+          code: "Size Code",
+          value: "Value",
           description: "Description",
-          hexCode: "Hex Code",
           status: "Status",
-          isDefault: "Default Color",
           isActive: "Active Status",
           isDraft: "Draft Status",
           isDeleted: "Deleted Status",
@@ -252,15 +247,15 @@ export default function ColorFormPage({ isEdit = false }: Props) {
       const blob = await pdf(
         <GenericPDF
           data={[formData]}
-          title="Color Details"
-          subtitle="Color Information"
+          title="Size Details"
+          subtitle="Size Information"
         />
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "color-details.pdf";
+      a.download = "size-details.pdf";
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
@@ -288,7 +283,7 @@ export default function ColorFormPage({ isEdit = false }: Props) {
                 ...prev,
                 isDraft: true,
               }));
-              toastRestore("Color saved as draft successfully");
+              toastRestore("Size saved as draft successfully");
             },
             show: canCreate,
           },
@@ -310,14 +305,14 @@ export default function ColorFormPage({ isEdit = false }: Props) {
   return (
     <>
       <MinimizablePageLayout
-        moduleId="color-form-module"
-        moduleName={isEdit ? "Edit Color" : "Adding Color"}
+        moduleId="size-form-module"
+        moduleName={isEdit ? "Edit Size" : "Adding Size"}
         moduleRoute={
-          isEdit ? `/colors/edit/${formData.name || "new"}` : "/colors/create"
+          isEdit ? `/sizes/edit/${formData.name || "new"}` : "/sizes/create"
         }
         onMinimize={handleMinimize}
-        title={isEdit ? "Edit Color" : "Add Color"}
-        listPath="colors"
+        title={isEdit ? "Edit Size" : "Add Size"}
+        listPath="sizes"
         popoverOptions={popoverOptions}
         videoSrc={video}
         videoHeader="Tutorial video"
@@ -328,7 +323,7 @@ export default function ColorFormPage({ isEdit = false }: Props) {
         printEnabled={printEnabled}
         onPrintToggle={canPrint ? handleSwitchChange : undefined}
         activePage="create"
-        module="colors"
+        module="sizes"
         additionalFooterButtons={
           canCreate ? (
             <div className="flex gap-4 max-[435px]:gap-2">
@@ -358,9 +353,9 @@ export default function ColorFormPage({ isEdit = false }: Props) {
             onSubmit={handleSubmit}
             className="space-y-6 relative"
           >
-            {/* First Row: Color Name and Code */}
+            {/* First Row: Size Name, Code, Value, Description */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
-              {/* Color Name field - only show if user can create */}
+              {/* Size Name field - only show if user can create */}
               {name && (
                 <div className="space-y-2">
                   <EditableInput
@@ -371,14 +366,14 @@ export default function ColorFormPage({ isEdit = false }: Props) {
                     onChange={handleChange}
                     onNext={() => focusNextInput("code")}
                     onCancel={() => setFormData({ ...formData, name: "" })}
-                    labelText="Color Name"
-                    tooltipText="Enter the color name"
+                    labelText="Size Name"
+                    tooltipText="Enter the size name"
                     required
                   />
                 </div>
               )}
 
-              {/* Color Code field - only show if user can create */}
+              {/* Size Code field - only show if user can create */}
               {code && (
                 <div className="space-y-2">
                   <EditableInput
@@ -387,28 +382,28 @@ export default function ColorFormPage({ isEdit = false }: Props) {
                     name="code"
                     value={formData.code}
                     onChange={handleChange}
-                    onNext={() => focusNextInput("hexCode")}
+                    onNext={() => focusNextInput("value")}
                     onCancel={() => setFormData({ ...formData, code: "" })}
-                    labelText="Color Code"
-                    tooltipText="Enter the color code (e.g., BLU001)"
+                    labelText="Size Code"
+                    tooltipText="Enter the size code (e.g., SZ001)"
                     required
                   />
                 </div>
               )}
 
-              {/* Hex Code field - only show if user can create */}
-              {hexCode && (
+              {/* Value field - only show if user can create */}
+              {valuePerm && (
                 <div className="space-y-2">
                   <EditableInput
-                    setRef={setRef("hexCode")}
-                    id="hexCode"
-                    name="hexCode"
-                    value={formData.hexCode}
+                    setRef={setRef("value")}
+                    id="value"
+                    name="value"
+                    value={formData.value}
                     onChange={handleChange}
                     onNext={() => focusNextInput("description")}
-                    onCancel={() => setFormData({ ...formData, hexCode: "" })}
-                    labelText="Hex Code"
-                    tooltipText="Enter the hex color code (e.g., #3B82F6)"
+                    onCancel={() => setFormData({ ...formData, value: "" })}
+                    labelText="Value"
+                    tooltipText="Enter the size value (e.g., S, M, 32)"
                     type="text"
                     required
                   />
@@ -429,7 +424,7 @@ export default function ColorFormPage({ isEdit = false }: Props) {
                       setFormData({ ...formData, description: "" })
                     }
                     labelText="Description"
-                    tooltipText="Enter a description for the color"
+                    tooltipText="Enter a description for the size"
                     type="text"
                     required
                   />
@@ -437,7 +432,7 @@ export default function ColorFormPage({ isEdit = false }: Props) {
               )}
             </div>
 
-            {/* Second Row: Status and Default */}
+            {/* Second Row: Default and Status */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
               {/* Default field - only show if user can create */}
               {isDefault && (
@@ -451,12 +446,12 @@ export default function ColorFormPage({ isEdit = false }: Props) {
                       {
                         label: labels.yes,
                         value: labels.yes,
-                        date: "Set default color",
+                        date: "Set default size",
                       },
                       {
                         label: labels.no,
                         value: labels.no,
-                        date: "Remove default color",
+                        date: "Remove default size",
                       },
                     ]}
                     value={isDefaultState === "Yes" ? labels.yes : labels.no}
@@ -483,11 +478,10 @@ export default function ColorFormPage({ isEdit = false }: Props) {
                     placeholder=" "
                     labelText="Default"
                     className="relative"
-                    tooltipText="Set as default color"
+                    tooltipText="Set as default size"
                   />
                 </div>
               )}
-
               {/* Status field - only show if user can create */}
               {status && (
                 <div className="space-y-2">
@@ -536,7 +530,7 @@ export default function ColorFormPage({ isEdit = false }: Props) {
                         },
                       },
                     }}
-                    tooltipText="Set the color status"
+                    tooltipText="Set the size status"
                   />
                 </div>
               )}
