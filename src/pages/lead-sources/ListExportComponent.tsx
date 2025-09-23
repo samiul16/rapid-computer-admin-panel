@@ -1,426 +1,597 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
-  Search,
-  X,
   Printer,
   FileSpreadsheet,
   FileText,
   Download,
+  MessageCircle,
+  Mail,
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import PDF from "@/components/common/pdf";
+import { Tooltip } from "@mantine/core";
+import { cn } from "@/lib/utils";
 import { pdf } from "@react-pdf/renderer";
 import { toastError } from "@/lib/toast";
 import { exportToExcel } from "@/lib/exportToExcel";
 import { exportToCSV } from "@/lib/exportToCSV";
 import { printHtmlContent } from "@/lib/printHtmlContent";
-import countryDetailPrintContent from "@/lib/printContents/countryDetails";
+// import countryDetailPrintContent from "@/lib/printContents/countryDetails";
+import dynamicPrintContent from "@/lib/printContents/countryDetails";
+import { TablePDF } from "@/components/TablePDF";
+import WhatsAppPopup from "@/components/common/WhatsAppPopup";
+import { useDisclosure } from "@mantine/hooks";
+import EmailPopup from "@/components/common/EmailPopup";
+import FloatingCloseButton from "@/components/common/FloatingCloseButton";
+import HeaderSearch from "@/components/HeaderSearch";
 
 interface ExportDropdownProps {
   table: any; // Replace with your table type
   allColumnsVisible: boolean;
   setAllColumnsVisible: (visible: boolean) => void;
+  columnOrder?: string[];
   setShowExport: (visible: boolean) => void;
+  onClose: () => void;
 }
 
 export function ExportComponent({
   table,
   allColumnsVisible,
   setAllColumnsVisible,
-  setShowExport,
+  columnOrder,
+  onClose,
 }: ExportDropdownProps) {
+  const [whatsappOpened, { open: openWhatsapp, close: closeWhatsapp }] =
+    useDisclosure(false);
+  const [emailOpened, { open: openEmail, close: closeEmail }] =
+    useDisclosure(false);
+
+  const visibleColumns = table
+    .getVisibleFlatColumns()
+    .filter((col: any) => col.id !== "select" && col.id !== "actions");
+
+  console.log("visibleColumns in export component", visibleColumns);
   const [exportSearch, setExportSearch] = useState("");
 
-  const handleApply = () => {
-    // Add your apply logic here
-    console.log("Apply clicked");
-    setShowExport(false);
-  };
+  const exportButtons = [
+    {
+      id: "excel",
+      icon: FileSpreadsheet,
+      label: "Export to Excel",
+      color: "text-green-600",
+      onClick: handleExportToExcel,
+    },
+    {
+      id: "pdf",
+      icon: FileText,
+      label: "Export to PDF",
+      color: "text-red-600",
+      onClick: handleExport,
+    },
+    {
+      id: "csv",
+      icon: Download,
+      label: "Export to CSV",
+      color: "text-blue-600",
+      onClick: handleExportToCSV,
+    },
+    {
+      id: "print",
+      icon: Printer,
+      label: "Export to Print",
+      color: "text-gray-600",
+      onClick: handlePrintCountry,
+    },
+    {
+      id: "docs",
+      icon: FileText,
+      label: "Export to Docs",
+      color: "text-purple-600",
+      onClick: () => console.log("Export to Docs"),
+    },
+    {
+      id: "whatsapp",
+      icon: MessageCircle,
+      label: "Export to WhatsApp",
+      color: "text-green-500",
+      onClick: () => openWhatsapp(),
+    },
+    {
+      id: "email",
+      icon: Mail,
+      label: "Export to Email",
+      color: "text-blue-500",
+      onClick: () => openEmail(),
+    },
+  ];
 
-  const handleExport = async () => {
+  // [All your existing export functions remain the same - handleExport, handleExportToExcel, etc.]
+  // ... (keeping all the export functions as they were)
+
+  // Add this data cleaning function
+  function cleanDataForExport(data: any[]) {
+    return data.map((row) => {
+      const cleanedRow: Record<string, any> = {};
+
+      Object.keys(row).forEach((key) => {
+        const value = row[key];
+
+        // Skip JSX/React component strings and invalid values
+        if (
+          typeof value === "string" &&
+          (value.includes("jsxDEV") ||
+            value.includes("fileName:") ||
+            value.includes("lineNumber:") ||
+            value.length > 500) // Skip very long strings that are likely JSX
+        ) {
+          return; // Skip this property
+        }
+
+        // Clean and format valid values
+        if (value !== null && value !== undefined) {
+          // Handle dates
+          if (typeof value === "string" && value.match(/^\d{4}-\d{2}-\d{2}/)) {
+            cleanedRow[key] = new Date(value).toLocaleDateString();
+          }
+          // Handle booleans
+          else if (typeof value === "boolean") {
+            cleanedRow[key] = value ? "Yes" : "No";
+          }
+          // Handle regular strings and numbers
+          else if (typeof value === "string" || typeof value === "number") {
+            cleanedRow[key] = value;
+          }
+        }
+      });
+
+      return cleanedRow;
+    });
+  }
+
+  // Update your export functions to use cleaned data
+  async function handleExport() {
     console.log("Export clicked");
+    console.log("columnOrder", columnOrder);
     try {
+      const rows = table.getRowModel().rows;
+      const allVisibleColumns = table
+        .getVisibleFlatColumns()
+        .filter((col: any) => col.id !== "select" && col.id !== "actions");
+
+      // Reorder columns based on columnOrder state, excluding select and actions
+      const orderedColumnIds = columnOrder?.filter(
+        (colId) => colId !== "select" && colId !== "actions"
+      );
+
+      const visibleColumns = orderedColumnIds
+        ?.map((orderedColId) =>
+          allVisibleColumns.find((col: any) => col.id === orderedColId)
+        )
+        .filter((col) => col && col.getIsVisible()); // Only include visible columns
+
+      console.log(
+        "Final ordered visible columns:",
+        visibleColumns?.map((col) => col?.id)
+      );
+
+      // Get clean data from table in the correct column order
+      const tableData = rows.map((row: any) => {
+        const rowData: Record<string, any> = {};
+        visibleColumns?.forEach((col: any) => {
+          const value = row.getValue(col.id);
+          // Clean the data
+          if (
+            value !== null &&
+            value !== undefined &&
+            typeof value !== "object"
+          ) {
+            rowData[col.id] = value;
+          }
+        });
+        return rowData;
+      });
+
+      // Create column headers with proper display names in the correct order
+      const columnHeaders = visibleColumns?.map((col: any) => {
+        const displayNameMap: Record<string, string> = {
+          title: "Name",
+          code: "Code",
+          callingCode: "ISD",
+          currency: "Currency",
+          states: "States",
+          cities: "Cities",
+          createdAt: "Created At",
+          updatedAt: "Updated At",
+          draftedAt: "Drafted At",
+          status: "Status",
+        };
+
+        return {
+          key: col.id,
+          header:
+            col.columnDef.meta?.exportLabel || displayNameMap[col.id] || col.id,
+          width: col.getSize ? col.getSize() : 150,
+        };
+      });
+
+      console.log("Column headers for PDF:", columnHeaders);
+
       const blob = await pdf(
-        <PDF
-          data={[
-            {
-              code: "BD",
-              name: "Bangladesh",
-              name_in_bangla: "বাংলাদেশ",
-              name_in_arabic: "البنغلاديش",
-              created_at: "2025-06-26T12:00:00.000Z",
-              updated_at: "2025-06-26T12:00:00.000Z",
-              deleted_at: null,
-              drafted_at: null,
-              is_active: true,
-              is_draft: false,
-              is_deleted: false,
-              flag_url: "https://flagcdn.com/16x12/bd.png",
-              country_code: "BD",
-              country_name: "Bangladesh",
-              country_flag: "🇧🇩",
-              description: "The central business district of the city",
-              is_default: true,
-              is_drafted: false,
-            },
-          ]}
-          title="Country Details"
+        <TablePDF
+          data={tableData}
+          columns={columnHeaders}
+          title="Countries Data Export"
           subtitle="Country Information Report"
         />
       ).toBlob();
 
-      console.log("blob", blob);
-
       const url = URL.createObjectURL(blob);
-      console.log("url", url);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "countries-summary.pdf";
+      a.download = "countries-table-export.pdf";
       a.click();
-      console.log("a", a);
-      console.log("url", url);
       URL.revokeObjectURL(url);
     } catch (error) {
       console.log(error);
       toastError("Something went wrong when generating PDF");
     }
-  };
+  }
 
-  const handleExportToExcel = () => {
+  function handleExportToExcel() {
     try {
-      const rows = table.getRowModel().rows; // Get all currently visible (filtered + sorted) rows
-      const visibleColumns = table
+      const rows = table.getRowModel().rows;
+      const allVisibleColumns = table
         .getVisibleFlatColumns()
         .filter((col: any) => col.id !== "select" && col.id !== "actions");
 
-      const exportableData = rows.map((row: any) => {
+      // Reorder columns based on columnOrder state
+      const orderedColumnIds = columnOrder?.filter(
+        (colId) => colId !== "select" && colId !== "actions"
+      );
+
+      const visibleColumns = orderedColumnIds
+        ?.map((orderedColId) =>
+          allVisibleColumns.find((col: any) => col.id === orderedColId)
+        )
+        .filter((col) => col && col.getIsVisible());
+
+      // Get and clean data
+      const rawData = rows.map((row: any) => {
         const rowData: Record<string, any> = {};
-        visibleColumns.forEach((col: any) => {
-          const header = col.columnDef.meta?.exportLabel || col.id;
-
-          console.log("col", col.columnDef.meta?.exportLabel);
-          console.log("header", header);
-
-          rowData[header] = row.getValue(col.id);
+        visibleColumns?.forEach((col: any) => {
+          rowData[col.id] = row.getValue(col.id);
         });
         return rowData;
       });
 
-      console.log("exportableData", exportableData);
+      const cleanedData = cleanDataForExport(rawData);
+
+      // Create final export data with proper headers in correct order
+      const exportableData = cleanedData.map((row: any) => {
+        const finalRow: Record<string, any> = {};
+        visibleColumns?.forEach((col: any) => {
+          if (row[col.id] !== undefined) {
+            const displayNameMap: Record<string, string> = {
+              title: "Name",
+              code: "Code",
+              callingCode: "ISD",
+              currency: "Currency",
+              states: "States",
+              cities: "Cities",
+              createdAt: "Created At",
+              updatedAt: "Updated At",
+              draftedAt: "Drafted At",
+              status: "Status",
+            };
+
+            const header =
+              col.columnDef.meta?.exportLabel ||
+              displayNameMap[col.id] ||
+              (typeof col.columnDef.header === "string"
+                ? col.columnDef.header
+                : col.id);
+            finalRow[header] = row[col.id];
+          }
+        });
+        return finalRow;
+      });
+
+      const columnWidths = Object.keys(exportableData[0] || {}).map(() => 20);
 
       exportToExcel(
         exportableData,
-        "countries-data",
-        "Countries",
-        [25, 15, 20, 12, 18, 18]
+        "table-data-export",
+        "Table Data",
+        columnWidths
       );
     } catch (error) {
       console.error("Export to Excel failed", error);
       toastError("Export to Excel failed");
     }
-  };
+  }
 
-  const handleExportToCSV = () => {
+  function handleExportToCSV() {
     try {
       const rows = table.getRowModel().rows;
-      const visibleColumns = table
+      const allVisibleColumns = table
         .getVisibleFlatColumns()
         .filter((col: any) => col.id !== "select" && col.id !== "actions");
 
-      const exportableData = rows.map((row: any) => {
+      // Reorder columns based on columnOrder state
+      const orderedColumnIds = columnOrder?.filter(
+        (colId) => colId !== "select" && colId !== "actions"
+      );
+
+      const visibleColumns = orderedColumnIds
+        ?.map((orderedColId) =>
+          allVisibleColumns.find((col: any) => col.id === orderedColId)
+        )
+        .filter((col) => col && col.getIsVisible());
+
+      // Get and clean data
+      const rawData = rows.map((row: any) => {
         const rowData: Record<string, any> = {};
-        visibleColumns.forEach((col: any) => {
-          const header =
-            typeof col.columnDef.header === "string"
-              ? col.columnDef.header
-              : col.columnDef.meta?.exportLabel || col.id;
-
-          console.log("header", header);
-
-          rowData[header] = row.getValue(col.id);
+        visibleColumns?.forEach((col: any) => {
+          rowData[col.id] = row.getValue(col.id);
         });
-        return rowData;
+        return rawData;
       });
 
-      console.log("exportableData", exportableData);
+      const cleanedData = cleanDataForExport(rawData);
 
-      exportToCSV(exportableData, "countries-data.csv");
+      // Create final export data with proper headers in correct order
+      const exportableData = cleanedData.map((row: any) => {
+        const finalRow: Record<string, any> = {};
+        visibleColumns?.forEach((col: any) => {
+          if (row[col.id] !== undefined) {
+            const displayNameMap: Record<string, string> = {
+              title: "Name",
+              code: "Code",
+              callingCode: "ISD",
+              currency: "Currency",
+              states: "States",
+              cities: "Cities",
+              createdAt: "Created At",
+              updatedAt: "Updated At",
+              draftedAt: "Drafted At",
+              status: "Status",
+            };
+
+            const header =
+              col.columnDef.meta?.exportLabel ||
+              displayNameMap[col.id] ||
+              (typeof col.columnDef.header === "string"
+                ? col.columnDef.header
+                : col.id);
+            finalRow[header] = row[col.id];
+          }
+        });
+        return finalRow;
+      });
+
+      exportToCSV(exportableData, "table-data-export.csv");
     } catch (error) {
       console.error("Export to CSV failed", error);
       toastError("Export to CSV failed");
     }
-  };
+  }
 
-  const handlePrintCountry = () => {
+  function handlePrintCountry() {
     console.log("handlePrintCountry");
     try {
       const rows = table.getRowModel().rows;
-      const visibleColumns = table
+      const allVisibleColumns = table
         .getVisibleFlatColumns()
         .filter((col: any) => col.id !== "select" && col.id !== "actions");
 
-      const exportableData = rows.map((row: any) => {
+      // Reorder columns based on columnOrder state
+      const orderedColumnIds = columnOrder?.filter(
+        (colId) => colId !== "select" && colId !== "actions"
+      );
+
+      const visibleColumns = orderedColumnIds
+        ?.map((orderedColId) =>
+          allVisibleColumns.find((col: any) => col.id === orderedColId)
+        )
+        .filter((col) => col && col.getIsVisible());
+
+      // Get and clean data
+      const rawData = rows.map((row: any) => {
         const rowData: Record<string, any> = {};
-        visibleColumns.forEach((col: any) => {
-          console.log("col", col);
-          const header = col.columnDef.meta?.exportLabel || col.id;
-
-          console.log("header", header);
-
-          rowData[header] = row.getValue(col.id);
+        visibleColumns?.forEach((col: any) => {
+          rowData[col.id] = row.getValue(col.id);
         });
         return rowData;
       });
 
-      console.log("exportableData", exportableData);
-      const html = countryDetailPrintContent(exportableData);
+      const cleanedData = cleanDataForExport(rawData);
 
+      // Create headers for print in correct order
+      const headers = visibleColumns
+        ?.filter((col: any) =>
+          cleanedData.some((row) => row[col.id] !== undefined)
+        )
+        .map((col: any) => {
+          const displayNameMap: Record<string, string> = {
+            title: "Name",
+            code: "Code",
+            callingCode: "ISD",
+            currency: "Currency",
+            states: "States",
+            cities: "Cities",
+            createdAt: "Created At",
+            updatedAt: "Updated At",
+            draftedAt: "Drafted At",
+            status: "Status",
+          };
+
+          return {
+            key: col.id,
+            label:
+              col.columnDef.meta?.exportLabel ||
+              displayNameMap[col.id] ||
+              (typeof col.columnDef.header === "string"
+                ? col.columnDef.header
+                : col.id),
+          };
+        });
+
+      const html = dynamicPrintContent(cleanedData, headers, "Table Data");
       printHtmlContent(html);
     } catch (error) {
       console.log(error);
       toastError("Something went wrong when printing");
     }
-  };
-
-  // const handlePrint = (countryData: any): void => {
-  //   if (!countryData) return;
-
-  //   const printWindow: Window | null = window.open("", "_blank");
-
-  //   if (printWindow) {
-  //     printWindow.document.open(); // Ensure the document is opened for writing
-  //     printWindow.document.write(`
-  //           <html>
-  //             <head>
-  //               <title>Print</title>
-  //               <!-- Inject Tailwind CSS from CDN or your build path -->
-  //               <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  //               <style>
-  //                 /* General Print Styles */
-  //                 body {
-  //                   font-family: Arial, sans-serif;
-  //                   margin: 0;
-  //                   padding: 0;
-  //                 }
-  //                 .print-container {
-  //                   border: 1px solid #ddd;
-  //                   padding: 20px;
-  //                   border-radius: 8px;
-  //                 }
-  //                 /* Add any additional custom styles here */
-  //               </style>
-  //             </head>
-  //             <body>
-  //               <div id="print-root"></div> <!-- Placeholder for React component -->
-  //             </body>
-  //           </html>
-  //         `);
-  //     printWindow.document.close();
-
-  //     // Wait for the document to be fully loaded
-  //     printWindow.onload = (): void => {
-  //       const printRoot = printWindow.document.getElementById("print-root");
-  //       if (!printRoot) return;
-
-  //       const root = ReactDOM.createRoot(printRoot);
-
-  //       // Here you render the full content template
-  //       root.render(<PrintTemplate countryData={countryData} />);
-
-  //       // After rendering, trigger the print and close the window
-  //       setTimeout((): void => {
-  //         printWindow.print();
-  //         printWindow.close();
-  //       }, 500);
-  //     };
-  //   }
-  // };
+  }
 
   return (
-    <div className="w-72 h-full flex flex-col border rounded-lg overflow-hidden">
-      {/* Top Section - Fixed Header */}
-      <div className="bg-white dark:bg-gray-900 border-b px-3 py-2 flex-shrink-0">
-        <div className="flex items-center gap-2">
-          {/* Select All Checkbox */}
-          <Checkbox
-            checked={allColumnsVisible}
-            onCheckedChange={(checked) => {
-              table
-                .getAllColumns()
-                .filter(
-                  (col: any) =>
-                    col.getCanHide() &&
-                    col.id !== "select" &&
-                    col.id !== "actions"
-                )
-                .forEach((col: any) => col.toggleVisibility(!!checked));
-              setAllColumnsVisible(!!checked);
-            }}
-            className="data-[state=checked]:bg-primary data-[state=checked]:text-white"
+    <>
+      <div className="h-full flex flex-col relative overflow-visible">
+        {/* Floating X Button */}
+        <FloatingCloseButton onClose={onClose} />
+
+        {/* Full Width Search */}
+        <div className="pl-2 pr-3 py-4 border-b flex-shrink-0">
+          <HeaderSearch
+            searchQuery={exportSearch}
+            setSearchQuery={setExportSearch}
           />
-
-          {/* Search Input */}
-          <div className="relative flex-1 rounded-full">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-            <Input
-              placeholder="Search..."
-              className="pl-8 h-8 w-full rounded-full"
-              value={exportSearch}
-              onChange={(e) => setExportSearch(e.target.value)}
-            />
-          </div>
-
-          {/* Clear Search Button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => {
-              setExportSearch("");
-              setShowExport(false);
-            }}
-          >
-            <X className="h-4 w-4" />
-          </Button>
         </div>
-      </div>
 
-      {/* Main Content - Split into left checkboxes and right export options */}
-      <div className="flex-1 flex min-h-0 overflow-hidden">
-        {/* Left Side - Checkboxes */}
-        <div className="flex-1 flex flex-col min-h-0">
-          <div className="flex-1 overflow-y-auto smooth-scroll px-1 py-1">
-            {table
-              .getAllColumns()
-              .filter(
-                (column: any) =>
-                  column.getCanHide() &&
-                  column.id !== "select" &&
-                  column.id !== "actions" &&
-                  (!exportSearch ||
-                    column.id
-                      .toLowerCase()
-                      .includes(exportSearch.toLowerCase()))
-              )
-              .map((column: any) => (
-                <div
-                  key={column.id}
-                  className="flex items-center gap-2 px-2 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
-                >
-                  <Checkbox
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) => {
-                      column.toggleVisibility(!!value);
-                      const visibleColumns = table
-                        .getAllColumns()
-                        .filter(
-                          (col: any) =>
-                            col.getCanHide() &&
-                            col.id !== "select" &&
-                            col.id !== "actions"
-                        )
-                        .filter((col: any) => col.getIsVisible());
-                      setAllColumnsVisible(
-                        visibleColumns.length ===
-                          table
-                            .getAllColumns()
-                            .filter(
-                              (col: any) =>
-                                col.getCanHide() &&
-                                col.id !== "select" &&
-                                col.id !== "actions"
-                            ).length
-                      );
-                    }}
-                    className="data-[state=checked]:bg-primary data-[state=checked]:text-white"
-                  />
-                  <span className="text-sm">{column.id}</span>
+        {/* Full Width Select All */}
+        <div className="px-6 py-4 border-b bg-white dark:bg-gray-800 flex-shrink-0">
+          <div className="flex items-center justify-between gap-2 font-medium">
+            <span className="text-gray-900 dark:text-gray-100">Select All</span>
+            <div
+              className={cn(
+                "w-[36px] h-4 rounded-[190px] flex items-center gap-2.5 transition-all duration-200 cursor-pointer",
+                allColumnsVisible
+                  ? "bg-sky-400 justify-end"
+                  : "bg-sky-200 justify-start"
+              )}
+              onClick={() => {
+                const newValue = !allColumnsVisible;
+                table
+                  .getAllColumns()
+                  .filter(
+                    (col: any) =>
+                      col.getCanHide() &&
+                      col.id !== "select" &&
+                      col.id !== "actions"
+                  )
+                  .forEach((col: any) => col.toggleVisibility(newValue));
+                setAllColumnsVisible(newValue);
+              }}
+            >
+              <div className="w-4.5 h-4.5 bg-gray-50 rounded-full shadow-[-1px_14px_18px_0px_rgba(0,0,0,0.25)] transition-all duration-200" />
+            </div>
+          </div>
+        </div>
+
+        {/* Content Area with Single Scroll */}
+        <div className="flex-1 flex overflow-hidden">
+          {/* Combined Content Area with Single Scroll */}
+          <div className="flex-1 overflow-y-auto grid-scroll">
+            <div className="flex">
+              {/* Left side - Field names */}
+              <div className="flex-1 px-6 py-4 space-y-3">
+                {table
+                  .getAllColumns()
+                  .filter(
+                    (column: any) =>
+                      column.getCanHide() &&
+                      column.id !== "select" &&
+                      column.id !== "actions" &&
+                      (!exportSearch ||
+                        column.id
+                          .toLowerCase()
+                          .includes(exportSearch.toLowerCase()))
+                  )
+                  .map((column: any) => {
+                    const isVisible = column.getIsVisible();
+
+                    return (
+                      <div
+                        key={column.id}
+                        className="flex items-center justify-between gap-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded px-2 py-2"
+                      >
+                        <span className="text-sm text-gray-700 dark:text-gray-300 capitalize flex-1">
+                          {column.id}
+                        </span>
+                        <div
+                          className={cn(
+                            "w-[36px] h-4 rounded-[190px] flex items-center gap-2.5 transition-all duration-200 cursor-pointer",
+                            isVisible
+                              ? "bg-sky-400 justify-end"
+                              : "bg-sky-200 justify-start"
+                          )}
+                          onClick={() => {
+                            column.toggleVisibility(!isVisible);
+                            const visibleColumns = table
+                              .getAllColumns()
+                              .filter(
+                                (col: any) =>
+                                  col.getCanHide() &&
+                                  col.id !== "select" &&
+                                  col.id !== "actions"
+                              )
+                              .filter((col: any) => col.getIsVisible());
+                            setAllColumnsVisible(
+                              visibleColumns.length ===
+                                table
+                                  .getAllColumns()
+                                  .filter(
+                                    (col: any) =>
+                                      col.getCanHide() &&
+                                      col.id !== "select" &&
+                                      col.id !== "actions"
+                                  ).length
+                            );
+                          }}
+                        >
+                          <div className="w-4.5 h-4.5 bg-gray-50 rounded-full shadow-[-1px_14px_18px_0px_rgba(0,0,0,0.25)] transition-all duration-200" />
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+
+              {/* Right side - Export options (sticky) */}
+              <div className="w-20 border-l sticky top-0">
+                <div className="flex flex-col items-center space-y-4 p-2 py-6">
+                  {exportButtons.map((button) => {
+                    const IconComponent = button.icon;
+                    return (
+                      <Tooltip
+                        key={button.id}
+                        label={button.label}
+                        position="left"
+                        withArrow
+                      >
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className={`w-12 h-12 rounded-full hover:scale-105 transition-transform flex-shrink-0 ${button.color}`}
+                          onClick={button.onClick}
+                        >
+                          <IconComponent className="w-6 h-6" />
+                        </Button>
+                      </Tooltip>
+                    );
+                  })}
                 </div>
-              ))}
+              </div>
+            </div>
           </div>
         </div>
-
-        {/* Right Side - Export Options with Icons in Rounded Circles */}
-        <div className="w-20 border-l bg-gray-50 dark:bg-gray-800 flex flex-col items-center py-3 gap-3 flex-shrink-0">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="w-14 h-14 rounded-full bg-gray-100 dark:hover:bg-gray-700 border-2 border-blue-200"
-            title="Print"
-            onClick={handlePrintCountry}
-          >
-            <Printer className="h-4 w-4 text-primary" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="w-14 h-14 rounded-full bg-gray-100 dark:hover:bg-gray-700 border-2 border-blue-200"
-            title="Export to Excel"
-            onClick={() => handleExportToExcel()}
-          >
-            <FileSpreadsheet className="h-4 w-4 text-primary" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="w-14 h-14 rounded-full bg-gray-100 dark:hover:bg-gray-700 border-2 border-blue-200"
-            title="Export to PDF"
-            onClick={() => handleExport()}
-          >
-            <FileText className="h-4 w-4 text-primary" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="w-14 h-14 rounded-full bg-gray-100 dark:hover:bg-gray-700 border-2 border-blue-200"
-            title="Export to CSV"
-            onClick={() => handleExportToCSV()}
-          >
-            <Download className="h-4 w-4 text-primary" />
-          </Button>
-        </div>
       </div>
 
-      {/* Bottom Section - Fixed Footer (Full Width) */}
-      <div className="bg-white dark:bg-gray-900 border-t px-3 py-2 flex-shrink-0 w-full">
-        <div className="flex justify-between">
-          {/* Reset Button */}
-          <Button
-            variant="outline"
-            size="sm"
-            className="rounded-full dark:hover:bg-gray-800"
-            onClick={() => {
-              table
-                .getAllColumns()
-                .filter(
-                  (col: any) =>
-                    col.getCanHide() &&
-                    col.id !== "select" &&
-                    col.id !== "actions"
-                )
-                .forEach((col: any) => col.toggleVisibility(true));
-              setAllColumnsVisible(true);
-              setExportSearch("");
-            }}
-          >
-            Reset
-          </Button>
-
-          {/* Apply Button */}
-          <Button
-            variant="outline"
-            size="sm"
-            className="rounded-full"
-            onClick={handleApply}
-          >
-            Apply
-          </Button>
-        </div>
-      </div>
-    </div>
+      <EmailPopup closeEmail={closeEmail} emailOpened={emailOpened} />
+      <WhatsAppPopup
+        closeWhatsapp={closeWhatsapp}
+        whatsappOpened={whatsappOpened}
+      />
+    </>
   );
 }
 
