@@ -17,34 +17,46 @@ import { ResetFormModal } from "@/components/common/ResetFormModal";
 import { usePermission } from "@/hooks/usePermissions";
 import MinimizablePageLayout from "@/components/MinimizablePageLayout";
 
-const MOCK_BRANDS = [
+const MOCK_DAMAGE_ITEMS = [
   {
     id: "1",
-    name: "Apex",
-    code: "BRD001",
-    description: "Premium performance brand",
+    itemId: "ITM-0001",
+    quantityDamaged: 3,
+    documentDate: "2025-09-10T10:00:00Z",
+    reportedBy: "John Doe",
+    location: "Warehouse A",
+    damageType: "Broken",
     status: "Active",
   },
   {
     id: "2",
-    name: "Velocity",
-    code: "BRD002",
-    description: "High-speed and sports-focused",
-    status: "Active",
+    itemId: "ITM-0002",
+    quantityDamaged: 1,
+    documentDate: "2025-09-11T12:30:00Z",
+    reportedBy: "Jane Smith",
+    location: "Warehouse B",
+    damageType: "Water Damage",
+    status: "Inactive",
   },
   {
     id: "3",
-    name: "Nimbus",
-    code: "BRD003",
-    description: "Cloud-like comfort and reliability",
+    itemId: "ITM-0003",
+    quantityDamaged: 6,
+    documentDate: "2025-09-08T08:20:00Z",
+    reportedBy: "Ahmed Ali",
+    location: "Store 1",
+    damageType: "Cracked",
     status: "Draft",
   },
   {
     id: "4",
-    name: "Quantum",
-    code: "BRD004",
-    description: "Cutting-edge innovation",
-    status: "InActive",
+    itemId: "ITM-0004",
+    quantityDamaged: 2,
+    documentDate: "2025-09-09T09:45:00Z",
+    reportedBy: "Maria Garcia",
+    location: "Warehouse A",
+    damageType: "Expired",
+    status: "Inactive",
   },
 ];
 
@@ -62,7 +74,7 @@ export type HistoryEntry = {
   print: boolean;
 };
 
-export default function BrandDetailsPage() {
+export default function DamageItemsDetailsPage() {
   // const { t } = useTranslation();
   const navigate = useNavigate();
 
@@ -79,27 +91,41 @@ export default function BrandDetailsPage() {
   // const { canCreate, canView, canEdit, canDelete } = useUserMasterPermissions();
 
   // Field-level permissions
-  const canPdf: boolean = usePermission("brands", "pdf");
-  const canPrint: boolean = usePermission("brands", "print");
-  const canSeeHistory: boolean = usePermission("brands", "history");
+  const canPdf: boolean = usePermission("damage-items", "pdf");
+  const canPrint: boolean = usePermission("damage-items", "print");
+  const canSeeHistory: boolean = usePermission("damage-items", "history");
 
-  let brandData = {
+  let damageData = {
     id: selectedBrand,
-    name: MOCK_BRANDS.find((b) => b.id === selectedBrand)?.name || "Apex",
-    code: MOCK_BRANDS.find((b) => b.id === selectedBrand)?.code || "BRD001",
-    description:
-      MOCK_BRANDS.find((b) => b.id === selectedBrand)?.description ||
-      "Premium performance brand",
+    itemId:
+      MOCK_DAMAGE_ITEMS.find((d) => d.id === selectedBrand)?.itemId ||
+      "ITM-0001",
+    quantityDamaged:
+      MOCK_DAMAGE_ITEMS.find((d) => d.id === selectedBrand)?.quantityDamaged ||
+      0,
+    documentDate:
+      MOCK_DAMAGE_ITEMS.find((d) => d.id === selectedBrand)?.documentDate ||
+      "2025-09-10T10:00:00Z",
+    reportedBy:
+      MOCK_DAMAGE_ITEMS.find((d) => d.id === selectedBrand)?.reportedBy ||
+      "John Doe",
+    location:
+      MOCK_DAMAGE_ITEMS.find((d) => d.id === selectedBrand)?.location ||
+      "Warehouse A",
+    damageType:
+      MOCK_DAMAGE_ITEMS.find((d) => d.id === selectedBrand)?.damageType ||
+      "Broken",
     isDefault: true,
     isActive: true,
     isDraft: false,
     isDeleted: false,
-    status: MOCK_BRANDS.find((b) => b.id === selectedBrand)?.status || "Active",
-    createdAt: "2023-05-15T10:30:00Z",
-    updatedAt: "2025-01-15T14:30:00Z",
+    status:
+      MOCK_DAMAGE_ITEMS.find((d) => d.id === selectedBrand)?.status || "Active",
+    createdAt: "2025-05-15T10:30:00Z",
+    updatedAt: "2025-09-15T14:30:00Z",
     draftedAt: "2025-05-20T14:45:00Z",
     deletedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(),
-  };
+  } as any;
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -110,11 +136,14 @@ export default function BrandDetailsPage() {
     }
     console.log("isViewPage", isViewPage);
     if (isViewPage) {
-      brandData = {
+      damageData = {
         id: selectedBrand,
-        name: "",
-        code: "",
-        description: "",
+        itemId: "",
+        quantityDamaged: "",
+        documentDate: "",
+        reportedBy: "",
+        location: "",
+        damageType: "",
         isDefault: true,
         isActive: true,
         isDraft: false,
@@ -128,17 +157,20 @@ export default function BrandDetailsPage() {
     }
   }, []);
 
-  const handlePrintBrand = (brand: any) => {
+  const handlePrintDamageItem = (damage: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "Brand Master Details",
-        data: [brand],
+        title: "Damage Item Details",
+        data: [damage],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
-          name: "Brand Name",
-          code: "Brand Code",
-          description: "Description",
-          isDefault: "Default Brand",
+          itemId: "Item ID",
+          quantityDamaged: "Quantity Damaged",
+          documentDate: "Document Date",
+          reportedBy: "Reported By",
+          location: "Location",
+          damageType: "Damage Type",
+          isDefault: "Default",
           isActive: "Active Status",
           isDraft: "Draft Status",
           isDeleted: "Deleted Status",
@@ -167,19 +199,19 @@ export default function BrandDetailsPage() {
   const handleExportPDF = async () => {
     console.log("Export PDF clicked");
     try {
-      console.log("brandData on pdf click", brandData);
+      console.log("damageData on pdf click", damageData);
       const blob = await pdf(
         <GenericPDF
-          data={[brandData]}
-          title="Brand Master Details"
-          subtitle="Brand Information"
+          data={[damageData]}
+          title="Damage Item Details"
+          subtitle="Damage Item Information"
         />
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "brand-details.pdf";
+      a.download = "damage-item-details.pdf";
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
@@ -223,25 +255,25 @@ export default function BrandDetailsPage() {
   return (
     <>
       <MinimizablePageLayout
-        moduleId="brand-details-module"
-        moduleName="Brand Details"
-        moduleRoute="/brands/view"
-        title="Viewing Brand"
+        moduleId="damage-item-details-module"
+        moduleName="Damage Item Details"
+        moduleRoute="/damage-items/view"
+        title="Viewing Damage Item"
         videoSrc={video}
         videoHeader="Tutorial video"
-        listPath="brands"
+        listPath="damage-items"
         activePage="view"
-        module="brands"
+        module="damage-items"
         popoverOptions={[
           {
             label: "Create",
             icon: <Plus className="w-5 h-5 text-green-600" />,
-            onClick: () => navigate("/brands/create"),
+            onClick: () => navigate("/damage-items/create"),
           },
           {
             label: "Edit",
             icon: <Edit className="w-5 h-5 text-blue-600" />,
-            onClick: () => navigate("/brands/edit/1"),
+            onClick: () => navigate("/damage-items/edit/1"),
           },
         ]}
         keepChanges={keepChanges}
@@ -265,67 +297,91 @@ export default function BrandDetailsPage() {
                   handleExportPDF();
                 }
                 if (printEnabled) {
-                  handlePrintBrand(brandData);
+                  handlePrintDamageItem(damageData);
                 }
               }
             : undefined
         }
       >
-        {/* Row 1: Brand Selection, Name, Code */}
+        {/* Row 1: Damage Item Selection, Item ID, Quantity, Document Date */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
           <div className="mt-1">
             <Autocomplete
-              options={MOCK_BRANDS}
+              options={MOCK_DAMAGE_ITEMS}
               value={selectedBrand}
               onValueChange={setSelectedBrand}
               placeholder=" "
-              displayKey="name"
+              displayKey="itemId"
               valueKey="id"
-              searchKey="name"
+              searchKey="itemId"
               disabled={false}
               className="w-[96%] bg-gray-100 rounded-xl"
               labelClassName="bg-gray-50 rounded-2xl"
-              labelText="Brand Name"
+              labelText="Item ID"
               isShowTemplateIcon={false}
             />
           </div>
 
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Brand Name</h3>
+              <h3 className="font-normal text-gray-600">Quantity Damaged</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(brandData.name)}
+              {displayValue(damageData.quantityDamaged)}
             </div>
           </div>
 
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Brand Code</h3>
+              <h3 className="font-normal text-gray-600">Document Date</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(brandData.code)}
+              {displayValue(
+                damageData.documentDate
+                  ? new Date(damageData.documentDate).toLocaleDateString()
+                  : ""
+              )}
             </div>
           </div>
 
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Description</h3>
+              <h3 className="font-normal text-gray-600">Reported By</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(brandData.description)}
+              {displayValue(damageData.reportedBy)}
             </div>
           </div>
         </div>
 
-        {/* Row 2: Description, Status, Default */}
+        {/* Row 2: Reported By, Location, Damage Type, Status, Default, Action */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+          <div className="">
+            <div className="flex flex-col">
+              <div className="flex justify-between items-center mb-1">
+                <h3 className="font-normal text-gray-600">Location</h3>
+              </div>
+              <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+                {displayValue(damageData.location)}
+              </div>
+            </div>
+          </div>
+
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">Damage Type</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(damageData.damageType)}
+            </div>
+          </div>
+
           <div className="">
             <div className="flex justify-between items-center mb-1">
               <h3 className="font-normal text-gray-600">Status</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(brandData.status)}
+              {displayValue(damageData.status)}
             </div>
           </div>
 
@@ -335,7 +391,7 @@ export default function BrandDetailsPage() {
                 <span className="text-[15px] text-gray-600">Default</span>
               </div>
               <div className="">
-                {brandData.isDefault ? (
+                {damageData.isDefault ? (
                   <span className="text-black text-[15px]">Yes</span>
                 ) : (
                   <span className="text-black text-[15px]">No</span>
@@ -360,10 +416,10 @@ export default function BrandDetailsPage() {
         columnData={mockHistoryData}
         title="History"
         statusInfo={{
-          created: getRelativeTime(brandData.createdAt),
-          updated: getRelativeTime(brandData.updatedAt),
-          drafted: getRelativeTime(brandData.draftedAt),
-          deleted: getRelativeTime(brandData.deletedAt),
+          created: getRelativeTime(damageData.createdAt),
+          updated: getRelativeTime(damageData.updatedAt),
+          drafted: getRelativeTime(damageData.draftedAt),
+          deleted: getRelativeTime(damageData.deletedAt),
         }}
       />
 

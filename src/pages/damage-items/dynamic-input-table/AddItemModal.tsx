@@ -378,8 +378,13 @@ export default function AddItemModal({
         },
       }}
       centered
+      classNames={{
+        content: "!grid-scroll",
+        body: "!grid-scroll",
+        inner: "!grid-scroll",
+      }}
     >
-      <form onSubmit={handleSubmit} className="p-6">
+      <form onSubmit={handleSubmit} className="p-6 !grid-scroll">
         {/* First Row: Item Code, Barcode, Short Name */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="space-y-2">

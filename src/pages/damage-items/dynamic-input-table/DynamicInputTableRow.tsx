@@ -85,7 +85,7 @@ const DynamicInputTableRow: React.FC<DynamicInputTableRowProps> = React.memo(
                 "&:focus": {
                   borderColor: "var(--primary)",
                 },
-                borderRadius: "0.5rem",
+                borderRadius: "12px",
               },
               dropdown: {
                 fontSize: "12px",
@@ -155,6 +155,7 @@ const DynamicInputTableRow: React.FC<DynamicInputTableRowProps> = React.memo(
                 "&:focus": {
                   borderColor: "var(--primary)",
                 },
+                borderRadius: "12px",
               },
               dropdown: {
                 fontSize: "12px",
