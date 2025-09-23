@@ -1,31 +1,30 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useRef, useEffect } from "react";
-import { useTranslation } from "react-i18next";
-import { Trash2, Undo2, MoreVertical, CalendarIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
-import EditableInput, {
-  type EditableInputRef,
-} from "@/components/common/EditableInput";
-import { Autocomplete } from "@mantine/core";
 import video from "@/assets/videos/test.mp4";
+import { Autocomplete } from "@/components/common/Autocomplete";
+import EditableInput from "@/components/common/EditableInput";
 import GenericPDF from "@/components/common/pdf";
-import { printHtmlContent } from "@/lib/printHtmlContent";
-import { toastError, toastSuccess } from "@/lib/toast";
-import { pdf } from "@react-pdf/renderer";
-import PageLayout from "@/components/common/PageLayout";
-import LanguageTranslatorModal from "@/components/common/LanguageTranslatorModel";
-import { useNavigate, useParams } from "react-router-dom";
+import { ResetFormModal } from "@/components/common/ResetFormModal";
+import { Button } from "@/components/ui/button";
 import { PrintCommonLayout } from "@/lib/printContents/PrintCommonLayout";
+import { printHtmlContent } from "@/lib/printHtmlContent";
+import { toastError, toastRestore, toastSuccess } from "@/lib/toast";
+import { pdf } from "@react-pdf/renderer";
+import { Check, Eye, MoreVertical, Plus } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
+import { usePermission } from "@/hooks/usePermissions";
+import { useLanguageLabels } from "@/hooks/useLanguageLabels";
+import { useAppSelector } from "@/store/hooks";
+import type { OpeningStockModuleData } from "@/types/modules";
+import MinimizablePageLayout from "@/components/MinimizablePageLayout";
+import { useMinimizedModuleData } from "@/hooks/useMinimizedModuleData";
+import { SwitchSelect } from "@/components/common/SwitchAutoComplete";
+import { ActionsAutocomplete } from "@/components/common/ActionsAutocomplete";
+import { cn } from "@/lib/utils";
+import { getModuleFromPath } from "@/lib/utils";
+import LanguageTranslatorModal from "@/components/common/LanguageTranslatorModel";
 import DynamicInputTableList from "./dynamic-input-table/DynamicInputTableList";
+import EnglishDate from "@/components/EnglishDateInput";
 
 // Define OpeningStock interface
 interface OpeningStock {
@@ -33,7 +32,7 @@ interface OpeningStock {
   documentNumber: string;
   branch: string;
   poNumber: string;
-  documentDate: Date | string;
+  documentDate: string;
   remarks: string;
   amount: number;
   isActive: boolean;
@@ -77,7 +76,7 @@ const MOCK_OPENING_STOCKS: OpeningStock[] = [
     documentNumber: "OS001",
     branch: "Main Branch",
     poNumber: "PO-2024-001",
-    documentDate: new Date("2024-01-15"),
+    documentDate: "",
     remarks: "Initial inventory setup for main branch",
     amount: 15000.5,
     isActive: true,
@@ -89,164 +88,66 @@ const MOCK_OPENING_STOCKS: OpeningStock[] = [
     deletedAt: null,
     isDeleted: false,
   },
-  {
-    id: "2",
-    documentNumber: "OS002",
-    branch: "North Branch",
-    poNumber: "PO-2024-002",
-    documentDate: new Date("2024-01-16"),
-    remarks: "Quarterly stock adjustment for north branch",
-    amount: 8750.25,
-    isActive: true,
-    isDefault: true,
-    isDraft: false,
-    createdAt: new Date("2024-01-16T09:15:00Z"),
-    draftedAt: null,
-    updatedAt: new Date("2024-01-21T16:30:00Z"),
-    deletedAt: null,
-    isDeleted: false,
-  },
-  {
-    id: "3",
-    documentNumber: "OS003",
-    branch: "South Branch",
-    poNumber: "PO-2024-003",
-    documentDate: new Date("2024-01-17"),
-    remarks: "New location inventory setup",
-    amount: 12300.75,
-    isActive: true,
-    isDefault: false,
-    isDraft: true,
-    createdAt: new Date("2024-01-17T11:45:00Z"),
-    draftedAt: new Date("2024-01-17T11:45:00Z"),
-    updatedAt: new Date("2024-01-22T13:20:00Z"),
-    deletedAt: null,
-    isDeleted: false,
-  },
-  {
-    id: "4",
-    documentNumber: "OS004",
-    branch: "East Branch",
-    poNumber: "PO-2024-004",
-    documentDate: new Date("2024-01-18"),
-    remarks: "Stock reconciliation after audit",
-    amount: 9850.0,
-    isActive: false,
-    isDefault: false,
-    isDraft: false,
-    createdAt: new Date("2024-01-18T14:20:00Z"),
-    draftedAt: null,
-    updatedAt: new Date("2024-01-23T10:15:00Z"),
-    deletedAt: null,
-    isDeleted: false,
-  },
-  {
-    id: "5",
-    documentNumber: "OS005",
-    branch: "West Branch",
-    poNumber: "PO-2024-005",
-    documentDate: new Date("2024-01-19"),
-    remarks: "Monthly inventory update",
-    amount: 16750.3,
-    isActive: true,
-    isDefault: false,
-    isDraft: false,
-    createdAt: new Date("2024-01-19T08:30:00Z"),
-    draftedAt: null,
-    updatedAt: new Date("2024-01-24T15:45:00Z"),
-    deletedAt: null,
-    isDeleted: false,
-  },
-  {
-    id: "6",
-    documentNumber: "OS006",
-    branch: "Central Branch",
-    poNumber: "PO-2024-006",
-    documentDate: new Date("2024-01-20"),
-    remarks: "Year-end stock count verification",
-    amount: 22100.45,
-    isActive: true,
-    isDefault: false,
-    isDraft: false,
-    createdAt: new Date("2024-01-20T12:00:00Z"),
-    draftedAt: null,
-    updatedAt: new Date("2024-01-25T09:30:00Z"),
-    deletedAt: null,
-    isDeleted: false,
-  },
-  {
-    id: "7",
-    documentNumber: "OS007",
-    branch: "Downtown Branch",
-    poNumber: "PO-2024-007",
-    documentDate: new Date("2024-01-21"),
-    remarks: "Seasonal inventory adjustment",
-    amount: 7890.6,
-    isActive: true,
-    isDefault: false,
-    isDraft: true,
-    createdAt: new Date("2024-01-21T16:15:00Z"),
-    draftedAt: new Date("2024-01-21T16:15:00Z"),
-    updatedAt: new Date("2024-01-26T11:40:00Z"),
-    deletedAt: null,
-    isDeleted: false,
-  },
-  {
-    id: "8",
-    documentNumber: "OS008",
-    branch: "Suburban Branch",
-    poNumber: "PO-2024-008",
-    documentDate: new Date("2024-01-22"),
-    remarks: "New product line addition",
-    amount: 13450.8,
-    isActive: true,
-    isDefault: false,
-    isDraft: false,
-    createdAt: new Date("2024-01-22T13:45:00Z"),
-    draftedAt: null,
-    updatedAt: new Date("2024-01-27T14:20:00Z"),
-    deletedAt: null,
-    isDeleted: false,
-  },
+  // ... other mock data
 ];
 
 type Props = {
   isEdit?: boolean;
 };
 
-export default function OpeningStockEditPage({ isEdit = false }: Props) {
-  const { t } = useTranslation();
+export default function OpeningStockInventoryEditPage({
+  isEdit = true,
+}: Props) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams();
-  const [keepChanges, setKeepChanges] = useState(false);
+  const labels = useLanguageLabels();
+  const { isRTL } = useAppSelector((state) => state.language);
 
+  const detectedModule = getModuleFromPath(location.pathname);
+
+  // Get module ID for this edit page
+  const moduleId = `${detectedModule}-edit-module-${id || "new"}`;
+
+  // Use the custom hook for minimized module data
+  const {
+    moduleData,
+    hasMinimizedData,
+    resetModuleData,
+    getModuleScrollPosition,
+  } = useMinimizedModuleData<OpeningStockModuleData>(moduleId);
+
+  const [keepCreating, setKeepCreating] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
-
-  const poNumberInputRef = useRef<EditableInputRef>(null);
-  const remarksInputRef = useRef<EditableInputRef>(null);
-  const activeSwitchRef = useRef<HTMLButtonElement>(null);
-  const defaultSwitchRef = useRef<HTMLButtonElement>(null);
-  const draftSwitchRef = useRef<HTMLButtonElement>(null);
-  const deleteButtonRef = useRef<HTMLButtonElement>(null);
+  const [isDefaultState, setIsDefaultState] = useState<"Yes" | "No" | string>(
+    "No"
+  );
+  const [statusState, setStatusState] = useState<
+    "Active" | "Draft" | "Delete" | string
+  >("Active");
+  const [selectedAction, setSelectedAction] = useState<string>("");
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [printEnabled, setPrintEnabled] = useState(false);
   const [pdfChecked, setPdfChecked] = useState(false);
-
-  // Date picker state
-  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [formKey, setFormKey] = useState(0);
+  const [isRestoredFromMinimized, setIsRestoredFromMinimized] = useState(false);
+  const [shouldRestoreFromMinimized, setShouldRestoreFromMinimized] =
+    useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Translation state
   const [translations, setTranslations] = useState([
     { id: 1, english: "", arabic: "", bangla: "" },
   ]);
 
-  // Form state - Initialize with default values
+  // Form state
   const [formData, setFormData] = useState<OpeningStock>({
     id: "",
     documentNumber: "",
     branch: "",
     poNumber: "",
-    documentDate: new Date(),
+    documentDate: "",
     remarks: "",
     amount: 0,
     isActive: true,
@@ -259,227 +160,291 @@ export default function OpeningStockEditPage({ isEdit = false }: Props) {
     isDeleted: false,
   });
 
-  // Loading state
-  const [isLoading, setIsLoading] = useState(true);
+  // Permission checks
+  const canCreate = usePermission(detectedModule, "create");
+  const canView = usePermission(detectedModule, "view");
+  const canPdf: boolean = usePermission(detectedModule, "pdf");
+  const canPrint: boolean = usePermission(detectedModule, "print");
+
+  // Memoize branch data to prevent unnecessary re-renders
+  const memoizedBranches = useMemo(() => [...MOCK_BRANCHES], []);
 
   // Document number options for autocomplete
-  const documentNumberOptions = MOCK_OPENING_STOCKS.map((stock) => ({
-    value: stock.documentNumber,
-    label: `${stock.documentNumber} - ${stock.branch}`,
-  }));
+  const documentNumberOptions = useMemo(
+    () =>
+      MOCK_OPENING_STOCKS.map((stock) => ({
+        value: stock.documentNumber,
+        label: `${stock.documentNumber} - ${stock.branch}`,
+      })),
+    []
+  );
 
-  // Function to find and load opening stock data
-  const loadOpeningStockData = (documentNumber: string) => {
-    const stockData = MOCK_OPENING_STOCKS.find(
-      (stock) => stock.documentNumber === documentNumber
-    );
+  // Update translation data when remarks change
+  const updateTranslations = useCallback((remarks: string) => {
+    setTranslations([
+      { id: 1, english: remarks || "", arabic: "", bangla: "" },
+    ]);
+  }, []);
 
-    if (stockData) {
-      setFormData({
-        ...stockData,
-        updatedAt: new Date(), // Update the timestamp
-      });
-      toastSuccess(`Loaded data for ${documentNumber}`);
-    } else {
-      toastError(`Opening stock ${documentNumber} not found`);
-    }
+  useEffect(() => {
+    updateTranslations(formData.remarks);
+  }, [formData.remarks, updateTranslations]);
+
+  // Refs for form elements
+  const inputRefs = useRef<Record<string, HTMLElement | null>>({});
+  const setRef = (name: string) => (el: HTMLElement | null) => {
+    inputRefs.current[name] = el;
+  };
+  const focusNextInput = (nextField: string) => {
+    inputRefs.current[nextField]?.focus();
   };
 
-  // Handle document number selection
-  const handleDocumentNumberChange = (value: string | null) => {
-    if (value) {
-      const documentNumber = value.split(" - ")[0]; // Extract document number from "OS001 - Main Branch"
-      setFormData((prev) => ({ ...prev, documentNumber }));
-      loadOpeningStockData(documentNumber);
+  // Check for restore flag from taskbar
+  useEffect(() => {
+    const shouldRestore = localStorage.getItem(`restore-${moduleId}`);
+    if (shouldRestore === "true") {
+      console.log(
+        "Setting shouldRestoreFromMinimized to true from localStorage"
+      );
+      setShouldRestoreFromMinimized(true);
+      localStorage.removeItem(`restore-${moduleId}`);
     }
-  };
+  }, [moduleId]);
+
+  // Restore logic using the custom hook
+  useEffect(() => {
+    console.log("Checking for restored module...");
+    console.log("Has minimized data:", hasMinimizedData);
+    console.log("shouldRestoreFromMinimized flag:", shouldRestoreFromMinimized);
+
+    const shouldAutoRestore =
+      shouldRestoreFromMinimized ||
+      (hasMinimizedData &&
+        moduleData &&
+        !isRestoredFromMinimized &&
+        !formData.documentNumber &&
+        !formData.branch);
+
+    if (hasMinimizedData && moduleData && shouldAutoRestore) {
+      console.log("Found restored module and should restore:", moduleData);
+
+      // Restore form data
+      setFormData(moduleData.formData);
+
+      // Restore UI states based on form data
+      setIsDefaultState(moduleData.isDefault ? "Yes" : "No");
+      if (moduleData.isDraft) {
+        setStatusState("Draft");
+      } else {
+        setStatusState("Active");
+      }
+
+      // Set flag to prevent re-restoration
+      setIsRestoredFromMinimized(true);
+      setShouldRestoreFromMinimized(false);
+
+      // Restore scroll position
+      const scrollPosition = getModuleScrollPosition(moduleId);
+      if (scrollPosition) {
+        setTimeout(() => {
+          window.scrollTo(0, scrollPosition);
+        }, 200);
+      }
+    } else if (hasMinimizedData && !shouldAutoRestore) {
+      console.log("Found minimized module but not restoring automatically");
+    }
+  }, [
+    hasMinimizedData,
+    moduleData,
+    isRestoredFromMinimized,
+    shouldRestoreFromMinimized,
+    formData.documentNumber,
+    formData.branch,
+    moduleId,
+    getModuleScrollPosition,
+  ]);
 
   // Initialize data on component mount
   useEffect(() => {
-    setIsLoading(true);
+    if (!hasMinimizedData && !isRestoredFromMinimized) {
+      setIsLoading(true);
 
-    // If ID is provided in URL, load that specific record
-    if (id && id !== "undefined") {
-      const stockData = MOCK_OPENING_STOCKS.find((stock) => stock.id === id);
-      if (stockData) {
-        setFormData(stockData);
+      // If ID is provided in URL, load that specific record
+      if (id && id !== "undefined") {
+        const stockData = MOCK_OPENING_STOCKS.find((stock) => stock.id === id);
+        if (stockData) {
+          setFormData(stockData);
+          setIsDefaultState(stockData.isDefault ? labels.yes : labels.no);
+          if (stockData.isDraft) {
+            setStatusState("Draft");
+          } else {
+            setStatusState("Active");
+          }
+        } else {
+          // If ID not found, load the first record as default
+          const defaultStock = MOCK_OPENING_STOCKS[0];
+          setFormData(defaultStock);
+          setIsDefaultState(defaultStock.isDefault ? labels.yes : labels.no);
+          setStatusState(defaultStock.isDraft ? "Draft" : "Active");
+        }
       } else {
-        // If ID not found, load the first record as default
-        setFormData(MOCK_OPENING_STOCKS[0]);
+        // Load the first record as default for editing
+        const defaultStock = MOCK_OPENING_STOCKS[0];
+        setFormData(defaultStock);
+        setIsDefaultState(defaultStock.isDefault ? labels.yes : labels.no);
+        setStatusState(defaultStock.isDraft ? "Draft" : "Active");
       }
-    } else {
-      // Load the first record as default for editing
-      setFormData(MOCK_OPENING_STOCKS[0]);
+
+      setIsLoading(false);
     }
+  }, [id, labels, hasMinimizedData, isRestoredFromMinimized]);
 
-    setIsLoading(false);
-  }, [id]);
+  // Function to find and load opening stock data
+  const loadOpeningStockData = useCallback(
+    (documentNumber: string) => {
+      const stockData = MOCK_OPENING_STOCKS.find(
+        (stock) => stock.documentNumber === documentNumber
+      );
 
-  // Update translation data when remarks change
-  useEffect(() => {
-    setTranslations([
-      { id: 1, english: formData.remarks || "", arabic: "", bangla: "" },
-    ]);
-  }, [formData.remarks]);
-
-  // Update the focusNextInput function
-  const focusNextInput = (currentField: string) => {
-    console.log("Current field:", currentField);
-    switch (currentField) {
-      case "documentNumber": {
-        // Focus on branch dropdown
-        const branchInput = document.querySelector(
-          'input[placeholder="Select branch..."]'
-        ) as HTMLInputElement;
-        branchInput?.focus();
-        break;
+      if (stockData) {
+        setFormData({
+          ...stockData,
+          updatedAt: new Date(), // Update the timestamp
+        });
+        setIsDefaultState(stockData.isDefault ? labels.yes : labels.no);
+        setStatusState(stockData.isDraft ? "Draft" : "Active");
+        toastSuccess(`Loaded data for ${documentNumber}`);
+      } else {
+        toastError(`Opening stock ${documentNumber} not found`);
       }
-      case "branch":
-        poNumberInputRef.current?.focus();
-        break;
-      case "poNumber": {
-        // Focus on the document date picker trigger
-        const datePickerTrigger = document.querySelector(
-          '[data-testid="date-picker-trigger"]'
-        ) as HTMLButtonElement;
-        datePickerTrigger?.focus();
-        break;
+    },
+    [labels]
+  );
+
+  // Handle document number selection
+  const handleDocumentNumberChange = useCallback(
+    (value: string | null) => {
+      if (value) {
+        const documentNumber = value.split(" - ")[0]; // Extract document number from "OS001 - Main Branch"
+        setFormData((prev) => ({ ...prev, documentNumber }));
+        loadOpeningStockData(documentNumber);
       }
-      case "documentDate":
-        remarksInputRef.current?.focus();
-        break;
-      case "remarks":
-        activeSwitchRef.current?.focus();
-        break;
-      case "active":
-        defaultSwitchRef.current?.focus();
-        break;
-      case "default":
-        draftSwitchRef.current?.focus();
-        break;
-      case "draft":
-        deleteButtonRef.current?.focus();
-        break;
-      default:
-        break;
-    }
-  };
-
-  const getRelativeTime = (dateString: string | null | Date) => {
-    if (!dateString) return "--/--/----";
-
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInMs = now.getTime() - date.getTime();
-
-    const minutes = Math.floor(diffInMs / (1000 * 60));
-    const hours = Math.floor(diffInMs / (1000 * 60 * 60));
-    const days = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
-    const months = Math.floor(diffInMs / (1000 * 60 * 60 * 24 * 30));
-    const years = Math.floor(diffInMs / (1000 * 60 * 60 * 24 * 365));
-
-    if (years > 0) {
-      return `${years}y ago`;
-    } else if (months > 0) {
-      return `${months}mo ago`;
-    } else if (days > 0) {
-      return `${days}d ago`;
-    } else if (hours > 0) {
-      return `${hours}h ago`;
-    } else if (minutes > 0) {
-      return `${minutes}m ago`;
-    } else {
-      return "Just now";
-    }
-  };
-
-  // Handle key navigation for switches and buttons
-  const handleSwitchKeyDown = (
-    e: React.KeyboardEvent,
-    currentField: string
-  ) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      // Trigger the switch/button action first
-      switch (currentField) {
-        case "active":
-          setFormData({ ...formData, isActive: !formData.isActive });
-          break;
-        case "default":
-          setFormData({ ...formData, isDefault: !formData.isDefault });
-          break;
-        case "draft":
-          setFormData({ ...formData, isDraft: !formData.isDraft });
-          break;
-        case "delete":
-          setFormData({ ...formData, isDeleted: !formData.isDeleted });
-          break;
-      }
-      // Then move to next field
-      setTimeout(() => focusNextInput(currentField), 50);
-    }
-  };
+    },
+    [loadOpeningStockData]
+  );
 
   // Handle form field changes
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
-      [name]: type === "checkbox" ? checked : value,
-      updatedAt: new Date(), // Update timestamp on any change
-    });
-  };
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { name, value, type, checked } = e.target;
+      const newFormData = {
+        ...formData,
+        [name]: type === "checkbox" ? checked : value,
+        updatedAt: new Date(), // Update timestamp on any change
+      };
+      setFormData(newFormData);
+    },
+    [formData]
+  );
 
   // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Opening Stock Edit Form submitted:", formData);
-    toastSuccess("Opening stock updated successfully!");
-  };
 
-  // Handle form reset
-  const handleReset = () => {
-    if (window.confirm(t("form.resetConfirm"))) {
-      // Reset to original loaded data
-      const originalData = MOCK_OPENING_STOCKS.find(
-        (stock) => stock.documentNumber === formData.documentNumber
+    if (pdfChecked) {
+      await handleExportPDF();
+    }
+    if (printEnabled) {
+      handlePrintOpeningStock(formData);
+    }
+
+    if (keepCreating) {
+      toastSuccess(
+        `${detectedModule} ${isEdit ? "updated" : "created"} successfully!`
       );
-      if (originalData) {
-        setFormData(originalData);
-        toastSuccess("Form reset to original values");
-      }
+      handleReset();
+    } else {
+      toastSuccess(
+        `${detectedModule} ${isEdit ? "updated" : "created"} successfully!`
+      );
+      navigate(`/${detectedModule}`);
     }
   };
 
-  const handlePrintOpeningStock = (stockData: any) => {
-    try {
-      const html = PrintCommonLayout({
-        title: "Opening Stock Details",
-        data: [stockData],
-        excludeFields: ["id", "__v", "_id"],
-        fieldLabels: {
-          documentNumber: "Document Number",
-          branch: "Branch",
-          poNumber: "P.O Number",
-          documentDate: "Document Date",
-          remarks: "Remarks",
-          amount: "Amount",
-          isActive: "Active Status",
-          isDefault: "Default Status",
-          isDraft: "Draft Status",
-          isDeleted: "Deleted Status",
-          createdAt: "Created At",
-          updatedAt: "Updated At",
-          draftedAt: "Drafted At",
-          deletedAt: "Deleted At",
-        },
-      });
-      printHtmlContent(html);
-    } catch (error) {
-      console.log(error);
-      toastError("Something went wrong when printing");
+  // Update handleReset function to use the custom hook
+  const handleReset = async () => {
+    // Reset to original loaded data
+    const originalData = MOCK_OPENING_STOCKS.find(
+      (stock) => stock.documentNumber === formData.documentNumber
+    );
+    if (originalData) {
+      setFormData(originalData);
+      setIsDefaultState(originalData.isDefault ? labels.yes : labels.no);
+      setStatusState(originalData.isDraft ? "Draft" : "Active");
+      setSelectedAction("");
+      setIsRestoredFromMinimized(false);
+
+      if (formRef.current) {
+        formRef.current.reset();
+      }
+
+      setFormKey((prev) => prev + 1);
+
+      // Reset form data using the custom hook
+      if (hasMinimizedData) {
+        try {
+          await resetModuleData(moduleId);
+          console.log("Form data reset in Redux");
+        } catch (error) {
+          console.error("Error resetting form data:", error);
+        }
+      }
+
+      toastSuccess("Form reset to original values");
+
+      setTimeout(() => {
+        inputRefs.current["documentNumber"]?.focus();
+      }, 100);
     }
   };
+
+  const handleResetClick = () => {
+    setIsResetModalOpen(true);
+  };
+
+  const handlePrintOpeningStock = useCallback(
+    (stockData: any) => {
+      try {
+        const html = PrintCommonLayout({
+          title: `${detectedModule} Details`,
+          data: [stockData],
+          excludeFields: ["id", "__v", "_id"],
+          fieldLabels: {
+            documentNumber: "Document Number",
+            branch: "Branch",
+            poNumber: "P.O Number",
+            documentDate: "Document Date",
+            remarks: "Remarks",
+            amount: "Amount",
+            isActive: "Active Status",
+            isDefault: labels.default,
+            isDraft: labels.draft,
+            isDeleted: "Deleted Status",
+            createdAt: "Created At",
+            updatedAt: "Updated At",
+            draftedAt: "Drafted At",
+            deletedAt: "Deleted At",
+          },
+        });
+        printHtmlContent(html);
+      } catch (error) {
+        console.log(error);
+        toastError("Something went wrong when printing");
+      }
+    },
+    [detectedModule, labels]
+  );
 
   const handleSwitchChange = (checked: boolean) => {
     setPrintEnabled(checked);
@@ -496,20 +461,19 @@ export default function OpeningStockEditPage({ isEdit = false }: Props) {
   };
 
   const handleExportPDF = async () => {
-    console.log("Export PDF clicked");
     try {
       const blob = await pdf(
         <GenericPDF
           data={[formData]}
-          title="Opening Stock Details"
-          subtitle="Opening Stock Information"
+          title={`${detectedModule} Details`}
+          subtitle={`${detectedModule} Information`}
         />
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `opening-stock-${formData.documentNumber}.pdf`;
+      a.download = `${detectedModule}-${formData.documentNumber}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
@@ -517,6 +481,78 @@ export default function OpeningStockEditPage({ isEdit = false }: Props) {
       toastError("Something went wrong when generating PDF");
     }
   };
+
+  const [popoverOptions, setPopoverOptions] = useState([
+    {
+      label: "Create",
+      icon: <Plus className="w-5 h-5 text-green-500" />,
+      onClick: () => {
+        navigate(`/${detectedModule}/create`);
+      },
+      show: canCreate,
+    },
+    {
+      label: "View",
+      icon: <Eye className="w-5 h-5 text-green-600" />,
+      onClick: () => {
+        navigate(`/${detectedModule}/view`);
+      },
+      show: canView,
+    },
+  ]);
+
+  useEffect(() => {
+    setPopoverOptions((prevOptions) => {
+      const filteredOptions = prevOptions.filter(
+        (opt) => opt.label !== "Draft"
+      );
+
+      if (!formData.isDraft) {
+        return [
+          ...filteredOptions,
+          {
+            label: labels.draft || "Draft",
+            icon: <Check className="text-green-500" />,
+            onClick: () => {
+              setFormData((prev) => ({
+                ...prev,
+                isDraft: true,
+              }));
+              toastRestore(`${detectedModule} saved as draft successfully`);
+            },
+            show: canCreate,
+          },
+        ];
+      }
+      return filteredOptions;
+    });
+  }, [formData.isDraft, labels, canCreate, detectedModule]);
+
+  // Branch change handler
+  const handleBranchChange = useCallback((value: string | null) => {
+    setFormData((prev) => ({
+      ...prev,
+      branch: value || "",
+      updatedAt: new Date(),
+    }));
+  }, []);
+
+  // Translation handlers
+  const handleTranslationSave = useCallback((data: any) => {
+    setTranslations(data);
+    console.log("Opening Stock translations saved:", data);
+  }, []);
+
+  // Create minimize handler using the custom hook
+  const handleMinimize = useCallback((): OpeningStockModuleData => {
+    return {
+      formData,
+      hasChanges: true,
+      scrollPosition: window.scrollY,
+      isDraft: formData.isDraft,
+      isDefault: formData.isDefault,
+    };
+  }, [formData]);
 
   if (isLoading) {
     return (
@@ -528,330 +564,332 @@ export default function OpeningStockEditPage({ isEdit = false }: Props) {
 
   return (
     <>
-      <PageLayout
-        title={t("form.editingOpeningStock")}
+      <MinimizablePageLayout
+        moduleId={moduleId}
+        moduleName={`Edit ${detectedModule}`}
+        moduleRoute={`/${detectedModule}/edit/${id || "new"}`}
+        onMinimize={handleMinimize}
+        title={`Editing ${detectedModule}`}
+        listPath={detectedModule}
+        popoverOptions={popoverOptions}
         videoSrc={video}
-        videoHeader="Rapid ERP Video"
-        listPath="/opening-stock-inventory"
-        popoverOptions={[
-          {
-            label: "Create",
-            onClick: () => navigate("/opening-stock-inventory/create"),
-          },
-          {
-            label: "View",
-            onClick: () => navigate(`/opening-stock-inventory/${formData.id}`),
-          },
-        ]}
-        keepChanges={keepChanges}
-        onKeepChangesChange={setKeepChanges}
+        videoHeader="Tutorial video"
+        keepChanges={keepCreating}
+        onKeepChangesChange={setKeepCreating}
         pdfChecked={pdfChecked}
-        onPdfToggle={handlePDFSwitchChange}
+        onPdfToggle={canPdf ? handlePDFSwitchChange : undefined}
         printEnabled={printEnabled}
-        onPrintToggle={handleSwitchChange}
+        onPrintToggle={canPrint ? handleSwitchChange : undefined}
+        activePage="edit"
+        module={detectedModule}
         additionalFooterButtons={
-          <div className="flex gap-4">
+          <div className="flex gap-4 max-[435px]:gap-2">
             <Button
               variant="outline"
-              className="gap-2 text-primary rounded-full border-primary"
-              onClick={handleReset}
+              className="gap-2 hover:bg-primary/90 bg-white rounded-full border-primary w-28 max-[435px]:w-20 font-semibold! text-primary!"
+              onClick={handleResetClick}
             >
-              {t("button.reset")}
+              {labels.reset}
             </Button>
             <Button
               variant="outline"
-              className="gap-2 text-primary rounded-full border-primary"
-              onClick={() => formRef.current?.requestSubmit()}
+              className="gap-2 hover:bg-primary/90 bg-white rounded-full border-primary w-28 max-[435px]:w-20 font-semibold! text-primary!"
+              onClick={handleSubmit}
             >
-              {t("button.update")}
+              {labels.submit}
             </Button>
           </div>
         }
         className="w-full"
       >
-        <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
-          {/* First Row: Document Number, Branch, P.O Number, Document Date, Remarks */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">
-                Document Number <span className="text-red-500">*</span>
-              </h3>
-              <Autocomplete
-                data={documentNumberOptions}
-                value={
-                  formData.documentNumber
-                    ? `${formData.documentNumber} - ${formData.branch}`
-                    : ""
-                }
-                onChange={handleDocumentNumberChange}
-                placeholder="Select document number..."
-                className="w-full"
-                styles={{
-                  input: {
-                    "&:focus": {
-                      borderColor: "var(--primary)",
-                    },
-                    height: "40px",
-                  },
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    focusNextInput("documentNumber");
+        <div dir={isRTL ? "rtl" : "ltr"}>
+          <form
+            ref={formRef}
+            key={formKey}
+            onSubmit={handleSubmit}
+            className="space-y-6"
+          >
+            {/* Dynamic form fields in responsive grid */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 my-8">
+              {/* Document Number */}
+              <div className="md:col-span-3 space-y-2">
+                <Autocomplete
+                  ref={(el: any) => setRef("documentNumber")(el)}
+                  id="documentNumber"
+                  name="documentNumber"
+                  allowCustomInput={false}
+                  options={documentNumberOptions.map((opt) => opt.label)}
+                  value={
+                    formData.documentNumber
+                      ? `${formData.documentNumber} - ${formData.branch}`
+                      : ""
                   }
-                }}
-                limit={10}
-                maxDropdownHeight={200}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">
-                Branch <span className="text-red-500">*</span>
-              </h3>
-              <Autocomplete
-                data={MOCK_BRANCHES}
-                value={formData.branch}
-                onChange={(value) => {
-                  setFormData({
-                    ...formData,
-                    branch: value || "",
-                    updatedAt: new Date(),
-                  });
-                }}
-                placeholder="Select branch..."
-                className="w-full"
-                styles={{
-                  input: {
-                    "&:focus": {
+                  onValueChange={handleDocumentNumberChange}
+                  isShowTemplateIcon={false}
+                  onEnterPress={() => focusNextInput("branch")}
+                  placeholder=""
+                  labelText="Document Number"
+                  className="relative"
+                  styles={{
+                    input: {
                       borderColor: "var(--primary)",
+                      "&:focus": {
+                        borderColor: "var(--primary)",
+                      },
                     },
-                    height: "40px",
-                  },
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    focusNextInput("branch");
+                  }}
+                  tooltipText="Select document number to edit"
+                />
+              </div>
+
+              {/* Branch */}
+              <div className="md:col-span-3 space-y-2">
+                <Autocomplete
+                  ref={(el: any) => setRef("branch")(el)}
+                  id="branch"
+                  name="branch"
+                  allowCustomInput={true}
+                  options={memoizedBranches}
+                  value={formData.branch}
+                  onValueChange={handleBranchChange}
+                  isShowTemplateIcon={false}
+                  onEnterPress={() => focusNextInput("poNumber")}
+                  placeholder=""
+                  labelText="Branch"
+                  className="relative"
+                  styles={{
+                    input: {
+                      borderColor: "var(--primary)",
+                      "&:focus": {
+                        borderColor: "var(--primary)",
+                      },
+                    },
+                  }}
+                  tooltipText="Select the branch"
+                />
+              </div>
+
+              {/* P.O Number */}
+              <div className="md:col-span-3 space-y-2">
+                <EditableInput
+                  setRef={setRef("poNumber")}
+                  id="poNumber"
+                  name="poNumber"
+                  value={formData.poNumber}
+                  onChange={handleChange}
+                  onNext={() => focusNextInput("documentDate")}
+                  onCancel={() => setFormData({ ...formData, poNumber: "" })}
+                  labelText="P.O Number"
+                  tooltipText="Purchase order number"
+                />
+              </div>
+
+              {/* Document Date */}
+              <div className="md:col-span-3 space-y-2">
+                <EnglishDate
+                  isDate={true}
+                  calendarType="gregorian"
+                  userLang="en"
+                  rtl={false}
+                  onChange={(date: string) =>
+                    setFormData({
+                      ...formData,
+                      documentDate: date,
+                      updatedAt: new Date(),
+                    })
                   }
-                }}
-                limit={10}
-                maxDropdownHeight={200}
-                required
-              />
+                  value={formData.documentDate}
+                  disabled={false}
+                  labelText="Document Date"
+                  className={cn("transition-all", "ring-1 ring-primary")}
+                  setStartNextFocus={() => focusNextInput("remarks")}
+                />
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">P.O Number</h3>
-              <EditableInput
-                ref={poNumberInputRef}
-                id="poNumber"
-                name="poNumber"
-                className="w-full h-10"
-                value={formData.poNumber}
-                onChange={handleChange}
-                onNext={() => focusNextInput("poNumber")}
-                onCancel={() => {}}
-                tooltipText="Please enter purchase order number"
-              />
-            </div>
+            {/* Second Row: Status controls */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 my-8">
+              {/* Remarks */}
+              <div className="md:col-span-3 space-y-2">
+                <EditableInput
+                  setRef={setRef("remarks")}
+                  id="remarks"
+                  name="remarks"
+                  labelText="Remarks"
+                  value={formData.remarks}
+                  onChange={handleChange}
+                  onNext={() => focusNextInput("isDefault")}
+                  onCancel={() => setFormData({ ...formData, remarks: "" })}
+                  tooltipText="Additional remarks or notes"
+                />
+              </div>
 
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">
-                Document Date <span className="text-red-500">*</span>
-              </h3>
-              <Popover
-                open={isDatePickerOpen}
-                onOpenChange={setIsDatePickerOpen}
-              >
-                <PopoverTrigger asChild>
-                  <Button
-                    data-testid="date-picker-trigger"
-                    variant="outline"
-                    className={cn(
-                      "w-full h-10 justify-start text-left font-normal",
-                      !formData.documentDate && "text-muted-foreground"
-                    )}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        focusNextInput("documentDate");
-                      }
-                    }}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.documentDate ? (
-                      format(new Date(formData.documentDate), "PPP")
-                    ) : (
-                      <span>Pick a date</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={
-                      formData.documentDate
-                        ? new Date(formData.documentDate)
-                        : undefined
-                    }
-                    onSelect={(date) => {
-                      setFormData({
-                        ...formData,
-                        documentDate: date || new Date(),
+              {/* Default field - Updated to use SwitchSelect */}
+              {canCreate && (
+                <div className="md:col-span-3 space-y-2">
+                  <SwitchSelect
+                    ref={(el: any) => setRef("isDefault")(el)}
+                    id="isDefault"
+                    name="isDefault"
+                    options={[
+                      {
+                        label: labels.yes,
+                        value: labels.yes,
+                        date: "Set default",
+                      },
+                      {
+                        label: labels.no,
+                        value: labels.no,
+                        date: "Remove default",
+                      },
+                    ]}
+                    value={isDefaultState === "Yes" ? labels.yes : labels.no}
+                    labelClassName="rounded-lg"
+                    onValueChange={(value: string | string[]) => {
+                      const isYes = Array.isArray(value)
+                        ? value[0] === labels.yes
+                        : value === labels.yes;
+                      setIsDefaultState(isYes ? "Yes" : "No");
+                      const newValue = isYes;
+                      setFormData((prev) => ({
+                        ...prev,
+                        isDefault: newValue,
                         updatedAt: new Date(),
-                      });
-                      setIsDatePickerOpen(false);
-                      focusNextInput("documentDate");
+                      }));
+                      focusNextInput("status");
                     }}
-                    initialFocus
+                    onEnterPress={() => focusNextInput("status")}
+                    placeholder=" "
+                    labelText={labels.default}
+                    tooltipText="Set as default opening stock"
+                    className="relative"
                   />
-                </PopoverContent>
-              </Popover>
-            </div>
+                </div>
+              )}
 
-            <div className="space-y-2">
-              <div className="flex justify-between items-center mb-1">
-                <h3 className="font-medium">Remarks</h3>
-                <MoreVertical
-                  className="h-4 w-4 cursor-pointer"
-                  onClick={() => setIsOptionModalOpen(true)}
+              {/* Status field - Updated to use SwitchSelect */}
+              <div className="md:col-span-3 space-y-2">
+                <SwitchSelect
+                  ref={(el: any) => setRef("status")(el)}
+                  id="status"
+                  name="status"
+                  labelText="Status"
+                  multiSelect={false}
+                  options={[
+                    {
+                      label: "Active",
+                      value: "Active",
+                      date: "Set active",
+                    },
+                    {
+                      label: "Draft",
+                      value: "Draft",
+                      date: "Set draft",
+                    },
+                    {
+                      label: "Delete",
+                      value: "Delete",
+                      date: "Set delete",
+                    },
+                  ]}
+                  value={statusState}
+                  onValueChange={(value: string | string[]) => {
+                    const stringValue = Array.isArray(value)
+                      ? value[0] || ""
+                      : value;
+                    setStatusState(stringValue);
+
+                    setFormData((prev) => ({
+                      ...prev,
+                      isDraft: stringValue === "Draft",
+                      isDeleted: stringValue === "Delete",
+                      updatedAt: new Date(),
+                    }));
+                  }}
+                  placeholder=""
+                  styles={{
+                    input: {
+                      borderColor: "var(--primary)",
+                      "&:focus": {
+                        borderColor: "var(--primary)",
+                      },
+                    },
+                  }}
+                  tooltipText="Opening stock status"
                 />
               </div>
-              <EditableInput
-                ref={remarksInputRef}
-                id="remarks"
-                name="remarks"
-                className="w-full h-10"
-                value={formData.remarks}
-                onChange={handleChange}
-                onNext={() => focusNextInput("remarks")}
-                onCancel={() => {}}
-                tooltipText="Additional remarks or notes"
-              />
-            </div>
-          </div>
 
-          {/* Second Row: Status Switches */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">{t("common.active")}</h3>
-              <div className="h-10 flex items-center">
-                <Switch
-                  ref={activeSwitchRef}
-                  id="isActive"
-                  name="isActive"
-                  checked={formData.isActive}
-                  onCheckedChange={(checked) =>
-                    setFormData({
-                      ...formData,
-                      isActive: checked,
-                      updatedAt: new Date(),
-                    })
-                  }
-                  onKeyDown={(e) => handleSwitchKeyDown(e, "active")}
+              {/* Actions */}
+              <div className="md:col-span-3 space-y-2">
+                <ActionsAutocomplete
+                  ref={(el: any) => setRef("actions")(el)}
+                  id="actions"
+                  name="actions"
+                  labelText="Action"
+                  value={selectedAction}
+                  actions={[
+                    {
+                      action: "Created",
+                      user: "Karim",
+                      role: "Super User",
+                      date: "15 Jan 2024",
+                      value: "created",
+                    },
+                    {
+                      action: "Updated",
+                      user: "Rahim",
+                      role: "Admin",
+                      date: "20 Jan 2024",
+                      value: "updated",
+                    },
+                    {
+                      action: "Drafted",
+                      user: "Karim",
+                      role: "Super User",
+                      date: "17 Jan 2024",
+                      value: "drafted",
+                    },
+                    {
+                      action: "Deleted",
+                      user: "Abdullah",
+                      role: "Super Admin",
+                      date: "25 Jan 2024",
+                      value: "deleted",
+                    },
+                  ]}
+                  placeholder=""
+                  onValueChange={(value: string) => {
+                    setSelectedAction(value);
+                    console.log("Selected action:", value);
+                  }}
+                  styles={{
+                    input: {
+                      borderColor: "var(--primary)",
+                      "&:focus": {
+                        borderColor: "var(--primary)",
+                      },
+                    },
+                  }}
+                  tooltipText={`${detectedModule} Action`}
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">Is Default</h3>
-              <div className="h-10 flex items-center">
-                <Switch
-                  ref={defaultSwitchRef}
-                  id="isDefault"
-                  name="isDefault"
-                  checked={formData.isDefault}
-                  onCheckedChange={(checked) =>
-                    setFormData({
-                      ...formData,
-                      isDefault: checked,
-                      updatedAt: new Date(),
-                    })
-                  }
-                  onKeyDown={(e) => handleSwitchKeyDown(e, "default")}
-                />
-              </div>
-            </div>
+            {/* Dynamic Input Table */}
+            <DynamicInputTableList isEdit={isEdit} />
+          </form>
+        </div>
+      </MinimizablePageLayout>
 
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">{t("common.draft")}</h3>
-              <div className="h-10 flex items-center">
-                <Switch
-                  ref={draftSwitchRef}
-                  id="isDraft"
-                  name="isDraft"
-                  checked={formData.isDraft}
-                  onCheckedChange={(checked) =>
-                    setFormData({
-                      ...formData,
-                      isDraft: checked,
-                      updatedAt: new Date(),
-                    })
-                  }
-                  onKeyDown={(e) => handleSwitchKeyDown(e, "draft")}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">
-                {formData.isDeleted ? t("button.restore") : t("button.delete")}
-              </h3>
-              <div className="h-10 flex items-center">
-                <Button
-                  ref={deleteButtonRef}
-                  variant="ghost"
-                  size="icon"
-                  onClick={() =>
-                    setFormData({
-                      ...formData,
-                      isDeleted: !formData.isDeleted,
-                      updatedAt: new Date(),
-                    })
-                  }
-                  onKeyDown={(e) => handleSwitchKeyDown(e, "delete")}
-                >
-                  {formData.isDeleted ? (
-                    <Undo2 className="text-green-500" />
-                  ) : (
-                    <Trash2 className="text-red-500" />
-                  )}
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Third Row: Timestamps */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <h3 className="font-medium mb-1">{t("common.created")}</h3>
-              <p className="text-gray-500 text-sm">
-                {getRelativeTime(formData.createdAt)}
-              </p>
-            </div>
-            <div>
-              <h3 className="font-medium mb-1">{t("common.updated")}</h3>
-              <p className="text-gray-500 text-sm font-semibold">
-                {getRelativeTime(formData.updatedAt)}
-              </p>
-            </div>
-            <div>
-              <h3 className="font-medium mb-1">{t("common.drafted")}</h3>
-              <p className="text-gray-500 text-sm">
-                {getRelativeTime(formData.draftedAt)}
-              </p>
-            </div>
-            <div>
-              <h3 className="font-medium mb-1">{t("common.deleted")}</h3>
-              <p className="text-gray-500 text-sm">
-                {getRelativeTime(formData.deletedAt)}
-              </p>
-            </div>
-          </div>
-
-          {/* Dynamic Input Table */}
-          <DynamicInputTableList isEdit={isEdit} />
-        </form>
-      </PageLayout>
+      <ResetFormModal
+        opened={isResetModalOpen}
+        onClose={() => setIsResetModalOpen(false)}
+        onConfirm={handleReset}
+        title={labels.resetForm}
+        message={labels.resetFormMessage}
+        confirmText={labels.resetFormConfirm}
+        cancelText={labels.cancel}
+      />
 
       {/* Language Translator Modal */}
       <LanguageTranslatorModal
@@ -859,10 +897,7 @@ export default function OpeningStockEditPage({ isEdit = false }: Props) {
         onClose={() => setIsOptionModalOpen(false)}
         title="Opening Stock Language Translator"
         initialData={translations}
-        onSave={(data) => {
-          setTranslations(data);
-          console.log("Opening Stock translations saved:", data);
-        }}
+        onSave={handleTranslationSave}
       />
     </>
   );

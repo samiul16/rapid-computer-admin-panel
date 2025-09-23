@@ -54,6 +54,32 @@ export interface CategoryFormData {
   isDeleted?: boolean;
 }
 
+interface OpeningStock {
+  id: string;
+  documentNumber: string;
+  branch: string;
+  poNumber: string;
+  documentDate: string;
+  remarks: string;
+  amount: number;
+  isActive: boolean;
+  isDefault: boolean;
+  isDraft: boolean;
+  createdAt: Date | null;
+  draftedAt: Date | null;
+  updatedAt: Date | null;
+  deletedAt: Date | null;
+  isDeleted: boolean;
+}
+
+export interface OpeningStockModuleData {
+  formData: OpeningStock;
+  hasChanges: boolean;
+  scrollPosition?: number;
+  isDraft: boolean;
+  isDefault: boolean;
+}
+
 export interface SubCategoryFormData {
   slNo: string;
   groups: string;
@@ -71,6 +97,33 @@ export interface SubCategoryFormData {
   required?: boolean;
   isDraft?: boolean;
   isDefault?: boolean;
+}
+
+interface StockTransfer {
+  id: string;
+  documentNumber: string;
+  sourceBranch: string;
+  destinationBranch: string;
+  poNumber: string;
+  documentDate: Date | string;
+  remarks: string;
+  amount: number;
+  isActive: boolean;
+  isDefault: boolean;
+  isDraft: boolean;
+  createdAt: Date | null;
+  draftedAt: Date | null;
+  updatedAt: Date | null;
+  deletedAt: Date | null;
+  isDeleted: boolean;
+}
+
+export interface StockTransferModuleData {
+  formData: StockTransfer;
+  hasChanges: boolean;
+  scrollPosition?: number;
+  isDraft: boolean;
+  isDefault: boolean;
 }
 
 export interface LanguageFormData {
