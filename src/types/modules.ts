@@ -39,6 +39,21 @@ export interface CountryFormData {
   isDeleted: boolean;
 }
 
+export interface CategoryFormData {
+  slNo: string;
+  name: string;
+  group: string;
+  description: string;
+  status: string;
+  isDraft: boolean;
+  isDefault: boolean;
+  createdAt?: Date | null;
+  draftedAt?: Date | null;
+  updatedAt?: Date | null;
+  deletedAt?: Date | null;
+  isDeleted?: boolean;
+}
+
 export interface LanguageFormData {
   id?: string;
   seq: number;
