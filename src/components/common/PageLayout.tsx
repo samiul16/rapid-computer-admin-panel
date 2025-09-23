@@ -80,6 +80,7 @@ export default function DPageLayout({
   isShowEdit = true,
   isShowView = true,
 }: PageLayoutProps) {
+  console.log("listPath:", listPath);
   const navigate = useNavigate();
   const location = useLocation();
   // const [companyName, setCompanyName] = useState("Rapid ERP Solutions");
@@ -129,6 +130,7 @@ export default function DPageLayout({
     } else if (value === "edit") {
       // Preserve current view mode when going to edit
       const currentView = searchParams.get("view") || "grid"; // default fallback
+      console.log(`/${listPath}/edit/1?fromView=${currentView}`);
       navigate(`/${listPath}/edit/1?fromView=${currentView}`);
     } else if (value === "view") {
       // Preserve current view mode when going to view

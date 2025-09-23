@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Trash2, Undo2, MoreVertical, CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,11 +27,12 @@ import { useNavigate } from "react-router-dom";
 import { PrintCommonLayout } from "@/lib/printContents/PrintCommonLayout";
 import DynamicInputTableList from "./dynamic-input-table/DynamicInputTableList";
 
-// Define OpeningStock interface
-interface OpeningStock {
+// Define StockTransfer interface (renamed from OpeningStock)
+interface StockTransfer {
   id: string;
   documentNumber: string;
-  branch: string;
+  sourceBranch: string;
+  destinationBranch: string;
   poNumber: string;
   documentDate: Date | string;
   remarks: string;
@@ -46,7 +47,7 @@ interface OpeningStock {
   isDeleted: boolean;
 }
 
-// Mock branch data
+// Mock branch data - memoized to prevent recreation
 const MOCK_BRANCHES = [
   "Main Branch",
   "North Branch",
@@ -74,18 +75,20 @@ type Props = {
   isEdit?: boolean;
 };
 
-// Generate incremental document number
+// Generate incremental document number - memoized function
 const generateDocumentNumber = () => {
-  const lastNumber = localStorage.getItem("lastOpeningStockNumber") || "0";
+  const lastNumber = localStorage.getItem("lastStockTransferNumber") || "0";
   const nextNumber = (parseInt(lastNumber) + 1).toString().padStart(3, "0");
-  localStorage.setItem("lastOpeningStockNumber", nextNumber);
-  return `OS${nextNumber}`;
+  localStorage.setItem("lastStockTransferNumber", nextNumber);
+  return `ST${nextNumber}`;
 };
 
-const initialData: OpeningStock = {
+// Initial data factory function to prevent shared object references
+const createInitialData = (): StockTransfer => ({
   id: "1",
   documentNumber: generateDocumentNumber(),
-  branch: "",
+  sourceBranch: "",
+  destinationBranch: "",
   poNumber: "",
   documentDate: new Date(),
   remarks: "",
@@ -98,9 +101,9 @@ const initialData: OpeningStock = {
   updatedAt: new Date(),
   deletedAt: null,
   isDeleted: false,
-};
+});
 
-export default function OpeningStockFormPage({ isEdit = false }: Props) {
+export default function StockTransferFormPage({ isEdit = false }: Props) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [keepCreating, setKeepCreating] = useState(false);
@@ -108,6 +111,7 @@ export default function OpeningStockFormPage({ isEdit = false }: Props) {
   const formRef = useRef<HTMLFormElement>(null);
   const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
 
+  // Refs for form elements
   const documentNumberInputRef = useRef<EditableInputRef>(null);
   const poNumberInputRef = useRef<EditableInputRef>(null);
   const remarksInputRef = useRef<EditableInputRef>(null);
@@ -115,6 +119,8 @@ export default function OpeningStockFormPage({ isEdit = false }: Props) {
   const defaultSwitchRef = useRef<HTMLButtonElement>(null);
   const draftSwitchRef = useRef<HTMLButtonElement>(null);
   const deleteButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Print and PDF states
   const [printEnabled, setPrintEnabled] = useState(false);
   const [pdfChecked, setPdfChecked] = useState(false);
 
@@ -126,45 +132,49 @@ export default function OpeningStockFormPage({ isEdit = false }: Props) {
     { id: 1, english: "", arabic: "", bangla: "" },
   ]);
 
-  // Form state
-  const [formData, setFormData] = useState<OpeningStock>({
-    id: "",
-    documentNumber: generateDocumentNumber(),
-    branch: "",
-    poNumber: "",
-    documentDate: new Date(),
-    remarks: "",
-    amount: 0,
-    isActive: true,
-    isDefault: false,
-    isDraft: false,
-    createdAt: new Date(),
-    draftedAt: null,
-    updatedAt: new Date(),
-    deletedAt: null,
-    isDeleted: false,
-  });
+  // Form state - use factory function to prevent shared references
+  const [formData, setFormData] = useState<StockTransfer>(() =>
+    createInitialData()
+  );
 
-  // Update translation data when remarks change
-  useEffect(() => {
+  // Memoize the initial data for edit mode
+  const initialData = useMemo(() => createInitialData(), []);
+
+  // Memoize branch data to prevent unnecessary re-renders
+  const memoizedBranches = useMemo(() => [...MOCK_BRANCHES], []);
+
+  // Update translation data when remarks change - stabilized with useCallback
+  const updateTranslations = useCallback((remarks: string) => {
     setTranslations([
-      { id: 1, english: formData.remarks || "", arabic: "", bangla: "" },
+      { id: 1, english: remarks || "", arabic: "", bangla: "" },
     ]);
-  }, [formData.remarks]);
+  }, []);
 
-  // Update the focusNextInput function to include all form elements
-  const focusNextInput = (currentField: string) => {
+  useEffect(() => {
+    updateTranslations(formData.remarks);
+  }, [formData.remarks, updateTranslations]);
+
+  // Memoized focus navigation function
+  const focusNextInput = useCallback((currentField: string) => {
     console.log("Current field:", currentField);
     switch (currentField) {
       case "documentNumber": {
-        // Focus on branch dropdown
-        const branchInput = document.querySelector(
-          'input[placeholder="Select branch..."]'
+        // Focus on source branch dropdown
+        const sourceBranchInput = document.querySelector(
+          'input[placeholder="Select source branch..."]'
         ) as HTMLInputElement;
-        branchInput?.focus();
+        sourceBranchInput?.focus();
         break;
       }
-      case "branch":
+      case "sourceBranch": {
+        // Focus on destination branch dropdown
+        const destBranchInput = document.querySelector(
+          'input[placeholder="Select destination branch..."]'
+        ) as HTMLInputElement;
+        destBranchInput?.focus();
+        break;
+      }
+      case "destinationBranch":
         poNumberInputRef.current?.focus();
         break;
       case "poNumber": {
@@ -193,9 +203,10 @@ export default function OpeningStockFormPage({ isEdit = false }: Props) {
       default:
         break;
     }
-  };
+  }, []);
 
-  const getRelativeTime = (dateString: string | null | Date) => {
+  // Memoized relative time calculation
+  const getRelativeTime = useCallback((dateString: string | null | Date) => {
     if (!dateString) return "--/--/----";
 
     const date = new Date(dateString);
@@ -221,94 +232,82 @@ export default function OpeningStockFormPage({ isEdit = false }: Props) {
     } else {
       return "Just now";
     }
-  };
+  }, []);
 
-  // Add this function to handle key navigation for switches and buttons
-  const handleSwitchKeyDown = (
-    e: React.KeyboardEvent,
-    currentField: string
-  ) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      // Trigger the switch/button action first
-      switch (currentField) {
-        case "active":
-          setFormData({ ...formData, isActive: !formData.isActive });
-          break;
-        case "default":
-          setFormData({ ...formData, isDefault: !formData.isDefault });
-          break;
-        case "draft":
-          setFormData({ ...formData, isDraft: !formData.isDraft });
-          break;
-        case "delete":
-          setFormData({ ...formData, isDeleted: !formData.isDeleted });
-          break;
+  // Stabilized switch key navigation handler
+  const handleSwitchKeyDown = useCallback(
+    (e: React.KeyboardEvent, currentField: string) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        // Trigger the switch/button action first
+        switch (currentField) {
+          case "active":
+            setFormData((prev) => ({ ...prev, isActive: !prev.isActive }));
+            break;
+          case "default":
+            setFormData((prev) => ({ ...prev, isDefault: !prev.isDefault }));
+            break;
+          case "draft":
+            setFormData((prev) => ({ ...prev, isDraft: !prev.isDraft }));
+            break;
+          case "delete":
+            setFormData((prev) => ({ ...prev, isDeleted: !prev.isDeleted }));
+            break;
+        }
+        // Then move to next field
+        setTimeout(() => focusNextInput(currentField), 50);
       }
-      // Then move to next field
-      setTimeout(() => focusNextInput(currentField), 50);
-    }
-  };
+    },
+    [focusNextInput]
+  );
 
   // Initialize with edit data if available
   useEffect(() => {
     if (isEdit && initialData) {
-      setFormData({
-        ...initialData,
-      });
+      setFormData({ ...initialData });
     }
   }, [isEdit, initialData]);
 
-  // Handle form field changes
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Stabilized form field change handler
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [name]: type === "checkbox" ? checked : value,
-    });
-  };
+    }));
+  }, []);
 
-  // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Opening Stock Form submitted:", formData);
-  };
+  // Stabilized form submission handler
+  const handleSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      console.log("Stock Transfer Form submitted:", formData);
+    },
+    [formData]
+  );
 
-  // Handle form reset
-  const handleReset = () => {
+  // Stabilized form reset handler
+  const handleReset = useCallback(() => {
     if (window.confirm(t("form.resetConfirm"))) {
-      setFormData({
-        id: "",
-        documentNumber: generateDocumentNumber(),
-        branch: "",
-        poNumber: "",
-        documentDate: new Date(),
-        remarks: "",
-        amount: 0,
-        isActive: true,
-        isDefault: false,
-        isDraft: false,
-        createdAt: new Date(),
-        draftedAt: null,
-        updatedAt: new Date(),
-        deletedAt: null,
-        isDeleted: false,
-      });
+      const newData = createInitialData();
+      setFormData(newData);
       if (formRef.current) {
         formRef.current.reset();
       }
     }
-  };
+  }, [t]);
 
-  const handlePrintOpeningStock = (stockData: any) => {
+  // Stabilized print handler
+  const handlePrintStockTransfer = useCallback((stockData: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "Opening Stock Details",
+        title: "Stock Transfer Details",
         data: [stockData],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
           documentNumber: "Document Number",
-          branch: "Branch",
+          sourceBranch: "Source Branch",
+          destinationBranch: "Destination Branch",
           poNumber: "P.O Number",
           documentDate: "Document Date",
           remarks: "Remarks",
@@ -328,52 +327,146 @@ export default function OpeningStockFormPage({ isEdit = false }: Props) {
       console.log(error);
       toastError("Something went wrong when printing");
     }
-  };
+  }, []);
 
-  const handleSwitchChange = (checked: boolean) => {
-    setPrintEnabled(checked);
-    if (checked && formData) {
-      // Small delay to allow switch animation to complete
-      setTimeout(() => handlePrintOpeningStock(formData), 100);
-    }
-  };
+  // Stabilized switch change handlers
+  const handleSwitchChange = useCallback(
+    (checked: boolean) => {
+      setPrintEnabled(checked);
+      if (checked && formData) {
+        // Small delay to allow switch animation to complete
+        setTimeout(() => handlePrintStockTransfer(formData), 100);
+      }
+    },
+    [formData, handlePrintStockTransfer]
+  );
 
-  const handlePDFSwitchChange = (pdfChecked: boolean) => {
+  const handlePDFSwitchChange = useCallback((pdfChecked: boolean) => {
     setPdfChecked(pdfChecked);
     if (pdfChecked) {
       // Small delay to allow switch animation to complete
       setTimeout(() => handleExportPDF(), 100);
     }
-  };
+  }, []);
 
-  const handleExportPDF = async () => {
+  // Stabilized PDF export handler
+  const handleExportPDF = useCallback(async () => {
     console.log("Export PDF clicked");
     try {
       console.log("stockData on pdf click", formData);
       const blob = await pdf(
         <GenericPDF
           data={[formData]}
-          title="Opening Stock Details"
-          subtitle="Opening Stock Information"
+          title="Stock Transfer Details"
+          subtitle="Stock Transfer Information"
         />
       ).toBlob();
 
-      console.log("blob", blob);
-
       const url = URL.createObjectURL(blob);
-      console.log("url", url);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "opening-stock-details.pdf";
+      a.download = "stock-transfer-details.pdf";
       a.click();
-      console.log("a", a);
-      console.log("url", url);
       URL.revokeObjectURL(url);
     } catch (error) {
       console.log(error);
       toastError("Something went wrong when generating PDF");
     }
-  };
+  }, [formData]);
+
+  // Memoized navigation handlers
+  const popoverOptions = useMemo(
+    () => [
+      {
+        label: isEdit ? "Create" : "Edit",
+        onClick: () => {
+          if (isEdit) {
+            navigate("/stock-transfer/create");
+          } else {
+            navigate("/stock-transfer/edit/undefined");
+          }
+        },
+      },
+      {
+        label: "View",
+        onClick: () => {
+          navigate("/stock-transfer/view");
+        },
+      },
+    ],
+    [isEdit, navigate]
+  );
+
+  // Memoized branch change handlers
+  const handleSourceBranchChange = useCallback((value: string | null) => {
+    setFormData((prev) => ({ ...prev, sourceBranch: value || "" }));
+  }, []);
+
+  const handleDestinationBranchChange = useCallback((value: string | null) => {
+    setFormData((prev) => ({ ...prev, destinationBranch: value || "" }));
+  }, []);
+
+  // Memoized date change handler
+  const handleDateChange = useCallback(
+    (date: Date | undefined) => {
+      setFormData((prev) => ({
+        ...prev,
+        documentDate: date || new Date(),
+      }));
+      setIsDatePickerOpen(false);
+      focusNextInput("documentDate");
+    },
+    [focusNextInput]
+  );
+
+  // Memoized switch change handlers
+  const handleActiveSwitchChange = useCallback((checked: boolean) => {
+    setFormData((prev) => ({ ...prev, isActive: checked }));
+  }, []);
+
+  const handleDefaultSwitchChange = useCallback((checked: boolean) => {
+    setFormData((prev) => ({ ...prev, isDefault: checked }));
+  }, []);
+
+  const handleDraftSwitchChange = useCallback((checked: boolean) => {
+    setFormData((prev) => ({ ...prev, isDraft: checked }));
+  }, []);
+
+  const handleDeleteButtonClick = useCallback(() => {
+    setFormData((prev) => ({
+      ...prev,
+      isDeleted: !prev.isDeleted,
+    }));
+  }, []);
+
+  // Memoized translation handlers
+  const handleTranslationSave = useCallback((data: any) => {
+    setTranslations(data);
+    console.log("Stock Transfer translations saved:", data);
+  }, []);
+
+  // Memoized footer buttons
+  const additionalFooterButtons = useMemo(
+    () => (
+      <div className="flex gap-4">
+        <Button
+          variant="outline"
+          className="gap-2 text-primary rounded-full border-primary"
+          onClick={handleReset}
+        >
+          {t("button.reset")}
+        </Button>
+        <Button
+          variant="outline"
+          className="gap-2 text-primary rounded-full border-primary"
+          onClick={() => formRef.current?.requestSubmit()}
+        >
+          {t("button.submit")}
+        </Button>
+      </div>
+    ),
+    [handleReset, t]
+  );
 
   return (
     <>
@@ -386,56 +479,19 @@ export default function OpeningStockFormPage({ isEdit = false }: Props) {
         videoSrc={video}
         videoHeader="Rapid ERP Video"
         listPath="/stock-transfer"
-        popoverOptions={[
-          {
-            label: isEdit ? "Create" : "Edit",
-            onClick: () => {
-              // Handle navigation based on current state
-              if (isEdit) {
-                // Navigate to create page
-                navigate("/stock-transfer/create");
-              } else {
-                // Navigate to edit page
-                navigate("/stock-transfer/edit/undefined");
-              }
-            },
-          },
-          {
-            label: "View",
-            onClick: () => {
-              navigate("/stock-transfer/view");
-            },
-          },
-        ]}
+        popoverOptions={popoverOptions}
         keepChanges={keepCreating}
         onKeepChangesChange={setKeepCreating}
         pdfChecked={pdfChecked}
         onPdfToggle={handlePDFSwitchChange}
         printEnabled={printEnabled}
         onPrintToggle={handleSwitchChange}
-        additionalFooterButtons={
-          <div className="flex gap-4">
-            <Button
-              variant="outline"
-              className="gap-2 text-primary rounded-full border-primary"
-              onClick={handleReset}
-            >
-              {t("button.reset")}
-            </Button>
-            <Button
-              variant="outline"
-              className="gap-2 text-primary rounded-full border-primary"
-              onClick={() => formRef.current?.requestSubmit()}
-            >
-              {t("button.submit")}
-            </Button>
-          </div>
-        }
+        additionalFooterButtons={additionalFooterButtons}
         className="w-full"
       >
         <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
-          {/* First Row: Document Number, Branch, P.O Number, Document Date, Remarks */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          {/* First Row: Document Number, Source Branch, Destination Branch, P.O Number, Document Date, Remarks */}
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
             <div className="space-y-2">
               <h3 className="font-medium mb-1">
                 {t("form.documentNumber")}{" "}
@@ -460,12 +516,10 @@ export default function OpeningStockFormPage({ isEdit = false }: Props) {
                 {t("form.sourceBranch")} <span className="text-red-500">*</span>
               </h3>
               <Autocomplete
-                data={MOCK_BRANCHES}
-                value={formData.branch}
-                onChange={(value) => {
-                  setFormData({ ...formData, branch: value || "" });
-                }}
-                placeholder="Select branch..."
+                data={memoizedBranches}
+                value={formData.sourceBranch}
+                onChange={handleSourceBranchChange}
+                placeholder="Select source branch..."
                 className="w-full"
                 styles={{
                   input: {
@@ -477,7 +531,7 @@ export default function OpeningStockFormPage({ isEdit = false }: Props) {
                 }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
-                    focusNextInput("branch");
+                    focusNextInput("sourceBranch");
                   }
                 }}
                 limit={10}
@@ -485,18 +539,17 @@ export default function OpeningStockFormPage({ isEdit = false }: Props) {
                 required
               />
             </div>
+
             <div className="space-y-2">
               <h3 className="font-medium mb-1">
                 {t("form.destinationBranch")}{" "}
                 <span className="text-red-500">*</span>
               </h3>
               <Autocomplete
-                data={MOCK_BRANCHES}
-                value={formData.branch}
-                onChange={(value) => {
-                  setFormData({ ...formData, branch: value || "" });
-                }}
-                placeholder="Select branch..."
+                data={memoizedBranches}
+                value={formData.destinationBranch}
+                onChange={handleDestinationBranchChange}
+                placeholder="Select destination branch..."
                 className="w-full"
                 styles={{
                   input: {
@@ -508,7 +561,7 @@ export default function OpeningStockFormPage({ isEdit = false }: Props) {
                 }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
-                    focusNextInput("branch");
+                    focusNextInput("destinationBranch");
                   }
                 }}
                 limit={10}
@@ -570,14 +623,7 @@ export default function OpeningStockFormPage({ isEdit = false }: Props) {
                         ? new Date(formData.documentDate)
                         : undefined
                     }
-                    onSelect={(date) => {
-                      setFormData({
-                        ...formData,
-                        documentDate: date || new Date(),
-                      });
-                      setIsDatePickerOpen(false);
-                      focusNextInput("documentDate");
-                    }}
+                    onSelect={handleDateChange}
                     initialFocus
                   />
                 </PopoverContent>
@@ -617,9 +663,7 @@ export default function OpeningStockFormPage({ isEdit = false }: Props) {
                   name="isActive"
                   className=""
                   checked={formData.isActive}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, isActive: checked })
-                  }
+                  onCheckedChange={handleActiveSwitchChange}
                   onKeyDown={(e) => handleSwitchKeyDown(e, "active")}
                 />
               </div>
@@ -634,9 +678,7 @@ export default function OpeningStockFormPage({ isEdit = false }: Props) {
                   name="isDefault"
                   className=""
                   checked={formData.isDefault}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, isDefault: checked })
-                  }
+                  onCheckedChange={handleDefaultSwitchChange}
                   onKeyDown={(e) => handleSwitchKeyDown(e, "default")}
                 />
               </div>
@@ -651,9 +693,7 @@ export default function OpeningStockFormPage({ isEdit = false }: Props) {
                   name="isDraft"
                   className=""
                   checked={formData.isDraft}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, isDraft: checked })
-                  }
+                  onCheckedChange={handleDraftSwitchChange}
                   onKeyDown={(e) => handleSwitchKeyDown(e, "draft")}
                 />
               </div>
@@ -668,12 +708,7 @@ export default function OpeningStockFormPage({ isEdit = false }: Props) {
                   ref={deleteButtonRef}
                   variant="ghost"
                   size="icon"
-                  onClick={() =>
-                    setFormData({
-                      ...formData,
-                      isDeleted: !formData.isDeleted,
-                    })
-                  }
+                  onClick={handleDeleteButtonClick}
                   onKeyDown={(e) => handleSwitchKeyDown(e, "delete")}
                 >
                   {formData.isDeleted ? (
@@ -715,7 +750,7 @@ export default function OpeningStockFormPage({ isEdit = false }: Props) {
           </div>
 
           {/* Dynamic Input Table */}
-          <DynamicInputTableList />
+          <DynamicInputTableList isEdit={isEdit} />
         </form>
       </PageLayout>
 
@@ -723,12 +758,9 @@ export default function OpeningStockFormPage({ isEdit = false }: Props) {
       <LanguageTranslatorModal
         isOpen={isOptionModalOpen}
         onClose={() => setIsOptionModalOpen(false)}
-        title="Opening Stock Language Translator"
+        title="Stock Transfer Language Translator"
         initialData={translations}
-        onSave={(data) => {
-          setTranslations(data);
-          console.log("Opening Stock translations saved:", data);
-        }}
+        onSave={handleTranslationSave}
       />
     </>
   );

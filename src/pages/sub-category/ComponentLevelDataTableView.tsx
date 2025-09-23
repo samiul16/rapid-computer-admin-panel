@@ -41,8 +41,6 @@ export default function ComponentLevelDataTableView({
   const detectedModule = getModuleFromPath(location.pathname);
   const canCreate = usePermission(detectedModule, "create");
 
-  console.log("table view", location.pathname);
-
   const columnSchema: TableViewDataTableColumnConfig[] = [
     ...tableViewColumnSchema,
 
@@ -88,6 +86,7 @@ export default function ComponentLevelDataTableView({
       showVisibility={showVisibility}
       isFilterOpen={isFilterOpen}
       setIsFilterOpen={setIsFilterOpen}
+      showImages={false}
     />
   );
 }
