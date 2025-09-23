@@ -17,37 +17,37 @@ import { ResetFormModal } from "@/components/common/ResetFormModal";
 import { usePermission } from "@/hooks/usePermissions";
 import MinimizablePageLayout from "@/components/MinimizablePageLayout";
 
-const MOCK_COLORS = [
+const MOCK_SIZES = [
   {
     id: "1",
-    name: "Ocean Blue",
-    code: "BLU001",
-    description: "A beautiful ocean blue color",
-    hexCode: "#3B82F6",
+    name: "Small",
+    code: "SZ001",
+    value: "S",
+    description: "Standard small size suitable for compact items",
     status: "Active",
   },
   {
     id: "2",
-    name: "Forest Green",
-    code: "GRN002",
-    description: "Deep forest green color",
-    hexCode: "#059669",
+    name: "Medium",
+    code: "SZ002",
+    value: "M",
+    description: "Most commonly used medium size",
     status: "Active",
   },
   {
     id: "3",
-    name: "Sunset Orange",
-    code: "ORG003",
-    description: "Warm sunset orange color",
-    hexCode: "#F97316",
+    name: "Large",
+    code: "SZ003",
+    value: "L",
+    description: "Large size for spacious fit",
     status: "Draft",
   },
   {
     id: "4",
-    name: "Royal Purple",
-    code: "PUR004",
-    description: "Rich royal purple color",
-    hexCode: "#7C3AED",
+    name: "Extra Large",
+    code: "SZ004",
+    value: "XL",
+    description: "Extra large size for oversized requirements",
     status: "InActive",
   },
 ];
@@ -66,13 +66,13 @@ export type HistoryEntry = {
   print: boolean;
 };
 
-export default function ColorDetailsPage() {
+export default function SizeDetailsPage() {
   // const { t } = useTranslation();
   const navigate = useNavigate();
 
   const [keepChanges, setKeepChanges] = useState(false);
   const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
-  const [selectedColor, setSelectedColor] = useState("1");
+  const [selectedSize, setSelectedSize] = useState("1");
   const location = useLocation();
   const isViewPage = location.pathname.includes("/view");
   const [pdfChecked, setPdfChecked] = useState(false);
@@ -83,24 +83,23 @@ export default function ColorDetailsPage() {
   // const { canCreate, canView, canEdit, canDelete } = useUserMasterPermissions();
 
   // Field-level permissions
-  const canPdf: boolean = usePermission("colors", "pdf");
-  const canPrint: boolean = usePermission("colors", "print");
-  const canSeeHistory: boolean = usePermission("colors", "history");
+  const canPdf: boolean = usePermission("sizes", "pdf");
+  const canPrint: boolean = usePermission("sizes", "print");
+  const canSeeHistory: boolean = usePermission("sizes", "history");
 
-  let colorData = {
-    id: selectedColor,
-    name: MOCK_COLORS.find((c) => c.id === selectedColor)?.name || "Ocean Blue",
-    code: MOCK_COLORS.find((c) => c.id === selectedColor)?.code || "BLU001",
+  let sizeData = {
+    id: selectedSize,
+    name: MOCK_SIZES.find((s) => s.id === selectedSize)?.name || "Small",
+    code: MOCK_SIZES.find((s) => s.id === selectedSize)?.code || "SZ001",
+    value: MOCK_SIZES.find((s) => s.id === selectedSize)?.value || "S",
     description:
-      MOCK_COLORS.find((c) => c.id === selectedColor)?.description ||
-      "A beautiful ocean blue color",
-    hexCode:
-      MOCK_COLORS.find((c) => c.id === selectedColor)?.hexCode || "#3B82F6",
+      MOCK_SIZES.find((s) => s.id === selectedSize)?.description ||
+      "Standard small size suitable for compact items",
     isDefault: true,
     isActive: true,
     isDraft: false,
     isDeleted: false,
-    status: MOCK_COLORS.find((c) => c.id === selectedColor)?.status || "Active",
+    status: MOCK_SIZES.find((s) => s.id === selectedSize)?.status || "Active",
     createdAt: "2023-05-15T10:30:00Z",
     updatedAt: "2025-01-15T14:30:00Z",
     draftedAt: "2025-05-20T14:45:00Z",
@@ -116,12 +115,12 @@ export default function ColorDetailsPage() {
     }
     console.log("isViewPage", isViewPage);
     if (isViewPage) {
-      colorData = {
-        id: selectedColor,
+      sizeData = {
+        id: selectedSize,
         name: "",
         code: "",
+        value: "",
         description: "",
-        hexCode: "",
         isDefault: true,
         isActive: true,
         isDraft: false,
@@ -131,22 +130,22 @@ export default function ColorDetailsPage() {
         updatedAt: "",
         draftedAt: "",
         deletedAt: "",
-      };
+      } as any;
     }
   }, []);
 
-  const handlePrintColor = (colorData: any) => {
+  const handlePrintSize = (size: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "Color Master Details",
-        data: [colorData],
+        title: "Size Master Details",
+        data: [size],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
-          name: "Color Name",
-          code: "Color Code",
+          name: "Size Name",
+          code: "Size Code",
+          value: "Value",
           description: "Description",
-          hexCode: "Hex Code",
-          isDefault: "Default Color",
+          isDefault: "Default Size",
           isActive: "Active Status",
           isDraft: "Draft Status",
           isDeleted: "Deleted Status",
@@ -175,19 +174,19 @@ export default function ColorDetailsPage() {
   const handleExportPDF = async () => {
     console.log("Export PDF clicked");
     try {
-      console.log("colorData on pdf click", colorData);
+      console.log("sizeData on pdf click", sizeData);
       const blob = await pdf(
         <GenericPDF
-          data={[colorData]}
-          title="Color Master Details"
-          subtitle="Color Information"
+          data={[sizeData]}
+          title="Size Master Details"
+          subtitle="Size Information"
         />
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "color-details.pdf";
+      a.download = "size-details.pdf";
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
@@ -231,25 +230,25 @@ export default function ColorDetailsPage() {
   return (
     <>
       <MinimizablePageLayout
-        moduleId="color-details-module"
-        moduleName="Color Details"
-        moduleRoute="/colors/view"
-        title="Viewing Color"
+        moduleId="size-details-module"
+        moduleName="Size Details"
+        moduleRoute="/sizes/view"
+        title="Viewing Size"
         videoSrc={video}
         videoHeader="Tutorial video"
-        listPath="colors"
+        listPath="sizes"
         activePage="view"
-        module="colors"
+        module="sizes"
         popoverOptions={[
           {
             label: "Create",
             icon: <Plus className="w-5 h-5 text-green-600" />,
-            onClick: () => navigate("/colors/create"),
+            onClick: () => navigate("/sizes/create"),
           },
           {
             label: "Edit",
             icon: <Edit className="w-5 h-5 text-blue-600" />,
-            onClick: () => navigate("/colors/edit/1"),
+            onClick: () => navigate("/sizes/edit/1"),
           },
         ]}
         keepChanges={keepChanges}
@@ -273,19 +272,19 @@ export default function ColorDetailsPage() {
                   handleExportPDF();
                 }
                 if (printEnabled) {
-                  handlePrintColor(colorData);
+                  handlePrintSize(sizeData);
                 }
               }
             : undefined
         }
       >
-        {/* Row 1: Color Selection, Name, Code, Description */}
+        {/* Row 1: Size Selection, Name, Code, Value */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
           <div className="mt-1">
             <Autocomplete
-              options={MOCK_COLORS}
-              value={selectedColor}
-              onValueChange={setSelectedColor}
+              options={MOCK_SIZES}
+              value={selectedSize}
+              onValueChange={setSelectedSize}
               placeholder=" "
               displayKey="name"
               valueKey="id"
@@ -293,35 +292,35 @@ export default function ColorDetailsPage() {
               disabled={false}
               className="w-[96%] bg-gray-100 rounded-xl"
               labelClassName="bg-gray-50 rounded-2xl"
-              labelText="Color Name"
+              labelText="Size Name"
               isShowTemplateIcon={false}
             />
           </div>
 
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Color Name</h3>
+              <h3 className="font-normal text-gray-600">Size Name</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(colorData.name)}
+              {displayValue(sizeData.name)}
             </div>
           </div>
 
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Color Code</h3>
+              <h3 className="font-normal text-gray-600">Size Code</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(colorData.code)}
+              {displayValue(sizeData.code)}
             </div>
           </div>
 
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Description</h3>
+              <h3 className="font-normal text-gray-600">Value</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(colorData.description)}
+              {displayValue(sizeData.value)}
             </div>
           </div>
         </div>
@@ -330,10 +329,10 @@ export default function ColorDetailsPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Hex Code</h3>
+              <h3 className="font-normal text-gray-600">Description</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(colorData.hexCode)}
+              {displayValue(sizeData.description)}
             </div>
           </div>
 
@@ -342,7 +341,7 @@ export default function ColorDetailsPage() {
               <h3 className="font-normal text-gray-600">Status</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(colorData.status)}
+              {displayValue(sizeData.status)}
             </div>
           </div>
 
@@ -352,7 +351,7 @@ export default function ColorDetailsPage() {
                 <span className="text-[15px] text-gray-600">Default</span>
               </div>
               <div className="">
-                {colorData.isDefault ? (
+                {sizeData.isDefault ? (
                   <span className="text-black text-[15px]">Yes</span>
                 ) : (
                   <span className="text-black text-[15px]">No</span>
@@ -361,22 +360,6 @@ export default function ColorDetailsPage() {
             </div>
           </div>
 
-          <div className="">
-            <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Color Preview</h3>
-            </div>
-            <div className="w-full py-1 text-gray-900 text-md dark:text-white flex items-center gap-2">
-              <div
-                className="w-6 h-6 rounded border border-gray-300"
-                style={{ backgroundColor: colorData.hexCode || "#3B82F6" }}
-              ></div>
-              <span>{displayValue(colorData.hexCode)}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Row 3: Action, Created At, Updated At, Drafted At */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
           <div className="">
             <h3 className="font-normal mb-1 text-gray-600">Action</h3>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
@@ -393,10 +376,10 @@ export default function ColorDetailsPage() {
         columnData={mockHistoryData}
         title="History"
         statusInfo={{
-          created: getRelativeTime(colorData.createdAt),
-          updated: getRelativeTime(colorData.updatedAt),
-          drafted: getRelativeTime(colorData.draftedAt),
-          deleted: getRelativeTime(colorData.deletedAt),
+          created: getRelativeTime(sizeData.createdAt),
+          updated: getRelativeTime(sizeData.updatedAt),
+          drafted: getRelativeTime(sizeData.draftedAt),
+          deleted: getRelativeTime(sizeData.deletedAt),
         }}
       />
 
