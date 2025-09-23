@@ -11,7 +11,10 @@ import { pdf } from "@react-pdf/renderer";
 import { Check, Eye, Plus } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useColorsPermissions, usePermission } from "@/hooks/usePermissions";
+import {
+  useLeadSourcesPermissions,
+  usePermission,
+} from "@/hooks/usePermissions";
 // import { useLanguageLabels } from "@/hooks/useLanguageLabels";
 import { useAppSelector } from "@/store/hooks";
 import MinimizablePageLayout from "@/components/MinimizablePageLayout";
@@ -19,11 +22,8 @@ import { useMinimizedModuleData } from "@/hooks/useMinimizedModuleData";
 import { SwitchSelect } from "@/components/common/SwitchAutoComplete";
 import { ActionsAutocomplete } from "@/components/common/ActionsAutocomplete";
 
-type ColorData = {
+type LeadSourceData = {
   name: string;
-  code: string;
-  description: string;
-  hexCode: string;
   status: "active" | "inactive" | "draft" | "deleted";
   isDefault: boolean;
   isActive: boolean;
@@ -35,8 +35,8 @@ type ColorData = {
   deletedAt: Date | null;
 };
 
-type ColorModuleData = {
-  formData: ColorData;
+type LeadSourceModuleData = {
+  formData: LeadSourceData;
   hasChanges: boolean;
   scrollPosition: number;
 };
@@ -45,11 +45,8 @@ type Props = {
   isEdit?: boolean;
 };
 
-const initialData: ColorData = {
-  name: "Ocean Blue",
-  code: "BLU001",
-  description: "A beautiful ocean blue color",
-  hexCode: "#3B82F6",
+const initialData: LeadSourceData = {
+  name: "Website",
   status: "active",
   isDefault: false,
   isActive: true,
@@ -61,14 +58,14 @@ const initialData: ColorData = {
   deletedAt: null,
 };
 
-export default function ColorEditPage({ isEdit = true }: Props) {
+export default function LeadSourceEditPage({ isEdit = true }: Props) {
   const navigate = useNavigate();
   const { id } = useParams();
   // const labels = useLanguageLabels();
   const { isRTL } = useAppSelector((state) => state.language);
 
   // Get module ID for this edit page
-  const moduleId = `color-edit-module-${id || "new"}`;
+  const moduleId = `lead-source-edit-module-${id || "new"}`;
 
   // Use the custom hook for minimized module data
   const {
@@ -76,7 +73,7 @@ export default function ColorEditPage({ isEdit = true }: Props) {
     hasMinimizedData,
     resetModuleData,
     getModuleScrollPosition,
-  } = useMinimizedModuleData<ColorModuleData>(moduleId);
+  } = useMinimizedModuleData<LeadSourceModuleData>(moduleId);
 
   const [keepCreating, setKeepCreating] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
@@ -94,24 +91,18 @@ export default function ColorEditPage({ isEdit = true }: Props) {
   const [selectedAction, setSelectedAction] = useState<string>("");
 
   // Permission checks
-  const { canCreate, canView } = useColorsPermissions();
+  const { canCreate, canView } = useLeadSourcesPermissions();
 
   // Field-level permissions
-  const name: boolean = usePermission("colors", "edit", "name");
-  const code: boolean = usePermission("colors", "edit", "code");
-  const description: boolean = usePermission("colors", "edit", "description");
-  const hexCode: boolean = usePermission("colors", "edit", "hexCode");
-  const status: boolean = usePermission("colors", "edit", "status");
-  const isDefault: boolean = usePermission("colors", "edit", "isDefault");
-  const canPdf: boolean = usePermission("colors", "pdf");
-  const canPrint: boolean = usePermission("colors", "print");
+  const name: boolean = usePermission("lead-sources", "edit", "name");
+  const status: boolean = usePermission("lead-sources", "edit", "status");
+  const isDefault: boolean = usePermission("lead-sources", "edit", "isDefault");
+  const canPdf: boolean = usePermission("lead-sources", "pdf");
+  const canPrint: boolean = usePermission("lead-sources", "print");
 
   // Form state
-  const [formData, setFormData] = useState<ColorData>({
+  const [formData, setFormData] = useState<LeadSourceData>({
     name: "",
-    code: "",
-    description: "",
-    hexCode: "",
     status: "active",
     isDefault: false,
     isActive: true,
@@ -208,16 +199,16 @@ export default function ColorEditPage({ isEdit = true }: Props) {
       await handleExportPDF();
     }
     if (printEnabled) {
-      handlePrintColor(formData);
+      handlePrintLeadSource(formData);
     }
 
     // keep switch functionality
     if (keepCreating) {
-      toastSuccess("Color updated successfully!");
+      toastSuccess("Lead source updated successfully!");
       handleReset();
     } else {
-      toastSuccess("Color updated successfully!");
-      navigate("/colors");
+      toastSuccess("Lead source updated successfully!");
+      navigate("/lead-sources");
     }
   };
 
@@ -225,9 +216,6 @@ export default function ColorEditPage({ isEdit = true }: Props) {
   const handleReset = async () => {
     setFormData({
       name: "",
-      code: "",
-      description: "",
-      hexCode: "",
       status: "active",
       isDefault: false,
       isActive: true,
@@ -268,19 +256,16 @@ export default function ColorEditPage({ isEdit = true }: Props) {
     setIsResetModalOpen(true);
   };
 
-  const handlePrintColor = (colorData: any) => {
+  const handlePrintLeadSource = (leadSourceData: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "Color Details",
-        data: [colorData],
+        title: "Lead Source Details",
+        data: [leadSourceData],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
-          name: "Color Name",
-          code: "Color Code",
-          description: "Description",
-          hexCode: "Hex Code",
+          name: "Lead Source Name",
           status: "Status",
-          isDefault: "Default Color",
+          isDefault: "Default Lead Source",
           isActive: "Active Status",
           isDraft: "Draft Status",
           isDeleted: "Deleted Status",
@@ -310,15 +295,15 @@ export default function ColorEditPage({ isEdit = true }: Props) {
       const blob = await pdf(
         <GenericPDF
           data={[formData]}
-          title="Color Details"
-          subtitle="Color Information"
+          title="Lead Source Details"
+          subtitle="Lead Source Information"
         />
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "color-details.pdf";
+      a.download = "lead-source-details.pdf";
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
@@ -332,7 +317,7 @@ export default function ColorEditPage({ isEdit = true }: Props) {
       label: "Create",
       icon: <Plus className="w-5 h-5 text-green-500" />,
       onClick: () => {
-        navigate("/colors/create");
+        navigate("/lead-sources/create");
       },
       show: canCreate,
     },
@@ -340,7 +325,7 @@ export default function ColorEditPage({ isEdit = true }: Props) {
       label: "View",
       icon: <Eye className="w-5 h-5 text-green-600" />,
       onClick: () => {
-        navigate("/colors/view");
+        navigate("/lead-sources/view");
       },
       show: canView,
     },
@@ -363,7 +348,7 @@ export default function ColorEditPage({ isEdit = true }: Props) {
                 ...prev,
                 isDraft: true,
               }));
-              toastRestore("Color saved as draft successfully");
+              toastRestore("Lead source saved as draft successfully");
             },
             show: canCreate,
           },
@@ -374,7 +359,7 @@ export default function ColorEditPage({ isEdit = true }: Props) {
   }, [formData.isDraft, canCreate]);
 
   // Create minimize handler using the custom hook
-  const handleMinimize = useCallback((): ColorModuleData => {
+  const handleMinimize = useCallback((): LeadSourceModuleData => {
     return {
       formData,
       hasChanges: true,
@@ -386,11 +371,11 @@ export default function ColorEditPage({ isEdit = true }: Props) {
     <>
       <MinimizablePageLayout
         moduleId={moduleId}
-        moduleName={`Edit Color`}
-        moduleRoute={`/colors/edit/${id || "new"}`}
+        moduleName={`Edit Lead Source`}
+        moduleRoute={`/lead-sources/edit/${id || "new"}`}
         onMinimize={handleMinimize}
-        title="Edit Color"
-        listPath="colors"
+        title="Edit Lead Source"
+        listPath="lead-sources"
         popoverOptions={popoverOptions}
         videoSrc={video}
         videoHeader="Tutorial video"
@@ -401,7 +386,7 @@ export default function ColorEditPage({ isEdit = true }: Props) {
         printEnabled={printEnabled}
         onPrintToggle={canPrint ? handleSwitchChange : undefined}
         activePage="edit"
-        module="colors"
+        module="lead-sources"
         additionalFooterButtons={
           canCreate ? (
             <div className="flex gap-4 max-[435px]:gap-2">
@@ -431,9 +416,9 @@ export default function ColorEditPage({ isEdit = true }: Props) {
             onSubmit={handleSubmit}
             className="space-y-6"
           >
-            {/* First Row: Color Name, Code, Description, Hex Code */}
+            {/* First Row: Lead Source Name */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
-              {/* Color Name field - only show if user can edit */}
+              {/* Lead Source Name field - only show if user can edit */}
               {name && (
                 <div className="space-y-2">
                   <EditableInput
@@ -442,74 +427,15 @@ export default function ColorEditPage({ isEdit = true }: Props) {
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    onNext={() => focusNextInput("code")}
-                    onCancel={() => setFormData({ ...formData, name: "" })}
-                    labelText="Color Name"
-                    tooltipText="Enter the color name"
-                    required
-                  />
-                </div>
-              )}
-
-              {/* Color Code field - only show if user can edit */}
-              {code && (
-                <div className="space-y-2">
-                  <EditableInput
-                    setRef={setRef("code")}
-                    id="code"
-                    name="code"
-                    value={formData.code}
-                    onChange={handleChange}
-                    onNext={() => focusNextInput("description")}
-                    onCancel={() => setFormData({ ...formData, code: "" })}
-                    labelText="Color Code"
-                    tooltipText="Enter the color code (e.g., BLU001)"
-                    required
-                  />
-                </div>
-              )}
-
-              {/* Description field - only show if user can edit */}
-              {description && (
-                <div className="space-y-2">
-                  <EditableInput
-                    setRef={setRef("description")}
-                    id="description"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    onNext={() => focusNextInput("hexCode")}
-                    onCancel={() =>
-                      setFormData({ ...formData, description: "" })
-                    }
-                    labelText="Description"
-                    tooltipText="Enter color description"
-                    required
-                  />
-                </div>
-              )}
-
-              {/* Hex Code field - only show if user can edit */}
-              {hexCode && (
-                <div className="space-y-2">
-                  <EditableInput
-                    setRef={setRef("hexCode")}
-                    id="hexCode"
-                    name="hexCode"
-                    value={formData.hexCode}
-                    onChange={handleChange}
                     onNext={() => focusNextInput("status")}
-                    onCancel={() => setFormData({ ...formData, hexCode: "" })}
-                    labelText="Hex Code"
-                    tooltipText="Enter hex color code (e.g., #3B82F6)"
+                    onCancel={() => setFormData({ ...formData, name: "" })}
+                    labelText="Lead Source Name"
+                    tooltipText="Enter the lead source name (e.g., Website, Social Media, LinkedIn)"
                     required
                   />
                 </div>
               )}
-            </div>
 
-            {/* Second Row: Status, Default */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
               {/* Status field - only show if user can edit */}
               {status && (
                 <div className="space-y-2">
@@ -580,7 +506,7 @@ export default function ColorEditPage({ isEdit = true }: Props) {
                         },
                       },
                     }}
-                    tooltipText="Set the color status"
+                    tooltipText="Set the lead source status"
                   />
                 </div>
               )}
@@ -629,7 +555,7 @@ export default function ColorEditPage({ isEdit = true }: Props) {
                     placeholder=" "
                     labelText="Default"
                     className="relative"
-                    tooltipText="Set as default color"
+                    tooltipText="Set as default lead source"
                   />
                 </div>
               )}
@@ -684,7 +610,7 @@ export default function ColorEditPage({ isEdit = true }: Props) {
                       },
                     },
                   }}
-                  tooltipText="Color Action History"
+                  tooltipText="Lead Source Action History"
                 />
               </div>
             </div>
