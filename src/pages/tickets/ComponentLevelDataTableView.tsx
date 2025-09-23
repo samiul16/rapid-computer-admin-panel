@@ -21,6 +21,8 @@ export default function ComponentLevelDataTableView({
   showFilter,
   setShowVisibility,
   showVisibility,
+  isFilterOpen,
+  setIsFilterOpen,
 }: {
   viewMode: string;
   setViewMode: (viewMode: string) => void;
@@ -32,6 +34,8 @@ export default function ComponentLevelDataTableView({
   showFilter: boolean;
   setShowVisibility: (showVisibility: boolean) => void;
   showVisibility: boolean;
+  isFilterOpen: boolean;
+  setIsFilterOpen: (isFilterOpen: boolean) => void;
 }) {
   const location = useLocation();
   const detectedModule = getModuleFromPath(location.pathname);
@@ -82,6 +86,8 @@ export default function ComponentLevelDataTableView({
       showFilter={showFilter}
       setShowVisibility={setShowVisibility}
       showVisibility={showVisibility}
+      isFilterOpen={isFilterOpen}
+      setIsFilterOpen={setIsFilterOpen}
     />
   );
 }

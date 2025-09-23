@@ -9,7 +9,7 @@ import { PrintCommonLayout } from "@/lib/printContents/PrintCommonLayout";
 import { printHtmlContent } from "@/lib/printHtmlContent";
 import { toastError, toastRestore, toastSuccess } from "@/lib/toast";
 import { pdf } from "@react-pdf/renderer";
-import { Check, Eye, MoreVertical, Plus } from "lucide-react";
+import { Check, Eye, Plus } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { usePermission } from "@/hooks/usePermissions";
@@ -570,7 +570,7 @@ export default function OpeningStockInventoryEditPage({
         moduleRoute={`/${detectedModule}/edit/${id || "new"}`}
         onMinimize={handleMinimize}
         title={`Editing ${detectedModule}`}
-        listPath={detectedModule}
+        listPath="opening-stock-inventory"
         popoverOptions={popoverOptions}
         videoSrc={video}
         videoHeader="Tutorial video"
@@ -689,6 +689,7 @@ export default function OpeningStockInventoryEditPage({
                 <EnglishDate
                   isDate={true}
                   calendarType="gregorian"
+                  isShowCalender={true}
                   userLang="en"
                   rtl={false}
                   onChange={(date: string) =>
