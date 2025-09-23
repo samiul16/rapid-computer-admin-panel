@@ -8,6 +8,7 @@ import type {
   AuthState,
   UsersPermissions,
   UserMasterPermissions,
+  ColorsPermissions,
 } from "@/types/permissions.types";
 
 // Define your root state type
@@ -82,6 +83,24 @@ export const useUserMasterPermissions = (): UserMasterPermissions => {
       permissions,
       "user-master"
     ) as unknown as UserMasterPermissions;
+  }, [permissions]);
+
+  return permissionCheckers;
+};
+
+/**
+ * Typed hook specifically for colors module
+ */
+export const useColorsPermissions = (): ColorsPermissions => {
+  const permissions = useSelector((state: RootState) => {
+    return state.auth.user?.permissions;
+  });
+
+  const permissionCheckers = useMemo(() => {
+    return createPermissionCheckers(
+      permissions,
+      "colors"
+    ) as unknown as ColorsPermissions;
   }, [permissions]);
 
   return permissionCheckers;

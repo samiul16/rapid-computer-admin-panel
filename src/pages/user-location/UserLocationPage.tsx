@@ -1,72 +1,173 @@
-import { useState } from "react";
+import {
+  BadgeCheck,
+  CheckCircle2,
+  CircleMinus,
+  Eye,
+  FileCheck,
+  Trash2,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import PageLayout from "@/layouts/PageLayout/MainPageLayout"; // Update path as needed
+import CountryGrid from "./UserLocationGrid";
+import CountryDataTable2 from "./UserLocationDataTable";
+import TabsCounter from "./components/TabsCounter";
+// import MaterialTableTabs from "@/components/common/MaterialTableTabs";
+import CounterTabs from "@/components/CounterTabs";
+import { useAppSelector } from "@/store/hooks";
+import { cn } from "@/lib/utils";
+import { selectMinimizedModulesForUser } from "@/store/minimizedModulesSlice";
+import MobileCounterTabs from "@/components/MobileCounterTabs";
+import useIsMobile from "@/hooks/useIsMobile";
 
-import PageHeader from "./components/PageHeader";
-import UserLocationGrid from "./UserLocationGrid";
-import UserLocationDataTable from "./UserLocationDataTable";
-import UserLocationTab from "./components/user-LocationTab";
-import UserLocationTableTab from "./components/User-LocationTableTab";
+// Mock data - replace with real data from your API
+const summaryData = {
+  total: 42,
+  draft: 30,
+  active: 30,
+  inactive: 20,
+  deleted: 30,
+  updated: 25,
+};
 
-export default function UserLocationPage() {
+const cardConfigs = [
+  {
+    key: "total" as keyof typeof summaryData,
+    title: "Total",
+    imgSrc: "/counter-1.svg",
+    icon: <Eye />,
+    color: "blue",
+    total: summaryData.total,
+  },
+  {
+    key: "active" as keyof typeof summaryData,
+    title: "Active",
+    imgSrc: "/counter-active.svg",
+    icon: <BadgeCheck />,
+    color: "green",
+    total: summaryData.active,
+  },
+  {
+    key: "inactive" as keyof typeof summaryData,
+    title: "Inactive",
+    imgSrc: "/counter-inactive.svg",
+    icon: <CircleMinus />,
+    color: "gray",
+    total: summaryData.inactive,
+  },
+  {
+    key: "draft" as keyof typeof summaryData,
+    title: "Draft",
+    imgSrc: "/counter-draft.svg",
+    icon: <FileCheck />,
+    color: "yellow",
+    total: summaryData.draft,
+  },
+  {
+    key: "updated" as keyof typeof summaryData,
+    title: "Updated",
+    imgSrc: "/counter-updated.svg",
+    icon: <CheckCircle2 />,
+    color: "purple",
+    total: summaryData.updated,
+  },
+  {
+    key: "deleted" as keyof typeof summaryData,
+    title: "Deleted",
+    imgSrc: "/counter-deleted.svg",
+    icon: <Trash2 />,
+    color: "red",
+    total: summaryData.deleted,
+  },
+];
+
+export default function CountryPage() {
   const [viewMode, setViewMode] = useState("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [showVisibility, setShowVisibility] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [dataTableFilter] = useState({});
+  const [timeLabel, setTimeLabel] = useState("This year");
+  const [dataTableFilter, setDataTableFilter] = useState({});
 
-  return (
-    <div className="w-100vw px-2 py-4 dark:bg-gray-900">
-      {/* Header Section */}
-      <PageHeader
-        setViewMode={setViewMode}
+  // Get current user id and that user's minimized modules array
+  const userId = useAppSelector((state) => state.auth.user?.userId);
+  const isMobile = useIsMobile();
+  const minimizedModulesForUser = useAppSelector((state) =>
+    selectMinimizedModulesForUser(state, userId ?? "__no_user__")
+  );
+  // console.log("Minimized modules for user:", minimizedModulesForUser);
+  // Mock data - replace with real data from your API
+  const summaryData = {
+    total: 42,
+    draft: 5,
+    active: 30,
+    inactive: 5,
+    deleted: 2,
+    updated: 2,
+  };
+
+  // Get view mode from URL query parameter
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const viewModeParam = urlParams.get("view");
+    if (viewModeParam) {
+      setViewMode(viewModeParam);
+    }
+  }, []);
+
+  // Tabs Section Component
+  const tabsSection =
+    viewMode === "grid" ? (
+      <TabsCounter
+        cardConfigs={cardConfigs}
+        summaryData={summaryData}
         viewMode={viewMode}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        setIsFilterOpen={setIsFilterOpen}
-        isFilterOpen={isFilterOpen}
+        setViewMode={setViewMode}
         setIsExportOpen={setIsExportOpen}
+        isExportOpen={isExportOpen}
+        setIsFilterOpen={setIsFilterOpen}
         setShowVisibility={setShowVisibility}
-        showVisibility={showVisibility}
-        setTimeLabel={() => {}}
-        title="Users Location"
-        createPath=""
+        timeLabel={timeLabel}
       />
+    ) : //isMobile then mobileCounterComponent else CounterTabs
+    isMobile ? (
+      <MobileCounterTabs
+        dataTableFilter={dataTableFilter}
+        setDataTableFilter={setDataTableFilter}
+      />
+    ) : (
+      <CounterTabs
+        dataTableFilter={dataTableFilter}
+        setDataTableFilter={setDataTableFilter}
+      />
+    );
 
-      {/* Grap section or gmail tab */}
-      {viewMode === "grid" ? (
-        <UserLocationTab
-          viewMode={viewMode}
-          setViewMode={setViewMode}
+  // Main Content Component
+  const mainContent =
+    viewMode === "grid" ? (
+      <div
+        className={
+          "h-[calc(100vh-440px)] md:h-[calc(100vh-440px)] lg:h-[calc(100vh-440px)] xl:h-[calc(100vh-440px)] scroll-smooth [scrollbar-gutter:stable]"
+        }
+      >
+        <CountryGrid
+          searchQuery={searchQuery}
+          setIsFilterOpen={setIsFilterOpen}
+          isFilterOpen={isFilterOpen}
           setIsExportOpen={setIsExportOpen}
           isExportOpen={isExportOpen}
-          setIsFilterOpen={setIsFilterOpen}
-          setShowVisibility={setShowVisibility}
         />
-      ) : (
-        <UserLocationTableTab
-          setIsExportOpen={setIsExportOpen}
-          isExportOpen={isExportOpen}
-          setIsFilterOpen={setIsFilterOpen}
-          setShowVisibility={setShowVisibility}
-          viewMode={viewMode}
-          setViewMode={setViewMode}
-        />
-      )}
-      {/* Scrollable Content Area */}
-      {viewMode === "grid" ? (
-        <div className="mt-8 h-[calc(100vh-300px)] md:h-[calc(100vh-300px)] lg:h-[calc(100vh-300px)] xl:h-[calc(100vh-300px)] border-1 rounded-lg scroll-smooth [scrollbar-gutter:stable]">
-          <UserLocationGrid
-            searchQuery={searchQuery}
-            setIsFilterOpen={setIsFilterOpen}
-            isFilterOpen={isFilterOpen}
-            setIsExportOpen={setIsExportOpen}
-            isExportOpen={isExportOpen}
-          />
-        </div>
-      ) : (
-        <div className="mt-4 h-[calc(100vh-322px)] overflow-y-auto overflow-x-hidden border rounded-lg scroll-smooth [scrollbar-gutter:stable]">
-          <UserLocationDataTable
+      </div>
+    ) : (
+      <div
+        className={cn(
+          minimizedModulesForUser.length > 0
+            ? "h-[calc(100vh-477px)]"
+            : "h-[calc(100vh-396px)]"
+        )}
+      >
+        <div className="overflow-y-auto overflow-x-hidden scroll-smooth [scrollbar-gutter:stable] h-full">
+          <CountryDataTable2
             viewMode={viewMode}
             searchQuery={searchQuery}
             setViewMode={setViewMode}
@@ -77,9 +178,33 @@ export default function UserLocationPage() {
             showFilter={isFilterOpen}
             setShowVisibility={setShowVisibility}
             showVisibility={showVisibility}
+            setIsFilterOpen={setIsFilterOpen}
+            isFilterOpen={isFilterOpen}
           />
         </div>
-      )}
-    </div>
+      </div>
+    );
+
+  return (
+    <PageLayout
+      title="Users Location"
+      createPath="/user-location/create"
+      viewMode={viewMode}
+      setViewMode={setViewMode}
+      searchQuery={searchQuery}
+      setSearchQuery={setSearchQuery}
+      setIsFilterOpen={setIsFilterOpen}
+      isFilterOpen={isFilterOpen}
+      setIsExportOpen={setIsExportOpen}
+      isExportOpen={isExportOpen}
+      setShowVisibility={setShowVisibility}
+      showVisibility={showVisibility}
+      setTimeLabel={setTimeLabel}
+      tabsSection={tabsSection}
+      pathName="user-location"
+      showCreateButton={false}
+    >
+      {mainContent}
+    </PageLayout>
   );
 }

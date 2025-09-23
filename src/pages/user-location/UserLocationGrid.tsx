@@ -2,13 +2,25 @@ import { Card, CardTitle } from "@/components/ui/card";
 import { Tooltip } from "@mantine/core";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
-import GridExportComponent from "./GridExportComponent";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/store";
 import GridFilterComponent from "./GridFilterComponent";
-import UserLocationPopover from "./UserLocationPopover";
-import { createPortal } from "react-dom";
+import useIsMobile from "@/hooks/useIsMobile";
+
+// User Location interface
+interface UserLocation {
+  id: string;
+  name: string;
+  avatar: string;
+  totalCompanies: number;
+  totalBranches: number;
+  status: "active" | "inactive";
+  isDeleted: boolean;
+}
 
 // Mock data - replace with real data from your API
-const userLocations = [
+const userLocations: UserLocation[] = [
   {
     id: "1",
     name: "John Smith",
@@ -91,7 +103,7 @@ const userLocations = [
   },
   {
     id: "9",
-    name: "Jennifer Martinez",
+    name: "James Wilson",
     avatar:
       "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
     totalCompanies: 3,
@@ -101,7 +113,7 @@ const userLocations = [
   },
   {
     id: "10",
-    name: "Jennifer Martinez",
+    name: "Maria Garcia",
     avatar:
       "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
     totalCompanies: 3,
@@ -111,7 +123,7 @@ const userLocations = [
   },
   {
     id: "11",
-    name: "Jennifer Martinez",
+    name: "Christopher Lee",
     avatar:
       "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
     totalCompanies: 3,
@@ -121,7 +133,7 @@ const userLocations = [
   },
   {
     id: "12",
-    name: "Jennifer Martinez",
+    name: "Jennifer Thompson",
     avatar:
       "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
     totalCompanies: 3,
@@ -148,14 +160,15 @@ export default function UserLocationGrid({
 }: Props) {
   console.log("User Location grid rendered");
 
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { isRTL } = useSelector((state: RootState) => state.language);
+  const isMobile = useIsMobile();
+
   const [userLocationsData, setUserLocationsData] = useState(userLocations);
-  const [selectedLocation, setSelectedLocation] = useState<
-    (typeof userLocations)[0] | null
-  >(null);
-  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-  const [popoverPosition, setPopoverPosition] = useState({ x: 0, y: 0 });
-  const [selectedCardElement, setSelectedCardElement] =
-    useState<HTMLElement | null>(null);
+  // const canDelete: boolean = usePermission("users", "delete");
+  // const canRestore: boolean = usePermission("users", "restore");
+  // const canEdit: boolean = usePermission("users", "edit");
 
   // Infinite scroll states
   const [isLoading, setIsLoading] = useState(false);
@@ -163,83 +176,6 @@ export default function UserLocationGrid({
   const [, setPage] = useState(1);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const ITEMS_PER_PAGE = 4;
-
-  // Function to update popover position based on card element
-  const updatePopoverPosition = useCallback(() => {
-    if (!selectedCardElement || !isPopoverOpen) return;
-
-    const rect = selectedCardElement.getBoundingClientRect();
-    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-    const scrollLeft =
-      window.pageXOffset || document.documentElement.scrollLeft;
-
-    // Calculate position for the popover
-    const x = rect.left + scrollLeft + rect.width / 2;
-    const y = rect.top + scrollTop + rect.height + 10; // 10px offset from card
-
-    setPopoverPosition({ x, y });
-  }, [selectedCardElement, isPopoverOpen]);
-
-  // Update popover position on scroll
-  useEffect(() => {
-    if (!isPopoverOpen || !selectedCardElement) return;
-
-    const handleScrollUpdate = () => {
-      updatePopoverPosition();
-    };
-
-    const container = scrollContainerRef.current;
-    if (container) {
-      container.addEventListener("scroll", handleScrollUpdate);
-    }
-
-    // Also listen to window scroll in case of page scroll
-    window.addEventListener("scroll", handleScrollUpdate);
-    window.addEventListener("resize", handleScrollUpdate);
-
-    return () => {
-      if (container) {
-        container.removeEventListener("scroll", handleScrollUpdate);
-      }
-      window.removeEventListener("scroll", handleScrollUpdate);
-      window.removeEventListener("resize", handleScrollUpdate);
-    };
-  }, [isPopoverOpen, selectedCardElement, updatePopoverPosition]);
-
-  // Close popover when scrolling significantly or card goes out of view
-  useEffect(() => {
-    if (!isPopoverOpen || !selectedCardElement) return;
-
-    const handleScrollClose = () => {
-      const rect = selectedCardElement.getBoundingClientRect();
-      const container = scrollContainerRef.current;
-
-      if (!container) return;
-
-      const containerRect = container.getBoundingClientRect();
-
-      // Close popover if card is significantly out of view
-      if (
-        rect.bottom < containerRect.top - 50 ||
-        rect.top > containerRect.bottom + 50
-      ) {
-        setIsPopoverOpen(false);
-        setSelectedLocation(null);
-        setSelectedCardElement(null);
-      }
-    };
-
-    const container = scrollContainerRef.current;
-    if (container) {
-      container.addEventListener("scroll", handleScrollClose);
-    }
-
-    return () => {
-      if (container) {
-        container.removeEventListener("scroll", handleScrollClose);
-      }
-    };
-  }, [isPopoverOpen, selectedCardElement]);
 
   // Simulate API call to load more data
   const loadMoreData = useCallback(async () => {
@@ -249,17 +185,29 @@ export default function UserLocationGrid({
 
     await new Promise((resolve) => setTimeout(resolve, 800));
 
-    const companyNames = [
-      "Alpha Industries",
-      "Beta Solutions",
-      "Gamma Technologies",
-      "Delta Systems",
-      "Epsilon Corp",
-      "Zeta Enterprises",
-      "Eta Innovations",
-      "Theta Dynamics",
-      "Iota Solutions",
-      "Kappa Industries",
+    const firstNames = [
+      "John",
+      "Jane",
+      "Michael",
+      "Emily",
+      "David",
+      "Sarah",
+      "Robert",
+      "Lisa",
+      "James",
+      "Maria",
+    ];
+    const lastNames = [
+      "Smith",
+      "Johnson",
+      "Williams",
+      "Brown",
+      "Jones",
+      "Garcia",
+      "Miller",
+      "Davis",
+      "Rodriguez",
+      "Martinez",
     ];
 
     const avatarUrls = [
@@ -271,15 +219,26 @@ export default function UserLocationGrid({
       "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face",
     ];
 
-    const newItems = Array.from({ length: ITEMS_PER_PAGE }, (_, index) => ({
-      id: `${Date.now()}-${index}`,
-      name: companyNames[Math.floor(Math.random() * companyNames.length)],
-      avatar: avatarUrls[Math.floor(Math.random() * avatarUrls.length)],
-      totalCompanies: Math.floor(Math.random() * 10) + 1,
-      totalBranches: Math.floor(Math.random() * 20) + 1,
-      status: Math.random() > 0.3 ? "active" : "inactive",
-      isDeleted: false,
-    }));
+    const newItems: UserLocation[] = Array.from(
+      { length: ITEMS_PER_PAGE },
+      (_, index) => {
+        const firstName =
+          firstNames[Math.floor(Math.random() * firstNames.length)];
+        const lastName =
+          lastNames[Math.floor(Math.random() * lastNames.length)];
+        const fullName = `${firstName} ${lastName}`;
+
+        return {
+          id: `${Date.now()}-${index}`,
+          name: fullName,
+          avatar: avatarUrls[Math.floor(Math.random() * avatarUrls.length)],
+          totalCompanies: Math.floor(Math.random() * 10) + 1,
+          totalBranches: Math.floor(Math.random() * 20) + 1,
+          status: Math.random() > 0.3 ? "active" : "inactive",
+          isDeleted: false,
+        };
+      }
+    );
 
     // Stop loading more after reaching 50 items for demo
     if (userLocationsData.length >= 46) {
@@ -314,41 +273,21 @@ export default function UserLocationGrid({
     return () => container.removeEventListener("scroll", handleScroll);
   }, [handleScroll]);
 
-  // Filter locations based on search query
+  // Filter user locations based on search query
   const filteredLocations = userLocationsData.filter(
     (location) =>
       location.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       location.status.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleCardClick = (
-    location: (typeof userLocations)[0],
-    event: React.MouseEvent
-  ) => {
-    event.preventDefault();
-    event.stopPropagation();
+  // const handleEditClick = (userId: string) => {
+  //   const viewMode = searchParams.get("view") || "grid";
+  //   navigate(`/users/edit/${userId}?fromView=${viewMode}`);
+  // };
 
-    const cardElement = event.currentTarget as HTMLElement;
-    const rect = cardElement.getBoundingClientRect();
-    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-    const scrollLeft =
-      window.pageXOffset || document.documentElement.scrollLeft;
-
-    // Calculate position for the popover
-    const x = rect.left + scrollLeft + rect.width / 2;
-    const y = rect.top + scrollTop + rect.height + 10; // 10px offset from card
-
-    setPopoverPosition({ x, y });
-    setSelectedLocation(location);
-    setSelectedCardElement(cardElement);
-    setIsPopoverOpen(true);
-  };
-
-  // Close popover handler
-  const handleClosePopover = () => {
-    setIsPopoverOpen(false);
-    setSelectedLocation(null);
-    setSelectedCardElement(null);
+  const handleViewClick = (locationId: string) => {
+    const viewMode = searchParams.get("view") || "grid";
+    navigate(`/user-location/view/${locationId}?fromView=${viewMode}`);
   };
 
   return (
@@ -357,37 +296,39 @@ export default function UserLocationGrid({
         "px-4 py-3 h-full flex flex-col bg-white dark:bg-gray-900 parent relative rounded-lg"
       )}
     >
-      {/* Floating Label - Left Top */}
-      <div
-        className={cn(
-          "absolute -top-4 left-6 rtl:left-auto rtl:right-6 py-1 rounded-md z-40! bg-white w-fit"
-        )}
-      >
-        <span
-          className={cn(
-            "text-md font-semibold tracking-wide capitalize text-gray-600"
-          )}
-        >
-          Total {userLocations.length} user
-        </span>
-      </div>
-
       {/* Main content area */}
-      <div className="flex flex-1 overflow-hidden mt-2">
-        {/* Cards container */}
+      <div className="flex flex-1 overflow-hidden mt-2 relative">
+        {/* Cards container with animated width */}
         <div
           ref={scrollContainerRef}
-          className="overflow-y-auto scroll-smooth smooth-scroll pr-4"
+          className={cn(
+            "overflow-y-auto grid-scroll transition-all duration-300 ease-in-out",
+            isRTL ? "" : ""
+          )}
           style={{
             width: isFilterOpen || isExportOpen ? "calc(100% - 320px)" : "100%",
           }}
         >
-          <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 pb-4 p-2">
+          <div
+            className={cn(
+              "grid gap-6 pb-4 p-5",
+              // Mobile: 1 column, Tablet: 2 columns, Desktop: 3-4 columns
+              isMobile
+                ? "grid-cols-1"
+                : "grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
+            )}
+          >
             {filteredLocations.map((location, index) => (
               <Card
                 key={index}
-                className="transition-all hover:border-primary/90 hover:shadow-lg hover:translate-y-[-5px] relative group dark:bg-gray-800 p-3 duration-200 cursor-pointer"
-                onClick={(e) => handleCardClick(location, e)}
+                className={cn(
+                  "transition-all relative group dark:bg-gray-800 duration-200 w-full shadow-[2px_3px_8px_0_rgba(0,0,0,0.10)] border-[#E2E4EB] border border-solid rounded-[12px] flex p-5 flex-col gap-4 cursor-pointer",
+                  // Different hover effects for mobile vs desktop
+                  isMobile
+                    ? "hover:shadow-lg hover:border-primary"
+                    : "hover:scale-105 hover:z-50 hover:relative hover:border-primary min-w-[280px]"
+                )}
+                onClick={() => handleViewClick(location.id)}
               >
                 {/* Avatar */}
                 <div className="flex justify-center">
@@ -407,7 +348,10 @@ export default function UserLocationGrid({
 
                 {/* Name */}
                 <div className="text-center mb-2 -mt-4">
-                  <CardTitle className="text-sm font-semibold cursor-pointer hover:text-primary transition-colors truncate">
+                  <CardTitle
+                    className="text-lg font-semibold cursor-pointer hover:text-primary transition-colors truncate"
+                    style={{ fontSize: "18px" }}
+                  >
                     {location.name}
                   </CardTitle>
                 </div>
@@ -496,45 +440,97 @@ export default function UserLocationGrid({
           )}
         </div>
 
-        {/* Filter component - Right side only */}
-        {isFilterOpen && (
-          <div className="w-80 flex-shrink-0 border-l border-gray-200 dark:border-gray-700 pl-4">
-            <div className="h-full flex flex-col">
+        {/* Animated Filter Panel */}
+        <div
+          className={cn(
+            "absolute top-0 h-full transition-all duration-300 ease-in-out transform z-10",
+            isRTL ? "left-0" : "right-0",
+            isFilterOpen
+              ? "translate-x-0 opacity-100 visible"
+              : isRTL
+              ? "-translate-x-full opacity-0 invisible"
+              : "translate-x-full opacity-0 invisible"
+          )}
+          style={{
+            width: isMobile ? "100%" : "320px", // Full width on mobile
+          }}
+        >
+          <div
+            className={cn(
+              "h-full",
+              isMobile ? "pb-4 mt-1" : "p-2" // Less padding on mobile
+            )}
+          >
+            <div
+              className={cn(
+                "w-full flex-shrink-0 border rounded-[20px] border-gray-200 dark:border-gray-700 h-full bg-white dark:bg-gray-800 shadow-2xl transition-all duration-300 ease-in-out",
+                isFilterOpen ? "scale-100 opacity-100" : "scale-95 opacity-0"
+              )}
+            >
               <GridFilterComponent
+                key={`filter-panel-${isFilterOpen}`}
                 data={userLocations}
                 setFilteredData={setUserLocationsData}
-                setShowFilter={setIsFilterOpen}
+                setShowTabs={setIsFilterOpen}
+                defaultTab="filter"
               />
             </div>
           </div>
-        )}
+        </div>
 
-        {/* Export component - Right side only */}
-        {isExportOpen && (
-          <div className="w-80 flex-shrink-0 border-l border-gray-200 dark:border-gray-700 pl-4">
-            <div className="h-full flex flex-col">
-              <GridExportComponent
+        {/* Animated Export Panel */}
+        <div
+          className={cn(
+            "absolute top-0 h-full transition-all duration-300 ease-in-out transform z-10",
+            isRTL ? "left-0" : "right-0",
+            isExportOpen
+              ? "translate-x-0 opacity-100"
+              : isRTL
+              ? "-translate-x-full opacity-0"
+              : "translate-x-full opacity-0"
+          )}
+          style={{
+            width: isMobile ? "100%" : "320px", // Full width on mobile
+          }}
+        >
+          <div
+            className={cn(
+              "h-full",
+              isMobile ? "pb-4 mt-1" : "p-2" // Less padding on mobile
+            )}
+          >
+            <div
+              className={cn(
+                "w-full flex-shrink-0 border rounded-[20px] border-gray-200 dark:border-gray-700 h-full bg-white dark:bg-gray-800 shadow-2xl transition-all duration-300 ease-in-out",
+                isExportOpen ? "opacity-100" : "opacity-0"
+              )}
+            >
+              <GridFilterComponent
+                key={`export-panel-${isExportOpen}`}
                 data={userLocations}
                 setFilteredData={setUserLocationsData}
-                setIsExportOpen={setIsExportOpen}
+                setShowTabs={setIsExportOpen}
+                defaultTab="export"
               />
             </div>
           </div>
+        </div>
+
+        {/* Backdrop overlay for mobile/smaller screens */}
+        {(isFilterOpen || isExportOpen) && (
+          <div
+            className={cn(
+              "fixed inset-0 bg-black bg-opacity-30 transition-opacity duration-300 ease-in-out z-5",
+              isMobile ? "" : "md:hidden", // Always show overlay on mobile
+              isFilterOpen || isExportOpen ? "opacity-100" : "opacity-0"
+            )}
+            onClick={() => {
+              setIsFilterOpen(false);
+              setIsExportOpen(false);
+            }}
+          />
         )}
       </div>
-
-      {/* User Location Popover - Portal */}
-      {selectedLocation &&
-        isPopoverOpen &&
-        createPortal(
-          <UserLocationPopover
-            opened={isPopoverOpen}
-            onClose={handleClosePopover}
-            position={popoverPosition}
-            userData={selectedLocation}
-          />,
-          document.body
-        )}
     </div>
   );
 }
