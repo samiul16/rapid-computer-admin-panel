@@ -9904,6 +9904,97 @@ export const userPermission = {
         },
       },
     },
+    "damage-items": {
+      formPermissions: {
+        create: true,
+        view: true,
+        edit: true,
+        delete: true,
+        restore: true,
+        export: true,
+        import: true,
+        pdf: true,
+        print: true,
+        history: true,
+      },
+      fieldPermissions: {
+        itemId: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        quantityDamaged: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        documentDate: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        reportedBy: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        location: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        damageType: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        status: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        isDraft: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        isActive: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        isDeleted: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        createdAt: {
+          view: true,
+          edit: false,
+          create: true,
+        },
+        updatedAt: {
+          view: true,
+          edit: false,
+          create: true,
+        },
+        draftedAt: {
+          view: true,
+          edit: false,
+          create: true,
+        },
+        deletedAt: {
+          view: true,
+          edit: false,
+          create: true,
+        },
+        isDefault: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+      },
+    },
     brands: {
       formPermissions: {
         create: true,
