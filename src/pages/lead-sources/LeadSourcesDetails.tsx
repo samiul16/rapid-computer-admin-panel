@@ -17,38 +17,56 @@ import { ResetFormModal } from "@/components/common/ResetFormModal";
 import { usePermission } from "@/hooks/usePermissions";
 import MinimizablePageLayout from "@/components/MinimizablePageLayout";
 
-const MOCK_COLORS = [
+const MOCK_LEAD_SOURCES = [
   {
     id: "1",
-    name: "Ocean Blue",
-    code: "BLU001",
-    description: "A beautiful ocean blue color",
-    hexCode: "#3B82F6",
+    name: "Website",
     status: "Active",
   },
   {
     id: "2",
-    name: "Forest Green",
-    code: "GRN002",
-    description: "Deep forest green color",
-    hexCode: "#059669",
+    name: "Social Media",
     status: "Active",
   },
   {
     id: "3",
-    name: "Sunset Orange",
-    code: "ORG003",
-    description: "Warm sunset orange color",
-    hexCode: "#F97316",
+    name: "LinkedIn",
     status: "Draft",
   },
   {
     id: "4",
-    name: "Royal Purple",
-    code: "PUR004",
-    description: "Rich royal purple color",
-    hexCode: "#7C3AED",
+    name: "Facebook",
     status: "InActive",
+  },
+  {
+    id: "5",
+    name: "Instagram",
+    status: "Active",
+  },
+  {
+    id: "6",
+    name: "Referral",
+    status: "Active",
+  },
+  {
+    id: "7",
+    name: "Email Campaign",
+    status: "Active",
+  },
+  {
+    id: "8",
+    name: "Google Ads",
+    status: "Active",
+  },
+  {
+    id: "9",
+    name: "Organic Search",
+    status: "Active",
+  },
+  {
+    id: "10",
+    name: "Events",
+    status: "Active",
   },
 ];
 
@@ -66,13 +84,13 @@ export type HistoryEntry = {
   print: boolean;
 };
 
-export default function ColorDetailsPage() {
+export default function LeadSourceDetailsPage() {
   // const { t } = useTranslation();
   const navigate = useNavigate();
 
   const [keepChanges, setKeepChanges] = useState(false);
   const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
-  const [selectedColor, setSelectedColor] = useState("1");
+  const [selectedLeadSource, setSelectedLeadSource] = useState("1");
   const location = useLocation();
   const isViewPage = location.pathname.includes("/view");
   const [pdfChecked, setPdfChecked] = useState(false);
@@ -83,24 +101,22 @@ export default function ColorDetailsPage() {
   // const { canCreate, canView, canEdit, canDelete } = useUserMasterPermissions();
 
   // Field-level permissions
-  const canPdf: boolean = usePermission("colors", "pdf");
-  const canPrint: boolean = usePermission("colors", "print");
-  const canSeeHistory: boolean = usePermission("colors", "history");
+  const canPdf: boolean = usePermission("lead-sources", "pdf");
+  const canPrint: boolean = usePermission("lead-sources", "print");
+  const canSeeHistory: boolean = usePermission("lead-sources", "history");
 
-  let colorData = {
-    id: selectedColor,
-    name: MOCK_COLORS.find((c) => c.id === selectedColor)?.name || "Ocean Blue",
-    code: MOCK_COLORS.find((c) => c.id === selectedColor)?.code || "BLU001",
-    description:
-      MOCK_COLORS.find((c) => c.id === selectedColor)?.description ||
-      "A beautiful ocean blue color",
-    hexCode:
-      MOCK_COLORS.find((c) => c.id === selectedColor)?.hexCode || "#3B82F6",
+  let leadSourceData = {
+    id: selectedLeadSource,
+    name:
+      MOCK_LEAD_SOURCES.find((ls) => ls.id === selectedLeadSource)?.name ||
+      "Website",
     isDefault: true,
     isActive: true,
     isDraft: false,
     isDeleted: false,
-    status: MOCK_COLORS.find((c) => c.id === selectedColor)?.status || "Active",
+    status:
+      MOCK_LEAD_SOURCES.find((ls) => ls.id === selectedLeadSource)?.status ||
+      "Active",
     createdAt: "2023-05-15T10:30:00Z",
     updatedAt: "2025-01-15T14:30:00Z",
     draftedAt: "2025-05-20T14:45:00Z",
@@ -116,12 +132,9 @@ export default function ColorDetailsPage() {
     }
     console.log("isViewPage", isViewPage);
     if (isViewPage) {
-      colorData = {
-        id: selectedColor,
+      leadSourceData = {
+        id: selectedLeadSource,
         name: "",
-        code: "",
-        description: "",
-        hexCode: "",
         isDefault: true,
         isActive: true,
         isDraft: false,
@@ -135,18 +148,15 @@ export default function ColorDetailsPage() {
     }
   }, []);
 
-  const handlePrintColor = (colorData: any) => {
+  const handlePrintLeadSource = (leadSourceData: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "Color Master Details",
-        data: [colorData],
+        title: "Lead Source Master Details",
+        data: [leadSourceData],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
-          name: "Color Name",
-          code: "Color Code",
-          description: "Description",
-          hexCode: "Hex Code",
-          isDefault: "Default Color",
+          name: "Lead Source Name",
+          isDefault: "Default Lead Source",
           isActive: "Active Status",
           isDraft: "Draft Status",
           isDeleted: "Deleted Status",
@@ -175,19 +185,19 @@ export default function ColorDetailsPage() {
   const handleExportPDF = async () => {
     console.log("Export PDF clicked");
     try {
-      console.log("colorData on pdf click", colorData);
+      console.log("leadSourceData on pdf click", leadSourceData);
       const blob = await pdf(
         <GenericPDF
-          data={[colorData]}
-          title="Color Master Details"
-          subtitle="Color Information"
+          data={[leadSourceData]}
+          title="Lead Source Master Details"
+          subtitle="Lead Source Information"
         />
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "color-details.pdf";
+      a.download = "lead-source-details.pdf";
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
@@ -231,25 +241,25 @@ export default function ColorDetailsPage() {
   return (
     <>
       <MinimizablePageLayout
-        moduleId="color-details-module"
-        moduleName="Color Details"
-        moduleRoute="/colors/view"
-        title="Viewing Color"
+        moduleId="lead-source-details-module"
+        moduleName="Lead Source Details"
+        moduleRoute="/lead-sources/view"
+        title="Viewing Lead Source"
         videoSrc={video}
         videoHeader="Tutorial video"
-        listPath="colors"
+        listPath="lead-sources"
         activePage="view"
-        module="colors"
+        module="lead-sources"
         popoverOptions={[
           {
             label: "Create",
             icon: <Plus className="w-5 h-5 text-green-600" />,
-            onClick: () => navigate("/colors/create"),
+            onClick: () => navigate("/lead-sources/create"),
           },
           {
             label: "Edit",
             icon: <Edit className="w-5 h-5 text-blue-600" />,
-            onClick: () => navigate("/colors/edit/1"),
+            onClick: () => navigate("/lead-sources/edit/1"),
           },
         ]}
         keepChanges={keepChanges}
@@ -273,19 +283,19 @@ export default function ColorDetailsPage() {
                   handleExportPDF();
                 }
                 if (printEnabled) {
-                  handlePrintColor(colorData);
+                  handlePrintLeadSource(leadSourceData);
                 }
               }
             : undefined
         }
       >
-        {/* Row 1: Color Selection, Name, Code, Description */}
+        {/* Row 1: Lead Source Selection, Name */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
           <div className="mt-1">
             <Autocomplete
-              options={MOCK_COLORS}
-              value={selectedColor}
-              onValueChange={setSelectedColor}
+              options={MOCK_LEAD_SOURCES}
+              value={selectedLeadSource}
+              onValueChange={setSelectedLeadSource}
               placeholder=" "
               displayKey="name"
               valueKey="id"
@@ -293,56 +303,16 @@ export default function ColorDetailsPage() {
               disabled={false}
               className="w-[96%] bg-gray-100 rounded-xl"
               labelClassName="bg-gray-50 rounded-2xl"
-              labelText="Color Name"
+              labelText="Lead Source Name"
               isShowTemplateIcon={false}
             />
           </div>
-
-          <div className="">
-            <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Color Name</h3>
-            </div>
-            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(colorData.name)}
-            </div>
-          </div>
-
-          <div className="">
-            <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Color Code</h3>
-            </div>
-            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(colorData.code)}
-            </div>
-          </div>
-
-          <div className="">
-            <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Description</h3>
-            </div>
-            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(colorData.description)}
-            </div>
-          </div>
-        </div>
-
-        {/* Row 2: Hex Code, Status, Default */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-          <div className="">
-            <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Hex Code</h3>
-            </div>
-            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(colorData.hexCode)}
-            </div>
-          </div>
-
           <div className="">
             <div className="flex justify-between items-center mb-1">
               <h3 className="font-normal text-gray-600">Status</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(colorData.status)}
+              {displayValue(leadSourceData.status)}
             </div>
           </div>
 
@@ -352,7 +322,7 @@ export default function ColorDetailsPage() {
                 <span className="text-[15px] text-gray-600">Default</span>
               </div>
               <div className="">
-                {colorData.isDefault ? (
+                {leadSourceData.isDefault ? (
                   <span className="text-black text-[15px]">Yes</span>
                 ) : (
                   <span className="text-black text-[15px]">No</span>
@@ -361,22 +331,6 @@ export default function ColorDetailsPage() {
             </div>
           </div>
 
-          <div className="">
-            <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Color Preview</h3>
-            </div>
-            <div className="w-full py-1 text-gray-900 text-md dark:text-white flex items-center gap-2">
-              <div
-                className="w-6 h-6 rounded border border-gray-300"
-                style={{ backgroundColor: colorData.hexCode || "#3B82F6" }}
-              ></div>
-              <span>{displayValue(colorData.hexCode)}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Row 3: Action, Created At, Updated At, Drafted At */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
           <div className="">
             <h3 className="font-normal mb-1 text-gray-600">Action</h3>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
@@ -393,10 +347,10 @@ export default function ColorDetailsPage() {
         columnData={mockHistoryData}
         title="History"
         statusInfo={{
-          created: getRelativeTime(colorData.createdAt),
-          updated: getRelativeTime(colorData.updatedAt),
-          drafted: getRelativeTime(colorData.draftedAt),
-          deleted: getRelativeTime(colorData.deletedAt),
+          created: getRelativeTime(leadSourceData.createdAt),
+          updated: getRelativeTime(leadSourceData.updatedAt),
+          drafted: getRelativeTime(leadSourceData.draftedAt),
+          deleted: getRelativeTime(leadSourceData.deletedAt),
         }}
       />
 
