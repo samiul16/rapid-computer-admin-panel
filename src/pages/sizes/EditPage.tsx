@@ -24,7 +24,7 @@ type SizeData = {
   code: string;
   value: string;
   description: string;
-  status: "active" | "inactive" | "draft";
+  status: "active" | "inactive" | "draft" | "deleted";
   isDefault: boolean;
   isActive: boolean;
   isDraft: boolean;
@@ -523,18 +523,23 @@ export default function SizeEditPage({ isEdit = true }: Props) {
                     options={[
                       {
                         label: "Active",
-                        value: "active",
+                        value: "Active",
                         date: "Set active",
                       },
                       {
                         label: "Inactive",
-                        value: "inactive",
+                        value: "Inactive",
                         date: "Set inactive",
                       },
                       {
                         label: "Draft",
-                        value: "draft",
+                        value: "Draft",
                         date: "Set draft",
+                      },
+                      {
+                        label: "Delete",
+                        value: "Delete",
+                        date: "Set delete",
                       },
                     ]}
                     value={formData.status}
@@ -545,9 +550,22 @@ export default function SizeEditPage({ isEdit = true }: Props) {
 
                       setFormData((prev) => ({
                         ...prev,
-                        status: stringValue as "active" | "inactive" | "draft",
-                        isDraft: stringValue === "draft",
-                        isActive: stringValue === "active",
+                        status: stringValue as
+                          | "active"
+                          | "inactive"
+                          | "draft"
+                          | "deleted",
+                        isDraft: stringValue === "Draft",
+                        isActive: stringValue === "Active",
+                        isDeleted: stringValue === "Delete",
+                      }));
+
+                      // Update your form data
+                      setFormData((prev) => ({
+                        ...prev,
+                        isDeleted: stringValue === "Delete",
+                        isDraft: stringValue === "Draft",
+                        isActive: stringValue === "Active",
                       }));
                       focusNextInput("isDefault");
                     }}

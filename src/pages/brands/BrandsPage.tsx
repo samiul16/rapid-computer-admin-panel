@@ -187,8 +187,8 @@ export default function CountryPage() {
 
   return (
     <PageLayout
-      title="Sizes"
-      createPath="/sizes/create"
+      title="Brands"
+      createPath="/brands/create"
       viewMode={viewMode}
       setViewMode={setViewMode}
       searchQuery={searchQuery}
@@ -201,7 +201,7 @@ export default function CountryPage() {
       showVisibility={showVisibility}
       setTimeLabel={setTimeLabel}
       tabsSection={tabsSection}
-      pathName="sizes"
+      pathName="brands"
     >
       {mainContent}
     </PageLayout>

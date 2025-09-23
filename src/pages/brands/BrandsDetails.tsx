@@ -17,37 +17,33 @@ import { ResetFormModal } from "@/components/common/ResetFormModal";
 import { usePermission } from "@/hooks/usePermissions";
 import MinimizablePageLayout from "@/components/MinimizablePageLayout";
 
-const MOCK_SIZES = [
+const MOCK_BRANDS = [
   {
     id: "1",
-    name: "Small",
-    code: "SZ001",
-    value: "S",
-    description: "Standard small size suitable for compact items",
+    name: "Apex",
+    code: "BRD001",
+    description: "Premium performance brand",
     status: "Active",
   },
   {
     id: "2",
-    name: "Medium",
-    code: "SZ002",
-    value: "M",
-    description: "Most commonly used medium size",
+    name: "Velocity",
+    code: "BRD002",
+    description: "High-speed and sports-focused",
     status: "Active",
   },
   {
     id: "3",
-    name: "Large",
-    code: "SZ003",
-    value: "L",
-    description: "Large size for spacious fit",
+    name: "Nimbus",
+    code: "BRD003",
+    description: "Cloud-like comfort and reliability",
     status: "Draft",
   },
   {
     id: "4",
-    name: "Extra Large",
-    code: "SZ004",
-    value: "XL",
-    description: "Extra large size for oversized requirements",
+    name: "Quantum",
+    code: "BRD004",
+    description: "Cutting-edge innovation",
     status: "InActive",
   },
 ];
@@ -66,13 +62,13 @@ export type HistoryEntry = {
   print: boolean;
 };
 
-export default function SizeDetailsPage() {
+export default function BrandDetailsPage() {
   // const { t } = useTranslation();
   const navigate = useNavigate();
 
   const [keepChanges, setKeepChanges] = useState(false);
   const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
-  const [selectedSize, setSelectedSize] = useState("1");
+  const [selectedBrand, setSelectedBrand] = useState("1");
   const location = useLocation();
   const isViewPage = location.pathname.includes("/view");
   const [pdfChecked, setPdfChecked] = useState(false);
@@ -83,23 +79,22 @@ export default function SizeDetailsPage() {
   // const { canCreate, canView, canEdit, canDelete } = useUserMasterPermissions();
 
   // Field-level permissions
-  const canPdf: boolean = usePermission("sizes", "pdf");
-  const canPrint: boolean = usePermission("sizes", "print");
-  const canSeeHistory: boolean = usePermission("sizes", "history");
+  const canPdf: boolean = usePermission("brands", "pdf");
+  const canPrint: boolean = usePermission("brands", "print");
+  const canSeeHistory: boolean = usePermission("brands", "history");
 
-  let sizeData = {
-    id: selectedSize,
-    name: MOCK_SIZES.find((s) => s.id === selectedSize)?.name || "Small",
-    code: MOCK_SIZES.find((s) => s.id === selectedSize)?.code || "SZ001",
-    value: MOCK_SIZES.find((s) => s.id === selectedSize)?.value || "S",
+  let brandData = {
+    id: selectedBrand,
+    name: MOCK_BRANDS.find((b) => b.id === selectedBrand)?.name || "Apex",
+    code: MOCK_BRANDS.find((b) => b.id === selectedBrand)?.code || "BRD001",
     description:
-      MOCK_SIZES.find((s) => s.id === selectedSize)?.description ||
-      "Standard small size suitable for compact items",
+      MOCK_BRANDS.find((b) => b.id === selectedBrand)?.description ||
+      "Premium performance brand",
     isDefault: true,
     isActive: true,
     isDraft: false,
     isDeleted: false,
-    status: MOCK_SIZES.find((s) => s.id === selectedSize)?.status || "Active",
+    status: MOCK_BRANDS.find((b) => b.id === selectedBrand)?.status || "Active",
     createdAt: "2023-05-15T10:30:00Z",
     updatedAt: "2025-01-15T14:30:00Z",
     draftedAt: "2025-05-20T14:45:00Z",
@@ -115,11 +110,10 @@ export default function SizeDetailsPage() {
     }
     console.log("isViewPage", isViewPage);
     if (isViewPage) {
-      sizeData = {
-        id: selectedSize,
+      brandData = {
+        id: selectedBrand,
         name: "",
         code: "",
-        value: "",
         description: "",
         isDefault: true,
         isActive: true,
@@ -134,18 +128,17 @@ export default function SizeDetailsPage() {
     }
   }, []);
 
-  const handlePrintSize = (size: any) => {
+  const handlePrintBrand = (brand: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "Size Master Details",
-        data: [size],
+        title: "Brand Master Details",
+        data: [brand],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
-          name: "Size Name",
-          code: "Size Code",
-          value: "Value",
+          name: "Brand Name",
+          code: "Brand Code",
           description: "Description",
-          isDefault: "Default Size",
+          isDefault: "Default Brand",
           isActive: "Active Status",
           isDraft: "Draft Status",
           isDeleted: "Deleted Status",
@@ -174,19 +167,19 @@ export default function SizeDetailsPage() {
   const handleExportPDF = async () => {
     console.log("Export PDF clicked");
     try {
-      console.log("sizeData on pdf click", sizeData);
+      console.log("brandData on pdf click", brandData);
       const blob = await pdf(
         <GenericPDF
-          data={[sizeData]}
-          title="Size Master Details"
-          subtitle="Size Information"
+          data={[brandData]}
+          title="Brand Master Details"
+          subtitle="Brand Information"
         />
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "size-details.pdf";
+      a.download = "brand-details.pdf";
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
@@ -230,25 +223,25 @@ export default function SizeDetailsPage() {
   return (
     <>
       <MinimizablePageLayout
-        moduleId="size-details-module"
-        moduleName="Size Details"
-        moduleRoute="/sizes/view"
-        title="Viewing Size"
+        moduleId="brand-details-module"
+        moduleName="Brand Details"
+        moduleRoute="/brands/view"
+        title="Viewing Brand"
         videoSrc={video}
         videoHeader="Tutorial video"
-        listPath="sizes"
+        listPath="brands"
         activePage="view"
-        module="sizes"
+        module="brands"
         popoverOptions={[
           {
             label: "Create",
             icon: <Plus className="w-5 h-5 text-green-600" />,
-            onClick: () => navigate("/sizes/create"),
+            onClick: () => navigate("/brands/create"),
           },
           {
             label: "Edit",
             icon: <Edit className="w-5 h-5 text-blue-600" />,
-            onClick: () => navigate("/sizes/edit/1"),
+            onClick: () => navigate("/brands/edit/1"),
           },
         ]}
         keepChanges={keepChanges}
@@ -272,19 +265,19 @@ export default function SizeDetailsPage() {
                   handleExportPDF();
                 }
                 if (printEnabled) {
-                  handlePrintSize(sizeData);
+                  handlePrintBrand(brandData);
                 }
               }
             : undefined
         }
       >
-        {/* Row 1: Size Selection, Name, Code, Value */}
+        {/* Row 1: Brand Selection, Name, Code */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
           <div className="mt-1">
             <Autocomplete
-              options={MOCK_SIZES}
-              value={selectedSize}
-              onValueChange={setSelectedSize}
+              options={MOCK_BRANDS}
+              value={selectedBrand}
+              onValueChange={setSelectedBrand}
               placeholder=" "
               displayKey="name"
               valueKey="id"
@@ -292,56 +285,47 @@ export default function SizeDetailsPage() {
               disabled={false}
               className="w-[96%] bg-gray-100 rounded-xl"
               labelClassName="bg-gray-50 rounded-2xl"
-              labelText="Size Name"
+              labelText="Brand Name"
               isShowTemplateIcon={false}
             />
           </div>
 
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Size Name</h3>
+              <h3 className="font-normal text-gray-600">Brand Name</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(sizeData.name)}
+              {displayValue(brandData.name)}
             </div>
           </div>
 
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Size Code</h3>
+              <h3 className="font-normal text-gray-600">Brand Code</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(sizeData.code)}
+              {displayValue(brandData.code)}
             </div>
           </div>
 
-          <div className="">
-            <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Value</h3>
-            </div>
-            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(sizeData.value)}
-            </div>
-          </div>
-        </div>
-
-        {/* Row 2: Hex Code, Status, Default */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
           <div className="">
             <div className="flex justify-between items-center mb-1">
               <h3 className="font-normal text-gray-600">Description</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(sizeData.description)}
+              {displayValue(brandData.description)}
             </div>
           </div>
+        </div>
 
+        {/* Row 2: Description, Status, Default */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
           <div className="">
             <div className="flex justify-between items-center mb-1">
               <h3 className="font-normal text-gray-600">Status</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(sizeData.status)}
+              {displayValue(brandData.status)}
             </div>
           </div>
 
@@ -351,7 +335,7 @@ export default function SizeDetailsPage() {
                 <span className="text-[15px] text-gray-600">Default</span>
               </div>
               <div className="">
-                {sizeData.isDefault ? (
+                {brandData.isDefault ? (
                   <span className="text-black text-[15px]">Yes</span>
                 ) : (
                   <span className="text-black text-[15px]">No</span>
@@ -376,10 +360,10 @@ export default function SizeDetailsPage() {
         columnData={mockHistoryData}
         title="History"
         statusInfo={{
-          created: getRelativeTime(sizeData.createdAt),
-          updated: getRelativeTime(sizeData.updatedAt),
-          drafted: getRelativeTime(sizeData.draftedAt),
-          deleted: getRelativeTime(sizeData.deletedAt),
+          created: getRelativeTime(brandData.createdAt),
+          updated: getRelativeTime(brandData.updatedAt),
+          drafted: getRelativeTime(brandData.draftedAt),
+          deleted: getRelativeTime(brandData.deletedAt),
         }}
       />
 

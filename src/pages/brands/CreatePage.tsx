@@ -17,10 +17,9 @@ import { useAppSelector } from "@/store/hooks";
 import MinimizablePageLayout from "@/components/MinimizablePageLayout";
 import { SwitchSelect } from "@/components/common/SwitchAutoComplete";
 
-type SizeData = {
+type BrandData = {
   name: string;
   code: string;
-  value: string;
   description: string;
   status: "active" | "inactive" | "draft";
   isDefault: boolean;
@@ -37,11 +36,10 @@ type Props = {
   isEdit?: boolean;
 };
 
-const initialData: SizeData = {
-  name: "Small",
-  code: "SZ001",
-  value: "S",
-  description: "Standard small size suitable for compact items",
+const initialData: BrandData = {
+  name: "Apex",
+  code: "BRD001",
+  description: "Premium performance brand",
   status: "active",
   isDefault: false,
   isActive: true,
@@ -53,7 +51,7 @@ const initialData: SizeData = {
   isDeleted: false,
 };
 
-export default function SizeFormPage({ isEdit = false }: Props) {
+export default function BrandFormPage({ isEdit = false }: Props) {
   const navigate = useNavigate();
   const labels = useLanguageLabels();
   const { isRTL } = useAppSelector((state) => state.language);
@@ -70,20 +68,18 @@ export default function SizeFormPage({ isEdit = false }: Props) {
   const { canCreate, canView } = useColorsPermissions();
 
   // Field-level permissions
-  const name: boolean = usePermission("sizes", "create", "name");
-  const code: boolean = usePermission("sizes", "create", "code");
-  const valuePerm: boolean = usePermission("sizes", "create", "value");
-  const description: boolean = usePermission("sizes", "create", "description");
-  const status: boolean = usePermission("sizes", "create", "status");
-  const isDefault: boolean = usePermission("sizes", "create", "isDefault");
-  const canPdf: boolean = usePermission("sizes", "pdf");
-  const canPrint: boolean = usePermission("sizes", "print");
+  const name: boolean = usePermission("brands", "create", "name");
+  const code: boolean = usePermission("brands", "create", "code");
+  const description: boolean = usePermission("brands", "create", "description");
+  const status: boolean = usePermission("brands", "create", "status");
+  const isDefault: boolean = usePermission("brands", "create", "isDefault");
+  const canPdf: boolean = usePermission("brands", "pdf");
+  const canPrint: boolean = usePermission("brands", "print");
 
   // Form state
-  const [formData, setFormData] = useState<SizeData>({
+  const [formData, setFormData] = useState<BrandData>({
     name: "",
     code: "",
-    value: "",
     description: "",
     status: "active",
     isDefault: false,
@@ -114,9 +110,9 @@ export default function SizeFormPage({ isEdit = false }: Props) {
       ),
       onClick: () => {
         if (isEdit) {
-          navigate("/sizes/create");
+          navigate("/brands/create");
         } else {
-          navigate("/sizes/edit/undefined");
+          navigate("/brands/edit/undefined");
         }
       },
       show: canCreate,
@@ -125,7 +121,7 @@ export default function SizeFormPage({ isEdit = false }: Props) {
       label: "View",
       icon: <Eye className="w-5 h-5 text-green-600" />,
       onClick: () => {
-        navigate("/sizes/view");
+        navigate("/brands/view");
       },
       show: canView,
     },
@@ -158,16 +154,16 @@ export default function SizeFormPage({ isEdit = false }: Props) {
       await handleExportPDF();
     }
     if (printEnabled) {
-      handlePrintSize(formData);
+      handlePrintBrand(formData);
     }
 
     // keep switch functionality
     if (keepCreating) {
-      toastSuccess("Size created successfully!");
+      toastSuccess("Brand created successfully!");
       handleReset();
     } else {
-      toastSuccess("Size created successfully!");
-      navigate("/sizes");
+      toastSuccess("Brand created successfully!");
+      navigate("/brands");
     }
   };
 
@@ -179,7 +175,6 @@ export default function SizeFormPage({ isEdit = false }: Props) {
     setFormData({
       name: "",
       code: "",
-      value: "",
       description: "",
       status: "active",
       isDefault: false,
@@ -206,16 +201,15 @@ export default function SizeFormPage({ isEdit = false }: Props) {
     }, 100);
   };
 
-  const handlePrintSize = (sizeData: any) => {
+  const handlePrintBrand = (brandData: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "Size Details",
-        data: [sizeData],
+        title: "Brand Details",
+        data: [brandData],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
-          name: "Size Name",
-          code: "Size Code",
-          value: "Value",
+          name: "Brand Name",
+          code: "Brand Code",
           description: "Description",
           status: "Status",
           isActive: "Active Status",
@@ -247,15 +241,15 @@ export default function SizeFormPage({ isEdit = false }: Props) {
       const blob = await pdf(
         <GenericPDF
           data={[formData]}
-          title="Size Details"
-          subtitle="Size Information"
+          title="Brand Details"
+          subtitle="Brand Information"
         />
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "size-details.pdf";
+      a.download = "brand-details.pdf";
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
@@ -283,7 +277,7 @@ export default function SizeFormPage({ isEdit = false }: Props) {
                 ...prev,
                 isDraft: true,
               }));
-              toastRestore("Size saved as draft successfully");
+              toastRestore("Brand saved as draft successfully");
             },
             show: canCreate,
           },
@@ -305,14 +299,14 @@ export default function SizeFormPage({ isEdit = false }: Props) {
   return (
     <>
       <MinimizablePageLayout
-        moduleId="size-form-module"
-        moduleName={isEdit ? "Edit Size" : "Adding Size"}
+        moduleId="brand-form-module"
+        moduleName={isEdit ? "Edit Brand" : "Adding Brand"}
         moduleRoute={
-          isEdit ? `/sizes/edit/${formData.name || "new"}` : "/sizes/create"
+          isEdit ? `/brands/edit/${formData.name || "new"}` : "/brands/create"
         }
         onMinimize={handleMinimize}
-        title={isEdit ? "Edit Size" : "Add Size"}
-        listPath="sizes"
+        title={isEdit ? "Edit Brand" : "Add Brand"}
+        listPath="brands"
         popoverOptions={popoverOptions}
         videoSrc={video}
         videoHeader="Tutorial video"
@@ -323,7 +317,7 @@ export default function SizeFormPage({ isEdit = false }: Props) {
         printEnabled={printEnabled}
         onPrintToggle={canPrint ? handleSwitchChange : undefined}
         activePage="create"
-        module="sizes"
+        module="brands"
         additionalFooterButtons={
           canCreate ? (
             <div className="flex gap-4 max-[435px]:gap-2">
@@ -353,9 +347,9 @@ export default function SizeFormPage({ isEdit = false }: Props) {
             onSubmit={handleSubmit}
             className="space-y-6 relative"
           >
-            {/* First Row: Size Name, Code, Value, Description */}
+            {/* First Row: Brand Name, Code, Description */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
-              {/* Size Name field - only show if user can create */}
+              {/* Brand Name field - only show if user can create */}
               {name && (
                 <div className="space-y-2">
                   <EditableInput
@@ -366,14 +360,14 @@ export default function SizeFormPage({ isEdit = false }: Props) {
                     onChange={handleChange}
                     onNext={() => focusNextInput("code")}
                     onCancel={() => setFormData({ ...formData, name: "" })}
-                    labelText="Size Name"
-                    tooltipText="Enter the size name"
+                    labelText="Brand Name"
+                    tooltipText="Enter the brand name"
                     required
                   />
                 </div>
               )}
 
-              {/* Size Code field - only show if user can create */}
+              {/* Brand Code field - only show if user can create */}
               {code && (
                 <div className="space-y-2">
                   <EditableInput
@@ -382,29 +376,10 @@ export default function SizeFormPage({ isEdit = false }: Props) {
                     name="code"
                     value={formData.code}
                     onChange={handleChange}
-                    onNext={() => focusNextInput("value")}
-                    onCancel={() => setFormData({ ...formData, code: "" })}
-                    labelText="Size Code"
-                    tooltipText="Enter the size code (e.g., SZ001)"
-                    required
-                  />
-                </div>
-              )}
-
-              {/* Value field - only show if user can create */}
-              {valuePerm && (
-                <div className="space-y-2">
-                  <EditableInput
-                    setRef={setRef("value")}
-                    id="value"
-                    name="value"
-                    value={formData.value}
-                    onChange={handleChange}
                     onNext={() => focusNextInput("description")}
-                    onCancel={() => setFormData({ ...formData, value: "" })}
-                    labelText="Value"
-                    tooltipText="Enter the size value (e.g., S, M, 32)"
-                    type="text"
+                    onCancel={() => setFormData({ ...formData, code: "" })}
+                    labelText="Brand Code"
+                    tooltipText="Enter the brand code (e.g., BRD001)"
                     required
                   />
                 </div>
@@ -424,16 +399,13 @@ export default function SizeFormPage({ isEdit = false }: Props) {
                       setFormData({ ...formData, description: "" })
                     }
                     labelText="Description"
-                    tooltipText="Enter a description for the size"
+                    tooltipText="Enter a description for the brand"
                     type="text"
                     required
                   />
                 </div>
               )}
-            </div>
 
-            {/* Second Row: Default and Status */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
               {/* Default field - only show if user can create */}
               {isDefault && (
                 <div className="space-y-2 relative">
@@ -446,12 +418,12 @@ export default function SizeFormPage({ isEdit = false }: Props) {
                       {
                         label: labels.yes,
                         value: labels.yes,
-                        date: "Set default size",
+                        date: "Set default brand",
                       },
                       {
                         label: labels.no,
                         value: labels.no,
-                        date: "Remove default size",
+                        date: "Remove default brand",
                       },
                     ]}
                     value={isDefaultState === "Yes" ? labels.yes : labels.no}
@@ -478,10 +450,14 @@ export default function SizeFormPage({ isEdit = false }: Props) {
                     placeholder=" "
                     labelText="Default"
                     className="relative"
-                    tooltipText="Set as default size"
+                    tooltipText="Set as default brand"
                   />
                 </div>
               )}
+            </div>
+
+            {/* Second Row: Default and Status */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
               {/* Status field - only show if user can create */}
               {status && (
                 <div className="space-y-2">
@@ -530,7 +506,7 @@ export default function SizeFormPage({ isEdit = false }: Props) {
                         },
                       },
                     }}
-                    tooltipText="Set the size status"
+                    tooltipText="Set the brand status"
                   />
                 </div>
               )}

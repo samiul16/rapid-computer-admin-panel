@@ -19,12 +19,11 @@ import { useMinimizedModuleData } from "@/hooks/useMinimizedModuleData";
 import { SwitchSelect } from "@/components/common/SwitchAutoComplete";
 import { ActionsAutocomplete } from "@/components/common/ActionsAutocomplete";
 
-type SizeData = {
+type BrandData = {
   name: string;
   code: string;
-  value: string;
   description: string;
-  status: "active" | "inactive" | "draft";
+  status: "active" | "inactive" | "draft" | "deleted";
   isDefault: boolean;
   isActive: boolean;
   isDraft: boolean;
@@ -35,8 +34,8 @@ type SizeData = {
   deletedAt: Date | null;
 };
 
-type SizeModuleData = {
-  formData: SizeData;
+type BrandModuleData = {
+  formData: BrandData;
   hasChanges: boolean;
   scrollPosition: number;
 };
@@ -45,11 +44,10 @@ type Props = {
   isEdit?: boolean;
 };
 
-const initialData: SizeData = {
-  name: "Small",
-  code: "SZ001",
-  value: "S",
-  description: "Standard small size suitable for compact items",
+const initialData: BrandData = {
+  name: "Apex",
+  code: "BRD001",
+  description: "Premium performance brand",
   status: "active",
   isDefault: false,
   isActive: true,
@@ -61,14 +59,14 @@ const initialData: SizeData = {
   deletedAt: null,
 };
 
-export default function SizeEditPage({ isEdit = true }: Props) {
+export default function BrandEditPage({ isEdit = true }: Props) {
   const navigate = useNavigate();
   const { id } = useParams();
   // const labels = useLanguageLabels();
   const { isRTL } = useAppSelector((state) => state.language);
 
   // Get module ID for this edit page
-  const moduleId = `size-edit-module-${id || "new"}`;
+  const moduleId = `brand-edit-module-${id || "new"}`;
 
   // Use the custom hook for minimized module data
   const {
@@ -76,7 +74,7 @@ export default function SizeEditPage({ isEdit = true }: Props) {
     hasMinimizedData,
     resetModuleData,
     getModuleScrollPosition,
-  } = useMinimizedModuleData<SizeModuleData>(moduleId);
+  } = useMinimizedModuleData<BrandModuleData>(moduleId);
 
   const [keepCreating, setKeepCreating] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
@@ -97,20 +95,18 @@ export default function SizeEditPage({ isEdit = true }: Props) {
   const { canCreate, canView } = useColorsPermissions();
 
   // Field-level permissions
-  const name: boolean = usePermission("sizes", "edit", "name");
-  const code: boolean = usePermission("sizes", "edit", "code");
-  const valuePerm: boolean = usePermission("sizes", "edit", "value");
-  const description: boolean = usePermission("sizes", "edit", "description");
-  const status: boolean = usePermission("sizes", "edit", "status");
-  const isDefault: boolean = usePermission("sizes", "edit", "isDefault");
-  const canPdf: boolean = usePermission("sizes", "pdf");
-  const canPrint: boolean = usePermission("sizes", "print");
+  const name: boolean = usePermission("brands", "edit", "name");
+  const code: boolean = usePermission("brands", "edit", "code");
+  const description: boolean = usePermission("brands", "edit", "description");
+  const status: boolean = usePermission("brands", "edit", "status");
+  const isDefault: boolean = usePermission("brands", "edit", "isDefault");
+  const canPdf: boolean = usePermission("brands", "pdf");
+  const canPrint: boolean = usePermission("brands", "print");
 
   // Form state
-  const [formData, setFormData] = useState<SizeData>({
+  const [formData, setFormData] = useState<BrandData>({
     name: "",
     code: "",
-    value: "",
     description: "",
     status: "active",
     isDefault: false,
@@ -209,16 +205,16 @@ export default function SizeEditPage({ isEdit = true }: Props) {
       await handleExportPDF();
     }
     if (printEnabled) {
-      handlePrintSize(formData);
+      handlePrintBrand(formData);
     }
 
     // keep switch functionality
     if (keepCreating) {
-      toastSuccess("Size updated successfully!");
+      toastSuccess("Brand updated successfully!");
       handleReset();
     } else {
-      toastSuccess("Size updated successfully!");
-      navigate("/sizes");
+      toastSuccess("Brand updated successfully!");
+      navigate("/brands");
     }
   };
 
@@ -227,7 +223,6 @@ export default function SizeEditPage({ isEdit = true }: Props) {
     setFormData({
       name: "",
       code: "",
-      value: "",
       description: "",
       status: "active",
       isDefault: false,
@@ -269,19 +264,18 @@ export default function SizeEditPage({ isEdit = true }: Props) {
     setIsResetModalOpen(true);
   };
 
-  const handlePrintSize = (sizeData: any) => {
+  const handlePrintBrand = (brandData: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "Size Details",
-        data: [sizeData],
+        title: "Brand Details",
+        data: [brandData],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
-          name: "Size Name",
-          code: "Size Code",
-          value: "Value",
+          name: "Brand Name",
+          code: "Brand Code",
           description: "Description",
           status: "Status",
-          isDefault: "Default Size",
+          isDefault: "Default Brand",
           isActive: "Active Status",
           isDraft: "Draft Status",
           isDeleted: "Deleted Status",
@@ -311,15 +305,15 @@ export default function SizeEditPage({ isEdit = true }: Props) {
       const blob = await pdf(
         <GenericPDF
           data={[formData]}
-          title="Size Details"
-          subtitle="Size Information"
+          title="Brand Details"
+          subtitle="Brand Information"
         />
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "size-details.pdf";
+      a.download = "brand-details.pdf";
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
@@ -333,7 +327,7 @@ export default function SizeEditPage({ isEdit = true }: Props) {
       label: "Create",
       icon: <Plus className="w-5 h-5 text-green-500" />,
       onClick: () => {
-        navigate("/sizes/create");
+        navigate("/brands/create");
       },
       show: canCreate,
     },
@@ -341,7 +335,7 @@ export default function SizeEditPage({ isEdit = true }: Props) {
       label: "View",
       icon: <Eye className="w-5 h-5 text-green-600" />,
       onClick: () => {
-        navigate("/sizes/view");
+        navigate("/brands/view");
       },
       show: canView,
     },
@@ -375,7 +369,7 @@ export default function SizeEditPage({ isEdit = true }: Props) {
   }, [formData.isDraft, canCreate]);
 
   // Create minimize handler using the custom hook
-  const handleMinimize = useCallback((): SizeModuleData => {
+  const handleMinimize = useCallback((): BrandModuleData => {
     return {
       formData,
       hasChanges: true,
@@ -387,11 +381,11 @@ export default function SizeEditPage({ isEdit = true }: Props) {
     <>
       <MinimizablePageLayout
         moduleId={moduleId}
-        moduleName={`Edit Size`}
-        moduleRoute={`/sizes/edit/${id || "new"}`}
+        moduleName={`Edit Brand`}
+        moduleRoute={`/brands/edit/${id || "new"}`}
         onMinimize={handleMinimize}
-        title="Edit Size"
-        listPath="sizes"
+        title="Edit Brand"
+        listPath="brands"
         popoverOptions={popoverOptions}
         videoSrc={video}
         videoHeader="Tutorial video"
@@ -402,7 +396,7 @@ export default function SizeEditPage({ isEdit = true }: Props) {
         printEnabled={printEnabled}
         onPrintToggle={canPrint ? handleSwitchChange : undefined}
         activePage="edit"
-        module="sizes"
+        module="brands"
         additionalFooterButtons={
           canCreate ? (
             <div className="flex gap-4 max-[435px]:gap-2">
@@ -432,9 +426,9 @@ export default function SizeEditPage({ isEdit = true }: Props) {
             onSubmit={handleSubmit}
             className="space-y-6"
           >
-            {/* First Row: Size Name, Code, Value, Description */}
+            {/* First Row: Brand Name, Code, Description */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
-              {/* Size Name field - only show if user can edit */}
+              {/* Brand Name field - only show if user can edit */}
               {name && (
                 <div className="space-y-2">
                   <EditableInput
@@ -445,14 +439,14 @@ export default function SizeEditPage({ isEdit = true }: Props) {
                     onChange={handleChange}
                     onNext={() => focusNextInput("code")}
                     onCancel={() => setFormData({ ...formData, name: "" })}
-                    labelText="Size Name"
-                    tooltipText="Enter the size name"
+                    labelText="Brand Name"
+                    tooltipText="Enter the brand name"
                     required
                   />
                 </div>
               )}
 
-              {/* Size Code field - only show if user can edit */}
+              {/* Brand Code field - only show if user can edit */}
               {code && (
                 <div className="space-y-2">
                   <EditableInput
@@ -461,28 +455,10 @@ export default function SizeEditPage({ isEdit = true }: Props) {
                     name="code"
                     value={formData.code}
                     onChange={handleChange}
-                    onNext={() => focusNextInput("value")}
-                    onCancel={() => setFormData({ ...formData, code: "" })}
-                    labelText="Size Code"
-                    tooltipText="Enter the size code (e.g., SZ001)"
-                    required
-                  />
-                </div>
-              )}
-
-              {/* Value field - only show if user can edit */}
-              {valuePerm && (
-                <div className="space-y-2">
-                  <EditableInput
-                    setRef={setRef("value")}
-                    id="value"
-                    name="value"
-                    value={formData.value}
-                    onChange={handleChange}
                     onNext={() => focusNextInput("description")}
-                    onCancel={() => setFormData({ ...formData, value: "" })}
-                    labelText="Value"
-                    tooltipText="Enter the size value (e.g., S, M, 32)"
+                    onCancel={() => setFormData({ ...formData, code: "" })}
+                    labelText="Brand Code"
+                    tooltipText="Enter the brand code (e.g., BRD001)"
                     required
                   />
                 </div>
@@ -502,15 +478,12 @@ export default function SizeEditPage({ isEdit = true }: Props) {
                       setFormData({ ...formData, description: "" })
                     }
                     labelText="Description"
-                    tooltipText="Enter size description"
+                    tooltipText="Enter brand description"
                     required
                   />
                 </div>
               )}
-            </div>
 
-            {/* Second Row: Status, Default */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
               {/* Status field - only show if user can edit */}
               {status && (
                 <div className="space-y-2">
@@ -519,22 +492,27 @@ export default function SizeEditPage({ isEdit = true }: Props) {
                     id="status"
                     name="status"
                     labelText="Status"
-                    multiSelect={false}
+                    multiSelect={false} // Single select mode
                     options={[
                       {
                         label: "Active",
-                        value: "active",
-                        date: "Set active",
+                        value: "Active",
+                        date: "Set active country",
                       },
                       {
                         label: "Inactive",
-                        value: "inactive",
-                        date: "Set inactive",
+                        value: "InActive",
+                        date: "Set inactive country",
                       },
                       {
                         label: "Draft",
-                        value: "draft",
-                        date: "Set draft",
+                        value: "Draft",
+                        date: "Set draft country",
+                      },
+                      {
+                        label: "Delete",
+                        value: "Delete",
+                        date: "Set delete country",
                       },
                     ]}
                     value={formData.status}
@@ -542,17 +520,26 @@ export default function SizeEditPage({ isEdit = true }: Props) {
                       const stringValue = Array.isArray(value)
                         ? value[0] || ""
                         : value;
-
+                      console.log("switch value", stringValue);
                       setFormData((prev) => ({
                         ...prev,
-                        status: stringValue as "active" | "inactive" | "draft",
-                        isDraft: stringValue === "draft",
-                        isActive: stringValue === "active",
+                        status: stringValue as
+                          | "active"
+                          | "inactive"
+                          | "draft"
+                          | "deleted",
+                        isDeleted: stringValue === "deleted",
+                        isDraft: stringValue === "Draft",
+                        isActive: stringValue === "Active",
                       }));
-                      focusNextInput("isDefault");
-                    }}
-                    onEnterPress={() => {
-                      focusNextInput("isDefault");
+
+                      // Update your form data
+                      setFormData((prev) => ({
+                        ...prev,
+                        isDeleted: stringValue === "Delete",
+                        isDraft: stringValue === "Draft",
+                        isActive: stringValue === "Active",
+                      }));
                     }}
                     placeholder=""
                     styles={{
@@ -563,11 +550,14 @@ export default function SizeEditPage({ isEdit = true }: Props) {
                         },
                       },
                     }}
-                    tooltipText="Set the size status"
+                    tooltipText="Set the brand status"
                   />
                 </div>
               )}
+            </div>
 
+            {/* Second Row: Status, Default */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
               {/* Default field - only show if user can edit */}
               {isDefault && (
                 <div className="space-y-2 relative">
@@ -580,12 +570,12 @@ export default function SizeEditPage({ isEdit = true }: Props) {
                       {
                         label: "Yes",
                         value: "Yes",
-                        date: "Set default size",
+                        date: "Set default brand",
                       },
                       {
                         label: "No",
                         value: "No",
-                        date: "Remove default size",
+                        date: "Remove default brand",
                       },
                     ]}
                     value={isDefaultState === "Yes" ? "Yes" : "No"}
@@ -612,7 +602,7 @@ export default function SizeEditPage({ isEdit = true }: Props) {
                     placeholder=" "
                     labelText="Default"
                     className="relative"
-                    tooltipText="Set as default size"
+                    tooltipText="Set as default brand"
                   />
                 </div>
               )}
@@ -667,7 +657,7 @@ export default function SizeEditPage({ isEdit = true }: Props) {
                       },
                     },
                   }}
-                  tooltipText="Size Action History"
+                  tooltipText="Brand Action History"
                 />
               </div>
             </div>
