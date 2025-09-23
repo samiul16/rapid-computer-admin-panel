@@ -590,7 +590,7 @@ export default function ColorsDataTable({
       setViewMode={setViewMode}
       componentColumns={componentColumns}
       fixedColumns={["name", "code"]} // Pin color name and code columns
-      pathName="color-master"
+      pathName="colors"
       setShowExport={setShowExport}
       showExport={showExport}
       setShowFilter={setShowFilter}

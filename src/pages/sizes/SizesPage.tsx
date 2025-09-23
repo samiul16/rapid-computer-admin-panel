@@ -187,8 +187,8 @@ export default function CountryPage() {
 
   return (
     <PageLayout
-      title="Colors"
-      createPath="/colors/create"
+      title="Sizes"
+      createPath="/sizes/create"
       viewMode={viewMode}
       setViewMode={setViewMode}
       searchQuery={searchQuery}
@@ -201,7 +201,7 @@ export default function CountryPage() {
       showVisibility={showVisibility}
       setTimeLabel={setTimeLabel}
       tabsSection={tabsSection}
-      pathName="colors"
+      pathName="sizes"
     >
       {mainContent}
     </PageLayout>

@@ -3,13 +3,13 @@ import FixedColumnDataTable from "@/components/common/country-page-table/FixedCo
 import useIsMobile from "@/hooks/useIsMobile";
 import { useColorsPermissions } from "@/hooks/usePermissions";
 
-// Color interface to match the grid component
-interface Color {
+// Size interface to match the grid component
+interface SizeItem {
   id: string;
-  name: string;
   code: string;
+  name: string;
+  value: string;
   description: string;
-  hexCode: string;
   status: "active" | "inactive" | "draft";
   createdAt: string;
   updatedAt: string;
@@ -21,13 +21,13 @@ interface Color {
   actionMessage: string;
 }
 
-const mockColors: Color[] = [
+const mockSizes: SizeItem[] = [
   {
     id: "1",
-    name: "Primary Blue",
-    code: "BLU001",
-    description: "Main brand color used for primary actions and highlights",
-    hexCode: "#3B82F6",
+    code: "SZ001",
+    name: "Small",
+    value: "S",
+    description: "Standard small size suitable for compact items",
     status: "active",
     createdAt: "2023-01-15",
     updatedAt: "2023-11-20",
@@ -40,10 +40,10 @@ const mockColors: Color[] = [
   },
   {
     id: "2",
-    name: "Success Green",
-    code: "GRN001",
-    description: "Color for success states and positive feedback",
-    hexCode: "#10B981",
+    code: "SZ002",
+    name: "Medium",
+    value: "M",
+    description: "Most commonly used medium size",
     status: "active",
     createdAt: "2023-01-18",
     updatedAt: "2023-10-15",
@@ -56,10 +56,10 @@ const mockColors: Color[] = [
   },
   {
     id: "3",
-    name: "Warning Orange",
-    code: "ORG001",
-    description: "Warning color for alerts and caution states",
-    hexCode: "#F59E0B",
+    code: "SZ003",
+    name: "Large",
+    value: "L",
+    description: "Large size for spacious fit",
     status: "active",
     createdAt: "2023-02-01",
     updatedAt: "2023-11-10",
@@ -72,10 +72,10 @@ const mockColors: Color[] = [
   },
   {
     id: "4",
-    name: "Error Red",
-    code: "RED001",
-    description: "Error color for validation and critical states",
-    hexCode: "#EF4444",
+    code: "SZ004",
+    name: "Extra Large",
+    value: "XL",
+    description: "Extra large size for oversized requirements",
     status: "active",
     createdAt: "2023-02-10",
     updatedAt: "2023-11-05",
@@ -88,10 +88,10 @@ const mockColors: Color[] = [
   },
   {
     id: "5",
-    name: "Neutral Gray",
-    code: "GRY001",
-    description: "Neutral color for text and backgrounds",
-    hexCode: "#6B7280",
+    code: "SZ005",
+    name: "Double Extra Large",
+    value: "2XL",
+    description: "Very large size for extended range",
     status: "active",
     createdAt: "2023-02-15",
     updatedAt: "2023-10-28",
@@ -104,10 +104,10 @@ const mockColors: Color[] = [
   },
   {
     id: "6",
-    name: "Purple Accent",
-    code: "PRP001",
-    description: "Accent color for special features and highlights",
-    hexCode: "#8B5CF6",
+    code: "SZ006",
+    name: "Triple Extra Large",
+    value: "3XL",
+    description: "Largest standard size offering",
     status: "draft",
     createdAt: "2023-03-01",
     updatedAt: "2023-11-15",
@@ -120,10 +120,10 @@ const mockColors: Color[] = [
   },
   {
     id: "7",
-    name: "Teal Secondary",
-    code: "TEL001",
-    description: "Secondary color for supporting elements",
-    hexCode: "#14B8A6",
+    code: "SZ007",
+    name: "Kids Small",
+    value: "KS",
+    description: "Kids small size",
     status: "active",
     createdAt: "2023-03-10",
     updatedAt: "2023-11-08",
@@ -136,10 +136,10 @@ const mockColors: Color[] = [
   },
   {
     id: "8",
-    name: "Pink Highlight",
-    code: "PNK001",
-    description: "Highlight color for special promotions",
-    hexCode: "#EC4899",
+    code: "SZ008",
+    name: "Kids Medium",
+    value: "KM",
+    description: "Kids medium size",
     status: "inactive",
     createdAt: "2023-03-20",
     updatedAt: "2023-10-22",
@@ -152,10 +152,10 @@ const mockColors: Color[] = [
   },
   {
     id: "9",
-    name: "Indigo Dark",
-    code: "IND001",
-    description: "Dark indigo for headers and navigation",
-    hexCode: "#4F46E5",
+    code: "SZ009",
+    name: "Kids Large",
+    value: "KL",
+    description: "Kids large size",
     status: "active",
     createdAt: "2023-04-01",
     updatedAt: "2023-11-25",
@@ -168,10 +168,10 @@ const mockColors: Color[] = [
   },
   {
     id: "10",
-    name: "Yellow Bright",
-    code: "YLW001",
-    description: "Bright yellow for attention-grabbing elements",
-    hexCode: "#EAB308",
+    code: "SZ010",
+    name: "Custom Small",
+    value: "CUS-S",
+    description: "Custom-defined small size",
     status: "draft",
     createdAt: "2023-04-10",
     updatedAt: "2023-11-18",
@@ -184,10 +184,10 @@ const mockColors: Color[] = [
   },
   {
     id: "11",
-    name: "Cyan Light",
-    code: "CYN001",
-    description: "Light cyan for subtle backgrounds",
-    hexCode: "#06B6D4",
+    code: "SZ011",
+    name: "Custom Medium",
+    value: "CUS-M",
+    description: "Custom-defined medium size",
     status: "active",
     createdAt: "2023-04-15",
     updatedAt: "2023-09-10",
@@ -200,10 +200,10 @@ const mockColors: Color[] = [
   },
   {
     id: "12",
-    name: "Rose Soft",
-    code: "ROS001",
-    description: "Soft rose for gentle highlights",
-    hexCode: "#F43F5E",
+    code: "SZ012",
+    name: "Custom Large",
+    value: "CUS-L",
+    description: "Custom-defined large size",
     status: "inactive",
     createdAt: "2023-05-01",
     updatedAt: "2023-11-12",
@@ -216,10 +216,10 @@ const mockColors: Color[] = [
   },
   {
     id: "13",
-    name: "Emerald Deep",
-    code: "EMR001",
-    description: "Deep emerald for nature-themed elements",
-    hexCode: "#059669",
+    code: "SZ013",
+    name: "Numeric 28",
+    value: "28",
+    description: "Numeric waist size 28",
     status: "active",
     createdAt: "2023-05-10",
     updatedAt: "2023-10-30",
@@ -232,10 +232,10 @@ const mockColors: Color[] = [
   },
   {
     id: "14",
-    name: "Violet Rich",
-    code: "VIO001",
-    description: "Rich violet for premium features",
-    hexCode: "#7C3AED",
+    code: "SZ014",
+    name: "Numeric 30",
+    value: "30",
+    description: "Numeric waist size 30",
     status: "draft",
     createdAt: "2023-05-20",
     updatedAt: "2023-11-02",
@@ -248,10 +248,10 @@ const mockColors: Color[] = [
   },
   {
     id: "15",
-    name: "Amber Warm",
-    code: "AMB001",
-    description: "Warm amber for cozy interfaces",
-    hexCode: "#D97706",
+    code: "SZ015",
+    name: "Numeric 32",
+    value: "32",
+    description: "Numeric waist size 32",
     status: "active",
     createdAt: "2023-06-01",
     updatedAt: "2023-11-08",
@@ -264,10 +264,10 @@ const mockColors: Color[] = [
   },
   {
     id: "16",
-    name: "Sky Blue",
-    code: "SKY001",
-    description: "Sky blue for open and airy designs",
-    hexCode: "#0EA5E9",
+    code: "SZ016",
+    name: "Numeric 34",
+    value: "34",
+    description: "Numeric waist size 34",
     status: "active",
     createdAt: "2023-06-10",
     updatedAt: "2023-10-25",
@@ -280,10 +280,10 @@ const mockColors: Color[] = [
   },
   {
     id: "17",
-    name: "Lime Fresh",
-    code: "LIM001",
-    description: "Fresh lime for energetic elements",
-    hexCode: "#84CC16",
+    code: "SZ017",
+    name: "Numeric 36",
+    value: "36",
+    description: "Numeric waist size 36",
     status: "inactive",
     createdAt: "2023-06-15",
     updatedAt: "2023-06-20",
@@ -296,10 +296,10 @@ const mockColors: Color[] = [
   },
   {
     id: "18",
-    name: "Fuchsia Bold",
-    code: "FUC001",
-    description: "Bold fuchsia for standout features",
-    hexCode: "#D946EF",
+    code: "SZ018",
+    name: "Numeric 38",
+    value: "38",
+    description: "Numeric waist size 38",
     status: "draft",
     createdAt: "2023-07-01",
     updatedAt: "2023-11-15",
@@ -312,10 +312,10 @@ const mockColors: Color[] = [
   },
   {
     id: "19",
-    name: "Slate Professional",
-    code: "SLT001",
-    description: "Professional slate for business elements",
-    hexCode: "#475569",
+    code: "SZ019",
+    name: "Numeric 40",
+    value: "40",
+    description: "Numeric waist size 40",
     status: "active",
     createdAt: "2023-07-10",
     updatedAt: "2023-10-18",
@@ -328,10 +328,10 @@ const mockColors: Color[] = [
   },
   {
     id: "20",
-    name: "Zinc Neutral",
-    code: "ZNC001",
-    description: "Neutral zinc for subtle backgrounds",
-    hexCode: "#71717A",
+    code: "SZ020",
+    name: "Numeric 42",
+    value: "42",
+    description: "Numeric waist size 42",
     status: "inactive",
     createdAt: "2023-07-20",
     updatedAt: "2023-09-15",
@@ -344,7 +344,7 @@ const mockColors: Color[] = [
   },
 ];
 
-export default function ColorsDataTable({
+export default function SizesDataTable({
   viewMode,
   setViewMode,
   dataTableFilter,
@@ -378,7 +378,7 @@ export default function ColorsDataTable({
     {
       accessorKey: "name",
       title: "Name",
-      options: [...new Set(mockColors.map((item) => item.name))],
+      options: [...new Set(mockSizes.map((item) => item.name))],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
         const cellValue = row.getValue(columnId) as string;
@@ -399,7 +399,7 @@ export default function ColorsDataTable({
     {
       accessorKey: "code",
       title: "Code",
-      options: [...new Set(mockColors.map((item) => item.code))],
+      options: [...new Set(mockSizes.map((item) => item.code))],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
         const cellValue = row.getValue(columnId) as string;
@@ -418,9 +418,9 @@ export default function ColorsDataTable({
       },
     },
     {
-      accessorKey: "hexCode",
-      title: "Hex Code",
-      options: [...new Set(mockColors.map((item) => item.hexCode))],
+      accessorKey: "value",
+      title: "Value",
+      options: [...new Set(mockSizes.map((item) => item.value))],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
         const cellValue = row.getValue(columnId) as string;
@@ -429,19 +429,19 @@ export default function ColorsDataTable({
         );
       },
       sortingFn: (row1: any, row2: any) => {
-        return row1.getValue("hexCode").localeCompare(row2.getValue("hexCode"));
+        return row1.getValue("value").localeCompare(row2.getValue("value"));
       },
       size: isMobile ? 120 : 150,
       minSize: 120,
       meta: {
-        exportLabel: "Hex Code",
+        exportLabel: "Value",
         readOnly: !canCreate,
       },
     },
     {
       accessorKey: "description",
       title: "Description",
-      options: [...new Set(mockColors.map((item) => item.description))],
+      options: [...new Set(mockSizes.map((item) => item.description))],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
         const cellValue = row.getValue(columnId) as string;
@@ -567,17 +567,17 @@ export default function ColorsDataTable({
     },
   ];
 
-  const filteredData = mockColors.filter((color) => {
+  const filteredData = mockSizes.filter((item) => {
     if (dataTableFilter.status === "Active") {
-      return color.isActive;
+      return item.isActive;
     } else if (dataTableFilter.status === "Inactive") {
-      return !color.isActive;
+      return !item.isActive;
     } else if (dataTableFilter.status === "Draft") {
-      return color.isDraft;
+      return item.isDraft;
     } else if (dataTableFilter.status === "Deleted") {
-      return color.isDeleted;
+      return item.isDeleted;
     } else if (dataTableFilter.status === "Updated") {
-      return color.isUpdated;
+      return item.isUpdated;
     }
     return true;
   });
@@ -589,8 +589,8 @@ export default function ColorsDataTable({
       viewMode={viewMode}
       setViewMode={setViewMode}
       componentColumns={componentColumns}
-      fixedColumns={["name", "code"]} // Pin color name and code columns
-      pathName="color-master"
+      fixedColumns={["name", "code"]}
+      pathName="sizes"
       setShowExport={setShowExport}
       showExport={showExport}
       setShowFilter={setShowFilter}
