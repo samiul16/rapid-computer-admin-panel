@@ -1,263 +1,363 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import FixedColumnDataTable from "@/components/common/FixedColumnDataTable";
+import FixedColumnDataTable from "@/components/common/country-page-table/FixedColumnDataTable";
+import useIsMobile from "@/hooks/useIsMobile";
+import { useColorsPermissions } from "@/hooks/usePermissions";
 
-type ListTableDataType = {
-  itemId: string;
-  quantityDamaged: number;
-  damageDate: string;
-
-  reportedBy: string;
-  location: string;
-
-  damageType: "Transit" | "Handling" | "Expired" | "Other";
-
-  // same for all component
+// Brand interface to match the grid component
+interface BrandItem {
   id: string;
+  code: string;
+  name: string;
+  description: string;
   status: "active" | "inactive" | "draft";
-  isActive: boolean;
-  isDeleted: boolean;
-  isDraft: boolean;
-  isUpdated: boolean;
-  actionMessage: string;
   createdAt: string;
   updatedAt: string;
   draftedAt: string;
-};
+  isActive: boolean;
+  isDraft: boolean;
+  isDeleted: boolean;
+  isUpdated: boolean;
+  actionMessage: string;
+}
 
-export const listTableData: ListTableDataType[] = [
+const mockBrands: BrandItem[] = [
   {
-    itemId: "ITEM001",
-    quantityDamaged: 3,
-    damageDate: "2025-07-18",
-    reportedBy: "John Doe",
-    location: "Warehouse A",
-    damageType: "Handling",
-
-    id: "DAMAGE001",
+    id: "1",
+    code: "BRD001",
+    name: "Apex",
+    description: "Premium performance brand",
     status: "active",
+    createdAt: "2023-01-15",
+    updatedAt: "2023-11-20",
+    draftedAt: "2023-01-10",
     isActive: true,
-    isDeleted: false,
     isDraft: false,
+    isDeleted: false,
     isUpdated: false,
-    actionMessage: "Verified and discarded",
-    createdAt: "2025-07-18T10:00:00Z",
-    updatedAt: "2025-07-19T08:00:00Z",
-    draftedAt: "",
+    actionMessage: "Yesterday",
   },
   {
-    itemId: "ITEM002",
-    quantityDamaged: 1,
-    damageDate: "2025-07-17",
-    reportedBy: "Jane Smith",
-    location: "Warehouse B",
-    damageType: "Transit",
-    id: "DAMAGE002",
+    id: "2",
+    code: "BRD002",
+    name: "Velocity",
+    description: "High-speed and sports-focused",
+    status: "active",
+    createdAt: "2023-01-18",
+    updatedAt: "2023-10-15",
+    draftedAt: "2023-01-12",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "Yesterday",
+  },
+  {
+    id: "3",
+    code: "BRD003",
+    name: "Nimbus",
+    description: "Cloud-like comfort and reliability",
+    status: "active",
+    createdAt: "2023-02-01",
+    updatedAt: "2023-11-10",
+    draftedAt: "2023-01-25",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "Yesterday",
+  },
+  {
+    id: "4",
+    code: "BRD004",
+    name: "Quantum",
+    description: "Cutting-edge innovation",
+    status: "active",
+    createdAt: "2023-02-10",
+    updatedAt: "2023-11-05",
+    draftedAt: "2023-02-05",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "Yesterday",
+  },
+  {
+    id: "5",
+    code: "BRD005",
+    name: "Heritage",
+    description: "Classic and timeless design",
+    status: "active",
+    createdAt: "2023-02-15",
+    updatedAt: "2023-10-28",
+    draftedAt: "2023-02-08",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "1 day ago",
+  },
+  {
+    id: "6",
+    code: "BRD006",
+    name: "EcoLine",
+    description: "Sustainable, eco-friendly products",
     status: "draft",
+    createdAt: "2023-03-01",
+    updatedAt: "2023-11-15",
+    draftedAt: "2023-02-20",
     isActive: false,
-    isDeleted: false,
     isDraft: true,
-    isUpdated: false,
-    actionMessage: "Awaiting review",
-    createdAt: "2025-07-17T12:00:00Z",
-    updatedAt: "",
-    draftedAt: "2025-07-17T12:00:00Z",
-  },
-  {
-    itemId: "ITEM003",
-    quantityDamaged: 2,
-    damageDate: "2025-07-15",
-    reportedBy: "Ali Khan",
-    location: "Warehouse A",
-    damageType: "Expired",
-    id: "DAMAGE003",
-    status: "inactive",
-    isActive: false,
-    isDeleted: true,
-    isDraft: false,
-    isUpdated: false,
-    actionMessage: "Removed from stock",
-    createdAt: "2025-07-15T09:30:00Z",
-    updatedAt: "2025-07-16T10:00:00Z",
-    draftedAt: "",
-  },
-  {
-    itemId: "ITEM004",
-    quantityDamaged: 5,
-    damageDate: "2025-07-14",
-    reportedBy: "Fatema Begum",
-    location: "Warehouse C",
-    damageType: "Other",
-    id: "DAMAGE004",
-    status: "active",
-    isActive: true,
     isDeleted: false,
-    isDraft: false,
-    isUpdated: true,
-    actionMessage: "Partially repaired",
-    createdAt: "2025-07-14T11:15:00Z",
-    updatedAt: "2025-07-18T10:45:00Z",
-    draftedAt: "",
-  },
-  {
-    itemId: "ITEM005",
-    quantityDamaged: 4,
-    damageDate: "2025-07-13",
-    reportedBy: "Sadia Islam",
-    location: "Warehouse B",
-    damageType: "Handling",
-    id: "DAMAGE005",
-    status: "inactive",
-    isActive: false,
-    isDeleted: true,
-    isDraft: false,
     isUpdated: false,
-    actionMessage: "Marked for audit",
-    createdAt: "2025-07-13T13:45:00Z",
-    updatedAt: "2025-07-14T09:00:00Z",
-    draftedAt: "",
+    actionMessage: "1 day ago",
   },
   {
-    itemId: "ITEM006",
-    quantityDamaged: 2,
-    damageDate: "2025-07-12",
-    reportedBy: "Tariq Rahman",
-    location: "Warehouse A",
-    damageType: "Transit",
-    id: "DAMAGE006",
+    id: "7",
+    code: "BRD007",
+    name: "Metro",
+    description: "Urban style for everyday use",
     status: "active",
+    createdAt: "2023-03-10",
+    updatedAt: "2023-11-08",
+    draftedAt: "2023-03-05",
     isActive: true,
-    isDeleted: false,
     isDraft: false,
+    isDeleted: false,
     isUpdated: false,
-    actionMessage: "Replacement requested",
-    createdAt: "2025-07-12T14:20:00Z",
-    updatedAt: "2025-07-13T10:30:00Z",
-    draftedAt: "",
+    actionMessage: "1 day ago",
   },
   {
-    itemId: "ITEM007",
-    quantityDamaged: 1,
-    damageDate: "2025-07-11",
-    reportedBy: "Nusrat Jahan",
-    location: "Warehouse D",
-    damageType: "Expired",
-    id: "DAMAGE007",
+    id: "8",
+    code: "BRD008",
+    name: "TrailFox",
+    description: "Outdoor and rugged performance",
+    status: "inactive",
+    createdAt: "2023-03-20",
+    updatedAt: "2023-10-22",
+    draftedAt: "2023-03-15",
+    isActive: false,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "1 day ago",
+  },
+  {
+    id: "9",
+    code: "BRD009",
+    name: "Luxe",
+    description: "Luxury premium collection",
+    status: "active",
+    createdAt: "2023-04-01",
+    updatedAt: "2023-11-25",
+    draftedAt: "2023-03-25",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "1 day ago",
+  },
+  {
+    id: "10",
+    code: "BRD010",
+    name: "Craft",
+    description: "Handcrafted artisan series",
     status: "draft",
+    createdAt: "2023-04-10",
+    updatedAt: "2023-11-18",
+    draftedAt: "2023-04-05",
     isActive: false,
-    isDeleted: false,
     isDraft: true,
-    isUpdated: false,
-    actionMessage: "Pending supervisor review",
-    createdAt: "2025-07-11T08:00:00Z",
-    updatedAt: "",
-    draftedAt: "2025-07-11T08:00:00Z",
-  },
-  {
-    itemId: "ITEM008",
-    quantityDamaged: 7,
-    damageDate: "2025-07-10",
-    reportedBy: "Habib Hasan",
-    location: "Warehouse C",
-    damageType: "Other",
-    id: "DAMAGE008",
-    status: "active",
-    isActive: true,
     isDeleted: false,
-    isDraft: false,
-    isUpdated: true,
-    actionMessage: "Sent for inspection",
-    createdAt: "2025-07-10T10:10:00Z",
-    updatedAt: "2025-07-12T11:45:00Z",
-    draftedAt: "",
+    isUpdated: false,
+    actionMessage: "1 day ago",
   },
   {
-    itemId: "ITEM009",
-    quantityDamaged: 3,
-    damageDate: "2025-07-09",
-    reportedBy: "Mahmud Hossain",
-    location: "Warehouse A",
-    damageType: "Handling",
-    id: "DAMAGE009",
+    id: "11",
+    code: "BRD011",
+    name: "Fusion",
+    description: "Blend of style and function",
+    status: "active",
+    createdAt: "2023-04-15",
+    updatedAt: "2023-09-10",
+    draftedAt: "2023-04-10",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "1 day ago",
+  },
+  {
+    id: "12",
+    code: "BRD012",
+    name: "Vivid",
+    description: "Bold colors and expressive designs",
     status: "inactive",
+    createdAt: "2023-05-01",
+    updatedAt: "2023-11-12",
+    draftedAt: "2023-04-25",
     isActive: false,
-    isDeleted: true,
     isDraft: false,
-    isUpdated: false,
-    actionMessage: "Logged and closed",
-    createdAt: "2025-07-09T09:30:00Z",
-    updatedAt: "2025-07-10T09:00:00Z",
-    draftedAt: "",
-  },
-  {
-    itemId: "ITEM010",
-    quantityDamaged: 2,
-    damageDate: "2025-07-08",
-    reportedBy: "Farhana Akter",
-    location: "Warehouse B",
-    damageType: "Transit",
-    id: "DAMAGE010",
-    status: "active",
-    isActive: true,
     isDeleted: false,
-    isDraft: false,
     isUpdated: false,
-    actionMessage: "Investigation ongoing",
-    createdAt: "2025-07-08T15:00:00Z",
-    updatedAt: "2025-07-09T10:00:00Z",
-    draftedAt: "",
+    actionMessage: "1 day ago",
   },
   {
-    itemId: "ITEM011",
-    quantityDamaged: 6,
-    damageDate: "2025-07-07",
-    reportedBy: "Riyad Mahmud",
-    location: "Warehouse D",
-    damageType: "Handling",
-    id: "DAMAGE011",
+    id: "13",
+    code: "BRD013",
+    name: "Aurora",
+    description: "Elegant and minimalist",
+    status: "active",
+    createdAt: "2023-05-10",
+    updatedAt: "2023-10-30",
+    draftedAt: "2023-05-05",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "1 day ago",
+  },
+  {
+    id: "14",
+    code: "BRD014",
+    name: "Sonic",
+    description: "Audio and sound-oriented line",
     status: "draft",
+    createdAt: "2023-05-20",
+    updatedAt: "2023-11-02",
+    draftedAt: "2023-05-15",
     isActive: false,
-    isDeleted: false,
     isDraft: true,
+    isDeleted: false,
     isUpdated: false,
-    actionMessage: "Needs verification",
-    createdAt: "2025-07-07T08:30:00Z",
-    updatedAt: "",
-    draftedAt: "2025-07-07T08:30:00Z",
+    actionMessage: "1 day ago",
   },
   {
-    itemId: "ITEM012",
-    quantityDamaged: 9,
-    damageDate: "2025-07-06",
-    reportedBy: "Tanvir Ahmed",
-    location: "Warehouse A",
-    damageType: "Expired",
-    id: "DAMAGE012",
-    status: "inactive",
-    isActive: false,
-    isDeleted: true,
+    id: "15",
+    code: "BRD015",
+    name: "Titan",
+    description: "Heavy-duty durability",
+    status: "active",
+    createdAt: "2023-06-01",
+    updatedAt: "2023-11-08",
+    draftedAt: "2023-05-25",
+    isActive: true,
     isDraft: false,
+    isDeleted: false,
     isUpdated: false,
-    actionMessage: "Written off",
-    createdAt: "2025-07-06T07:45:00Z",
-    updatedAt: "2025-07-07T09:15:00Z",
-    draftedAt: "",
+    actionMessage: "1 day ago",
+  },
+  {
+    id: "16",
+    code: "BRD016",
+    name: "Zen",
+    description: "Calm aesthetics and simplicity",
+    status: "active",
+    createdAt: "2023-06-10",
+    updatedAt: "2023-10-25",
+    draftedAt: "2023-06-05",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "1 day ago",
+  },
+  {
+    id: "17",
+    code: "BRD017",
+    name: "Nova",
+    description: "Next-gen styling",
+    status: "inactive",
+    createdAt: "2023-06-15",
+    updatedAt: "2023-06-20",
+    draftedAt: "2023-06-12",
+    isActive: false,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "1 day ago",
+  },
+  {
+    id: "18",
+    code: "BRD018",
+    name: "Atlas",
+    description: "Travel and adventure line",
+    status: "draft",
+    createdAt: "2023-07-01",
+    updatedAt: "2023-11-15",
+    draftedAt: "2023-06-25",
+    isActive: false,
+    isDraft: true,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "1 day ago",
+  },
+  {
+    id: "19",
+    code: "BRD019",
+    name: "Pulse",
+    description: "Fitness and wellness",
+    status: "active",
+    createdAt: "2023-07-10",
+    updatedAt: "2023-10-18",
+    draftedAt: "2023-07-05",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "1 day ago",
+  },
+  {
+    id: "20",
+    code: "BRD020",
+    name: "Spark",
+    description: "Starter range and essentials",
+    status: "inactive",
+    createdAt: "2023-07-20",
+    updatedAt: "2023-09-15",
+    draftedAt: "2023-07-15",
+    isActive: false,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "1 day ago",
   },
 ];
 
-export default function ComponentLevelDataTable({
+export default function BrandsDataTable({
   viewMode,
   setViewMode,
   dataTableFilter,
+  searchQuery,
+  setShowExport,
+  showExport,
+  setShowFilter,
+  showFilter,
+  setShowVisibility,
+  showVisibility,
+  isFilterOpen,
+  setIsFilterOpen,
 }: {
   viewMode: string;
   setViewMode: (viewMode: string) => void;
   dataTableFilter: any;
+  searchQuery: string;
+  setShowExport: (showExport: boolean) => void;
+  showExport: boolean;
+  setShowFilter: (showFilter: boolean) => void;
+  showFilter: boolean;
+  setShowVisibility: (showVisibility: boolean) => void;
+  showVisibility: boolean;
+  isFilterOpen: boolean;
+  setIsFilterOpen: (isFilterOpen: boolean) => void;
 }) {
+  const { canCreate } = useColorsPermissions();
+  const isMobile = useIsMobile();
+
   const componentColumns = [
     {
-      accessorKey: "itemId",
-      title: "Item ID",
-      options: [...new Set(listTableData.map((item) => item.itemId))],
+      accessorKey: "name",
+      title: "Name",
+      options: [...new Set(mockBrands.map((item) => item.name))],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
         const cellValue = row.getValue(columnId) as string;
@@ -266,41 +366,19 @@ export default function ComponentLevelDataTable({
         );
       },
       sortingFn: (row1: any, row2: any) => {
-        return row1.getValue("itemId").localeCompare(row2.getValue("itemId"));
+        return row1.getValue("name").localeCompare(row2.getValue("name"));
       },
-      size: 180,
+      size: isMobile ? 120 : 180,
       minSize: 120,
       meta: {
-        exportLabel: "itemId",
+        exportLabel: "Name",
+        readOnly: !canCreate,
       },
     },
     {
-      accessorKey: "quantityDamaged",
-      title: "Quantity Damaged",
-      options: [...new Set(listTableData.map((item) => item.quantityDamaged))],
-      filterFn: (row: any, columnId: any, filterValue: any) => {
-        if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId);
-        return filterValue.some(
-          (filterVal: string | number) =>
-            String(cellValue) === String(filterVal)
-        );
-      },
-      sortingFn: (row1: any, row2: any) => {
-        return row1
-          .getValue("quantityDamaged")
-          .localeCompare(row2.getValue("quantityDamaged"));
-      },
-      size: 120,
-      minSize: 80,
-      meta: {
-        exportLabel: "quantityDamaged",
-      },
-    },
-    {
-      accessorKey: "damageDate",
-      title: "Damage Date",
-      options: [...new Set(listTableData.map((item) => item.damageDate))],
+      accessorKey: "code",
+      title: "Code",
+      options: [...new Set(mockBrands.map((item) => item.code))],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
         const cellValue = row.getValue(columnId) as string;
@@ -309,20 +387,19 @@ export default function ComponentLevelDataTable({
         );
       },
       sortingFn: (row1: any, row2: any) => {
-        return row1
-          .getValue("damageDate")
-          .localeCompare(row2.getValue("damageDate"));
+        return row1.getValue("code").localeCompare(row2.getValue("code"));
       },
-      size: 180,
-      minSize: 120,
+      size: isMobile ? 100 : 120,
+      minSize: 100,
       meta: {
-        exportLabel: "damageDate",
+        exportLabel: "Code",
+        readOnly: !canCreate,
       },
     },
     {
-      accessorKey: "reportedBy",
-      title: "Reported By",
-      options: [...new Set(listTableData.map((item) => item.reportedBy))],
+      accessorKey: "description",
+      title: "Description",
+      options: [...new Set(mockBrands.map((item) => item.description))],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
         const cellValue = row.getValue(columnId) as string;
@@ -332,92 +409,49 @@ export default function ComponentLevelDataTable({
       },
       sortingFn: (row1: any, row2: any) => {
         return row1
-          .getValue("reportedBy")
-          .localeCompare(row2.getValue("reportedBy"));
+          .getValue("description")
+          .localeCompare(row2.getValue("description"));
       },
-      size: 180,
-      minSize: 120,
+      size: isMobile ? 150 : 200,
+      minSize: 150,
       meta: {
-        exportLabel: "reportedBy",
+        exportLabel: "Description",
+        readOnly: !canCreate,
       },
     },
-    {
-      accessorKey: "location",
-      title: "Location",
-      options: [...new Set(listTableData.map((item) => item.location))],
-      filterFn: (row: any, columnId: any, filterValue: any) => {
-        if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as string;
-        return filterValue.some((filterVal: string) =>
-          cellValue.toLowerCase().includes(filterVal.toLowerCase())
-        );
-      },
-      sortingFn: (row1: any, row2: any) => {
-        return row1
-          .getValue("location")
-          .localeCompare(row2.getValue("location"));
-      },
-      size: 180,
-      minSize: 120,
-      meta: {
-        exportLabel: "location",
-      },
-    },
-    {
-      accessorKey: "damageType",
-      title: "Damage Type",
-      options: [...new Set(listTableData.map((item) => item.damageType))],
-      filterFn: (row: any, columnId: any, filterValue: any) => {
-        if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as string;
-        return filterValue.some((filterVal: string) =>
-          cellValue.toLowerCase().includes(filterVal.toLowerCase())
-        );
-      },
-      sortingFn: (row1: any, row2: any) => {
-        return row1
-          .getValue("damageType")
-          .localeCompare(row2.getValue("damageType"));
-      },
-      size: 180,
-      minSize: 120,
-      meta: {
-        exportLabel: "damageType",
-      },
-    },
-
-    {
-      accessorKey: "status",
-      title: "Status",
-      options: ["active", "inactive", "draft"],
-      filterFn: (row: any, columnId: any, filterValue: any) => {
-        if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as string;
-        return filterValue.includes(cellValue);
-      },
-      sortingFn: (row1: any, row2: any) => {
-        return row1.getValue("status").localeCompare(row2.getValue("status"));
-      },
-      size: 120,
-      minSize: 80,
-      meta: {
-        exportLabel: "status",
-      },
-    },
-
     {
       accessorKey: "createdAt",
       title: "Created",
       options: [], // Dates are typically not filtered with predefined options
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as string;
-        return filterValue.some((val: string) => cellValue.includes(val));
+        const dateValue = row.getValue(columnId) as string;
+        const date = new Date(dateValue);
+
+        // Check if the date is valid before calling toISOString
+        if (isNaN(date.getTime())) {
+          return false; // Invalid date, exclude from results
+        }
+
+        const cellValue = date.toISOString().split("T")[0];
+        return filterValue.includes(cellValue);
       },
       sortingFn: (row1: any, row2: any) => {
-        return row1
-          .getValue("createdAt")
-          .localeCompare(row2.getValue("createdAt"));
+        const date1 = new Date(row1.getValue("createdAt"));
+        const date2 = new Date(row2.getValue("createdAt"));
+
+        // Handle invalid dates by placing them at the end
+        if (isNaN(date1.getTime()) && isNaN(date2.getTime())) return 0;
+        if (isNaN(date1.getTime())) return 1;
+        if (isNaN(date2.getTime())) return -1;
+
+        return date1.getTime() - date2.getTime();
+      },
+      size: isMobile ? 150 : 180,
+      minSize: 150,
+      meta: {
+        exportLabel: "createdAt",
+        readOnly: true,
       },
     },
     {
@@ -426,13 +460,33 @@ export default function ComponentLevelDataTable({
       options: [], // Dates are typically not filtered with predefined options
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as string;
-        return filterValue.some((val: string) => cellValue.includes(val));
+        const dateValue = row.getValue(columnId) as string;
+        const date = new Date(dateValue);
+
+        // Check if the date is valid before calling toISOString
+        if (isNaN(date.getTime())) {
+          return false; // Invalid date, exclude from results
+        }
+
+        const cellValue = date.toISOString().split("T")[0];
+        return filterValue.includes(cellValue);
       },
       sortingFn: (row1: any, row2: any) => {
-        return row1
-          .getValue("updatedAt")
-          .localeCompare(row2.getValue("updatedAt"));
+        const date1 = new Date(row1.getValue("updatedAt"));
+        const date2 = new Date(row2.getValue("updatedAt"));
+
+        // Handle invalid dates by placing them at the end
+        if (isNaN(date1.getTime()) && isNaN(date2.getTime())) return 0;
+        if (isNaN(date1.getTime())) return 1;
+        if (isNaN(date2.getTime())) return -1;
+
+        return date1.getTime() - date2.getTime();
+      },
+      size: isMobile ? 150 : 180,
+      minSize: 150,
+      meta: {
+        exportLabel: "updatedAt",
+        readOnly: true,
       },
     },
     {
@@ -441,18 +495,38 @@ export default function ComponentLevelDataTable({
       options: [], // Dates are typically not filtered with predefined options
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as string;
-        return filterValue.some((val: string) => cellValue.includes(val));
+        const dateValue = row.getValue(columnId) as string;
+        const date = new Date(dateValue);
+
+        // Check if the date is valid before calling toISOString
+        if (isNaN(date.getTime())) {
+          return false; // Invalid date, exclude from results
+        }
+
+        const cellValue = date.toISOString().split("T")[0];
+        return filterValue.includes(cellValue);
       },
       sortingFn: (row1: any, row2: any) => {
-        return row1
-          .getValue("draftedAt")
-          .localeCompare(row2.getValue("draftedAt"));
+        const date1 = new Date(row1.getValue("draftedAt"));
+        const date2 = new Date(row2.getValue("draftedAt"));
+
+        // Handle invalid dates by placing them at the end
+        if (isNaN(date1.getTime())) return 1;
+        if (isNaN(date2.getTime())) return -1;
+
+        return date1.getTime() - date2.getTime();
+      },
+      size: isMobile ? 150 : 180,
+      minSize: 150,
+      meta: {
+        exportLabel: "draftedAt",
+        readOnly: true,
       },
     },
   ];
 
-  const filteredData = listTableData.filter((item) => {
+  const filteredData = mockBrands.filter((item: BrandItem) => {
+    // Brands use the same flags for demo
     if (dataTableFilter.status === "Active") {
       return item.isActive;
     } else if (dataTableFilter.status === "Inactive") {
@@ -469,11 +543,22 @@ export default function ComponentLevelDataTable({
 
   return (
     <FixedColumnDataTable
+      searchQuery={searchQuery}
       columnData={filteredData}
       viewMode={viewMode}
       setViewMode={setViewMode}
       componentColumns={componentColumns}
-      fixedColumns={[]} // Pin country name column
+      fixedColumns={["name", "code"]}
+      pathName="brands"
+      setShowExport={setShowExport}
+      showExport={showExport}
+      setShowFilter={setShowFilter}
+      showFilter={showFilter}
+      setShowVisibility={setShowVisibility}
+      showVisibility={showVisibility}
+      isFilterOpen={isFilterOpen}
+      setIsFilterOpen={setIsFilterOpen}
+      showImages={false}
     />
   );
 }

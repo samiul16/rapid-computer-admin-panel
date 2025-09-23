@@ -1,65 +1,48 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import video from "@/assets/videos/test.mp4";
-import ToggleStatusControls from "@/components/common/create-page-components/ToggleStatusControls";
 import EditableInput from "@/components/common/EditableInput";
-import LanguageTranslatorModal from "@/components/common/LanguageTranslatorModel";
-import PageLayout from "@/components/common/PageLayout";
 import GenericPDF from "@/components/common/pdf";
+import { ResetFormModal } from "@/components/common/ResetFormModal";
 import { Button } from "@/components/ui/button";
 import { PrintCommonLayout } from "@/lib/printContents/PrintCommonLayout";
 import { printHtmlContent } from "@/lib/printHtmlContent";
-import { toastError } from "@/lib/toast";
-import { Select } from "@mantine/core";
+import { toastError, toastRestore, toastSuccess } from "@/lib/toast";
 import { pdf } from "@react-pdf/renderer";
-import { useEffect, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
+import { Check, Edit, Eye, Plus } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import DynamicInputTableList from "./dynamic-input-table/DynamicInputTableList";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
-// Define OpeningStock interface
-interface OpeningStock {
-  id: string;
-  itemId: string;
-  quantityDamaged: number;
-  damageDate: Date | null | string;
+import { useColorsPermissions, usePermission } from "@/hooks/usePermissions";
+import { useLanguageLabels } from "@/hooks/useLanguageLabels";
+import { useAppSelector } from "@/store/hooks";
+import MinimizablePageLayout from "@/components/MinimizablePageLayout";
+import { SwitchSelect } from "@/components/common/SwitchAutoComplete";
 
-  reportedBy: string;
-  location: string;
-
-  damageType: "Transit" | "Handling" | "Expired" | "Other";
-
-  isActive: boolean;
+type BrandData = {
+  name: string;
+  code: string;
+  description: string;
+  status: "active" | "inactive" | "draft";
   isDefault: boolean;
+  isActive: boolean;
   isDraft: boolean;
   createdAt: Date | null;
   draftedAt: Date | null;
   updatedAt: Date | null;
   deletedAt: Date | null;
   isDeleted: boolean;
-}
+};
 
 type Props = {
   isEdit?: boolean;
 };
 
-const initialData: OpeningStock = {
-  id: "1",
-  itemId: "",
-  quantityDamaged: 0,
-  damageDate: "",
-  reportedBy: "",
-  location: "",
-  damageType: "Transit",
-  isActive: true,
+const initialData: BrandData = {
+  name: "Apex",
+  code: "BRD001",
+  description: "Premium performance brand",
+  status: "active",
   isDefault: false,
+  isActive: true,
   isDraft: false,
   createdAt: new Date(),
   draftedAt: null,
@@ -68,50 +51,81 @@ const initialData: OpeningStock = {
   isDeleted: false,
 };
 
-export default function DamageItemsCreatePage({ isEdit = false }: Props) {
-  const { t } = useTranslation();
+export default function BrandFormPage({ isEdit = false }: Props) {
   const navigate = useNavigate();
+  const labels = useLanguageLabels();
+  const { isRTL } = useAppSelector((state) => state.language);
+
   const [keepCreating, setKeepCreating] = useState(false);
-
   const formRef = useRef<HTMLFormElement>(null);
-  const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
-
   const [printEnabled, setPrintEnabled] = useState(false);
   const [pdfChecked, setPdfChecked] = useState(false);
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  const [formKey, setFormKey] = useState(0);
+  const [isDefaultState, setIsDefaultState] = useState<"Yes" | "No">("No");
 
-  // Date picker state
-  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  // Permission checks
+  const { canCreate, canView } = useColorsPermissions();
 
-  // Translation state
-  const [translations, setTranslations] = useState([
-    { id: 1, english: "", arabic: "", bangla: "" },
-  ]);
+  // Field-level permissions
+  const name: boolean = usePermission("brands", "create", "name");
+  const code: boolean = usePermission("brands", "create", "code");
+  const description: boolean = usePermission("brands", "create", "description");
+  const status: boolean = usePermission("brands", "create", "status");
+  const isDefault: boolean = usePermission("brands", "create", "isDefault");
+  const canPdf: boolean = usePermission("brands", "pdf");
+  const canPrint: boolean = usePermission("brands", "print");
 
   // Form state
-  const [formData, setFormData] = useState<OpeningStock>({
-    id: "",
-    itemId: "",
-    quantityDamaged: 0,
-    damageDate: "",
-    reportedBy: "",
-    location: "",
-    damageType: "Transit",
-    isActive: true,
+  const [formData, setFormData] = useState<BrandData>({
+    name: "",
+    code: "",
+    description: "",
+    status: "active",
     isDefault: false,
+    isActive: true,
     isDraft: false,
-    createdAt: new Date(),
-    draftedAt: null,
-    updatedAt: new Date(),
-    deletedAt: null,
     isDeleted: false,
+    createdAt: null,
+    draftedAt: null,
+    updatedAt: null,
+    deletedAt: null,
   });
 
-  // Update translation data when remarks change
+  // Initialize with edit data if available
   useEffect(() => {
-    setTranslations([
-      { id: 1, english: formData.damageType || "", arabic: "", bangla: "" },
-    ]);
-  }, [formData.damageType]);
+    if (isEdit && initialData) {
+      setFormData(initialData);
+      setIsDefaultState(initialData.isDefault ? "Yes" : "No");
+    }
+  }, [isEdit]);
+
+  const [popoverOptions, setPopoverOptions] = useState([
+    {
+      label: isEdit ? "Create" : "Edit",
+      icon: isEdit ? (
+        <Plus className="w-5 h-5 text-green-500" />
+      ) : (
+        <Edit className="w-5 h-5 text-blue-500" />
+      ),
+      onClick: () => {
+        if (isEdit) {
+          navigate("/brands/create");
+        } else {
+          navigate("/brands/edit/undefined");
+        }
+      },
+      show: canCreate,
+    },
+    {
+      label: "View",
+      icon: <Eye className="w-5 h-5 text-green-600" />,
+      onClick: () => {
+        navigate("/brands/view");
+      },
+      show: canView,
+    },
+  ]);
 
   // focus next input field
   const inputRefs = useRef<Record<string, HTMLElement | null>>({});
@@ -122,105 +136,83 @@ export default function DamageItemsCreatePage({ isEdit = false }: Props) {
     inputRefs.current[nextField]?.focus();
   };
 
-  const itemIdData = [
-    { id: 1, value: "Item 1", label: "Item 1" },
-    { id: 2, value: "Item 2", label: "Item 2" },
-    { id: 3, value: "Item 3", label: "Item 3" },
-  ];
-
-  const getRelativeTime = (dateString: string | null | Date) => {
-    if (!dateString) return "--/--/----";
-
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInMs = now.getTime() - date.getTime();
-
-    const minutes = Math.floor(diffInMs / (1000 * 60));
-    const hours = Math.floor(diffInMs / (1000 * 60 * 60));
-    const days = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
-    const months = Math.floor(diffInMs / (1000 * 60 * 60 * 24 * 30));
-    const years = Math.floor(diffInMs / (1000 * 60 * 60 * 24 * 365));
-
-    if (years > 0) {
-      return `${years}y ago`;
-    } else if (months > 0) {
-      return `${months}mo ago`;
-    } else if (days > 0) {
-      return `${days}d ago`;
-    } else if (hours > 0) {
-      return `${hours}h ago`;
-    } else if (minutes > 0) {
-      return `${minutes}m ago`;
-    } else {
-      return "Just now";
-    }
-  };
-
-  // Initialize with edit data if available
-  useEffect(() => {
-    if (isEdit && initialData) {
-      setFormData({
-        ...initialData,
-      });
-    }
-  }, [isEdit, initialData]);
-
   // Handle form field changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
-    setFormData({
+    const newFormData = {
       ...formData,
       [name]: type === "checkbox" ? checked : value,
-    });
+    };
+    setFormData(newFormData);
   };
 
   // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Opening Stock Form submitted:", formData);
-  };
 
-  // Handle form reset
-  const handleReset = () => {
-    if (window.confirm(t("form.resetConfirm"))) {
-      setFormData({
-        id: "",
-        itemId: "",
-        quantityDamaged: 0,
-        damageDate: "",
-        reportedBy: "",
-        location: "",
-        damageType: "Transit",
-        isActive: true,
-        isDefault: false,
-        isDraft: false,
-        createdAt: new Date(),
-        draftedAt: null,
-        updatedAt: new Date(),
-        deletedAt: null,
-        isDeleted: false,
-      });
-      if (formRef.current) {
-        formRef.current.reset();
-      }
+    if (pdfChecked) {
+      await handleExportPDF();
+    }
+    if (printEnabled) {
+      handlePrintBrand(formData);
+    }
+
+    // keep switch functionality
+    if (keepCreating) {
+      toastSuccess("Brand created successfully!");
+      handleReset();
+    } else {
+      toastSuccess("Brand created successfully!");
+      navigate("/brands");
     }
   };
 
-  const handlePrintOpeningStock = (stockData: any) => {
+  const handleResetClick = () => {
+    setIsResetModalOpen(true);
+  };
+
+  const handleReset = async () => {
+    setFormData({
+      name: "",
+      code: "",
+      description: "",
+      status: "active",
+      isDefault: false,
+      isActive: true,
+      isDraft: false,
+      isDeleted: false,
+      createdAt: new Date(),
+      draftedAt: null,
+      updatedAt: new Date(),
+      deletedAt: null,
+    });
+    setIsDefaultState("No");
+
+    if (formRef.current) {
+      formRef.current.reset();
+    }
+
+    // Force re-render of all inputs by changing key
+    setFormKey((prev) => prev + 1);
+
+    // Focus the first input field after reset
+    setTimeout(() => {
+      inputRefs.current["name"]?.focus();
+    }, 100);
+  };
+
+  const handlePrintBrand = (brandData: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "Damage Items Details",
-        data: [stockData],
+        title: "Brand Details",
+        data: [brandData],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
-          itemId: "Item ID",
-          quantityDamaged: "Quantity Damaged",
-          damageDate: "Damage Date",
-          reportedBy: "Reported By",
-          location: "Location",
-          damageType: "Damage Type",
+          name: "Brand Name",
+          code: "Brand Code",
+          description: "Description",
+          status: "Status",
           isActive: "Active Status",
-          isDefault: "Default Status",
           isDraft: "Draft Status",
           isDeleted: "Deleted Status",
           createdAt: "Created At",
@@ -238,42 +230,27 @@ export default function DamageItemsCreatePage({ isEdit = false }: Props) {
 
   const handleSwitchChange = (checked: boolean) => {
     setPrintEnabled(checked);
-    if (checked && formData) {
-      // Small delay to allow switch animation to complete
-      setTimeout(() => handlePrintOpeningStock(formData), 100);
-    }
   };
 
   const handlePDFSwitchChange = (pdfChecked: boolean) => {
     setPdfChecked(pdfChecked);
-    if (pdfChecked) {
-      // Small delay to allow switch animation to complete
-      setTimeout(() => handleExportPDF(), 100);
-    }
   };
 
   const handleExportPDF = async () => {
-    console.log("Export PDF clicked");
     try {
-      console.log("damageItemsData on pdf click", formData);
       const blob = await pdf(
         <GenericPDF
           data={[formData]}
-          title="Damage Items Details"
-          subtitle="Damage Items Information"
+          title="Brand Details"
+          subtitle="Brand Information"
         />
       ).toBlob();
 
-      console.log("blob", blob);
-
       const url = URL.createObjectURL(blob);
-      console.log("url", url);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "damage-items-details.pdf";
+      a.download = "brand-details.pdf";
       a.click();
-      console.log("a", a);
-      console.log("url", url);
       URL.revokeObjectURL(url);
     } catch (error) {
       console.log(error);
@@ -281,299 +258,271 @@ export default function DamageItemsCreatePage({ isEdit = false }: Props) {
     }
   };
 
+  useEffect(() => {
+    setPopoverOptions((prevOptions) => {
+      // Filter out any existing draft option first
+      const filteredOptions = prevOptions.filter(
+        (opt) => opt.label !== "Draft"
+      );
+
+      // Add draft option only if not already a draft
+      if (!formData.isDraft) {
+        return [
+          ...filteredOptions,
+          {
+            label: "Draft",
+            icon: <Check className="text-green-500" />,
+            onClick: () => {
+              setFormData((prev) => ({
+                ...prev,
+                isDraft: true,
+              }));
+              toastRestore("Brand saved as draft successfully");
+            },
+            show: canCreate,
+          },
+        ];
+      }
+      return filteredOptions;
+    });
+  }, [formData.isDraft, canCreate]);
+
+  // Create minimize handler
+  const handleMinimize = useCallback(() => {
+    return {
+      formData,
+      hasChanges: true,
+      scrollPosition: window.scrollY,
+    };
+  }, [formData]);
+
   return (
     <>
-      <PageLayout
-        title={
-          isEdit ? t("form.editingDamageItems") : t("form.creatingDamageItems")
+      <MinimizablePageLayout
+        moduleId="brand-form-module"
+        moduleName={isEdit ? "Edit Brand" : "Adding Brand"}
+        moduleRoute={
+          isEdit ? `/brands/edit/${formData.name || "new"}` : "/brands/create"
         }
+        onMinimize={handleMinimize}
+        title={isEdit ? "Edit Brand" : "Add Brand"}
+        listPath="brands"
+        popoverOptions={popoverOptions}
         videoSrc={video}
-        videoHeader="Rapid ERP Video"
-        listPath="/damage-items"
-        popoverOptions={[
-          {
-            label: isEdit ? "Create" : "Edit",
-            onClick: () => {
-              // Handle navigation based on current state
-              if (isEdit) {
-                // Navigate to create page
-                navigate("/damage-items/create");
-              } else {
-                // Navigate to edit page
-                navigate("/damage-items/edit/undefined");
-              }
-            },
-          },
-          {
-            label: "View",
-            onClick: () => {
-              navigate("/damage-items/view");
-            },
-          },
-        ]}
+        videoHeader="Tutorial video"
         keepChanges={keepCreating}
         onKeepChangesChange={setKeepCreating}
         pdfChecked={pdfChecked}
-        onPdfToggle={handlePDFSwitchChange}
+        onPdfToggle={canPdf ? handlePDFSwitchChange : undefined}
         printEnabled={printEnabled}
-        onPrintToggle={handleSwitchChange}
+        onPrintToggle={canPrint ? handleSwitchChange : undefined}
+        activePage="create"
+        module="brands"
         additionalFooterButtons={
-          <div className="flex gap-4">
-            <Button
-              variant="outline"
-              className="gap-2 text-primary rounded-full border-primary"
-              onClick={handleReset}
-            >
-              {t("button.reset")}
-            </Button>
-            <Button
-              variant="outline"
-              className="gap-2 text-primary rounded-full border-primary"
-              onClick={() => formRef.current?.requestSubmit()}
-            >
-              {t("button.submit")}
-            </Button>
-          </div>
+          canCreate ? (
+            <div className="flex gap-4 max-[435px]:gap-2">
+              <Button
+                variant="outline"
+                className="gap-2 hover:bg-primary/90! bg-white dark:bg-gray-900 rounded-full border-primary w-28 max-[435px]:w-20 font-semibold! text-primary!"
+                onClick={handleResetClick}
+              >
+                {labels.reset}
+              </Button>
+              <Button
+                variant="outline"
+                className="gap-2 hover:bg-primary/90 bg-white dark:bg-gray-900 rounded-full border-primary w-28 max-[435px]:w-20 font-semibold! text-primary!"
+                onClick={handleSubmit}
+              >
+                {labels.submit}
+              </Button>
+            </div>
+          ) : null
         }
         className="w-full"
       >
-        <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
-          {/* First Row: Document Number, Branch, P.O Number, Document Date, Remarks */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">
-                Item ID <span className="text-red-500">*</span>
-              </h3>
-              <Select
-                ref={(el) => setRef("itemId")(el as HTMLElement)}
-                id="itemId"
-                name="itemId"
-                className="w-full h-10"
-                value={formData.itemId}
-                onChange={(value) => {
-                  if (value) {
-                    setFormData({
-                      ...formData,
-                      itemId: value,
-                    });
-                  }
-                  // Call focusNextInput if needed
-                  focusNextInput("quantityDamaged");
-                }}
-                data={itemIdData.map((item) => item.value)}
-                placeholder="Select a customer id..."
-                searchable
-                clearable
-                required
-                styles={{
-                  input: {
-                    height: "40px",
-                    "&:focus": {
-                      borderColor: "var(--primary)",
-                    },
-                  },
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    focusNextInput("quantityDamaged");
-                  }
-                }}
-              />
-            </div>
+        <div dir={isRTL ? "rtl" : "ltr"}>
+          <form
+            ref={formRef}
+            key={formKey}
+            onSubmit={handleSubmit}
+            className="space-y-6 relative"
+          >
+            {/* First Row: Brand Name, Code, Description */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
+              {/* Brand Name field - only show if user can create */}
+              {name && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("name")}
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("code")}
+                    onCancel={() => setFormData({ ...formData, name: "" })}
+                    labelText="Brand Name"
+                    tooltipText="Enter the brand name"
+                    required
+                  />
+                </div>
+              )}
 
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">Quantity Damaged</h3>
-              <EditableInput
-                setRef={setRef("quantityDamaged")}
-                id="quantityDamaged"
-                name="quantityDamaged"
-                className="w-full h-10"
-                value={formData.quantityDamaged.toString() || ""}
-                onChange={handleChange}
-                onNext={() => focusNextInput("damageDate")}
-                onCancel={() => {}}
-                tooltipText="Please enter quantity damaged"
-              />
-            </div>
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">
-                Document Date <span className="text-red-500">*</span>
-              </h3>
-              <Popover
-                open={isDatePickerOpen}
-                onOpenChange={setIsDatePickerOpen}
-              >
-                <PopoverTrigger asChild>
-                  <Button
-                    name="damageDate"
-                    ref={(el) => setRef("damageDate")(el as HTMLButtonElement)}
-                    data-testid="date-picker-trigger"
-                    variant="outline"
-                    className={cn(
-                      "w-full h-10 justify-start text-left font-normal",
-                      !formData.damageDate && "text-muted-foreground"
-                    )}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        focusNextInput("reportedBy");
+              {/* Brand Code field - only show if user can create */}
+              {code && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("code")}
+                    id="code"
+                    name="code"
+                    value={formData.code}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("description")}
+                    onCancel={() => setFormData({ ...formData, code: "" })}
+                    labelText="Brand Code"
+                    tooltipText="Enter the brand code (e.g., BRD001)"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Description field - only show if user can create */}
+              {description && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("description")}
+                    id="description"
+                    name="description"
+                    value={formData.description}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("status")}
+                    onCancel={() =>
+                      setFormData({ ...formData, description: "" })
+                    }
+                    labelText="Description"
+                    tooltipText="Enter a description for the brand"
+                    type="text"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Default field - only show if user can create */}
+              {isDefault && (
+                <div className="space-y-2 relative">
+                  <SwitchSelect
+                    ref={(el: any) => setRef("isDefault")(el)}
+                    id="isDefault"
+                    name="isDefault"
+                    multiSelect={false}
+                    options={[
+                      {
+                        label: labels.yes,
+                        value: labels.yes,
+                        date: "Set default brand",
+                      },
+                      {
+                        label: labels.no,
+                        value: labels.no,
+                        date: "Remove default brand",
+                      },
+                    ]}
+                    value={isDefaultState === "Yes" ? labels.yes : labels.no}
+                    labelClassName="rounded-lg"
+                    onValueChange={(value: string | string[]) => {
+                      const isYes = Array.isArray(value)
+                        ? value[0] === labels.yes
+                        : value === labels.yes;
+                      setIsDefaultState(isYes ? "Yes" : "No");
+                      const newValue = isYes;
+                      setFormData((prev) => ({
+                        ...prev,
+                        isDefault: newValue,
+                      }));
+                    }}
+                    onEnterPress={() => {
+                      if (
+                        formData.isDefault === true ||
+                        formData.isDefault === false
+                      ) {
+                        // Form submission or next action
                       }
                     }}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.damageDate ? (
-                      format(new Date(formData.damageDate), "PPP")
-                    ) : (
-                      <span>Pick a date</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={
-                      formData.damageDate
-                        ? new Date(formData.damageDate)
-                        : undefined
-                    }
-                    onSelect={(date) => {
-                      setFormData({
-                        ...formData,
-                        damageDate: date || new Date(),
-                      });
-                      setIsDatePickerOpen(false);
-                      focusNextInput("reportedBy");
-                    }}
-                    initialFocus
+                    placeholder=" "
+                    labelText="Default"
+                    className="relative"
+                    tooltipText="Set as default brand"
                   />
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">Reported By</h3>
-              <EditableInput
-                setRef={setRef("reportedBy")}
-                id="reportedBy"
-                name="reportedBy"
-                className="w-full h-10"
-                value={formData.reportedBy.toString() || ""}
-                onChange={handleChange}
-                onNext={() => focusNextInput("location")}
-                onCancel={() => {}}
-                tooltipText="Please enter reported by"
-              />
-            </div>
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">Location</h3>
-              <EditableInput
-                setRef={setRef("location")}
-                id="location"
-                name="location"
-                className="w-full h-10"
-                value={formData.location.toString() || ""}
-                onChange={handleChange}
-                onNext={() => focusNextInput("damageType")}
-                onCancel={() => {}}
-                tooltipText="Please enter location"
-              />
+                </div>
+              )}
             </div>
 
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">Damage Type</h3>
-              <Select
-                ref={(el) => setRef("damageType")(el as HTMLElement)}
-                id="damageType"
-                name="damageType"
-                className="w-full h-10"
-                value={formData.damageType}
-                onChange={(value) => {
-                  if (
-                    value === "Transit" ||
-                    value === "Handling" ||
-                    value === "Expired" ||
-                    value === "Other"
-                  ) {
-                    setFormData({
-                      ...formData,
-                      damageType: value,
-                    });
-                  }
-                  // Call focusNextInput if needed
-                  focusNextInput("isDefault");
-                }}
-                data={["Transit", "Handling", "Expired", "Other"]}
-                placeholder="Select a customer id..."
-                searchable
-                clearable
-                required
-                styles={{
-                  input: {
-                    height: "40px",
-                    "&:focus": {
-                      borderColor: "var(--primary)",
-                    },
-                  },
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    focusNextInput("isDefault");
-                  }
-                }}
-              />
-            </div>
-          </div>
+            {/* Second Row: Default and Status */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
+              {/* Status field - only show if user can create */}
+              {status && (
+                <div className="space-y-2">
+                  <SwitchSelect
+                    ref={(el: any) => setRef("statusSwitch")(el)}
+                    id="statusSwitch"
+                    name="statusSwitch"
+                    labelText="Status"
+                    multiSelect={false}
+                    options={[
+                      {
+                        label: "Active",
+                        value: "active",
+                        date: "Set active",
+                      },
+                      {
+                        label: "Inactive",
+                        value: "inactive",
+                        date: "Set inactive",
+                      },
+                      {
+                        label: "Draft",
+                        value: "draft",
+                        date: "Set draft",
+                      },
+                    ]}
+                    value={formData.status}
+                    onValueChange={(value: string | string[]) => {
+                      const stringValue = Array.isArray(value)
+                        ? value[0] || ""
+                        : value;
 
-          {/* Second Row: Status Switches */}
-          {/* Toggle Status Control */}
-          <ToggleStatusControls
-            formData={formData as any}
-            setFormData={setFormData as any}
-            focusNextInput={focusNextInput}
-            setRef={setRef}
-          />
+                      setFormData((prev) => ({
+                        ...prev,
+                        status: stringValue as "active" | "inactive" | "draft",
+                        isDraft: stringValue === "draft",
+                        isActive: stringValue === "active",
+                      }));
+                    }}
+                    placeholder=""
+                    styles={{
+                      input: {
+                        borderColor: "var(--primary)",
+                        "&:focus": {
+                          borderColor: "var(--primary)",
+                        },
+                      },
+                    }}
+                    tooltipText="Set the brand status"
+                  />
+                </div>
+              )}
+            </div>
+          </form>
+        </div>
+      </MinimizablePageLayout>
 
-          {/* Third Row: Timestamps */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <h3 className="font-medium mb-1">{t("common.created")}</h3>
-              <p className="text-gray-500 text-sm">
-                {getRelativeTime(formData.createdAt)}
-              </p>
-            </div>
-            <div>
-              <h3 className="font-medium mb-1">{t("common.updated")}</h3>
-              <p className="text-gray-500 text-sm">
-                {getRelativeTime(formData.updatedAt)}
-              </p>
-            </div>
-            <div>
-              <h3 className="font-medium mb-1">{t("common.drafted")}</h3>
-              <p className="text-gray-500 text-sm">
-                {getRelativeTime(formData.draftedAt)}
-              </p>
-            </div>
-            <div>
-              <h3 className="font-medium mb-1">{t("common.deleted")}</h3>
-              <p className="text-gray-500 text-sm">
-                {getRelativeTime(formData.deletedAt)}
-              </p>
-            </div>
-          </div>
-
-          {/* Dynamic Input Table */}
-          <DynamicInputTableList />
-        </form>
-      </PageLayout>
-
-      {/* Language Translator Modal */}
-      <LanguageTranslatorModal
-        isOpen={isOptionModalOpen}
-        onClose={() => setIsOptionModalOpen(false)}
-        title="Opening Stock Language Translator"
-        initialData={translations}
-        onSave={(data) => {
-          setTranslations(data);
-          console.log("Opening Stock translations saved:", data);
-        }}
+      <ResetFormModal
+        opened={isResetModalOpen}
+        onClose={() => setIsResetModalOpen(false)}
+        onConfirm={handleReset}
+        title={labels.resetForm}
+        message={labels.resetFormMessage}
+        confirmText={labels.resetFormConfirm}
+        cancelText={labels.cancel}
       />
     </>
   );
