@@ -18,6 +18,7 @@ import MinimizablePageLayout from "@/components/MinimizablePageLayout";
 import { useMinimizedModuleData } from "@/hooks/useMinimizedModuleData";
 import { SwitchSelect } from "@/components/common/SwitchAutoComplete";
 import { ActionsAutocomplete } from "@/components/common/ActionsAutocomplete";
+import DynamicInputTableList from "./dynamic-input-table/DynamicInputTableList";
 
 type DamageItemData = {
   itemId: string;
@@ -573,68 +574,6 @@ export default function DamageItemEditPage({ isEdit = true }: Props) {
                   />
                 </div>
               )}
-
-              {/* Status field - only show if user can edit */}
-              {statusPerm && (
-                <div className="space-y-2">
-                  <SwitchSelect
-                    ref={(el: any) => setRef("status")(el)}
-                    id="status"
-                    name="status"
-                    labelText="Status"
-                    multiSelect={false} // Single select mode
-                    options={[
-                      {
-                        label: "Active",
-                        value: "Active",
-                        date: "Set active",
-                      },
-                      {
-                        label: "Inactive",
-                        value: "Inactive",
-                        date: "Set inactive",
-                      },
-                      {
-                        label: "Draft",
-                        value: "Draft",
-                        date: "Set draft",
-                      },
-                      {
-                        label: "Deleted",
-                        value: "Deleted",
-                        date: "Set deleted",
-                      },
-                    ]}
-                    value={formData.status}
-                    onValueChange={(value: string | string[]) => {
-                      const stringValue = Array.isArray(value)
-                        ? value[0] || ""
-                        : value;
-                      setFormData((prev) => ({
-                        ...prev,
-                        status: stringValue as
-                          | "Active"
-                          | "Inactive"
-                          | "Draft"
-                          | "Deleted",
-                        isDeleted: stringValue === "Deleted",
-                        isDraft: stringValue === "Draft",
-                        isActive: stringValue === "Active",
-                      }));
-                    }}
-                    placeholder=""
-                    styles={{
-                      input: {
-                        borderColor: "var(--primary)",
-                        "&:focus": {
-                          borderColor: "var(--primary)",
-                        },
-                      },
-                    }}
-                    tooltipText="Set the damage item status"
-                  />
-                </div>
-              )}
             </div>
 
             {/* Second Row: Location, Damage Type, Default, Actions */}
@@ -725,6 +664,67 @@ export default function DamageItemEditPage({ isEdit = true }: Props) {
                   />
                 </div>
               )}
+              {/* Status field - only show if user can edit */}
+              {statusPerm && (
+                <div className="space-y-2">
+                  <SwitchSelect
+                    ref={(el: any) => setRef("status")(el)}
+                    id="status"
+                    name="status"
+                    labelText="Status"
+                    multiSelect={false} // Single select mode
+                    options={[
+                      {
+                        label: "Active",
+                        value: "Active",
+                        date: "Set active",
+                      },
+                      {
+                        label: "Inactive",
+                        value: "InActive",
+                        date: "Set inactive",
+                      },
+                      {
+                        label: "Draft",
+                        value: "Draft",
+                        date: "Set draft",
+                      },
+                      {
+                        label: "Delete",
+                        value: "Delete",
+                        date: "Set deleted",
+                      },
+                    ]}
+                    value={formData.status}
+                    onValueChange={(value: string | string[]) => {
+                      const stringValue = Array.isArray(value)
+                        ? value[0] || ""
+                        : value;
+                      setFormData((prev) => ({
+                        ...prev,
+                        status: stringValue as
+                          | "Active"
+                          | "Inactive"
+                          | "Draft"
+                          | "Deleted",
+                        isDeleted: stringValue === "Delete",
+                        isDraft: stringValue === "Draft",
+                        isActive: stringValue === "Active",
+                      }));
+                    }}
+                    placeholder=""
+                    styles={{
+                      input: {
+                        borderColor: "var(--primary)",
+                        "&:focus": {
+                          borderColor: "var(--primary)",
+                        },
+                      },
+                    }}
+                    tooltipText="Set the damage item status"
+                  />
+                </div>
+              )}
 
               {/* Actions */}
               <div className="space-y-2">
@@ -779,6 +779,11 @@ export default function DamageItemEditPage({ isEdit = true }: Props) {
                   tooltipText="Damage Item Action History"
                 />
               </div>
+            </div>
+
+            {/* Dynamic Input Table List */}
+            <div className="mt-8">
+              <DynamicInputTableList isEdit={isEdit} />
             </div>
           </form>
         </div>
