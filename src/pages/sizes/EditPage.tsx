@@ -19,11 +19,11 @@ import { useMinimizedModuleData } from "@/hooks/useMinimizedModuleData";
 import { SwitchSelect } from "@/components/common/SwitchAutoComplete";
 import { ActionsAutocomplete } from "@/components/common/ActionsAutocomplete";
 
-type ColorData = {
+type SizeData = {
   name: string;
   code: string;
+  value: string;
   description: string;
-  hexCode: string;
   status: "active" | "inactive" | "draft";
   isDefault: boolean;
   isActive: boolean;
@@ -35,8 +35,8 @@ type ColorData = {
   deletedAt: Date | null;
 };
 
-type ColorModuleData = {
-  formData: ColorData;
+type SizeModuleData = {
+  formData: SizeData;
   hasChanges: boolean;
   scrollPosition: number;
 };
@@ -45,11 +45,11 @@ type Props = {
   isEdit?: boolean;
 };
 
-const initialData: ColorData = {
-  name: "Ocean Blue",
-  code: "BLU001",
-  description: "A beautiful ocean blue color",
-  hexCode: "#3B82F6",
+const initialData: SizeData = {
+  name: "Small",
+  code: "SZ001",
+  value: "S",
+  description: "Standard small size suitable for compact items",
   status: "active",
   isDefault: false,
   isActive: true,
@@ -61,14 +61,14 @@ const initialData: ColorData = {
   deletedAt: null,
 };
 
-export default function ColorEditPage({ isEdit = true }: Props) {
+export default function SizeEditPage({ isEdit = true }: Props) {
   const navigate = useNavigate();
   const { id } = useParams();
   // const labels = useLanguageLabels();
   const { isRTL } = useAppSelector((state) => state.language);
 
   // Get module ID for this edit page
-  const moduleId = `color-edit-module-${id || "new"}`;
+  const moduleId = `size-edit-module-${id || "new"}`;
 
   // Use the custom hook for minimized module data
   const {
@@ -76,7 +76,7 @@ export default function ColorEditPage({ isEdit = true }: Props) {
     hasMinimizedData,
     resetModuleData,
     getModuleScrollPosition,
-  } = useMinimizedModuleData<ColorModuleData>(moduleId);
+  } = useMinimizedModuleData<SizeModuleData>(moduleId);
 
   const [keepCreating, setKeepCreating] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
@@ -97,21 +97,21 @@ export default function ColorEditPage({ isEdit = true }: Props) {
   const { canCreate, canView } = useColorsPermissions();
 
   // Field-level permissions
-  const name: boolean = usePermission("colors", "edit", "name");
-  const code: boolean = usePermission("colors", "edit", "code");
-  const description: boolean = usePermission("colors", "edit", "description");
-  const hexCode: boolean = usePermission("colors", "edit", "hexCode");
-  const status: boolean = usePermission("colors", "edit", "status");
-  const isDefault: boolean = usePermission("colors", "edit", "isDefault");
-  const canPdf: boolean = usePermission("colors", "pdf");
-  const canPrint: boolean = usePermission("colors", "print");
+  const name: boolean = usePermission("sizes", "edit", "name");
+  const code: boolean = usePermission("sizes", "edit", "code");
+  const valuePerm: boolean = usePermission("sizes", "edit", "value");
+  const description: boolean = usePermission("sizes", "edit", "description");
+  const status: boolean = usePermission("sizes", "edit", "status");
+  const isDefault: boolean = usePermission("sizes", "edit", "isDefault");
+  const canPdf: boolean = usePermission("sizes", "pdf");
+  const canPrint: boolean = usePermission("sizes", "print");
 
   // Form state
-  const [formData, setFormData] = useState<ColorData>({
+  const [formData, setFormData] = useState<SizeData>({
     name: "",
     code: "",
+    value: "",
     description: "",
-    hexCode: "",
     status: "active",
     isDefault: false,
     isActive: true,
@@ -187,6 +187,7 @@ export default function ColorEditPage({ isEdit = true }: Props) {
     ) {
       setFormData(initialData);
       setIsDefaultState(initialData.isDefault ? "Yes" : "No");
+      setIsDefaultState(initialData.isDefault ? "Yes" : "No");
     }
   }, [isEdit, hasMinimizedData, isRestoredFromMinimized, moduleId]);
 
@@ -208,16 +209,16 @@ export default function ColorEditPage({ isEdit = true }: Props) {
       await handleExportPDF();
     }
     if (printEnabled) {
-      handlePrintColor(formData);
+      handlePrintSize(formData);
     }
 
     // keep switch functionality
     if (keepCreating) {
-      toastSuccess("Color updated successfully!");
+      toastSuccess("Size updated successfully!");
       handleReset();
     } else {
-      toastSuccess("Color updated successfully!");
-      navigate("/colors");
+      toastSuccess("Size updated successfully!");
+      navigate("/sizes");
     }
   };
 
@@ -226,8 +227,8 @@ export default function ColorEditPage({ isEdit = true }: Props) {
     setFormData({
       name: "",
       code: "",
+      value: "",
       description: "",
-      hexCode: "",
       status: "active",
       isDefault: false,
       isActive: true,
@@ -268,19 +269,19 @@ export default function ColorEditPage({ isEdit = true }: Props) {
     setIsResetModalOpen(true);
   };
 
-  const handlePrintColor = (colorData: any) => {
+  const handlePrintSize = (sizeData: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "Color Details",
-        data: [colorData],
+        title: "Size Details",
+        data: [sizeData],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
-          name: "Color Name",
-          code: "Color Code",
+          name: "Size Name",
+          code: "Size Code",
+          value: "Value",
           description: "Description",
-          hexCode: "Hex Code",
           status: "Status",
-          isDefault: "Default Color",
+          isDefault: "Default Size",
           isActive: "Active Status",
           isDraft: "Draft Status",
           isDeleted: "Deleted Status",
@@ -310,15 +311,15 @@ export default function ColorEditPage({ isEdit = true }: Props) {
       const blob = await pdf(
         <GenericPDF
           data={[formData]}
-          title="Color Details"
-          subtitle="Color Information"
+          title="Size Details"
+          subtitle="Size Information"
         />
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "color-details.pdf";
+      a.download = "size-details.pdf";
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
@@ -332,7 +333,7 @@ export default function ColorEditPage({ isEdit = true }: Props) {
       label: "Create",
       icon: <Plus className="w-5 h-5 text-green-500" />,
       onClick: () => {
-        navigate("/colors/create");
+        navigate("/sizes/create");
       },
       show: canCreate,
     },
@@ -340,7 +341,7 @@ export default function ColorEditPage({ isEdit = true }: Props) {
       label: "View",
       icon: <Eye className="w-5 h-5 text-green-600" />,
       onClick: () => {
-        navigate("/colors/view");
+        navigate("/sizes/view");
       },
       show: canView,
     },
@@ -374,7 +375,7 @@ export default function ColorEditPage({ isEdit = true }: Props) {
   }, [formData.isDraft, canCreate]);
 
   // Create minimize handler using the custom hook
-  const handleMinimize = useCallback((): ColorModuleData => {
+  const handleMinimize = useCallback((): SizeModuleData => {
     return {
       formData,
       hasChanges: true,
@@ -386,11 +387,11 @@ export default function ColorEditPage({ isEdit = true }: Props) {
     <>
       <MinimizablePageLayout
         moduleId={moduleId}
-        moduleName={`Edit Color`}
-        moduleRoute={`/colors/edit/${id || "new"}`}
+        moduleName={`Edit Size`}
+        moduleRoute={`/sizes/edit/${id || "new"}`}
         onMinimize={handleMinimize}
-        title="Edit Color"
-        listPath="colors"
+        title="Edit Size"
+        listPath="sizes"
         popoverOptions={popoverOptions}
         videoSrc={video}
         videoHeader="Tutorial video"
@@ -401,7 +402,7 @@ export default function ColorEditPage({ isEdit = true }: Props) {
         printEnabled={printEnabled}
         onPrintToggle={canPrint ? handleSwitchChange : undefined}
         activePage="edit"
-        module="colors"
+        module="sizes"
         additionalFooterButtons={
           canCreate ? (
             <div className="flex gap-4 max-[435px]:gap-2">
@@ -431,9 +432,9 @@ export default function ColorEditPage({ isEdit = true }: Props) {
             onSubmit={handleSubmit}
             className="space-y-6"
           >
-            {/* First Row: Color Name, Code, Description, Hex Code */}
+            {/* First Row: Size Name, Code, Value, Description */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
-              {/* Color Name field - only show if user can edit */}
+              {/* Size Name field - only show if user can edit */}
               {name && (
                 <div className="space-y-2">
                   <EditableInput
@@ -444,14 +445,14 @@ export default function ColorEditPage({ isEdit = true }: Props) {
                     onChange={handleChange}
                     onNext={() => focusNextInput("code")}
                     onCancel={() => setFormData({ ...formData, name: "" })}
-                    labelText="Color Name"
-                    tooltipText="Enter the color name"
+                    labelText="Size Name"
+                    tooltipText="Enter the size name"
                     required
                   />
                 </div>
               )}
 
-              {/* Color Code field - only show if user can edit */}
+              {/* Size Code field - only show if user can edit */}
               {code && (
                 <div className="space-y-2">
                   <EditableInput
@@ -460,10 +461,28 @@ export default function ColorEditPage({ isEdit = true }: Props) {
                     name="code"
                     value={formData.code}
                     onChange={handleChange}
-                    onNext={() => focusNextInput("description")}
+                    onNext={() => focusNextInput("value")}
                     onCancel={() => setFormData({ ...formData, code: "" })}
-                    labelText="Color Code"
-                    tooltipText="Enter the color code (e.g., BLU001)"
+                    labelText="Size Code"
+                    tooltipText="Enter the size code (e.g., SZ001)"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Value field - only show if user can edit */}
+              {valuePerm && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("value")}
+                    id="value"
+                    name="value"
+                    value={formData.value}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("description")}
+                    onCancel={() => setFormData({ ...formData, value: "" })}
+                    labelText="Value"
+                    tooltipText="Enter the size value (e.g., S, M, 32)"
                     required
                   />
                 </div>
@@ -478,30 +497,12 @@ export default function ColorEditPage({ isEdit = true }: Props) {
                     name="description"
                     value={formData.description}
                     onChange={handleChange}
-                    onNext={() => focusNextInput("hexCode")}
+                    onNext={() => focusNextInput("status")}
                     onCancel={() =>
                       setFormData({ ...formData, description: "" })
                     }
                     labelText="Description"
-                    tooltipText="Enter color description"
-                    required
-                  />
-                </div>
-              )}
-
-              {/* Hex Code field - only show if user can edit */}
-              {hexCode && (
-                <div className="space-y-2">
-                  <EditableInput
-                    setRef={setRef("hexCode")}
-                    id="hexCode"
-                    name="hexCode"
-                    value={formData.hexCode}
-                    onChange={handleChange}
-                    onNext={() => focusNextInput("status")}
-                    onCancel={() => setFormData({ ...formData, hexCode: "" })}
-                    labelText="Hex Code"
-                    tooltipText="Enter hex color code (e.g., #3B82F6)"
+                    tooltipText="Enter size description"
                     required
                   />
                 </div>
@@ -562,7 +563,7 @@ export default function ColorEditPage({ isEdit = true }: Props) {
                         },
                       },
                     }}
-                    tooltipText="Set the color status"
+                    tooltipText="Set the size status"
                   />
                 </div>
               )}
@@ -579,12 +580,12 @@ export default function ColorEditPage({ isEdit = true }: Props) {
                       {
                         label: "Yes",
                         value: "Yes",
-                        date: "Set default color",
+                        date: "Set default size",
                       },
                       {
                         label: "No",
                         value: "No",
-                        date: "Remove default color",
+                        date: "Remove default size",
                       },
                     ]}
                     value={isDefaultState === "Yes" ? "Yes" : "No"}
@@ -611,7 +612,7 @@ export default function ColorEditPage({ isEdit = true }: Props) {
                     placeholder=" "
                     labelText="Default"
                     className="relative"
-                    tooltipText="Set as default color"
+                    tooltipText="Set as default size"
                   />
                 </div>
               )}
@@ -666,7 +667,7 @@ export default function ColorEditPage({ isEdit = true }: Props) {
                       },
                     },
                   }}
-                  tooltipText="Color Action History"
+                  tooltipText="Size Action History"
                 />
               </div>
             </div>
