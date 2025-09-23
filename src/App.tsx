@@ -189,9 +189,9 @@ import ColorsEditPage from "./pages/colors/EditPage";
 import ColorsPage from "./pages/colors/ColorsPage";
 
 // Sizes
-import SizesCreatePage from "./pages/sizes/SizesCreatePage";
+import SizesCreatePage from "./pages/sizes/CreatePage";
 import SizesDetails from "./pages/sizes/SizesDetails";
-import SizesEditPage from "./pages/sizes/SizesEditPage";
+import SizesEditPage from "./pages/sizes/EditPage";
 import SizesPage from "./pages/sizes/SizesPage";
 
 // Warehouse
