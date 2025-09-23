@@ -1,217 +1,346 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import FixedColumnDataTable from "@/components/common/FixedColumnDataTable";
+import FixedColumnDataTable from "@/components/common/country-page-table/FixedColumnDataTable";
+import useIsMobile from "@/hooks/useIsMobile";
+import { useColorsPermissions } from "@/hooks/usePermissions";
 
-type ListTableDataType = {
+// Color interface to match the grid component
+interface Color {
+  id: string;
   name: string;
   code: string;
-  hexCode: string;
   description: string;
-
-  // same for all component
-  id: string;
+  hexCode: string;
   status: "active" | "inactive" | "draft";
-  isActive: boolean;
-  isDeleted: boolean;
-  isDraft: boolean;
-  isUpdated: boolean;
-  actionMessage: string;
   createdAt: string;
   updatedAt: string;
   draftedAt: string;
-};
+  isActive: boolean;
+  isDraft: boolean;
+  isDeleted: boolean;
+  isUpdated: boolean;
+  actionMessage: string;
+}
 
-export const listTableData: ListTableDataType[] = [
+const mockColors: Color[] = [
   {
-    id: "color-001",
-    name: "Red",
-    code: "RED",
-    hexCode: "#FF0000",
-    description: "Primary red color used for danger or delete actions",
+    id: "1",
+    name: "Primary Blue",
+    code: "BLU001",
+    description: "Main brand color used for primary actions and highlights",
+    hexCode: "#3B82F6",
     status: "active",
+    createdAt: "2023-01-15",
+    updatedAt: "2023-11-20",
+    draftedAt: "2023-01-10",
     isActive: true,
-    isDeleted: false,
     isDraft: false,
+    isDeleted: false,
     isUpdated: false,
-    actionMessage: "Activated successfully",
-    createdAt: "2025-07-01T10:00:00Z",
-    updatedAt: "2025-07-01T10:00:00Z",
-    draftedAt: "",
+    actionMessage: "Yesterday",
   },
   {
-    id: "color-002",
-    name: "Green",
-    code: "GREEN",
-    hexCode: "#00FF00",
-    description: "Used for success or active states",
+    id: "2",
+    name: "Success Green",
+    code: "GRN001",
+    description: "Color for success states and positive feedback",
+    hexCode: "#10B981",
     status: "active",
+    createdAt: "2023-01-18",
+    updatedAt: "2023-10-15",
+    draftedAt: "2023-01-12",
     isActive: true,
-    isDeleted: false,
     isDraft: false,
-    isUpdated: true,
-    actionMessage: "Color updated",
-    createdAt: "2025-07-01T11:00:00Z",
-    updatedAt: "2025-07-02T09:00:00Z",
-    draftedAt: "",
-  },
-  {
-    id: "color-003",
-    name: "Blue",
-    code: "BLUE",
-    hexCode: "#0000FF",
-    description: "Used for links or primary buttons",
-    status: "inactive",
-    isActive: false,
     isDeleted: false,
-    isDraft: false,
     isUpdated: false,
-    actionMessage: "Marked as inactive",
-    createdAt: "2025-07-01T12:00:00Z",
-    updatedAt: "2025-07-03T08:30:00Z",
-    draftedAt: "",
+    actionMessage: "Yesterday",
   },
   {
-    id: "color-004",
-    name: "Yellow",
-    code: "YELLOW",
-    hexCode: "#FFFF00",
-    description: "Used for warnings or highlights",
+    id: "3",
+    name: "Warning Orange",
+    code: "ORG001",
+    description: "Warning color for alerts and caution states",
+    hexCode: "#F59E0B",
+    status: "active",
+    createdAt: "2023-02-01",
+    updatedAt: "2023-11-10",
+    draftedAt: "2023-01-25",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "Yesterday",
+  },
+  {
+    id: "4",
+    name: "Error Red",
+    code: "RED001",
+    description: "Error color for validation and critical states",
+    hexCode: "#EF4444",
+    status: "active",
+    createdAt: "2023-02-10",
+    updatedAt: "2023-11-05",
+    draftedAt: "2023-02-05",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "Yesterday",
+  },
+  {
+    id: "5",
+    name: "Neutral Gray",
+    code: "GRY001",
+    description: "Neutral color for text and backgrounds",
+    hexCode: "#6B7280",
+    status: "active",
+    createdAt: "2023-02-15",
+    updatedAt: "2023-10-28",
+    draftedAt: "2023-02-08",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "1 day ago",
+  },
+  {
+    id: "6",
+    name: "Purple Accent",
+    code: "PRP001",
+    description: "Accent color for special features and highlights",
+    hexCode: "#8B5CF6",
     status: "draft",
+    createdAt: "2023-03-01",
+    updatedAt: "2023-11-15",
+    draftedAt: "2023-02-20",
     isActive: false,
-    isDeleted: false,
     isDraft: true,
-    isUpdated: false,
-    actionMessage: "Draft saved",
-    createdAt: "2025-07-02T10:00:00Z",
-    updatedAt: "",
-    draftedAt: "2025-07-02T10:30:00Z",
-  },
-  {
-    id: "color-005",
-    name: "Black",
-    code: "BLACK",
-    hexCode: "#000000",
-    description: "Standard black used for text and background",
-    status: "active",
-    isActive: true,
     isDeleted: false,
-    isDraft: false,
     isUpdated: false,
-    actionMessage: "Enabled for default themes",
-    createdAt: "2025-07-01T15:00:00Z",
-    updatedAt: "2025-07-01T15:00:00Z",
-    draftedAt: "",
+    actionMessage: "1 day ago",
   },
   {
-    id: "color-006",
-    name: "White",
-    code: "WHITE",
-    hexCode: "#FFFFFF",
-    description: "Used for text or card background",
+    id: "7",
+    name: "Teal Secondary",
+    code: "TEL001",
+    description: "Secondary color for supporting elements",
+    hexCode: "#14B8A6",
     status: "active",
+    createdAt: "2023-03-10",
+    updatedAt: "2023-11-08",
+    draftedAt: "2023-03-05",
     isActive: true,
-    isDeleted: false,
     isDraft: false,
+    isDeleted: false,
     isUpdated: false,
-    actionMessage: "Used in all light themes",
-    createdAt: "2025-07-03T09:00:00Z",
-    updatedAt: "2025-07-03T09:00:00Z",
-    draftedAt: "",
+    actionMessage: "1 day ago",
   },
   {
-    id: "color-007",
-    name: "Orange",
-    code: "ORANGE",
-    hexCode: "#FFA500",
-    description: "Used for attention or promo sections",
+    id: "8",
+    name: "Pink Highlight",
+    code: "PNK001",
+    description: "Highlight color for special promotions",
+    hexCode: "#EC4899",
     status: "inactive",
+    createdAt: "2023-03-20",
+    updatedAt: "2023-10-22",
+    draftedAt: "2023-03-15",
     isActive: false,
-    isDeleted: false,
     isDraft: false,
-    isUpdated: false,
-    actionMessage: "Deactivated manually",
-    createdAt: "2025-06-30T08:00:00Z",
-    updatedAt: "2025-07-01T08:00:00Z",
-    draftedAt: "",
-  },
-  {
-    id: "color-008",
-    name: "Purple",
-    code: "PURPLE",
-    hexCode: "#800080",
-    description: "Brand accent color",
-    status: "draft",
-    isActive: false,
     isDeleted: false,
-    isDraft: true,
     isUpdated: false,
-    actionMessage: "Still under review",
-    createdAt: "2025-07-02T13:30:00Z",
-    updatedAt: "",
-    draftedAt: "2025-07-02T13:30:00Z",
+    actionMessage: "1 day ago",
   },
   {
-    id: "color-009",
-    name: "Gray",
-    code: "GRAY",
-    hexCode: "#808080",
-    description: "Neutral color for disabled items",
+    id: "9",
+    name: "Indigo Dark",
+    code: "IND001",
+    description: "Dark indigo for headers and navigation",
+    hexCode: "#4F46E5",
     status: "active",
+    createdAt: "2023-04-01",
+    updatedAt: "2023-11-25",
+    draftedAt: "2023-03-25",
     isActive: true,
-    isDeleted: false,
     isDraft: false,
+    isDeleted: false,
     isUpdated: false,
-    actionMessage: "Enabled by default",
-    createdAt: "2025-07-01T09:00:00Z",
-    updatedAt: "2025-07-01T09:00:00Z",
-    draftedAt: "",
+    actionMessage: "1 day ago",
   },
   {
-    id: "color-010",
-    name: "Pink",
-    code: "PINK",
-    hexCode: "#FFC0CB",
-    description: "Optional theme color",
+    id: "10",
+    name: "Yellow Bright",
+    code: "YLW001",
+    description: "Bright yellow for attention-grabbing elements",
+    hexCode: "#EAB308",
+    status: "draft",
+    createdAt: "2023-04-10",
+    updatedAt: "2023-11-18",
+    draftedAt: "2023-04-05",
+    isActive: false,
+    isDraft: true,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "1 day ago",
+  },
+  {
+    id: "11",
+    name: "Cyan Light",
+    code: "CYN001",
+    description: "Light cyan for subtle backgrounds",
+    hexCode: "#06B6D4",
+    status: "active",
+    createdAt: "2023-04-15",
+    updatedAt: "2023-09-10",
+    draftedAt: "2023-04-10",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "1 day ago",
+  },
+  {
+    id: "12",
+    name: "Rose Soft",
+    code: "ROS001",
+    description: "Soft rose for gentle highlights",
+    hexCode: "#F43F5E",
     status: "inactive",
+    createdAt: "2023-05-01",
+    updatedAt: "2023-11-12",
+    draftedAt: "2023-04-25",
     isActive: false,
-    isDeleted: false,
     isDraft: false,
+    isDeleted: false,
     isUpdated: false,
-    actionMessage: "Temporarily disabled",
-    createdAt: "2025-07-03T11:00:00Z",
-    updatedAt: "2025-07-03T11:00:00Z",
-    draftedAt: "",
+    actionMessage: "1 day ago",
   },
   {
-    id: "color-011",
-    name: "Teal",
-    code: "TEAL",
-    hexCode: "#008080",
-    description: "Used in dashboard theme",
+    id: "13",
+    name: "Emerald Deep",
+    code: "EMR001",
+    description: "Deep emerald for nature-themed elements",
+    hexCode: "#059669",
     status: "active",
+    createdAt: "2023-05-10",
+    updatedAt: "2023-10-30",
+    draftedAt: "2023-05-05",
     isActive: true,
-    isDeleted: false,
     isDraft: false,
-    isUpdated: true,
-    actionMessage: "Color scheme updated",
-    createdAt: "2025-06-28T12:00:00Z",
-    updatedAt: "2025-07-02T14:00:00Z",
-    draftedAt: "",
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "1 day ago",
   },
   {
-    id: "color-012",
-    name: "Brown",
-    code: "BROWN",
-    hexCode: "#A52A2A",
-    description: "Optional background for rustic theme",
+    id: "14",
+    name: "Violet Rich",
+    code: "VIO001",
+    description: "Rich violet for premium features",
+    hexCode: "#7C3AED",
     status: "draft",
+    createdAt: "2023-05-20",
+    updatedAt: "2023-11-02",
+    draftedAt: "2023-05-15",
     isActive: false,
-    isDeleted: false,
     isDraft: true,
+    isDeleted: false,
     isUpdated: false,
-    actionMessage: "Pending QA approval",
-    createdAt: "2025-07-04T08:00:00Z",
-    updatedAt: "",
-    draftedAt: "2025-07-04T08:30:00Z",
+    actionMessage: "1 day ago",
+  },
+  {
+    id: "15",
+    name: "Amber Warm",
+    code: "AMB001",
+    description: "Warm amber for cozy interfaces",
+    hexCode: "#D97706",
+    status: "active",
+    createdAt: "2023-06-01",
+    updatedAt: "2023-11-08",
+    draftedAt: "2023-05-25",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "1 day ago",
+  },
+  {
+    id: "16",
+    name: "Sky Blue",
+    code: "SKY001",
+    description: "Sky blue for open and airy designs",
+    hexCode: "#0EA5E9",
+    status: "active",
+    createdAt: "2023-06-10",
+    updatedAt: "2023-10-25",
+    draftedAt: "2023-06-05",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "1 day ago",
+  },
+  {
+    id: "17",
+    name: "Lime Fresh",
+    code: "LIM001",
+    description: "Fresh lime for energetic elements",
+    hexCode: "#84CC16",
+    status: "inactive",
+    createdAt: "2023-06-15",
+    updatedAt: "2023-06-20",
+    draftedAt: "2023-06-12",
+    isActive: false,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "1 day ago",
+  },
+  {
+    id: "18",
+    name: "Fuchsia Bold",
+    code: "FUC001",
+    description: "Bold fuchsia for standout features",
+    hexCode: "#D946EF",
+    status: "draft",
+    createdAt: "2023-07-01",
+    updatedAt: "2023-11-15",
+    draftedAt: "2023-06-25",
+    isActive: false,
+    isDraft: true,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "1 day ago",
+  },
+  {
+    id: "19",
+    name: "Slate Professional",
+    code: "SLT001",
+    description: "Professional slate for business elements",
+    hexCode: "#475569",
+    status: "active",
+    createdAt: "2023-07-10",
+    updatedAt: "2023-10-18",
+    draftedAt: "2023-07-05",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "1 day ago",
+  },
+  {
+    id: "20",
+    name: "Zinc Neutral",
+    code: "ZNC001",
+    description: "Neutral zinc for subtle backgrounds",
+    hexCode: "#71717A",
+    status: "inactive",
+    createdAt: "2023-07-20",
+    updatedAt: "2023-09-15",
+    draftedAt: "2023-07-15",
+    isActive: false,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "1 day ago",
   },
 ];
 
@@ -219,36 +348,37 @@ export default function ColorsDataTable({
   viewMode,
   setViewMode,
   dataTableFilter,
+  searchQuery,
+  setShowExport,
+  showExport,
+  setShowFilter,
+  showFilter,
+  setShowVisibility,
+  showVisibility,
+  isFilterOpen,
+  setIsFilterOpen,
 }: {
   viewMode: string;
   setViewMode: (viewMode: string) => void;
   dataTableFilter: any;
+  searchQuery: string;
+  setShowExport: (showExport: boolean) => void;
+  showExport: boolean;
+  setShowFilter: (showFilter: boolean) => void;
+  showFilter: boolean;
+  setShowVisibility: (showVisibility: boolean) => void;
+  showVisibility: boolean;
+  isFilterOpen: boolean;
+  setIsFilterOpen: (isFilterOpen: boolean) => void;
 }) {
+  const { canCreate } = useColorsPermissions();
+  const isMobile = useIsMobile();
+
   const componentColumns = [
-    {
-      accessorKey: "code",
-      title: "Code",
-      options: [...new Set(listTableData.map((item) => item.code))],
-      filterFn: (row: any, columnId: any, filterValue: any) => {
-        if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as string;
-        return filterValue.some((filterVal: string) =>
-          cellValue.toLowerCase().includes(filterVal.toLowerCase())
-        );
-      },
-      sortingFn: (row1: any, row2: any) => {
-        return row1.getValue("code").localeCompare(row2.getValue("code"));
-      },
-      size: 180,
-      minSize: 120,
-      meta: {
-        exportLabel: "code",
-      },
-    },
     {
       accessorKey: "name",
       title: "Name",
-      options: [...new Set(listTableData.map((item) => item.name))],
+      options: [...new Set(mockColors.map((item) => item.name))],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
         const cellValue = row.getValue(columnId) as string;
@@ -259,77 +389,111 @@ export default function ColorsDataTable({
       sortingFn: (row1: any, row2: any) => {
         return row1.getValue("name").localeCompare(row2.getValue("name"));
       },
-      size: 180,
+      size: isMobile ? 120 : 180,
       minSize: 120,
       meta: {
-        exportLabel: "name",
+        exportLabel: "Name",
+        readOnly: !canCreate,
+      },
+    },
+    {
+      accessorKey: "code",
+      title: "Code",
+      options: [...new Set(mockColors.map((item) => item.code))],
+      filterFn: (row: any, columnId: any, filterValue: any) => {
+        if (!filterValue || filterValue.length === 0) return true;
+        const cellValue = row.getValue(columnId) as string;
+        return filterValue.some((filterVal: string) =>
+          cellValue.toLowerCase().includes(filterVal.toLowerCase())
+        );
+      },
+      sortingFn: (row1: any, row2: any) => {
+        return row1.getValue("code").localeCompare(row2.getValue("code"));
+      },
+      size: isMobile ? 100 : 120,
+      minSize: 100,
+      meta: {
+        exportLabel: "Code",
+        readOnly: !canCreate,
       },
     },
     {
       accessorKey: "hexCode",
       title: "Hex Code",
-      options: [...new Set(listTableData.map((item) => item.hexCode))],
+      options: [...new Set(mockColors.map((item) => item.hexCode))],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
         const cellValue = row.getValue(columnId) as string;
-        return filterValue.includes(cellValue);
+        return filterValue.some((filterVal: string) =>
+          cellValue.toLowerCase().includes(filterVal.toLowerCase())
+        );
       },
       sortingFn: (row1: any, row2: any) => {
         return row1.getValue("hexCode").localeCompare(row2.getValue("hexCode"));
       },
-      size: 50,
-      minSize: 50,
+      size: isMobile ? 120 : 150,
+      minSize: 120,
       meta: {
-        exportLabel: "hexCode",
+        exportLabel: "Hex Code",
+        readOnly: !canCreate,
       },
     },
     {
       accessorKey: "description",
-      title: "description",
-      options: [], // Dates are typically not filtered with predefined options
+      title: "Description",
+      options: [...new Set(mockColors.map((item) => item.description))],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
         const cellValue = row.getValue(columnId) as string;
-        return filterValue.some((val: string) => cellValue.includes(val));
+        return filterValue.some((filterVal: string) =>
+          cellValue.toLowerCase().includes(filterVal.toLowerCase())
+        );
       },
       sortingFn: (row1: any, row2: any) => {
         return row1
           .getValue("description")
           .localeCompare(row2.getValue("description"));
       },
-    },
-    {
-      accessorKey: "status",
-      title: "Status",
-      options: ["active", "inactive", "draft"],
-      filterFn: (row: any, columnId: any, filterValue: any) => {
-        if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as string;
-        return filterValue.includes(cellValue);
-      },
-      sortingFn: (row1: any, row2: any) => {
-        return row1.getValue("status").localeCompare(row2.getValue("status"));
-      },
-      size: 120,
-      minSize: 80,
+      size: isMobile ? 150 : 200,
+      minSize: 150,
       meta: {
-        exportLabel: "status",
+        exportLabel: "Description",
+        readOnly: !canCreate,
       },
     },
-
     {
       accessorKey: "createdAt",
       title: "Created",
       options: [], // Dates are typically not filtered with predefined options
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as string;
-        return filterValue.some((val: string) => cellValue.includes(val));
+        const dateValue = row.getValue(columnId) as string;
+        const date = new Date(dateValue);
+
+        // Check if the date is valid before calling toISOString
+        if (isNaN(date.getTime())) {
+          return false; // Invalid date, exclude from results
+        }
+
+        const cellValue = date.toISOString().split("T")[0];
+        return filterValue.includes(cellValue);
       },
       sortingFn: (row1: any, row2: any) => {
-        return row1
-          .getValue("createdAt")
-          .localeCompare(row2.getValue("createdAt"));
+        const date1 = new Date(row1.getValue("createdAt"));
+        const date2 = new Date(row2.getValue("createdAt"));
+
+        // Handle invalid dates by placing them at the end
+        if (isNaN(date1.getTime()) && isNaN(date2.getTime())) return 0;
+        if (isNaN(date1.getTime())) return 1;
+        if (isNaN(date2.getTime())) return -1;
+
+        return date1.getTime() - date2.getTime();
+      },
+      size: isMobile ? 150 : 180,
+      minSize: 150,
+      meta: {
+        exportLabel: "createdAt",
+        readOnly: true,
       },
     },
     {
@@ -338,13 +502,33 @@ export default function ColorsDataTable({
       options: [], // Dates are typically not filtered with predefined options
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as string;
-        return filterValue.some((val: string) => cellValue.includes(val));
+        const dateValue = row.getValue(columnId) as string;
+        const date = new Date(dateValue);
+
+        // Check if the date is valid before calling toISOString
+        if (isNaN(date.getTime())) {
+          return false; // Invalid date, exclude from results
+        }
+
+        const cellValue = date.toISOString().split("T")[0];
+        return filterValue.includes(cellValue);
       },
       sortingFn: (row1: any, row2: any) => {
-        return row1
-          .getValue("updatedAt")
-          .localeCompare(row2.getValue("updatedAt"));
+        const date1 = new Date(row1.getValue("updatedAt"));
+        const date2 = new Date(row2.getValue("updatedAt"));
+
+        // Handle invalid dates by placing them at the end
+        if (isNaN(date1.getTime()) && isNaN(date2.getTime())) return 0;
+        if (isNaN(date1.getTime())) return 1;
+        if (isNaN(date2.getTime())) return -1;
+
+        return date1.getTime() - date2.getTime();
+      },
+      size: isMobile ? 150 : 180,
+      minSize: 150,
+      meta: {
+        exportLabel: "updatedAt",
+        readOnly: true,
       },
     },
     {
@@ -353,39 +537,69 @@ export default function ColorsDataTable({
       options: [], // Dates are typically not filtered with predefined options
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as string;
-        return filterValue.some((val: string) => cellValue.includes(val));
+        const dateValue = row.getValue(columnId) as string;
+        const date = new Date(dateValue);
+
+        // Check if the date is valid before calling toISOString
+        if (isNaN(date.getTime())) {
+          return false; // Invalid date, exclude from results
+        }
+
+        const cellValue = date.toISOString().split("T")[0];
+        return filterValue.includes(cellValue);
       },
       sortingFn: (row1: any, row2: any) => {
-        return row1
-          .getValue("draftedAt")
-          .localeCompare(row2.getValue("draftedAt"));
+        const date1 = new Date(row1.getValue("draftedAt"));
+        const date2 = new Date(row2.getValue("draftedAt"));
+
+        // Handle invalid dates by placing them at the end
+        if (isNaN(date1.getTime())) return 1;
+        if (isNaN(date2.getTime())) return -1;
+
+        return date1.getTime() - date2.getTime();
+      },
+      size: isMobile ? 150 : 180,
+      minSize: 150,
+      meta: {
+        exportLabel: "draftedAt",
+        readOnly: true,
       },
     },
   ];
 
-  const filteredData = listTableData.filter((item) => {
+  const filteredData = mockColors.filter((color) => {
     if (dataTableFilter.status === "Active") {
-      return item.isActive;
+      return color.isActive;
     } else if (dataTableFilter.status === "Inactive") {
-      return !item.isActive;
+      return !color.isActive;
     } else if (dataTableFilter.status === "Draft") {
-      return item.isDraft;
+      return color.isDraft;
     } else if (dataTableFilter.status === "Deleted") {
-      return item.isDeleted;
+      return color.isDeleted;
     } else if (dataTableFilter.status === "Updated") {
-      return item.isUpdated;
+      return color.isUpdated;
     }
     return true;
   });
 
   return (
     <FixedColumnDataTable
+      searchQuery={searchQuery}
       columnData={filteredData}
       viewMode={viewMode}
       setViewMode={setViewMode}
       componentColumns={componentColumns}
-      fixedColumns={[]} // Pin country name column
+      fixedColumns={["name", "code"]} // Pin color name and code columns
+      pathName="colors"
+      setShowExport={setShowExport}
+      showExport={showExport}
+      setShowFilter={setShowFilter}
+      showFilter={showFilter}
+      setShowVisibility={setShowVisibility}
+      showVisibility={showVisibility}
+      isFilterOpen={isFilterOpen}
+      setIsFilterOpen={setIsFilterOpen}
+      showImages={false}
     />
   );
 }

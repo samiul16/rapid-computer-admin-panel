@@ -159,10 +159,10 @@ import TaxDetails from "./pages/tax/TaxDetails";
 import TaxPage from "./pages/tax/TaxPage";
 
 // Brand
-import BrandCreatePage from "./pages/brands/BrandCreatePage";
-import BrandDetails from "./pages/brands/BrandDetails";
-import BrandEditPage from "./pages/brands/BrandEditPage";
-import BrandPage from "./pages/brands/BrandPage";
+import BrandCreatePage from "./pages/brands/CreatePage";
+import BrandDetails from "./pages/brands/BrandsDetails";
+import BrandEditPage from "./pages/brands/EditPage";
+import BrandPage from "./pages/brands/BrandsPage";
 
 // Deliverymen
 import DeliverymenCreatePage from "./pages/deliverymen/DeliverymenCreatePage";
@@ -183,15 +183,15 @@ import StoreDetails from "./pages/store/StoreDetails";
 import StorePage from "./pages/store/StorePage";
 
 // Colors
-import ColorsCreatePage from "./pages/colors/ColorsCreatePage";
+import ColorsCreatePage from "./pages/colors/CreatePage";
 import ColorsDetails from "./pages/colors/ColorsDetails";
-import ColorsEditPage from "./pages/colors/ColorsEditPage";
+import ColorsEditPage from "./pages/colors/EditPage";
 import ColorsPage from "./pages/colors/ColorsPage";
 
 // Sizes
-import SizesCreatePage from "./pages/sizes/SizesCreatePage";
+import SizesCreatePage from "./pages/sizes/CreatePage";
 import SizesDetails from "./pages/sizes/SizesDetails";
-import SizesEditPage from "./pages/sizes/SizesEditPage";
+import SizesEditPage from "./pages/sizes/EditPage";
 import SizesPage from "./pages/sizes/SizesPage";
 
 // Warehouse
@@ -584,10 +584,10 @@ import CommissionCreatePage from "./pages/Commission/CreatePage";
 import CommissionEditPage from "./pages/Commission/EditPage";
 
 // Leads
-import LeadsPage from "./pages/new-leads/LeadsPage";
-import LeadsDetailsPage from "./pages/new-leads/LeadsDetailsPage";
-import LeadsEditPage from "./pages/new-leads/EditPage";
-import LeadsCreatePage from "./pages/new-leads/CreatePage";
+import NewLeadsPage from "./pages/leads/LeadsPage";
+import NewLeadsDetailsPage from "./pages/leads/LeadsDetails";
+import NewLeadsEditPage from "./pages/leads/EditPage";
+import NewLeadsCreatePage from "./pages/leads/CreatePage";
 
 // Booking Type
 import BookingTypePage from "./pages/BookingType/BookingTypePage";
@@ -1633,16 +1633,6 @@ function App() {
                 {/* Users Location */}
                 <Route path="/users-location" element={<UsersLocationPage />} />
 
-                {/* leads => leads */}
-                <Route path="/leads" element={<LeadsPage />} />
-                <Route path="/leads/:id" element={<LeadsDetailsPage />} />
-                <Route path="/leads/create" element={<LeadsCreatePage />} />
-                <Route
-                  path="/leads/edit/:id"
-                  element={<LeadsEditPage isEdit={true} />}
-                />
-                <Route path="/leads/view" element={<LeadsDetailsPage />} />
-
                 {/* Lead Sources */}
                 <Route path="/lead-sources" element={<LeadSourcesPage />} />
                 <Route
@@ -2006,6 +1996,20 @@ function App() {
                   path="/user-master/view"
                   element={<UserMasterDetails />}
                 />
+
+                {/* Leads */}
+                <Route path="/leads" element={<NewLeadsPage />} />
+                <Route path="/leads/:id" element={<NewLeadsDetailsPage />} />
+                <Route path="/leads/create" element={<NewLeadsCreatePage />} />
+                <Route
+                  path="/leads/edit/:id"
+                  element={<NewLeadsEditPage isEdit={true} />}
+                />
+                <Route
+                  path="/leads/:id/edit"
+                  element={<NewLeadsEditPage isEdit={true} />}
+                />
+                <Route path="/leads/view" element={<NewLeadsDetailsPage />} />
 
                 {/* Assets Master */}
                 <Route path="/assets-master" element={<AssetsMasterPage />} />
@@ -5923,16 +5927,6 @@ function App() {
                   element={<CheckoutEditPage isEdit={true} />}
                 />
                 <Route path="/checkout/view" element={<CheckoutDetails />} />
-
-                {/* Leads */}
-                <Route path="/leads" element={<LeadsPage />} />
-                <Route path="/leads/:id" element={<LeadsDetailsPage />} />
-                <Route path="/leads/create" element={<LeadsCreatePage />} />
-                <Route
-                  path="/leads/edit/:id"
-                  element={<LeadsEditPage isEdit={true} />}
-                />
-                <Route path="/leads/view" element={<LeadsDetailsPage />} />
 
                 {/* House Keepers */}
                 <Route path="/house-keepers" element={<HouseKeepersPage />} />

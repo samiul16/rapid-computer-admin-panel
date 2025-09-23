@@ -180,3 +180,44 @@ export interface UserMasterPermissions {
   canCreateUpdatedDate: boolean;
   canCreateDraftedDate: boolean;
 }
+
+// Specific types for colors module
+export interface ColorsPermissions {
+  // Form permissions
+  canCreate: boolean;
+  canView: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
+  canExport: boolean;
+  canImport: boolean;
+
+  // Field permissions - View
+  canViewName: boolean;
+  canViewCode: boolean;
+  canViewDescription: boolean;
+  canViewHexCode: boolean;
+  canViewStatus: boolean;
+  canViewCreatedDate: boolean;
+  canViewUpdatedDate: boolean;
+  canViewDraftedDate: boolean;
+
+  // Field permissions - Edit
+  canEditName: boolean;
+  canEditCode: boolean;
+  canEditDescription: boolean;
+  canEditHexCode: boolean;
+  canEditStatus: boolean;
+  canEditCreatedDate: boolean;
+  canEditUpdatedDate: boolean;
+  canEditDraftedDate: boolean;
+
+  // Field permissions - Create
+  canCreateName: boolean;
+  canCreateCode: boolean;
+  canCreateDescription: boolean;
+  canCreateHexCode: boolean;
+  canCreateStatus: boolean;
+  canCreateCreatedDate: boolean;
+  canCreateUpdatedDate: boolean;
+  canCreateDraftedDate: boolean;
+}

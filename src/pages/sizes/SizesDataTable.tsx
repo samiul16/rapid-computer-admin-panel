@@ -1,217 +1,346 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import FixedColumnDataTable from "@/components/common/FixedColumnDataTable";
+import FixedColumnDataTable from "@/components/common/country-page-table/FixedColumnDataTable";
+import useIsMobile from "@/hooks/useIsMobile";
+import { useColorsPermissions } from "@/hooks/usePermissions";
 
-type ListTableDataType = {
-  name: string;
+// Size interface to match the grid component
+interface SizeItem {
+  id: string;
   code: string;
+  name: string;
   value: string;
   description: string;
-
-  // same for all component
-  id: string;
   status: "active" | "inactive" | "draft";
-  isActive: boolean;
-  isDeleted: boolean;
-  isDraft: boolean;
-  isUpdated: boolean;
-  actionMessage: string;
   createdAt: string;
   updatedAt: string;
   draftedAt: string;
-};
+  isActive: boolean;
+  isDraft: boolean;
+  isDeleted: boolean;
+  isUpdated: boolean;
+  actionMessage: string;
+}
 
-export const listTableData: ListTableDataType[] = [
+const mockSizes: SizeItem[] = [
   {
-    id: "size-001",
+    id: "1",
+    code: "SZ001",
     name: "Small",
-    code: "S",
-    value: "28x20 cm",
-    description: "Standard small size",
+    value: "S",
+    description: "Standard small size suitable for compact items",
     status: "active",
+    createdAt: "2023-01-15",
+    updatedAt: "2023-11-20",
+    draftedAt: "2023-01-10",
     isActive: true,
-    isDeleted: false,
     isDraft: false,
+    isDeleted: false,
     isUpdated: false,
-    actionMessage: "Activated successfully",
-    createdAt: "2025-07-01T10:00:00Z",
-    updatedAt: "2025-07-01T10:00:00Z",
-    draftedAt: "",
+    actionMessage: "Yesterday",
   },
   {
-    id: "size-002",
+    id: "2",
+    code: "SZ002",
     name: "Medium",
-    code: "M",
-    value: "32x22 cm",
-    description: "Standard medium size",
+    value: "M",
+    description: "Most commonly used medium size",
     status: "active",
+    createdAt: "2023-01-18",
+    updatedAt: "2023-10-15",
+    draftedAt: "2023-01-12",
     isActive: true,
-    isDeleted: false,
     isDraft: false,
+    isDeleted: false,
     isUpdated: false,
-    actionMessage: "Used in men's category",
-    createdAt: "2025-07-01T11:00:00Z",
-    updatedAt: "2025-07-02T10:00:00Z",
-    draftedAt: "",
+    actionMessage: "Yesterday",
   },
   {
-    id: "size-003",
+    id: "3",
+    code: "SZ003",
     name: "Large",
-    code: "L",
-    value: "36x24 cm",
-    description: "Standard large size",
+    value: "L",
+    description: "Large size for spacious fit",
     status: "active",
+    createdAt: "2023-02-01",
+    updatedAt: "2023-11-10",
+    draftedAt: "2023-01-25",
     isActive: true,
-    isDeleted: false,
     isDraft: false,
-    isUpdated: true,
-    actionMessage: "Updated dimensions",
-    createdAt: "2025-07-01T12:00:00Z",
-    updatedAt: "2025-07-03T09:00:00Z",
-    draftedAt: "",
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "Yesterday",
   },
   {
-    id: "size-004",
+    id: "4",
+    code: "SZ004",
     name: "Extra Large",
-    code: "XL",
-    value: "40x28 cm",
-    description: "Larger than regular",
-    status: "inactive",
-    isActive: false,
-    isDeleted: false,
-    isDraft: false,
-    isUpdated: false,
-    actionMessage: "Temporarily disabled",
-    createdAt: "2025-06-28T09:30:00Z",
-    updatedAt: "2025-07-01T08:00:00Z",
-    draftedAt: "",
-  },
-  {
-    id: "size-005",
-    name: "Extra Small",
-    code: "XS",
-    value: "24x18 cm",
-    description: "For children and small items",
+    value: "XL",
+    description: "Extra large size for oversized requirements",
     status: "active",
+    createdAt: "2023-02-10",
+    updatedAt: "2023-11-05",
+    draftedAt: "2023-02-05",
     isActive: true,
-    isDeleted: false,
     isDraft: false,
-    isUpdated: false,
-    actionMessage: "Re-enabled",
-    createdAt: "2025-07-02T10:15:00Z",
-    updatedAt: "2025-07-02T10:15:00Z",
-    draftedAt: "",
-  },
-  {
-    id: "size-006",
-    name: "Double XL",
-    code: "XXL",
-    value: "44x30 cm",
-    description: "Biggest available size",
-    status: "draft",
-    isActive: false,
     isDeleted: false,
-    isDraft: true,
     isUpdated: false,
-    actionMessage: "Saved as draft",
-    createdAt: "2025-07-02T14:00:00Z",
-    updatedAt: "",
-    draftedAt: "2025-07-02T14:30:00Z",
+    actionMessage: "Yesterday",
   },
   {
-    id: "size-007",
+    id: "5",
+    code: "SZ005",
+    name: "Double Extra Large",
+    value: "2XL",
+    description: "Very large size for extended range",
+    status: "active",
+    createdAt: "2023-02-15",
+    updatedAt: "2023-10-28",
+    draftedAt: "2023-02-08",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "1 day ago",
+  },
+  {
+    id: "6",
+    code: "SZ006",
+    name: "Triple Extra Large",
+    value: "3XL",
+    description: "Largest standard size offering",
+    status: "draft",
+    createdAt: "2023-03-01",
+    updatedAt: "2023-11-15",
+    draftedAt: "2023-02-20",
+    isActive: false,
+    isDraft: true,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "1 day ago",
+  },
+  {
+    id: "7",
+    code: "SZ007",
     name: "Kids Small",
-    code: "KS",
-    value: "20x15 cm",
-    description: "Special size for toddlers",
+    value: "KS",
+    description: "Kids small size",
+    status: "active",
+    createdAt: "2023-03-10",
+    updatedAt: "2023-11-08",
+    draftedAt: "2023-03-05",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "1 day ago",
+  },
+  {
+    id: "8",
+    code: "SZ008",
+    name: "Kids Medium",
+    value: "KM",
+    description: "Kids medium size",
     status: "inactive",
+    createdAt: "2023-03-20",
+    updatedAt: "2023-10-22",
+    draftedAt: "2023-03-15",
     isActive: false,
-    isDeleted: false,
     isDraft: false,
+    isDeleted: false,
     isUpdated: false,
-    actionMessage: "Inactive due to low demand",
-    createdAt: "2025-06-30T11:00:00Z",
-    updatedAt: "2025-07-01T08:45:00Z",
-    draftedAt: "",
+    actionMessage: "1 day ago",
   },
   {
-    id: "size-008",
-    name: "Universal Fit",
-    code: "UNI",
-    value: "Flexible",
-    description: "Adjustable or stretchable fit",
+    id: "9",
+    code: "SZ009",
+    name: "Kids Large",
+    value: "KL",
+    description: "Kids large size",
     status: "active",
+    createdAt: "2023-04-01",
+    updatedAt: "2023-11-25",
+    draftedAt: "2023-03-25",
     isActive: true,
-    isDeleted: false,
     isDraft: false,
+    isDeleted: false,
     isUpdated: false,
-    actionMessage: "Applied to accessories",
-    createdAt: "2025-07-01T16:00:00Z",
-    updatedAt: "2025-07-01T16:00:00Z",
-    draftedAt: "",
+    actionMessage: "1 day ago",
   },
   {
-    id: "size-009",
-    name: "One Size",
-    code: "ONE",
-    value: "Fits All",
-    description: "Used for hats and belts",
-    status: "active",
-    isActive: true,
-    isDeleted: false,
-    isDraft: false,
-    isUpdated: false,
-    actionMessage: "Added for accessories",
-    createdAt: "2025-07-03T08:00:00Z",
-    updatedAt: "2025-07-03T08:00:00Z",
-    draftedAt: "",
-  },
-  {
-    id: "size-010",
-    name: "Slim Fit",
-    code: "SLIM",
-    value: "Tailored",
-    description: "Used in premium shirts",
+    id: "10",
+    code: "SZ010",
+    name: "Custom Small",
+    value: "CUS-S",
+    description: "Custom-defined small size",
     status: "draft",
+    createdAt: "2023-04-10",
+    updatedAt: "2023-11-18",
+    draftedAt: "2023-04-05",
     isActive: false,
-    isDeleted: false,
     isDraft: true,
+    isDeleted: false,
     isUpdated: false,
-    actionMessage: "Awaiting approval",
-    createdAt: "2025-07-04T09:00:00Z",
-    updatedAt: "",
-    draftedAt: "2025-07-04T09:15:00Z",
+    actionMessage: "1 day ago",
   },
   {
-    id: "size-011",
-    name: "Plus Size",
-    code: "PLUS",
-    value: "48x34 cm",
-    description: "Extended sizes for plus fit",
+    id: "11",
+    code: "SZ011",
+    name: "Custom Medium",
+    value: "CUS-M",
+    description: "Custom-defined medium size",
     status: "active",
+    createdAt: "2023-04-15",
+    updatedAt: "2023-09-10",
+    draftedAt: "2023-04-10",
     isActive: true,
-    isDeleted: false,
     isDraft: false,
-    isUpdated: true,
-    actionMessage: "Recently updated",
-    createdAt: "2025-06-29T10:00:00Z",
-    updatedAt: "2025-07-02T13:00:00Z",
-    draftedAt: "",
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "1 day ago",
   },
   {
-    id: "size-012",
-    name: "Tall Fit",
-    code: "TALL",
-    value: "Longer Length",
-    description: "Long fit for taller customers",
+    id: "12",
+    code: "SZ012",
+    name: "Custom Large",
+    value: "CUS-L",
+    description: "Custom-defined large size",
     status: "inactive",
+    createdAt: "2023-05-01",
+    updatedAt: "2023-11-12",
+    draftedAt: "2023-04-25",
     isActive: false,
-    isDeleted: false,
     isDraft: false,
+    isDeleted: false,
     isUpdated: false,
-    actionMessage: "Deactivated for redesign",
-    createdAt: "2025-06-27T11:00:00Z",
-    updatedAt: "2025-07-01T09:00:00Z",
-    draftedAt: "",
+    actionMessage: "1 day ago",
+  },
+  {
+    id: "13",
+    code: "SZ013",
+    name: "Numeric 28",
+    value: "28",
+    description: "Numeric waist size 28",
+    status: "active",
+    createdAt: "2023-05-10",
+    updatedAt: "2023-10-30",
+    draftedAt: "2023-05-05",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "1 day ago",
+  },
+  {
+    id: "14",
+    code: "SZ014",
+    name: "Numeric 30",
+    value: "30",
+    description: "Numeric waist size 30",
+    status: "draft",
+    createdAt: "2023-05-20",
+    updatedAt: "2023-11-02",
+    draftedAt: "2023-05-15",
+    isActive: false,
+    isDraft: true,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "1 day ago",
+  },
+  {
+    id: "15",
+    code: "SZ015",
+    name: "Numeric 32",
+    value: "32",
+    description: "Numeric waist size 32",
+    status: "active",
+    createdAt: "2023-06-01",
+    updatedAt: "2023-11-08",
+    draftedAt: "2023-05-25",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "1 day ago",
+  },
+  {
+    id: "16",
+    code: "SZ016",
+    name: "Numeric 34",
+    value: "34",
+    description: "Numeric waist size 34",
+    status: "active",
+    createdAt: "2023-06-10",
+    updatedAt: "2023-10-25",
+    draftedAt: "2023-06-05",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "1 day ago",
+  },
+  {
+    id: "17",
+    code: "SZ017",
+    name: "Numeric 36",
+    value: "36",
+    description: "Numeric waist size 36",
+    status: "inactive",
+    createdAt: "2023-06-15",
+    updatedAt: "2023-06-20",
+    draftedAt: "2023-06-12",
+    isActive: false,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "1 day ago",
+  },
+  {
+    id: "18",
+    code: "SZ018",
+    name: "Numeric 38",
+    value: "38",
+    description: "Numeric waist size 38",
+    status: "draft",
+    createdAt: "2023-07-01",
+    updatedAt: "2023-11-15",
+    draftedAt: "2023-06-25",
+    isActive: false,
+    isDraft: true,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "1 day ago",
+  },
+  {
+    id: "19",
+    code: "SZ019",
+    name: "Numeric 40",
+    value: "40",
+    description: "Numeric waist size 40",
+    status: "active",
+    createdAt: "2023-07-10",
+    updatedAt: "2023-10-18",
+    draftedAt: "2023-07-05",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "1 day ago",
+  },
+  {
+    id: "20",
+    code: "SZ020",
+    name: "Numeric 42",
+    value: "42",
+    description: "Numeric waist size 42",
+    status: "inactive",
+    createdAt: "2023-07-20",
+    updatedAt: "2023-09-15",
+    draftedAt: "2023-07-15",
+    isActive: false,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "1 day ago",
   },
 ];
 
@@ -219,36 +348,37 @@ export default function SizesDataTable({
   viewMode,
   setViewMode,
   dataTableFilter,
+  searchQuery,
+  setShowExport,
+  showExport,
+  setShowFilter,
+  showFilter,
+  setShowVisibility,
+  showVisibility,
+  isFilterOpen,
+  setIsFilterOpen,
 }: {
   viewMode: string;
   setViewMode: (viewMode: string) => void;
   dataTableFilter: any;
+  searchQuery: string;
+  setShowExport: (showExport: boolean) => void;
+  showExport: boolean;
+  setShowFilter: (showFilter: boolean) => void;
+  showFilter: boolean;
+  setShowVisibility: (showVisibility: boolean) => void;
+  showVisibility: boolean;
+  isFilterOpen: boolean;
+  setIsFilterOpen: (isFilterOpen: boolean) => void;
 }) {
+  const { canCreate } = useColorsPermissions();
+  const isMobile = useIsMobile();
+
   const componentColumns = [
-    {
-      accessorKey: "code",
-      title: "Code",
-      options: [...new Set(listTableData.map((item) => item.code))],
-      filterFn: (row: any, columnId: any, filterValue: any) => {
-        if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as string;
-        return filterValue.some((filterVal: string) =>
-          cellValue.toLowerCase().includes(filterVal.toLowerCase())
-        );
-      },
-      sortingFn: (row1: any, row2: any) => {
-        return row1.getValue("code").localeCompare(row2.getValue("code"));
-      },
-      size: 180,
-      minSize: 120,
-      meta: {
-        exportLabel: "code",
-      },
-    },
     {
       accessorKey: "name",
       title: "Name",
-      options: [...new Set(listTableData.map((item) => item.name))],
+      options: [...new Set(mockSizes.map((item) => item.name))],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
         const cellValue = row.getValue(columnId) as string;
@@ -259,77 +389,111 @@ export default function SizesDataTable({
       sortingFn: (row1: any, row2: any) => {
         return row1.getValue("name").localeCompare(row2.getValue("name"));
       },
-      size: 180,
+      size: isMobile ? 120 : 180,
       minSize: 120,
       meta: {
-        exportLabel: "name",
+        exportLabel: "Name",
+        readOnly: !canCreate,
+      },
+    },
+    {
+      accessorKey: "code",
+      title: "Code",
+      options: [...new Set(mockSizes.map((item) => item.code))],
+      filterFn: (row: any, columnId: any, filterValue: any) => {
+        if (!filterValue || filterValue.length === 0) return true;
+        const cellValue = row.getValue(columnId) as string;
+        return filterValue.some((filterVal: string) =>
+          cellValue.toLowerCase().includes(filterVal.toLowerCase())
+        );
+      },
+      sortingFn: (row1: any, row2: any) => {
+        return row1.getValue("code").localeCompare(row2.getValue("code"));
+      },
+      size: isMobile ? 100 : 120,
+      minSize: 100,
+      meta: {
+        exportLabel: "Code",
+        readOnly: !canCreate,
       },
     },
     {
       accessorKey: "value",
       title: "Value",
-      options: [...new Set(listTableData.map((item) => item.value))],
+      options: [...new Set(mockSizes.map((item) => item.value))],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
         const cellValue = row.getValue(columnId) as string;
-        return filterValue.includes(cellValue);
+        return filterValue.some((filterVal: string) =>
+          cellValue.toLowerCase().includes(filterVal.toLowerCase())
+        );
       },
       sortingFn: (row1: any, row2: any) => {
         return row1.getValue("value").localeCompare(row2.getValue("value"));
       },
-      size: 50,
-      minSize: 50,
+      size: isMobile ? 120 : 150,
+      minSize: 120,
       meta: {
-        exportLabel: "value",
+        exportLabel: "Value",
+        readOnly: !canCreate,
       },
     },
     {
       accessorKey: "description",
-      title: "description",
-      options: [], // Dates are typically not filtered with predefined options
+      title: "Description",
+      options: [...new Set(mockSizes.map((item) => item.description))],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
         const cellValue = row.getValue(columnId) as string;
-        return filterValue.some((val: string) => cellValue.includes(val));
+        return filterValue.some((filterVal: string) =>
+          cellValue.toLowerCase().includes(filterVal.toLowerCase())
+        );
       },
       sortingFn: (row1: any, row2: any) => {
         return row1
           .getValue("description")
           .localeCompare(row2.getValue("description"));
       },
-    },
-    {
-      accessorKey: "status",
-      title: "Status",
-      options: ["active", "inactive", "draft"],
-      filterFn: (row: any, columnId: any, filterValue: any) => {
-        if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as string;
-        return filterValue.includes(cellValue);
-      },
-      sortingFn: (row1: any, row2: any) => {
-        return row1.getValue("status").localeCompare(row2.getValue("status"));
-      },
-      size: 120,
-      minSize: 80,
+      size: isMobile ? 150 : 200,
+      minSize: 150,
       meta: {
-        exportLabel: "status",
+        exportLabel: "Description",
+        readOnly: !canCreate,
       },
     },
-
     {
       accessorKey: "createdAt",
       title: "Created",
       options: [], // Dates are typically not filtered with predefined options
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as string;
-        return filterValue.some((val: string) => cellValue.includes(val));
+        const dateValue = row.getValue(columnId) as string;
+        const date = new Date(dateValue);
+
+        // Check if the date is valid before calling toISOString
+        if (isNaN(date.getTime())) {
+          return false; // Invalid date, exclude from results
+        }
+
+        const cellValue = date.toISOString().split("T")[0];
+        return filterValue.includes(cellValue);
       },
       sortingFn: (row1: any, row2: any) => {
-        return row1
-          .getValue("createdAt")
-          .localeCompare(row2.getValue("createdAt"));
+        const date1 = new Date(row1.getValue("createdAt"));
+        const date2 = new Date(row2.getValue("createdAt"));
+
+        // Handle invalid dates by placing them at the end
+        if (isNaN(date1.getTime()) && isNaN(date2.getTime())) return 0;
+        if (isNaN(date1.getTime())) return 1;
+        if (isNaN(date2.getTime())) return -1;
+
+        return date1.getTime() - date2.getTime();
+      },
+      size: isMobile ? 150 : 180,
+      minSize: 150,
+      meta: {
+        exportLabel: "createdAt",
+        readOnly: true,
       },
     },
     {
@@ -338,13 +502,33 @@ export default function SizesDataTable({
       options: [], // Dates are typically not filtered with predefined options
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as string;
-        return filterValue.some((val: string) => cellValue.includes(val));
+        const dateValue = row.getValue(columnId) as string;
+        const date = new Date(dateValue);
+
+        // Check if the date is valid before calling toISOString
+        if (isNaN(date.getTime())) {
+          return false; // Invalid date, exclude from results
+        }
+
+        const cellValue = date.toISOString().split("T")[0];
+        return filterValue.includes(cellValue);
       },
       sortingFn: (row1: any, row2: any) => {
-        return row1
-          .getValue("updatedAt")
-          .localeCompare(row2.getValue("updatedAt"));
+        const date1 = new Date(row1.getValue("updatedAt"));
+        const date2 = new Date(row2.getValue("updatedAt"));
+
+        // Handle invalid dates by placing them at the end
+        if (isNaN(date1.getTime()) && isNaN(date2.getTime())) return 0;
+        if (isNaN(date1.getTime())) return 1;
+        if (isNaN(date2.getTime())) return -1;
+
+        return date1.getTime() - date2.getTime();
+      },
+      size: isMobile ? 150 : 180,
+      minSize: 150,
+      meta: {
+        exportLabel: "updatedAt",
+        readOnly: true,
       },
     },
     {
@@ -353,18 +537,37 @@ export default function SizesDataTable({
       options: [], // Dates are typically not filtered with predefined options
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as string;
-        return filterValue.some((val: string) => cellValue.includes(val));
+        const dateValue = row.getValue(columnId) as string;
+        const date = new Date(dateValue);
+
+        // Check if the date is valid before calling toISOString
+        if (isNaN(date.getTime())) {
+          return false; // Invalid date, exclude from results
+        }
+
+        const cellValue = date.toISOString().split("T")[0];
+        return filterValue.includes(cellValue);
       },
       sortingFn: (row1: any, row2: any) => {
-        return row1
-          .getValue("draftedAt")
-          .localeCompare(row2.getValue("draftedAt"));
+        const date1 = new Date(row1.getValue("draftedAt"));
+        const date2 = new Date(row2.getValue("draftedAt"));
+
+        // Handle invalid dates by placing them at the end
+        if (isNaN(date1.getTime())) return 1;
+        if (isNaN(date2.getTime())) return -1;
+
+        return date1.getTime() - date2.getTime();
+      },
+      size: isMobile ? 150 : 180,
+      minSize: 150,
+      meta: {
+        exportLabel: "draftedAt",
+        readOnly: true,
       },
     },
   ];
 
-  const filteredData = listTableData.filter((item) => {
+  const filteredData = mockSizes.filter((item) => {
     if (dataTableFilter.status === "Active") {
       return item.isActive;
     } else if (dataTableFilter.status === "Inactive") {
@@ -381,11 +584,22 @@ export default function SizesDataTable({
 
   return (
     <FixedColumnDataTable
+      searchQuery={searchQuery}
       columnData={filteredData}
       viewMode={viewMode}
       setViewMode={setViewMode}
       componentColumns={componentColumns}
-      fixedColumns={[]} // Pin country name column
+      fixedColumns={["name", "code"]}
+      pathName="sizes"
+      setShowExport={setShowExport}
+      showExport={showExport}
+      setShowFilter={setShowFilter}
+      showFilter={showFilter}
+      setShowVisibility={setShowVisibility}
+      showVisibility={showVisibility}
+      isFilterOpen={isFilterOpen}
+      setIsFilterOpen={setIsFilterOpen}
+      showImages={false}
     />
   );
 }

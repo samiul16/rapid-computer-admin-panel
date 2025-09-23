@@ -172,15 +172,17 @@ const EditableInput = forwardRef<EditableInputRef, EditableInputProps>(
               tooltip: {
                 fontSize: "14px",
                 padding: "8px 12px",
-                backgroundColor: "#374151",
-                color: "white",
+                backgroundColor: "white",
+                color: "var(--primary)",
+                border: "1px solid var(--primary)",
                 borderRadius: "6px",
-                fontWeight: "500",
+                fontWeight: "600",
                 boxShadow:
                   "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
               },
               arrow: {
-                backgroundColor: "#374151",
+                backgroundColor: "white",
+                border: "1px solid var(--primary)",
               },
             }}
           >
@@ -246,7 +248,7 @@ const EditableInput = forwardRef<EditableInputRef, EditableInputProps>(
                       }}
                       className={cn(
                         "pr-10 read-only:bg-gray-100 read-only:text-gray-500 read-only:cursor-not-allowed focus-visible:ring-0",
-                        "block px-2.5 pb-2.5 pt-3 w-full text-sm text-gray-900 bg-[#f8fafc] rounded-[12px] border-gray-300 appearance-none dark:text-white dark:border-gray-600 focus:outline-none focus:ring-0 peer h-[50px] focus:border-primary border-1 focus:border-2",
+                        "block px-2.5 pb-2.5 pt-3 w-full text-sm text-gray-900 rounded-[12px] border-gray-300 appearance-none dark:text-white dark:border-gray-600 focus:outline-none focus:ring-0 peer h-[50px] focus:border-primary border-1 focus:border-2",
                         "!pl-12", // Reduced padding for country selector
                         !isValid && isTouched
                           ? "border-red-400 focus:border-red-400"
@@ -282,7 +284,7 @@ const EditableInput = forwardRef<EditableInputRef, EditableInputProps>(
                 className={cn(
                   "pr-10 read-only:bg-gray-100 read-only:text-gray-500 read-only:cursor-not-allowed focus-visible:ring-0",
                   // floating label css
-                  "block px-2.5 pb-2.5 pt-4 w-full text-sm text-gray-900 bg-[#f8fafc] rounded-[12px] border-gray-300 appearance-none dark:text-white dark:border-gray-600 focus:outline-none focus:ring-0 peer h-[50px] focus:border-primary border-1 focus:border-2",
+                  "block px-2.5 pb-2.5 pt-4 w-full text-sm text-gray-900 rounded-[12px] border-gray-300 appearance-none dark:text-white dark:border-gray-600 focus:outline-none focus:ring-0 peer h-[50px] focus:border-primary border-1 focus:border-2",
                   !isValid && isTouched
                     ? "border-red-400 focus:border-red-400"
                     : "",
@@ -332,15 +334,17 @@ const EditableInput = forwardRef<EditableInputRef, EditableInputProps>(
                   tooltip: {
                     fontSize: "14px",
                     padding: "8px 12px",
-                    backgroundColor: "#374151",
-                    color: "white",
+                    backgroundColor: "white",
+                    color: "var(--primary)",
+                    border: "1px solid var(--primary)",
                     borderRadius: "6px",
-                    fontWeight: "500",
+                    fontWeight: "600",
                     boxShadow:
                       "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
                   },
                   arrow: {
-                    backgroundColor: "#374151",
+                    backgroundColor: "white",
+                    border: "1px solid var(--primary)",
                   },
                 }}
               >
