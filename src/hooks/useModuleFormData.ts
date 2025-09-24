@@ -1,6 +1,7 @@
 // hooks/useSubCategoryFormData.ts
 import { useMinimizedModuleData } from "./useMinimizedModuleData";
 import type {
+  InvoiceModuleData,
   OpeningStockModuleData,
   StockTransferModuleData,
   SubCategoryFormData,
@@ -22,4 +23,8 @@ export function useOpeningStockFormData() {
   return useMinimizedModuleData<OpeningStockModuleData>(
     "opening-stock-form-module"
   );
+}
+
+export function useInvoiceFormData() {
+  return useMinimizedModuleData<InvoiceModuleData>("invoice-form-module");
 }

@@ -1,115 +1,202 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
-import GmailTabs from "@/components/common/TableTabs";
-import VideoModal from "@/components/common/VideoModal";
-import video from "@/assets/videos/test.mp4";
+import {
+  BadgeCheck,
+  CheckCircle2,
+  CircleMinus,
+  Eye,
+  FileCheck,
+  Trash2,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import PageLayout from "@/layouts/PageLayout/MainPageLayout";
 import InvoicesGrid from "./InvoicesGrid";
 import InvoicesDataTable from "./InvoicesDataTable";
-import VerticalSummaryCards from "@/components/common/grid-data-table/VerticalSummaryCards";
+import TabsCounter from "@/pages/Country/components/TabsCounter";
+import CounterTabs from "@/components/CounterTabs";
+import { useAppSelector } from "@/store/hooks";
+import { cn } from "@/lib/utils";
+import { selectMinimizedModulesForUser } from "@/store/minimizedModulesSlice";
+import MobileCounterTabs from "@/components/MobileCounterTabs";
+import useIsMobile from "@/hooks/useIsMobile";
+import { useLocation } from "react-router-dom";
+
+// Mock data - replace with real data from your API
+const summaryData = {
+  total: 25,
+  draft: 5,
+  active: 20,
+  inactive: 5,
+  deleted: 2,
+  updated: 3,
+};
+
+const cardConfigs = [
+  {
+    key: "total" as keyof typeof summaryData,
+    title: "Total",
+    imgSrc: "/counter-1.svg",
+    icon: <Eye />,
+    color: "blue",
+    total: summaryData.total,
+  },
+  {
+    key: "active" as keyof typeof summaryData,
+    title: "Active",
+    imgSrc: "/counter-active.svg",
+    icon: <BadgeCheck />,
+    color: "green",
+    total: summaryData.active,
+  },
+  {
+    key: "inactive" as keyof typeof summaryData,
+    title: "Inactive",
+    imgSrc: "/counter-inactive.svg",
+    icon: <CircleMinus />,
+    color: "gray",
+    total: summaryData.inactive,
+  },
+  {
+    key: "draft" as keyof typeof summaryData,
+    title: "Draft",
+    imgSrc: "/counter-draft.svg",
+    icon: <FileCheck />,
+    color: "yellow",
+    total: summaryData.draft,
+  },
+  {
+    key: "updated" as keyof typeof summaryData,
+    title: "Updated",
+    imgSrc: "/counter-updated.svg",
+    icon: <CheckCircle2 />,
+    color: "purple",
+    total: summaryData.updated,
+  },
+  {
+    key: "deleted" as keyof typeof summaryData,
+    title: "Deleted",
+    imgSrc: "/counter-deleted.svg",
+    icon: <Trash2 />,
+    color: "red",
+    total: summaryData.deleted,
+  },
+];
 
 export default function InvoicesPage() {
-  const navigate = useNavigate();
   const [viewMode, setViewMode] = useState("grid");
-  const { t } = useTranslation();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const [showVisibility, setShowVisibility] = useState(false);
+  const [timeLabel, setTimeLabel] = useState("This year");
   const [dataTableFilter, setDataTableFilter] = useState({});
 
-  // Mock data - replace with real data from your API
-  const summaryData = {
-    total: 25,
-    draft: 5,
-    active: 20,
-    inactive: 5,
-    deleted: 2,
-    updated: 3,
-  };
+  const basePathName = useLocation().pathname;
+  const moduleName = "invoices";
+  const pathName = "invoices";
 
-  const cardConfigs = [
-    {
-      key: "total" as keyof typeof summaryData,
-      title: "TOTAL INVOICES",
-      icon: "/book-icon.svg",
-      color: "blue",
-      total: summaryData.total,
-    },
-    {
-      key: "active" as keyof typeof summaryData,
-      title: "ACTIVE INVOICES",
-      icon: "/activity-01.svg",
-      color: "green",
-      total: summaryData.active,
-    },
-    {
-      key: "draft" as keyof typeof summaryData,
-      title: "DRAFT INVOICES",
-      icon: "/pencil-edit-02.svg",
-      color: "yellow",
-      total: summaryData.draft,
-    },
-    {
-      key: "updated" as keyof typeof summaryData,
-      title: "UPDATED INVOICES",
-      icon: "/arrow-reload-horizontal.svg",
-      color: "purple",
-      total: summaryData.updated,
-    },
-    {
-      key: "inactive" as keyof typeof summaryData,
-      title: "INACTIVE INVOICES",
-      icon: "/unavailable.svg",
-      color: "gray",
-      total: summaryData.inactive,
-    },
-    {
-      key: "deleted" as keyof typeof summaryData,
-      title: "DELETED INVOICES",
-      icon: "/delete-02.svg",
-      color: "red",
-      total: summaryData.deleted,
-    },
-  ];
+  // Get current user id and that user's minimized modules array
+  const userId = useAppSelector((state) => state.auth.user?.userId);
+  const isMobile = useIsMobile();
+  const minimizedModulesForUser = useAppSelector((state) =>
+    selectMinimizedModulesForUser(state, userId ?? "__no_user__")
+  );
 
-  return (
-    <div className="w-100vw px-2 py-4 dark:bg-gray-900">
-      {/* Header Section */}
-      <div className="flex items-center gap-4 mb-4">
-        <VideoModal src={video} header={"Rapid ERP Video"} />
-        <h1 className="text-2xl font-bold flex-1 text-primary">Invoices</h1>
-        <Button
-          className="bg-primary text-white rounded-full cursor-pointer"
-          onClick={() => navigate("/invoices/create")}
-        >
-          <span className="hidden sm:inline">{t("button.create")}</span>
-          <span className="sm:hidden">{t("button.create")}</span>
-        </Button>
-      </div>
+  // Get view mode from URL query parameter
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const viewModeParam = urlParams.get("view");
+    if (viewModeParam) {
+      setViewMode(viewModeParam);
+    }
+  }, []);
 
-      {viewMode === "grid" ? (
-        <VerticalSummaryCards statistics={summaryData} data={cardConfigs} />
-      ) : (
-        <GmailTabs
-          dataTableFilter={dataTableFilter}
-          setDataTableFilter={setDataTableFilter}
-          viewMode={viewMode}
+  // Tabs Section Component
+  const tabsSection =
+    viewMode === "grid" ? (
+      <TabsCounter
+        cardConfigs={cardConfigs}
+        summaryData={summaryData}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        setIsExportOpen={setIsExportOpen}
+        isExportOpen={isExportOpen}
+        setIsFilterOpen={setIsFilterOpen}
+        setShowVisibility={setShowVisibility}
+        timeLabel={timeLabel}
+      />
+    ) : isMobile ? (
+      <MobileCounterTabs
+        dataTableFilter={dataTableFilter}
+        setDataTableFilter={setDataTableFilter}
+      />
+    ) : (
+      <CounterTabs
+        dataTableFilter={dataTableFilter}
+        setDataTableFilter={setDataTableFilter}
+      />
+    );
+
+  // Main Content Component
+  const mainContent =
+    viewMode === "grid" ? (
+      <div
+        className={
+          "h-[calc(100vh-440px)] md:h-[calc(100vh-440px)] lg:h-[calc(100vh-440px)] xl:h-[calc(100vh-440px)] scroll-smooth [scrollbar-gutter:stable]"
+        }
+      >
+        <InvoicesGrid
+          searchQuery={searchQuery}
+          setIsFilterOpen={setIsFilterOpen}
+          isFilterOpen={isFilterOpen}
+          setIsExportOpen={setIsExportOpen}
+          isExportOpen={isExportOpen}
           setViewMode={setViewMode}
         />
-      )}
-
-      {/* Scrollable Content Area */}
-      {viewMode === "grid" ? (
-        <div className="mt-4 h-[calc(100vh-420px)] md:h-[calc(100vh-420px)] lg:h-[calc(100vh-420px)] xl:h-[calc(100vh-420px)] overflow-y-auto overflow-x-hidden border rounded-lg scroll-smooth [scrollbar-gutter:stable]">
-          <InvoicesGrid setViewMode={setViewMode} />
-        </div>
-      ) : (
-        <div className="mt-4 h-[calc(100vh-270px)] md:h-[calc(100vh-270px)] lg:h-[calc(100vh-270px)] xl:h-[calc(100vh-270px)] overflow-y-auto overflow-x-hidden border rounded-lg scroll-smooth [scrollbar-gutter:stable]">
+      </div>
+    ) : (
+      <div
+        className={cn(
+          minimizedModulesForUser.length > 0
+            ? "h-[calc(100vh-477px)]"
+            : "h-[calc(100vh-396px)]"
+        )}
+      >
+        <div className="overflow-y-auto overflow-x-hidden scroll-smooth [scrollbar-gutter:stable] h-full">
           <InvoicesDataTable
             viewMode={viewMode}
             setViewMode={setViewMode}
             dataTableFilter={dataTableFilter}
+            setShowExport={setIsExportOpen}
+            showExport={isExportOpen}
+            setShowFilter={setIsFilterOpen}
+            showFilter={isFilterOpen}
+            setShowVisibility={setShowVisibility}
+            showVisibility={showVisibility}
+            isFilterOpen={isFilterOpen}
+            setIsFilterOpen={setIsFilterOpen}
           />
         </div>
-      )}
-    </div>
+      </div>
+    );
+
+  return (
+    <PageLayout
+      title={moduleName.charAt(0).toUpperCase() + moduleName.slice(1)}
+      createPath={`${basePathName}/create`}
+      viewMode={viewMode}
+      setViewMode={setViewMode}
+      searchQuery={searchQuery}
+      setSearchQuery={setSearchQuery}
+      setIsFilterOpen={setIsFilterOpen}
+      isFilterOpen={isFilterOpen}
+      setIsExportOpen={setIsExportOpen}
+      isExportOpen={isExportOpen}
+      setShowVisibility={setShowVisibility}
+      showVisibility={showVisibility}
+      setTimeLabel={setTimeLabel}
+      tabsSection={tabsSection}
+      pathName={pathName}
+    >
+      {mainContent}
+    </PageLayout>
   );
 }

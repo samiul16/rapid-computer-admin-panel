@@ -336,6 +336,8 @@ export default function PurchaseOrderLogisticDataTable({
   showFilter,
   setShowVisibility,
   showVisibility,
+  isFilterOpen,
+  setIsFilterOpen,
 }: {
   viewMode: string;
   setViewMode: (viewMode: string) => void;
@@ -347,6 +349,8 @@ export default function PurchaseOrderLogisticDataTable({
   showFilter: boolean;
   setShowVisibility: (setShowVisibility: boolean) => void;
   showVisibility: boolean;
+  isFilterOpen: boolean;
+  setIsFilterOpen: (setFilterOpen: boolean) => void;
 }) {
   const canCreate = usePermission("purchaseOrderLogistic", "create");
   const canViewSn = usePermission("purchaseOrderLogistic", "view", "sn");
@@ -370,11 +374,6 @@ export default function PurchaseOrderLogisticDataTable({
     "purchaseOrderLogistic",
     "view",
     "supplierName"
-  );
-  const canViewStatus = usePermission(
-    "purchaseOrderLogistic",
-    "view",
-    "status"
   );
   const canViewDate = usePermission("purchaseOrderLogistic", "view", "date");
   const canViewLoginId = usePermission(
@@ -442,6 +441,7 @@ export default function PurchaseOrderLogisticDataTable({
       size: 150,
       minSize: 120,
       meta: {
+        isFixed: true,
         exportLabel: "country",
         readOnly: !canCreate,
       },
@@ -546,29 +546,7 @@ export default function PurchaseOrderLogisticDataTable({
         readOnly: !canCreate,
       },
     },
-    {
-      accessorKey: "status",
-      title: "Status",
-      options: canViewStatus
-        ? [...new Set(mockPurchaseOrderLogistics.map((item) => item.status))]
-        : [],
-      filterFn: (row: any, columnId: any, filterValue: any) => {
-        if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as string;
-        return filterValue.some((filterVal: string) =>
-          cellValue.toLowerCase().includes(filterVal.toLowerCase())
-        );
-      },
-      sortingFn: (row1: any, row2: any) => {
-        return row1.getValue("status").localeCompare(row2.getValue("status"));
-      },
-      size: 120,
-      minSize: 100,
-      meta: {
-        exportLabel: "status",
-        readOnly: !canCreate,
-      },
-    },
+
     {
       accessorKey: "date",
       title: "Date",
@@ -684,7 +662,7 @@ export default function PurchaseOrderLogisticDataTable({
       viewMode={viewMode}
       setViewMode={setViewMode}
       componentColumns={componentColumns}
-      fixedColumns={["sn"]} // Pin SN column
+      fixedColumns={["sn", "country"]} // Pin SN column
       pathName="purchase-order-logistic"
       setShowExport={setShowExport}
       showExport={showExport}
@@ -692,6 +670,8 @@ export default function PurchaseOrderLogisticDataTable({
       showFilter={showFilter}
       setShowVisibility={setShowVisibility}
       showVisibility={showVisibility}
+      isFilterOpen={isFilterOpen}
+      setIsFilterOpen={setIsFilterOpen}
     />
   );
 }

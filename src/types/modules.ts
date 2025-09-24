@@ -99,6 +99,35 @@ export interface SubCategoryFormData {
   isDefault?: boolean;
 }
 
+// Invoice Module Data Interface
+export interface InvoiceModuleData {
+  id: string;
+  documentNumber: string;
+  poNumber: string;
+  poDate: string;
+  supplierName: string;
+  paymentMode: string;
+  dueDays: number;
+  paymentDate: string;
+  supplierNumber: string;
+  supplierStatus: string;
+  supplierGroup: string;
+  remarks: string;
+  country: string;
+  state: string;
+  city: string;
+  isActive: boolean;
+  isDraft: boolean;
+  createdAt: Date | null;
+  draftedAt: Date | null;
+  updatedAt: Date | null;
+  deletedAt: Date | null;
+  isDeleted: boolean;
+  // Module-specific metadata
+  hasChanges: boolean;
+  scrollPosition: number;
+}
+
 interface StockTransfer {
   id: string;
   documentNumber: string;
@@ -125,6 +154,14 @@ export interface StockTransferModuleData {
   isDraft: boolean;
   isDefault: boolean;
 }
+
+// export interface InvoiceModuleData {
+//   formData: Invoice;
+//   hasChanges: boolean;
+//   scrollPosition?: number;
+//   isDraft: boolean;
+//   isDefault: boolean;
+// }
 
 export interface LanguageFormData {
   id?: string;

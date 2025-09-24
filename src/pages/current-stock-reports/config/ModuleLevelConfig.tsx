@@ -66,10 +66,7 @@ export type TableViewDataType = ModuleFieldsType & {
 };
 
 // add value in array if you want to add fixed columns left side
-export const fixedColumnsValues: (keyof ModuleFieldsType)[] = [
-  "code",
-  "itemName",
-];
+export const fixedColumnsValues: (keyof ModuleFieldsType)[] = ["code"];
 
 // column key and title for data table view
 export const tableViewColumnSchema: TableViewDataTableColumnConfig[] = [
@@ -339,7 +336,6 @@ export const MOCK_TABLE_DATA: TableViewDataType[] = [
     isUpdated: true,
   },
 ];
-
 
 /*
 ===============================

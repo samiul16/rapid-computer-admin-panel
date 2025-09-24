@@ -625,6 +625,7 @@ export default function StockTransferCreatePage({ isEdit = false }: Props) {
                 <EnglishDate
                   isDate={true}
                   calendarType="gregorian"
+                  isShowCalender={true}
                   userLang="en"
                   rtl={false}
                   onChange={(date: string) =>
