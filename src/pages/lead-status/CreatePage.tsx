@@ -6,103 +6,83 @@ import { ResetFormModal } from "@/components/common/ResetFormModal";
 import { Button } from "@/components/ui/button";
 import { PrintCommonLayout } from "@/lib/printContents/PrintCommonLayout";
 import { printHtmlContent } from "@/lib/printHtmlContent";
-import { toastError, toastRestore, toastSuccess } from "@/lib/toast";
+import { toastError, toastSuccess } from "@/lib/toast";
 import { pdf } from "@react-pdf/renderer";
-import { Check, Edit, Eye, Plus } from "lucide-react";
+import { Edit, Eye, Plus } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  useLeadSourcesPermissions,
-  usePermission,
-} from "@/hooks/usePermissions";
+import { usePermission } from "@/hooks/usePermissions";
 import { useLanguageLabels } from "@/hooks/useLanguageLabels";
 import { useAppSelector } from "@/store/hooks";
 import MinimizablePageLayout from "@/components/MinimizablePageLayout";
 import { SwitchSelect } from "@/components/common/SwitchAutoComplete";
 
-type LeadSourceData = {
+type LeadStatusData = {
   name: string;
+  order: number;
+  color: string;
   status: "active" | "inactive" | "draft";
   isDefault: boolean;
-  isStatusActive: boolean;
-  isActive: boolean;
-  isDraft: boolean;
-  createdAt: Date | null;
-  draftedAt: Date | null;
-  updatedAt: Date | null;
-  deletedAt: Date | null;
-  isDeleted: boolean;
 };
 
 type Props = {
   isEdit?: boolean;
 };
 
-const initialData: LeadSourceData = {
-  name: "Website",
+const initialData: LeadStatusData = {
+  name: "New",
+  order: 1,
+  color: "#3B82F6",
   status: "active",
   isDefault: false,
-  isStatusActive: true,
-  isActive: true,
-  isDraft: false,
-  createdAt: new Date(),
-  draftedAt: null,
-  updatedAt: new Date(),
-  deletedAt: null,
-  isDeleted: false,
 };
 
-export default function LeadSourceFormPage({ isEdit = false }: Props) {
+export default function LeadStatusFormPage({ isEdit = false }: Props) {
   const navigate = useNavigate();
   const labels = useLanguageLabels();
   const { isRTL } = useAppSelector((state) => state.language);
 
   const [keepCreating, setKeepCreating] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
-  const [isDefaultState, setIsDefaultState] = useState<"Yes" | "No">("No");
   const [printEnabled, setPrintEnabled] = useState(false);
   const [pdfChecked, setPdfChecked] = useState(false);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [formKey, setFormKey] = useState(0);
 
   // Permission checks
-  const { canCreate, canView } = useLeadSourcesPermissions();
+  const canCreate = usePermission("lead-status", "create");
+  const canView = usePermission("lead-status", "view");
 
   // Field-level permissions
-  const name: boolean = usePermission("lead-sources", "create", "name");
-  const status: boolean = usePermission("lead-sources", "create", "status");
-  const isDefault: boolean = usePermission(
-    "lead-sources",
+  const name: boolean = usePermission("lead-status", "create", "name");
+  const orderField: boolean = usePermission("lead-status", "create", "order");
+  const colorField: boolean = usePermission("lead-status", "create", "color");
+  const statusField: boolean = usePermission("lead-status", "create", "status");
+  const isDefaultField: boolean = usePermission(
+    "lead-status",
     "create",
     "isDefault"
   );
-  const canPdf: boolean = usePermission("lead-sources", "pdf");
-  const canPrint: boolean = usePermission("lead-sources", "print");
+  const canPdf: boolean = usePermission("lead-status", "pdf");
+  const canPrint: boolean = usePermission("lead-status", "print");
 
   // Form state
-  const [formData, setFormData] = useState<LeadSourceData>({
+  const [formData, setFormData] = useState<LeadStatusData>({
     name: "",
+    order: 1,
+    color: "#3B82F6",
     status: "active",
     isDefault: false,
-    isStatusActive: true,
-    isActive: true,
-    isDraft: false,
-    isDeleted: false,
-    createdAt: null,
-    draftedAt: null,
-    updatedAt: null,
-    deletedAt: null,
   });
 
   // Initialize with edit data if available
   useEffect(() => {
     if (isEdit && initialData) {
       setFormData(initialData);
-      setIsDefaultState(initialData.isDefault ? "Yes" : "No");
     }
   }, [isEdit]);
 
-  const [popoverOptions, setPopoverOptions] = useState([
+  const [popoverOptions] = useState([
     {
       label: isEdit ? "Create" : "Edit",
       icon: isEdit ? (
@@ -112,9 +92,9 @@ export default function LeadSourceFormPage({ isEdit = false }: Props) {
       ),
       onClick: () => {
         if (isEdit) {
-          navigate("/lead-sources/create");
+          navigate("/lead-status/create");
         } else {
-          navigate("/lead-sources/edit/undefined");
+          navigate("/lead-status/edit/undefined");
         }
       },
       show: canCreate,
@@ -123,7 +103,7 @@ export default function LeadSourceFormPage({ isEdit = false }: Props) {
       label: "View",
       icon: <Eye className="w-5 h-5 text-green-600" />,
       onClick: () => {
-        navigate("/lead-sources/view");
+        navigate("/lead-status/view");
       },
       show: canView,
     },
@@ -141,10 +121,11 @@ export default function LeadSourceFormPage({ isEdit = false }: Props) {
   // Handle form field changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
+    const parsedValue = name === "order" ? Number(value) : value;
     const newFormData = {
       ...formData,
-      [name]: type === "checkbox" ? checked : value,
-    };
+      [name]: type === "checkbox" ? checked : parsedValue,
+    } as LeadStatusData;
     setFormData(newFormData);
   };
 
@@ -161,11 +142,11 @@ export default function LeadSourceFormPage({ isEdit = false }: Props) {
 
     // keep switch functionality
     if (keepCreating) {
-      toastSuccess("Lead source created successfully!");
+      toastSuccess("Lead status created successfully!");
       handleReset();
     } else {
-      toastSuccess("Lead source created successfully!");
-      navigate("/lead-sources");
+      toastSuccess("Lead status created successfully!");
+      navigate("/lead-status");
     }
   };
 
@@ -176,18 +157,11 @@ export default function LeadSourceFormPage({ isEdit = false }: Props) {
   const handleReset = async () => {
     setFormData({
       name: "",
+      order: 1,
+      color: "#3B82F6",
       status: "active",
       isDefault: false,
-      isStatusActive: true,
-      isActive: true,
-      isDraft: false,
-      isDeleted: false,
-      createdAt: new Date(),
-      draftedAt: null,
-      updatedAt: new Date(),
-      deletedAt: null,
     });
-    setIsDefaultState("No");
 
     if (formRef.current) {
       formRef.current.reset();
@@ -205,20 +179,15 @@ export default function LeadSourceFormPage({ isEdit = false }: Props) {
   const handlePrintLeadSource = (leadSourceData: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "Lead Source Details",
+        title: "Lead Status Details",
         data: [leadSourceData],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
-          name: "Lead Source Name",
+          name: "Name",
+          order: "Order",
+          color: "Color",
           status: "Status",
-          isDefault: "Default Lead Source",
-          isActive: "Active Status",
-          isDraft: "Draft Status",
-          isDeleted: "Deleted Status",
-          createdAt: "Created At",
-          updatedAt: "Updated At",
-          draftedAt: "Drafted At",
-          deletedAt: "Deleted At",
+          isDefault: "Default Lead Status",
         },
       });
       printHtmlContent(html);
@@ -241,15 +210,15 @@ export default function LeadSourceFormPage({ isEdit = false }: Props) {
       const blob = await pdf(
         <GenericPDF
           data={[formData]}
-          title="Lead Source Details"
-          subtitle="Lead Source Information"
+          title="Lead Status Details"
+          subtitle="Lead Status Information"
         />
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "lead-source-details.pdf";
+      a.download = "lead-status-details.pdf";
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
@@ -258,34 +227,7 @@ export default function LeadSourceFormPage({ isEdit = false }: Props) {
     }
   };
 
-  useEffect(() => {
-    setPopoverOptions((prevOptions) => {
-      // Filter out any existing draft option first
-      const filteredOptions = prevOptions.filter(
-        (opt) => opt.label !== "Draft"
-      );
-
-      // Add draft option only if not already a draft
-      if (!formData.isDraft) {
-        return [
-          ...filteredOptions,
-          {
-            label: "Draft",
-            icon: <Check className="text-green-500" />,
-            onClick: () => {
-              setFormData((prev) => ({
-                ...prev,
-                isDraft: true,
-              }));
-              toastRestore("Lead source saved as draft successfully");
-            },
-            show: canCreate,
-          },
-        ];
-      }
-      return filteredOptions;
-    });
-  }, [formData.isDraft, canCreate]);
+  // No draft toggle for lead status
 
   // Create minimize handler
   const handleMinimize = useCallback(() => {
@@ -299,16 +241,16 @@ export default function LeadSourceFormPage({ isEdit = false }: Props) {
   return (
     <>
       <MinimizablePageLayout
-        moduleId="lead-source-form-module"
-        moduleName={isEdit ? "Edit Lead Source" : "Adding Lead Source"}
+        moduleId="lead-status-form-module"
+        moduleName={isEdit ? "Edit Lead Status" : "Adding Lead Status"}
         moduleRoute={
           isEdit
-            ? `/lead-sources/edit/${formData.name || "new"}`
-            : "/lead-sources/create"
+            ? `/lead-status/edit/${formData.name || "new"}`
+            : "/lead-status/create"
         }
         onMinimize={handleMinimize}
-        title={isEdit ? "Edit Lead Source" : "Add Lead Source"}
-        listPath="lead-sources"
+        title={isEdit ? "Edit Lead Status" : "Add Lead Status"}
+        listPath="lead-status"
         popoverOptions={popoverOptions}
         videoSrc={video}
         videoHeader="Tutorial video"
@@ -319,7 +261,7 @@ export default function LeadSourceFormPage({ isEdit = false }: Props) {
         printEnabled={printEnabled}
         onPrintToggle={canPrint ? handleSwitchChange : undefined}
         activePage="create"
-        module="lead-sources"
+        module="lead-status"
         additionalFooterButtons={
           canCreate ? (
             <div className="flex gap-4 max-[435px]:gap-2">
@@ -349,9 +291,9 @@ export default function LeadSourceFormPage({ isEdit = false }: Props) {
             onSubmit={handleSubmit}
             className="space-y-6 relative"
           >
-            {/* First Row: Lead Source Name */}
+            {/* First Row: Lead Status Fields */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
-              {/* Lead Source Name field - only show if user can create */}
+              {/* Name */}
               {name && (
                 <div className="space-y-2">
                   <EditableInput
@@ -360,17 +302,55 @@ export default function LeadSourceFormPage({ isEdit = false }: Props) {
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    onNext={() => focusNextInput("status")}
+                    onNext={() => focusNextInput("order")}
                     onCancel={() => setFormData({ ...formData, name: "" })}
-                    labelText="Lead Source Name"
-                    tooltipText="Enter the lead source name (e.g., Website, Social Media, LinkedIn)"
+                    labelText="Lead Status Name"
+                    tooltipText="Enter the lead status name (e.g., New, Qualified, Won)"
                     required
                   />
                 </div>
               )}
 
-              {/* Default field - only show if user can create */}
-              {isDefault && (
+              {/* Order */}
+              {orderField && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("order")}
+                    id="order"
+                    name="order"
+                    value={String(formData.order)}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("color")}
+                    onCancel={() => setFormData({ ...formData, order: 1 })}
+                    labelText="Order"
+                    tooltipText="Enter display order (number)"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Color */}
+              {colorField && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("color")}
+                    id="color"
+                    name="color"
+                    value={formData.color}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("statusSwitch")}
+                    onCancel={() =>
+                      setFormData({ ...formData, color: "#3B82F6" })
+                    }
+                    labelText="Color"
+                    tooltipText="Enter hex color (e.g., #3B82F6)"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Default */}
+              {isDefaultField && (
                 <div className="space-y-2 relative">
                   <SwitchSelect
                     ref={(el: any) => setRef("isDefault")(el)}
@@ -381,45 +361,32 @@ export default function LeadSourceFormPage({ isEdit = false }: Props) {
                       {
                         label: labels.yes,
                         value: labels.yes,
-                        date: "Set default color",
+                        date: "Set default",
                       },
                       {
                         label: labels.no,
                         value: labels.no,
-                        date: "Remove default color",
+                        date: "Unset default",
                       },
                     ]}
-                    value={isDefaultState === "Yes" ? labels.yes : labels.no}
+                    value={formData.isDefault ? labels.yes : labels.no}
                     labelClassName="rounded-lg"
                     onValueChange={(value: string | string[]) => {
                       const isYes = Array.isArray(value)
                         ? value[0] === labels.yes
                         : value === labels.yes;
-                      setIsDefaultState(isYes ? "Yes" : "No");
-                      const newValue = isYes;
-                      setFormData((prev) => ({
-                        ...prev,
-                        isDefault: newValue,
-                      }));
-                    }}
-                    onEnterPress={() => {
-                      if (
-                        formData.isDefault === true ||
-                        formData.isDefault === false
-                      ) {
-                        // Form submission or next action
-                      }
+                      setFormData((prev) => ({ ...prev, isDefault: isYes }));
                     }}
                     placeholder=" "
                     labelText="Default"
                     className="relative"
-                    tooltipText="Set as default lead source"
+                    tooltipText="Set as default lead status"
                   />
                 </div>
               )}
 
-              {/* Status field - only show if user can create */}
-              {status && (
+              {/* Status */}
+              {statusField && (
                 <div className="space-y-2">
                   <SwitchSelect
                     ref={(el: any) => setRef("statusSwitch")(el)}
@@ -453,8 +420,6 @@ export default function LeadSourceFormPage({ isEdit = false }: Props) {
                       setFormData((prev) => ({
                         ...prev,
                         status: stringValue as "active" | "inactive" | "draft",
-                        isDraft: stringValue === "draft",
-                        isActive: stringValue === "active",
                       }));
                     }}
                     placeholder=""
@@ -466,7 +431,7 @@ export default function LeadSourceFormPage({ isEdit = false }: Props) {
                         },
                       },
                     }}
-                    tooltipText="Set the lead source status"
+                    tooltipText="Set the lead status availability"
                   />
                 </div>
               )}

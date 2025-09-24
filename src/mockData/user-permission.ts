@@ -10137,5 +10137,46 @@ export const userPermission = {
         },
       },
     },
+    "lead-status": {
+      formPermissions: {
+        create: true,
+        view: true,
+        edit: true,
+        delete: true,
+        restore: true,
+        export: true,
+        import: true,
+        pdf: true,
+        print: true,
+        history: true,
+      },
+      fieldPermissions: {
+        name: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        order: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        color: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        status: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        isDefault: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+      },
+    },
   },
 };
