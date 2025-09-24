@@ -26,14 +26,15 @@ import DynamicInputTableList from "@/components/common/dynamic-input-table/Dynam
 import EnglishDate from "@/components/EnglishDateInput";
 import { ActionsAutocomplete } from "@/components/common/ActionsAutocomplete";
 
-// Define Sales Invoice interface
+// Define Sales Return interface
 interface Invoice {
   id: string;
   documentNumber: string;
-  invoiceNumber: string;
-  invoiceDate: string;
+  salesInvoiceNumber: string;
+  poNumber: string;
+  poDate: string;
   customer: string;
-  trnNumber: string;
+  vatNumber: string;
   paymentMode: string;
   dueDays: number;
   paymentDate: string;
@@ -56,7 +57,7 @@ interface Invoice {
 // Mock customer data for auto-fill functionality
 interface CustomerData {
   name: string;
-  trnNumber: string;
+  vatNumber: string;
   country: string;
   state: string;
   city: string;
@@ -65,21 +66,21 @@ interface CustomerData {
 const MOCK_CUSTOMERS: CustomerData[] = [
   {
     name: "ABC Trading LLC",
-    trnNumber: "TRN-1234567890",
+    vatNumber: "VAT-1234567890",
     country: "UAE",
     state: "Dubai",
     city: "Deira",
   },
   {
     name: "Global Exports",
-    trnNumber: "TRN-2345678901",
+    vatNumber: "VAT-2345678901",
     country: "UAE",
     state: "Dubai",
     city: "Business Bay",
   },
   {
     name: "Sunrise Mart",
-    trnNumber: "TRN-3456789012",
+    vatNumber: "VAT-3456789012",
     country: "UAE",
     state: "Abu Dhabi",
     city: "Mussafah",
@@ -113,10 +114,11 @@ const MOCK_INVOICES: Invoice[] = [
   {
     id: "1",
     documentNumber: "DOC001",
-    invoiceNumber: "INV-2024-001",
-    invoiceDate: "2024-07-24",
+    salesInvoiceNumber: "INV-2024-001",
+    poNumber: "PO-2024-001",
+    poDate: "2024-07-20",
     customer: "ABC Trading LLC",
-    trnNumber: "TRN-1234567890",
+    vatNumber: "VAT-1234567890",
     paymentMode: "Bank Transfer",
     dueDays: 30,
     paymentDate: "2024-08-23",
@@ -138,10 +140,11 @@ const MOCK_INVOICES: Invoice[] = [
   {
     id: "2",
     documentNumber: "DOC002",
-    invoiceNumber: "INV-2024-002",
-    invoiceDate: "2024-07-25",
+    salesInvoiceNumber: "INV-2024-002",
+    poNumber: "PO-2024-002",
+    poDate: "2024-07-22",
     customer: "Global Exports",
-    trnNumber: "TRN-2345678901",
+    vatNumber: "VAT-2345678901",
     paymentMode: "Credit Card",
     dueDays: 15,
     paymentDate: "2024-08-09",
@@ -172,7 +175,7 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
   const labels = useLanguageLabels();
   const { isRTL } = useAppSelector((state) => state.language);
 
-  const detectedModule = "sales-invoice";
+  const detectedModule = "sales-return";
 
   // Use the custom hook for minimized module data
   const {
@@ -218,10 +221,11 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
   const [formData, setFormData] = useState<Invoice>({
     id: "",
     documentNumber: "",
-    invoiceNumber: "",
-    invoiceDate: "",
+    salesInvoiceNumber: "",
+    poNumber: "",
+    poDate: "",
     customer: "",
-    trnNumber: "",
+    vatNumber: "",
     paymentMode: "",
     dueDays: 0,
     paymentDate: "",
@@ -353,7 +357,7 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
       setIsRestoredFromMinimized(true);
 
       const scrollPosition = getModuleScrollPosition(
-        "sales-invoice-edit-module"
+        "sales-return-edit-module"
       );
       if (scrollPosition) {
         setTimeout(() => {
@@ -410,7 +414,7 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
         setFormData((prev) => ({
           ...prev,
           customer: newCustomer,
-          trnNumber: matchedCustomer.trnNumber,
+          vatNumber: matchedCustomer.vatNumber,
           country: matchedCustomer.country,
           state: matchedCustomer.state,
           city: matchedCustomer.city,
@@ -423,7 +427,7 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
         setFormData((prev) => ({
           ...prev,
           customer: newCustomer,
-          trnNumber: "",
+          vatNumber: "",
           country: "",
           state: "",
           city: "",
@@ -495,7 +499,7 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
 
       if (hasMinimizedData) {
         try {
-          await resetModuleData("sales-invoice-edit-module");
+          await resetModuleData("sales-return-edit-module");
           console.log("Form data reset in Redux");
         } catch (error) {
           console.error("Error resetting form data:", error);
@@ -519,10 +523,11 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
           excludeFields: ["id", "__v", "_id"],
           fieldLabels: {
             documentNumber: "Document Number",
-            invoiceNumber: "Invoice Number",
-            invoiceDate: "Invoice Date",
+            salesInvoiceNumber: "Sales Invoice Number",
+            poNumber: "P.O Number",
+            poDate: "P.O Date",
             customer: "Customer",
-            trnNumber: "TRN Number",
+            vatNumber: "VAT Number",
             paymentMode: "Payment Mode",
             dueDays: "Due Days",
             paymentDate: "Payment Date",
@@ -651,7 +656,7 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
   return (
     <>
       <MinimizablePageLayout
-        moduleId="sales-invoice-edit-module"
+        moduleId="sales-return-edit-module"
         moduleName={`Edit ${detectedModule}`}
         moduleRoute={`/${detectedModule}/edit/${
           formData.documentNumber || "new"
@@ -697,7 +702,7 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
             onSubmit={handleSubmit}
             className="space-y-6"
           >
-            {/* First Row: Document Number, Invoice Number, Invoice Date, Customer */}
+            {/* First Row: Document Number, Sales Invoice Number, P.O Number, P.O Date */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
               {/* Document Number */}
               <div className="space-y-2">
@@ -714,7 +719,7 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
                   }
                   onValueChange={handleDocumentNumberChange}
                   isShowTemplateIcon={false}
-                  onEnterPress={() => focusNextInput("invoiceNumber")}
+                  onEnterPress={() => focusNextInput("salesInvoiceNumber")}
                   placeholder=""
                   labelText="Document Number"
                   className="relative"
@@ -730,26 +735,63 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
                 />
               </div>
 
-              {/* Invoice Number */}
+              {/* Sales Invoice Number */}
               <div className="space-y-2">
                 <EditableInput
-                  setRef={setRef("invoiceNumber")}
-                  id="invoiceNumber"
-                  name="invoiceNumber"
-                  value={formData.invoiceNumber}
+                  setRef={setRef("salesInvoiceNumber")}
+                  id="salesInvoiceNumber"
+                  name="salesInvoiceNumber"
+                  value={formData.salesInvoiceNumber}
                   onChange={handleChange}
-                  onNext={() => focusNextInput("invoiceDate")}
+                  onNext={() => focusNextInput("poNumber")}
                   onCancel={() =>
                     setFormData({
                       ...formData,
-                      invoiceNumber: "",
+                      salesInvoiceNumber: "",
                     })
                   }
-                  labelText="Invoice Number"
-                  tooltipText="Invoice number"
+                  labelText="Sales Invoice Number"
+                  tooltipText="Reference sales invoice number"
                 />
               </div>
 
+              {/* P.O Number */}
+              <div className="space-y-2">
+                <EditableInput
+                  setRef={setRef("poNumber")}
+                  id="poNumber"
+                  name="poNumber"
+                  value={formData.poNumber}
+                  onChange={handleChange}
+                  onNext={() => focusNextInput("poDate")}
+                  onCancel={() => setFormData({ ...formData, poNumber: "" })}
+                  labelText="P.O Number"
+                  tooltipText="Purchase order number"
+                />
+              </div>
+
+              {/* P.O Date */}
+              <div className="space-y-2">
+                <EnglishDate
+                  isDate={true}
+                  isShowCalender={true}
+                  calendarType="gregorian"
+                  userLang="en"
+                  rtl={false}
+                  onChange={(date: string) =>
+                    setFormData({ ...formData, poDate: date })
+                  }
+                  value={formData.poDate}
+                  disabled={false}
+                  labelText="P.O Date"
+                  className={cn("transition-all", "ring-1 ring-primary")}
+                  setStartNextFocus={() => focusNextInput("customer")}
+                />
+              </div>
+            </div>
+
+            {/* Second Row: Customer, VAT Number, Payment Mode, Due Days */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
               {/* Customer */}
               <div className="space-y-2">
                 <Autocomplete
@@ -761,7 +803,7 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
                   options={memoizedCustomers.map((s) => s.name)}
                   value={formData.customer}
                   onValueChange={handleCustomerChange}
-                  onEnterPress={() => focusNextInput("trnNumber")}
+                  onEnterPress={() => focusNextInput("vatNumber")}
                   placeholder=""
                   className="relative"
                   tooltipText="Select or type customer"
@@ -776,47 +818,24 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
                   }}
                   setShowTemplates={setShowTemplates}
                   showTemplates={showTemplates}
-                  isShowTemplateIcon={true}
                 />
               </div>
 
-              {/* Invoice Date */}
-              <div className="space-y-2">
-                <EnglishDate
-                  isDate={true}
-                  isShowCalender={true}
-                  calendarType="gregorian"
-                  userLang="en"
-                  rtl={false}
-                  onChange={(date: string) =>
-                    setFormData({ ...formData, invoiceDate: date })
-                  }
-                  value={formData.invoiceDate}
-                  disabled={false}
-                  labelText="Invoice Date"
-                  className={cn("transition-all", "ring-1 ring-primary")}
-                  setStartNextFocus={() => focusNextInput("customer")}
-                />
-              </div>
-            </div>
-
-            {/* Second Row: TRN Number, Payment Mode, Due Days, Payment Date */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
-              {/* TRN Number */}
+              {/* VAT Number */}
               <div className="space-y-2">
                 <EditableInput
-                  setRef={setRef("trnNumber")}
-                  id="trnNumber"
-                  name="trnNumber"
-                  value={formData.trnNumber}
+                  setRef={setRef("vatNumber")}
+                  id="vatNumber"
+                  name="vatNumber"
+                  value={formData.vatNumber}
                   onChange={handleChange}
                   onNext={() => focusNextInput("paymentMode")}
-                  onCancel={() => setFormData({ ...formData, trnNumber: "" })}
-                  labelText="TRN Number"
+                  onCancel={() => setFormData({ ...formData, vatNumber: "" })}
+                  labelText="VAT Number"
                   tooltipText={
                     isCustomerFieldsDisabled()
                       ? "Select customer first"
-                      : "Tax Registration Number"
+                      : "VAT Registration Number"
                   }
                   readOnly={isCustomerFieldsDisabled() || isCustomerAutoFilled}
                   disabled={isCustomerFieldsDisabled()}
@@ -829,7 +848,6 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
                   }
                 />
               </div>
-
               {/* Payment Mode */}
               <div className="space-y-2">
                 <Autocomplete
@@ -858,23 +876,6 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
                   }}
                 />
               </div>
-
-              {/* Due Days */}
-              <div className="space-y-2">
-                <EditableInput
-                  setRef={setRef("dueDays")}
-                  id="dueDays"
-                  name="dueDays"
-                  type="number"
-                  value={formData.dueDays.toString()}
-                  onChange={handleChange}
-                  onNext={() => focusNextInput("paymentDate")}
-                  onCancel={() => setFormData({ ...formData, dueDays: 0 })}
-                  labelText="Due Days"
-                  tooltipText="Number of days until payment is due"
-                />
-              </div>
-
               {/* Payment Date */}
               <div className="space-y-2">
                 <EnglishDate
@@ -897,6 +898,22 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
 
             {/* Third Row: Country, State, City, Remarks */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
+              {" "}
+              {/* Due Days */}
+              <div className="space-y-2">
+                <EditableInput
+                  setRef={setRef("dueDays")}
+                  id="dueDays"
+                  name="dueDays"
+                  type="number"
+                  value={formData.dueDays.toString()}
+                  onChange={handleChange}
+                  onNext={() => focusNextInput("paymentDate")}
+                  onCancel={() => setFormData({ ...formData, dueDays: 0 })}
+                  labelText="Due Days"
+                  tooltipText="Number of days until payment is due"
+                />
+              </div>
               {/* Country */}
               <div className="space-y-2">
                 <EditableInput
@@ -920,7 +937,6 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
                   }
                 />
               </div>
-
               {/* State */}
               <div className="space-y-2">
                 <EditableInput
@@ -944,7 +960,6 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
                   }
                 />
               </div>
-
               {/* City */}
               <div className="space-y-2">
                 <EditableInput
@@ -968,7 +983,6 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
                   }
                 />
               </div>
-
               {/* Remarks */}
               <div className="space-y-2">
                 <EditableInput
@@ -983,10 +997,6 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
                   tooltipText="Additional remarks or notes"
                 />
               </div>
-            </div>
-
-            {/* Fourth Row: Salesman, Default, Status, Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
               {/* Salesman */}
               <div className="space-y-2">
                 <Autocomplete
@@ -1015,7 +1025,6 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
                   }}
                 />
               </div>
-
               {/* Default field - only show if user can edit */}
               {isDefaultPerm && (
                 <div className="space-y-2 relative">
@@ -1064,7 +1073,6 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
                   />
                 </div>
               )}
-
               {/* Status field - only show if user can edit */}
               {statusPerm && (
                 <div className="space-y-2">
@@ -1126,7 +1134,10 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
                   />
                 </div>
               )}
+            </div>
 
+            {/* Fourth Row: Salesman, Default, Status, Actions */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
               {/* Actions */}
               <div className="space-y-2">
                 <ActionsAutocomplete

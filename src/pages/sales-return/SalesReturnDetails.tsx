@@ -17,14 +17,15 @@ import { ResetFormModal } from "@/components/common/ResetFormModal";
 import { usePermission } from "@/hooks/usePermissions";
 import MinimizablePageLayout from "@/components/MinimizablePageLayout";
 
-// Define Sales Invoice interface (aligned with Create/Edit pages)
+// Define Sales Return interface (aligned with Create/Edit pages)
 interface Invoice {
   id: string;
   documentNumber: string;
-  invoiceNumber: string;
-  invoiceDate: string;
+  salesInvoiceNumber: string;
+  poNumber: string;
+  poDate: string;
   customer: string;
-  trnNumber: string;
+  vatNumber: string;
   paymentMode: string;
   dueDays: number;
   paymentDate: string;
@@ -43,12 +44,12 @@ interface Invoice {
 }
 
 const MOCK_INVOICES = [
-  { documentNumber: "DOC001", customer: "ABC Trading LLC" },
-  { documentNumber: "DOC002", customer: "Global Exports" },
-  { documentNumber: "DOC003", customer: "Sunrise Mart" },
-  { documentNumber: "DOC004", customer: "Blue Ocean Foods" },
-  { documentNumber: "DOC005", customer: "Prime Retailers" },
-  { documentNumber: "DOC006", customer: "Velocity Supplies" },
+  { documentNumber: "SR001", customer: "ABC Trading LLC" },
+  { documentNumber: "SR002", customer: "Global Exports" },
+  { documentNumber: "SR003", customer: "Sunrise Mart" },
+  { documentNumber: "SR004", customer: "Blue Ocean Foods" },
+  { documentNumber: "SR005", customer: "Prime Retailers" },
+  { documentNumber: "SR006", customer: "Velocity Supplies" },
 ];
 
 // Type definition for TypeScript
@@ -65,13 +66,13 @@ export type HistoryEntry = {
   print: boolean;
 };
 
-export default function InvoicesDetails() {
+export default function SalesReturnDetails() {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
   const [keepChanges, setKeepChanges] = useState(false);
   const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
-  const [selectedInvoice, setSelectedInvoice] = useState("INV001");
+  const [selectedInvoice, setSelectedInvoice] = useState("SR001");
   const location = useLocation();
   const isViewPage = location.pathname.includes("/view");
   const [pdfChecked, setPdfChecked] = useState(false);
@@ -79,23 +80,24 @@ export default function InvoicesDetails() {
   const [showExportModal, setShowExportModal] = useState(false);
 
   // Permission checks
-  // const canCreate: boolean = usePermission("sales-invoice", "create");
-  // const canEdit: boolean = usePermission("sales-invoice", "edit");
-  // const canDelete: boolean = usePermission("sales-invoice", "delete");
-  // const canExport: boolean = usePermission("sales-invoice", "export");
-  const canPdf: boolean = usePermission("sales-invoice", "pdf");
-  const canPrint: boolean = usePermission("sales-invoice", "print");
-  const canSeeHistory: boolean = usePermission("sales-invoice", "history");
+  // const canCreate: boolean = usePermission("sales-return", "create");
+  // const canEdit: boolean = usePermission("sales-return", "edit");
+  // const canDelete: boolean = usePermission("sales-return", "delete");
+  // const canExport: boolean = usePermission("sales-return", "export");
+  const canPdf: boolean = usePermission("sales-return", "pdf");
+  const canPrint: boolean = usePermission("sales-return", "print");
+  const canSeeHistory: boolean = usePermission("sales-return", "history");
 
   let invoiceData: Invoice = {
     id: "1",
     documentNumber: selectedInvoice,
-    invoiceNumber: `INV-2024-${selectedInvoice.replace("DOC", "")}`,
-    invoiceDate: "2024-07-24",
+    salesInvoiceNumber: `INV-2024-${selectedInvoice.replace("SR", "")}`,
+    poNumber: `PO-2024-${selectedInvoice.replace("SR", "")}`,
+    poDate: "2024-07-20",
     customer:
       MOCK_INVOICES.find((i) => i.documentNumber === selectedInvoice)
         ?.customer || "ABC Trading LLC",
-    trnNumber: "TRN-1234567890",
+    vatNumber: "VAT-1234567890",
     paymentMode: "Bank Transfer",
     dueDays: 30,
     paymentDate: "2024-08-23",
@@ -123,10 +125,11 @@ export default function InvoicesDetails() {
     if (isViewPage) {
       invoiceData = {
         ...invoiceData,
-        invoiceNumber: "",
-        invoiceDate: "",
+        salesInvoiceNumber: "",
+        poNumber: "",
+        poDate: "",
         customer: "",
-        trnNumber: "",
+        vatNumber: "",
         paymentMode: "",
         dueDays: 0,
         paymentDate: "",
@@ -146,15 +149,16 @@ export default function InvoicesDetails() {
   const handlePrintInvoice = (invoiceData: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "Sales Invoice Details",
+        title: "Sales Return Details",
         data: [invoiceData],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
           documentNumber: "Document Number",
-          invoiceNumber: "Invoice Number",
-          invoiceDate: "Invoice Date",
+          salesInvoiceNumber: "Sales Invoice Number",
+          poNumber: "P.O Number",
+          poDate: "P.O Date",
           customer: "Customer",
-          trnNumber: "TRN Number",
+          vatNumber: "VAT Number",
           paymentMode: "Payment Mode",
           dueDays: "Due Days",
           paymentDate: "Payment Date",
@@ -194,15 +198,15 @@ export default function InvoicesDetails() {
       const blob = await pdf(
         <GenericPDF
           data={[invoiceData]}
-          title="Sales Invoice Details"
-          subtitle="Sales Invoice Information"
+          title="Sales Return Details"
+          subtitle="Sales Return Information"
         />
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `sales-invoice-${selectedInvoice}-details.pdf`;
+      a.download = `sales-return-${selectedInvoice}-details.pdf`;
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
@@ -246,24 +250,24 @@ export default function InvoicesDetails() {
   return (
     <>
       <MinimizablePageLayout
-        moduleId="sales-invoice-details-module"
-        moduleName="Sales Invoice Details"
-        moduleRoute="/sales-invoice/view"
+        moduleId="sales-return-details-module"
+        moduleName="Sales Return Details"
+        moduleRoute="/sales-return/view"
         title={t("form.viewingInvoice")}
         videoSrc={video}
         videoHeader="Tutorial video"
-        listPath="sales-invoice"
+        listPath="sales-return"
         activePage="view"
         popoverOptions={[
           {
             label: "Create",
             icon: <Plus className="w-5 h-5 text-green-600" />,
-            onClick: () => navigate("/sales-invoice/create"),
+            onClick: () => navigate("/sales-return/create"),
           },
           {
             label: "Edit",
             icon: <Edit className="w-5 h-5 text-blue-600" />,
-            onClick: () => navigate(`/sales-invoice/edit/${invoiceData.id}`),
+            onClick: () => navigate(`/sales-return/edit/${invoiceData.id}`),
           },
         ]}
         keepChanges={keepChanges}
@@ -292,9 +296,9 @@ export default function InvoicesDetails() {
               }
             : undefined
         }
-        module="sales-invoice"
+        module="sales-return"
       >
-        {/* Row 1: Document Number, Invoice Number, Invoice Date, Customer */}
+        {/* Row 1: Document Number, Sales Invoice Number, P.O Date, Customer */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
           <div className="mt-1">
             <Autocomplete
@@ -314,16 +318,18 @@ export default function InvoicesDetails() {
           </div>
 
           <div className="">
-            <h3 className="font-normal mb-1 text-gray-600">Invoice Number</h3>
+            <h3 className="font-normal mb-1 text-gray-600">
+              Sales Invoice Number
+            </h3>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(invoiceData.invoiceNumber)}
+              {displayValue(invoiceData.salesInvoiceNumber)}
             </div>
           </div>
 
           <div className="">
-            <h3 className="font-normal mb-1 text-gray-600">Invoice Date</h3>
+            <h3 className="font-normal mb-1 text-gray-600">P.O Date</h3>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(invoiceData.invoiceDate)}
+              {displayValue(invoiceData.poDate)}
             </div>
           </div>
 
@@ -337,7 +343,7 @@ export default function InvoicesDetails() {
           </div>
         </div>
 
-        {/* Row 2: Payment Mode, Due Days, Payment Date, TRN Number */}
+        {/* Row 2: Payment Mode, Due Days, Payment Date, VAT Number */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
           <div className="">
             <h3 className="font-normal mb-1 text-gray-600">Payment Mode</h3>
@@ -361,9 +367,9 @@ export default function InvoicesDetails() {
           </div>
 
           <div className="">
-            <h3 className="font-normal mb-1 text-gray-600">TRN Number</h3>
+            <h3 className="font-normal mb-1 text-gray-600">VAT Number</h3>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(invoiceData.trnNumber)}
+              {displayValue(invoiceData.vatNumber)}
             </div>
           </div>
         </div>
