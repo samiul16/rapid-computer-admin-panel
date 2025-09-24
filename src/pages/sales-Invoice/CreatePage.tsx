@@ -12,38 +12,35 @@ import { Modal } from "@mantine/core";
 import { pdf } from "@react-pdf/renderer";
 import { Check, Edit, Eye, Plus } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { usePermission } from "@/hooks/usePermissions";
 import { useLanguageLabels } from "@/hooks/useLanguageLabels";
 import { useAppSelector } from "@/store/hooks";
-import type { InvoiceModuleData } from "@/types/modules";
 import MinimizablePageLayout from "@/components/MinimizablePageLayout";
 import { useInvoiceFormData } from "@/hooks/useModuleFormData";
 import { SwitchSelect } from "@/components/common/SwitchAutoComplete";
 import { TemplateContent } from "@/components/common/TemplateContent";
 import { cn } from "@/lib/utils";
-import { getModuleFromPath } from "@/lib/utils";
 import LanguageTranslatorModal from "@/components/common/LanguageTranslatorModel";
 import DynamicInputTableList from "@/components/common/dynamic-input-table/DynamicInputTableList";
 import EnglishDate from "@/components/EnglishDateInput";
 
-// Define Invoice interface to ensure type consistency
+// Define Sales Invoice interface
 interface Invoice {
   id: string;
   documentNumber: string;
-  poNumber: string;
-  poDate: string;
-  supplierName: string;
+  invoiceNumber: string;
+  invoiceDate: string;
+  customer: string;
+  trnNumber: string;
   paymentMode: string;
   dueDays: number;
   paymentDate: string;
-  supplierNumber: string;
-  supplierStatus: string;
-  supplierGroup: string;
-  remarks: string;
   country: string;
   state: string;
   city: string;
+  remarks: string;
+  salesman: string;
   isActive: boolean;
   isDraft: boolean;
   createdAt: Date | null;
@@ -53,40 +50,37 @@ interface Invoice {
   isDeleted: boolean;
 }
 
-// Mock supplier data for auto-fill functionality
-interface SupplierData {
+// Mock customer data for auto-fill functionality
+interface CustomerData {
   name: string;
-  number: string;
-  status: string;
-  group: string;
+  trnNumber: string;
   country: string;
   state: string;
   city: string;
-  paymentDate: string;
 }
 
-const MOCK_SUPPLIERS: SupplierData[] = [
+const MOCK_CUSTOMERS: CustomerData[] = [
   {
-    name: "AL AHAD CURTAINS TEX & FURNITURE TR.LLC",
-    number: "36",
-    status: "Active",
-    group: "Furniture Suppliers",
+    name: "ABC Trading LLC",
+    trnNumber: "TRN-1234567890",
     country: "UAE",
     state: "Dubai",
     city: "Deira",
-    paymentDate: "2024-08-15",
   },
   {
-    name: "SimplyNayela",
-    number: "12",
-    status: "Active",
-    group: "Fashion",
+    name: "Global Exports",
+    trnNumber: "TRN-2345678901",
     country: "UAE",
     state: "Dubai",
     city: "Business Bay",
-    paymentDate: "2024-08-12",
   },
-  // ... rest of the mock suppliers
+  {
+    name: "Sunrise Mart",
+    trnNumber: "TRN-3456789012",
+    country: "UAE",
+    state: "Abu Dhabi",
+    city: "Mussafah",
+  },
 ];
 
 // Payment mode options
@@ -103,14 +97,12 @@ const PAYMENT_MODES = [
   "Digital Wallet",
 ];
 
-// Supplier status options
-const SUPPLIER_STATUS_OPTIONS = [
-  "Active",
-  "Inactive",
-  "Pending",
-  "Suspended",
-  "Approved",
-  "Rejected",
+// Salesman options
+const SALESMAN_OPTIONS = [
+  "John Smith",
+  "Sarah Johnson",
+  "Michael Brown",
+  "Emily Davis",
 ];
 
 type Props = {
@@ -119,29 +111,36 @@ type Props = {
 
 // Generate incremental document number
 const generateDocumentNumber = () => {
-  const lastNumber = localStorage.getItem("lastInvoiceNumber") || "0";
+  const lastNumber = localStorage.getItem("lastSalesDocNumber") || "0";
   const nextNumber = (parseInt(lastNumber) + 1).toString().padStart(3, "0");
-  localStorage.setItem("lastInvoiceNumber", nextNumber);
-  return `INV${nextNumber}`;
+  localStorage.setItem("lastSalesDocNumber", nextNumber);
+  return `DOC${nextNumber}`;
+};
+
+// Generate incremental invoice number
+const generateInvoiceNumber = () => {
+  const lastNumber = localStorage.getItem("lastSalesInvoiceNumber") || "0";
+  const nextNumber = (parseInt(lastNumber) + 1).toString().padStart(3, "0");
+  localStorage.setItem("lastSalesInvoiceNumber", nextNumber);
+  return `INV-${new Date().getFullYear()}-${nextNumber}`;
 };
 
 // Initial data factory function
 const createInitialData = (): Invoice => ({
   id: "1",
   documentNumber: generateDocumentNumber(),
-  poNumber: "",
-  poDate: "",
-  supplierName: "",
+  invoiceNumber: generateInvoiceNumber(),
+  invoiceDate: "",
+  customer: "",
+  trnNumber: "",
   paymentMode: "",
   dueDays: 0,
   paymentDate: "",
-  supplierNumber: "",
-  supplierStatus: "",
-  supplierGroup: "",
-  remarks: "",
   country: "",
   state: "",
   city: "",
+  remarks: "",
+  salesman: "",
   isActive: true,
   isDraft: false,
   createdAt: new Date(),
@@ -153,11 +152,10 @@ const createInitialData = (): Invoice => ({
 
 export default function InvoiceCreatePage({ isEdit = false }: Props) {
   const navigate = useNavigate();
-  const location = useLocation();
   const labels = useLanguageLabels();
   const { isRTL } = useAppSelector((state) => state.language);
 
-  const detectedModule = getModuleFromPath(location.pathname);
+  const detectedModule = "sales-invoice";
 
   // Use the custom hook for minimized module data
   const {
@@ -179,7 +177,7 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [formKey, setFormKey] = useState(0);
   const [isRestoredFromMinimized, setIsRestoredFromMinimized] = useState(false);
-  const [isSupplierAutoFilled, setIsSupplierAutoFilled] = useState(false);
+  const [isCustomerAutoFilled, setIsCustomerAutoFilled] = useState(false);
 
   // Translation state
   const [translations, setTranslations] = useState([
@@ -195,49 +193,49 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
   // Form state
   const [formData, setFormData] = useState<Invoice>(() => createInitialData());
 
-  // Memoize supplier data to prevent unnecessary re-renders
-  const memoizedSuppliers = useMemo(() => [...MOCK_SUPPLIERS], []);
+  // Memoize customer data to prevent unnecessary re-renders
+  const memoizedCustomers = useMemo(() => [...MOCK_CUSTOMERS], []);
   const memoizedPaymentModes = useMemo(() => [...PAYMENT_MODES], []);
-  const memoizedStatusOptions = useMemo(() => [...SUPPLIER_STATUS_OPTIONS], []);
+  const memoizedSalesmanOptions = useMemo(() => [...SALESMAN_OPTIONS], []);
 
-  // Update translation data when supplier name changes
-  const updateTranslations = useCallback((supplierName: string) => {
+  // Update translation data when customer changes
+  const updateTranslations = useCallback((customer: string) => {
     setTranslations([
-      { id: 1, english: supplierName || "", arabic: "", bangla: "" },
+      { id: 1, english: customer || "", arabic: "", bangla: "" },
     ]);
   }, []);
 
   useEffect(() => {
-    updateTranslations(formData.supplierName);
-  }, [formData.supplierName, updateTranslations]);
+    updateTranslations(formData.customer);
+  }, [formData.customer, updateTranslations]);
 
-  // Helper function to check if supplier fields should be disabled
-  const isSupplierFieldsDisabled = () => {
-    return !formData.supplierName || formData.supplierName.trim() === "";
+  // Helper function to check if customer fields should be disabled
+  const isCustomerFieldsDisabled = () => {
+    return !formData.customer || formData.customer.trim() === "";
   };
 
-  // Function to search for supplier by name
-  const findSupplierByName = useCallback(
-    (name: string): SupplierData | null => {
+  // Function to search for customer by name
+  const findCustomerByName = useCallback(
+    (name: string): CustomerData | null => {
       if (!name.trim()) return null;
 
       // Find exact match first
-      let supplier = memoizedSuppliers.find(
+      let customer = memoizedCustomers.find(
         (s) => s.name.toLowerCase() === name.toLowerCase()
       );
 
       // If no exact match, find partial match
-      if (!supplier) {
-        supplier = memoizedSuppliers.find(
+      if (!customer) {
+        customer = memoizedCustomers.find(
           (s) =>
             s.name.toLowerCase().includes(name.toLowerCase()) ||
             name.toLowerCase().includes(s.name.toLowerCase())
         );
       }
 
-      return supplier || null;
+      return customer || null;
     },
-    [memoizedSuppliers]
+    [memoizedCustomers]
   );
 
   // Simplified restore logic using the custom hook
@@ -246,7 +244,7 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
       hasMinimizedData &&
       moduleData &&
       !isRestoredFromMinimized &&
-      !formData.supplierName &&
+      !formData.customer &&
       !formData.documentNumber;
 
     if (shouldAutoRestore) {
@@ -258,7 +256,9 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
       setStatusState(moduleData.isDraft ? "Draft" : "Active");
       setIsRestoredFromMinimized(true);
 
-      const scrollPosition = getModuleScrollPosition("invoice-form-module");
+      const scrollPosition = getModuleScrollPosition(
+        "sales-invoice-form-module"
+      );
       if (scrollPosition) {
         setTimeout(() => {
           window.scrollTo(0, scrollPosition);
@@ -269,7 +269,7 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
     hasMinimizedData,
     moduleData,
     isRestoredFromMinimized,
-    formData.supplierName,
+    formData.customer,
     formData.documentNumber,
     getModuleScrollPosition,
   ]);
@@ -319,50 +319,44 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
     inputRefs.current[nextField]?.focus();
   };
 
-  // Handle supplier name changes and auto-fill related fields
-  const handleSupplierNameChange = useCallback(
+  // Handle customer changes and auto-fill related fields
+  const handleCustomerChange = useCallback(
     (value: string | null) => {
-      const newSupplierName = value || "";
+      const newCustomer = value || "";
 
       setFormData((prev) => ({
         ...prev,
-        supplierName: newSupplierName,
+        customer: newCustomer,
       }));
 
-      // Search for matching supplier
-      const matchedSupplier = findSupplierByName(newSupplierName);
+      // Search for matching customer
+      const matchedCustomer = findCustomerByName(newCustomer);
 
-      if (matchedSupplier) {
+      if (matchedCustomer) {
         // Auto-fill related fields
         setFormData((prev) => ({
           ...prev,
-          supplierName: newSupplierName,
-          supplierNumber: matchedSupplier.number,
-          supplierStatus: matchedSupplier.status,
-          supplierGroup: matchedSupplier.group,
-          country: matchedSupplier.country,
-          state: matchedSupplier.state,
-          city: matchedSupplier.city,
-          paymentDate: matchedSupplier.paymentDate,
+          customer: newCustomer,
+          trnNumber: matchedCustomer.trnNumber,
+          country: matchedCustomer.country,
+          state: matchedCustomer.state,
+          city: matchedCustomer.city,
         }));
-        setIsSupplierAutoFilled(true);
+        setIsCustomerAutoFilled(true);
       } else {
-        // Clear auto-filled fields when supplier name is empty or no match
-        setIsSupplierAutoFilled(false);
+        // Clear auto-filled fields when customer is empty or no match
+        setIsCustomerAutoFilled(false);
         setFormData((prev) => ({
           ...prev,
-          supplierName: newSupplierName,
-          supplierNumber: "",
-          supplierStatus: "",
-          supplierGroup: "",
+          customer: newCustomer,
+          trnNumber: "",
           country: "",
           state: "",
           city: "",
-          paymentDate: "",
         }));
       }
     },
-    [findSupplierByName]
+    [findCustomerByName]
   );
 
   // Handle form field changes
@@ -412,7 +406,7 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
     setFormData(newData);
     setStatusState("Active");
     setIsRestoredFromMinimized(false);
-    setIsSupplierAutoFilled(false);
+    setIsCustomerAutoFilled(false);
 
     if (formRef.current) {
       formRef.current.reset();
@@ -422,7 +416,7 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
 
     if (hasMinimizedData) {
       try {
-        await resetModuleData("invoice-form-module");
+        await resetModuleData("sales-invoice-form-module");
         console.log("Form data reset in Redux");
       } catch (error) {
         console.error("Error resetting form data:", error);
@@ -443,19 +437,18 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
           excludeFields: ["id", "__v", "_id"],
           fieldLabels: {
             documentNumber: "Document Number",
-            poNumber: "P.O Number",
-            poDate: "P.O Date",
-            supplierName: "Supplier Name",
+            invoiceNumber: "Invoice Number",
+            invoiceDate: "Invoice Date",
+            customer: "Customer",
+            trnNumber: "TRN Number",
             paymentMode: "Payment Mode",
             dueDays: "Due Days",
             paymentDate: "Payment Date",
-            supplierNumber: "Supplier Number",
-            supplierStatus: "Supplier Status",
-            supplierGroup: "Supplier Group",
             remarks: "Remarks",
             country: "Country",
             state: "State",
             city: "City",
+            salesman: "Salesman",
             isActive: "Active Status",
             isDraft: labels.draft,
             isDeleted: "Deleted Status",
@@ -544,7 +537,7 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
   }, []);
 
   // Create minimize handler
-  const handleMinimize = useCallback((): InvoiceModuleData => {
+  const handleMinimize = useCallback((): any => {
     return {
       ...formData,
       hasChanges: true,
@@ -555,7 +548,7 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
   return (
     <>
       <MinimizablePageLayout
-        moduleId="invoice-form-module"
+        moduleId="sales-invoice-form-module"
         moduleName={
           isEdit ? `Edit ${detectedModule}` : `Adding ${detectedModule}`
         }
@@ -609,7 +602,7 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
             onSubmit={handleSubmit}
             className="space-y-6 relative"
           >
-            {/* First Row: Document Number, P.O Number, P.O Date, Supplier Name */}
+            {/* First Row: Document Number, Invoice Number, Invoice Date, Customer */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
               {/* Document Number */}
               <div className="space-y-2">
@@ -619,7 +612,7 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
                   name="documentNumber"
                   value={formData.documentNumber}
                   onChange={handleChange}
-                  onNext={() => focusNextInput("poNumber")}
+                  onNext={() => focusNextInput("invoiceNumber")}
                   onCancel={() => {}}
                   labelText="Document Number"
                   tooltipText="Auto-generated document number"
@@ -629,36 +622,41 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
                 />
               </div>
 
-              {/* P.O Number */}
+              {/* Invoice Number */}
               <div className="space-y-2">
                 <EditableInput
-                  setRef={setRef("poNumber")}
-                  id="poNumber"
-                  name="poNumber"
-                  value={formData.poNumber}
+                  setRef={setRef("invoiceNumber")}
+                  id="invoiceNumber"
+                  name="invoiceNumber"
+                  value={formData.invoiceNumber}
                   onChange={handleChange}
-                  onNext={() => focusNextInput("poDate")}
-                  onCancel={() => setFormData({ ...formData, poNumber: "" })}
-                  labelText="P.O Number"
-                  tooltipText="Purchase order number"
+                  onNext={() => focusNextInput("invoiceDate")}
+                  onCancel={() =>
+                    setFormData({
+                      ...formData,
+                      invoiceNumber: generateInvoiceNumber(),
+                    })
+                  }
+                  labelText="Invoice Number"
+                  tooltipText="Auto-generated invoice number"
                 />
               </div>
 
-              {/* Supplier Name */}
+              {/* Customer */}
               <div className="space-y-2">
                 <Autocomplete
-                  ref={(el: any) => setRef("supplierName")(el)}
-                  id="supplierName"
-                  name="supplierName"
-                  labelText="Supplier Name"
+                  ref={(el: any) => setRef("customer")(el)}
+                  id="customer"
+                  name="customer"
+                  labelText="Customer"
                   allowCustomInput={true}
-                  options={memoizedSuppliers.map((s) => s.name)}
-                  value={formData.supplierName}
-                  onValueChange={handleSupplierNameChange}
-                  onEnterPress={() => focusNextInput("paymentMode")}
+                  options={memoizedCustomers.map((s) => s.name)}
+                  value={formData.customer}
+                  onValueChange={handleCustomerChange}
+                  onEnterPress={() => focusNextInput("trnNumber")}
                   placeholder=""
                   className="relative"
-                  tooltipText="Select or type supplier name"
+                  tooltipText="Select or type customer"
                   userLang={isRTL ? "ar" : "en"}
                   styles={{
                     input: {
@@ -674,7 +672,7 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
                 />
               </div>
 
-              {/* P.O Date */}
+              {/* Invoice Date */}
               <div className="space-y-2">
                 <EnglishDate
                   isDate={true}
@@ -683,19 +681,47 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
                   userLang="en"
                   rtl={false}
                   onChange={(date: string) =>
-                    setFormData({ ...formData, poDate: date })
+                    setFormData({ ...formData, invoiceDate: date })
                   }
-                  value={formData.poDate}
+                  value={formData.paymentDate}
                   disabled={false}
-                  labelText="P.O Date"
+                  labelText="Invoice Date"
                   className={cn("transition-all", "ring-1 ring-primary")}
-                  setStartNextFocus={() => focusNextInput("supplierName")}
+                  setStartNextFocus={() => focusNextInput("customer")}
                 />
               </div>
             </div>
 
-            {/* Second Row: Payment Mode, Due Days, Payment Date, Supplier Number */}
+            {/* Second Row: TRN Number, Payment Mode, Due Days, Payment Date */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
+              {/* TRN Number */}
+              <div className="space-y-2">
+                <EditableInput
+                  setRef={setRef("trnNumber")}
+                  id="trnNumber"
+                  name="trnNumber"
+                  value={formData.trnNumber}
+                  onChange={handleChange}
+                  onNext={() => focusNextInput("paymentMode")}
+                  onCancel={() => setFormData({ ...formData, trnNumber: "" })}
+                  labelText="TRN Number"
+                  tooltipText={
+                    isCustomerFieldsDisabled()
+                      ? "Select customer first"
+                      : "Tax Registration Number"
+                  }
+                  readOnly={isCustomerFieldsDisabled() || isCustomerAutoFilled}
+                  disabled={isCustomerFieldsDisabled()}
+                  className={
+                    isCustomerFieldsDisabled()
+                      ? "bg-gray-200 cursor-not-allowed"
+                      : isCustomerAutoFilled
+                      ? "bg-gray-100"
+                      : ""
+                  }
+                />
+              </div>
+
               {/* Payment Mode */}
               <div className="space-y-2">
                 <Autocomplete
@@ -741,36 +767,6 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
                 />
               </div>
 
-              {/* Supplier Number */}
-              <div className="space-y-2">
-                <EditableInput
-                  setRef={setRef("supplierNumber")}
-                  id="supplierNumber"
-                  name="supplierNumber"
-                  value={formData.supplierNumber}
-                  onChange={handleChange}
-                  onNext={() => focusNextInput("supplierStatus")}
-                  onCancel={() =>
-                    setFormData({ ...formData, supplierNumber: "" })
-                  }
-                  labelText="Supplier Number"
-                  tooltipText={
-                    isSupplierFieldsDisabled()
-                      ? "Select supplier first"
-                      : "Supplier number"
-                  }
-                  readOnly={isSupplierFieldsDisabled() || isSupplierAutoFilled}
-                  disabled={isSupplierFieldsDisabled()}
-                  className={
-                    isSupplierFieldsDisabled()
-                      ? "bg-gray-200 cursor-not-allowed"
-                      : isSupplierAutoFilled
-                      ? "bg-gray-100"
-                      : ""
-                  }
-                />
-              </div>
-
               {/* Payment Date */}
               <div className="space-y-2">
                 <EnglishDate
@@ -783,125 +779,16 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
                     setFormData({ ...formData, paymentDate: date })
                   }
                   value={formData.paymentDate}
-                  disabled={isSupplierFieldsDisabled()}
+                  disabled={false}
                   labelText="Payment Date"
-                  className={cn(
-                    "transition-all",
-                    isSupplierFieldsDisabled()
-                      ? "bg-gray-200 cursor-not-allowed"
-                      : isSupplierAutoFilled
-                      ? "bg-gray-100 ring-1 ring-primary"
-                      : "ring-1 ring-primary"
-                  )}
-                  setStartNextFocus={() => focusNextInput("supplierNumber")}
+                  className={cn("transition-all", "ring-1 ring-primary")}
+                  setStartNextFocus={() => focusNextInput("trnNumber")}
                 />
               </div>
             </div>
 
-            {/* Third Row: Supplier Status, Supplier Group, Remarks, Country */}
+            {/* Third Row: Country, State, City, Remarks */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
-              {/* Supplier Status */}
-              <div className="space-y-2">
-                {isSupplierAutoFilled || isSupplierFieldsDisabled() ? (
-                  <EditableInput
-                    setRef={setRef("supplierStatus")}
-                    id="supplierStatus"
-                    name="supplierStatus"
-                    value={formData.supplierStatus}
-                    onChange={handleChange}
-                    onNext={() => focusNextInput("supplierGroup")}
-                    onCancel={() =>
-                      setFormData({ ...formData, supplierStatus: "" })
-                    }
-                    labelText="Supplier Status"
-                    tooltipText={
-                      isSupplierFieldsDisabled()
-                        ? "Select supplier first"
-                        : "Supplier status"
-                    }
-                    readOnly
-                    disabled={isSupplierFieldsDisabled()}
-                    className={
-                      isSupplierFieldsDisabled()
-                        ? "bg-gray-200 cursor-not-allowed"
-                        : "bg-gray-100"
-                    }
-                  />
-                ) : (
-                  <Autocomplete
-                    ref={(el: any) => setRef("supplierStatus")(el)}
-                    id="supplierStatus"
-                    name="supplierStatus"
-                    allowCustomInput={true}
-                    options={memoizedStatusOptions}
-                    value={formData.supplierStatus}
-                    onValueChange={(value: string | null) =>
-                      setFormData({ ...formData, supplierStatus: value || "" })
-                    }
-                    onEnterPress={() => focusNextInput("supplierGroup")}
-                    placeholder=""
-                    labelText="Supplier Status"
-                    className="relative"
-                    tooltipText="Select supplier status"
-                    userLang={isRTL ? "ar" : "en"}
-                    styles={{
-                      input: {
-                        borderColor: "var(--primary)",
-                        "&:focus": {
-                          borderColor: "var(--primary)",
-                        },
-                      },
-                    }}
-                    disabled={isSupplierFieldsDisabled()}
-                  />
-                )}
-              </div>
-
-              {/* Supplier Group */}
-              <div className="space-y-2">
-                <EditableInput
-                  setRef={setRef("supplierGroup")}
-                  id="supplierGroup"
-                  name="supplierGroup"
-                  value={formData.supplierGroup}
-                  onChange={handleChange}
-                  onNext={() => focusNextInput("remarks")}
-                  onCancel={() =>
-                    setFormData({ ...formData, supplierGroup: "" })
-                  }
-                  labelText="Supplier Group"
-                  tooltipText={
-                    isSupplierFieldsDisabled()
-                      ? "Select supplier first"
-                      : "Supplier group"
-                  }
-                  readOnly={isSupplierFieldsDisabled()}
-                  disabled={isSupplierFieldsDisabled()}
-                  className={
-                    isSupplierFieldsDisabled()
-                      ? "bg-gray-200 cursor-not-allowed"
-                      : isSupplierAutoFilled
-                      ? "bg-gray-100"
-                      : ""
-                  }
-                />
-              </div>
-
-              {/* Remarks */}
-              <div className="space-y-2">
-                <EditableInput
-                  setRef={setRef("remarks")}
-                  id="remarks"
-                  name="remarks"
-                  value={formData.remarks}
-                  onChange={handleChange}
-                  onNext={() => focusNextInput("country")}
-                  onCancel={() => setFormData({ ...formData, remarks: "" })}
-                  labelText="Remarks"
-                  tooltipText="Additional remarks or notes"
-                />
-              </div>
-
               {/* Country */}
               <div className="space-y-2">
                 <EditableInput
@@ -913,26 +800,19 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
                   onNext={() => focusNextInput("state")}
                   onCancel={() => setFormData({ ...formData, country: "" })}
                   labelText="Country"
-                  tooltipText={
-                    isSupplierFieldsDisabled()
-                      ? "Select supplier first"
-                      : "Country"
-                  }
-                  readOnly={isSupplierFieldsDisabled() || isSupplierAutoFilled}
-                  disabled={isSupplierFieldsDisabled()}
+                  tooltipText="Country"
+                  readOnly={isCustomerFieldsDisabled() || isCustomerAutoFilled}
+                  disabled={isCustomerFieldsDisabled()}
                   className={
-                    isSupplierFieldsDisabled()
+                    isCustomerFieldsDisabled()
                       ? "bg-gray-200 cursor-not-allowed"
-                      : isSupplierAutoFilled
+                      : isCustomerAutoFilled
                       ? "bg-gray-100"
                       : ""
                   }
                 />
               </div>
-            </div>
 
-            {/* Fourth Row: State, City, Status */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
               {/* State */}
               <div className="space-y-2">
                 <EditableInput
@@ -944,17 +824,13 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
                   onNext={() => focusNextInput("city")}
                   onCancel={() => setFormData({ ...formData, state: "" })}
                   labelText="State"
-                  tooltipText={
-                    isSupplierFieldsDisabled()
-                      ? "Select supplier first"
-                      : "State"
-                  }
-                  readOnly={isSupplierFieldsDisabled() || isSupplierAutoFilled}
-                  disabled={isSupplierFieldsDisabled()}
+                  tooltipText="State"
+                  readOnly={isCustomerFieldsDisabled() || isCustomerAutoFilled}
+                  disabled={isCustomerFieldsDisabled()}
                   className={
-                    isSupplierFieldsDisabled()
+                    isCustomerFieldsDisabled()
                       ? "bg-gray-200 cursor-not-allowed"
-                      : isSupplierAutoFilled
+                      : isCustomerAutoFilled
                       ? "bg-gray-100"
                       : ""
                   }
@@ -969,23 +845,66 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
                   name="city"
                   value={formData.city}
                   onChange={handleChange}
-                  onNext={() => focusNextInput("status")}
+                  onNext={() => focusNextInput("remarks")}
                   onCancel={() => setFormData({ ...formData, city: "" })}
                   labelText="City"
-                  tooltipText={
-                    isSupplierFieldsDisabled()
-                      ? "Select supplier first"
-                      : "City"
-                  }
-                  readOnly={isSupplierFieldsDisabled() || isSupplierAutoFilled}
-                  disabled={isSupplierFieldsDisabled()}
+                  tooltipText="City"
+                  readOnly={isCustomerFieldsDisabled() || isCustomerAutoFilled}
+                  disabled={isCustomerFieldsDisabled()}
                   className={
-                    isSupplierFieldsDisabled()
+                    isCustomerFieldsDisabled()
                       ? "bg-gray-200 cursor-not-allowed"
-                      : isSupplierAutoFilled
+                      : isCustomerAutoFilled
                       ? "bg-gray-100"
                       : ""
                   }
+                />
+              </div>
+
+              {/* Remarks */}
+              <div className="space-y-2">
+                <EditableInput
+                  setRef={setRef("remarks")}
+                  id="remarks"
+                  name="remarks"
+                  value={formData.remarks}
+                  onChange={handleChange}
+                  onNext={() => focusNextInput("salesman")}
+                  onCancel={() => setFormData({ ...formData, remarks: "" })}
+                  labelText="Remarks"
+                  tooltipText="Additional remarks or notes"
+                />
+              </div>
+            </div>
+
+            {/* Fourth Row: Salesman, Status */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
+              {/* Salesman */}
+              <div className="space-y-2">
+                <Autocomplete
+                  ref={(el: any) => setRef("salesman")(el)}
+                  id="salesman"
+                  name="salesman"
+                  allowCustomInput={true}
+                  options={memoizedSalesmanOptions}
+                  value={formData.salesman}
+                  onValueChange={(value: string | null) =>
+                    setFormData({ ...formData, salesman: value || "" })
+                  }
+                  onEnterPress={() => focusNextInput("status")}
+                  placeholder=""
+                  labelText="Salesman"
+                  className="relative"
+                  tooltipText="Select salesman"
+                  userLang={isRTL ? "ar" : "en"}
+                  styles={{
+                    input: {
+                      borderColor: "var(--primary)",
+                      "&:focus": {
+                        borderColor: "var(--primary)",
+                      },
+                    },
+                  }}
                 />
               </div>
 
@@ -1026,7 +945,7 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
                       },
                     },
                   }}
-                  tooltipText="Invoice status"
+                  tooltipText="Sales Invoice status"
                 />
               </div>
             </div>
@@ -1051,7 +970,7 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
       <LanguageTranslatorModal
         isOpen={isOptionModalOpen}
         onClose={() => setIsOptionModalOpen(false)}
-        title="Invoice Language Translator"
+        title="Sales Invoice Language Translator"
         initialData={translations}
         onSave={handleTranslationSave}
       />
@@ -1069,38 +988,38 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
         <TemplateContent
           headers={[
             { key: "documentNumber", label: "Document Number" },
-            { key: "supplierName", label: "Supplier Name" },
+            { key: "customer", label: "Customer" },
             { key: "paymentMode", label: "Payment Mode" },
             { key: "dueDays", label: "Due Days" },
           ]}
           data={[
             {
-              documentNumber: "INV001",
-              supplierName: "AL AHAD CURTAINS TEX & FURNITURE TR.LLC",
+              documentNumber: "DOC001",
+              customer: "ABC Trading LLC",
               paymentMode: "Bank Transfer",
               dueDays: "30 days",
             },
             {
-              documentNumber: "INV002",
-              supplierName: "SimplyNayela",
+              documentNumber: "DOC002",
+              customer: "Global Exports",
               paymentMode: "Credit Card",
               dueDays: "15 days",
             },
             {
-              documentNumber: "INV003",
-              supplierName: "BROWN HUT AUTO ACCESSORISE TR L.L.C",
+              documentNumber: "DOC003",
+              customer: "Sunrise Mart",
               paymentMode: "Cash",
               dueDays: "7 days",
             },
             {
-              documentNumber: "INV004",
-              supplierName: "PIDILITE MEA CHEMICALS L.L.C",
+              documentNumber: "DOC004",
+              customer: "Blue Ocean Foods",
               paymentMode: "Wire Transfer",
               dueDays: "45 days",
             },
             {
-              documentNumber: "INV005",
-              supplierName: "TOP LEATHER Vehicles Upholstery Service L.L.C",
+              documentNumber: "DOC005",
+              customer: "Prime Retailers",
               paymentMode: "Check",
               dueDays: "21 days",
             },
@@ -1110,12 +1029,12 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
             setShowTemplates(false);
             setFormData((prev) => ({
               ...prev,
-              supplierName: selectedData.supplierName,
+              customer: selectedData.customer,
               paymentMode: selectedData.paymentMode,
               dueDays: parseInt(selectedData.dueDays.replace(" days", "")),
             }));
-            // Trigger auto-fill for supplier
-            handleSupplierNameChange(selectedData.supplierName);
+            // Trigger auto-fill for customer
+            handleCustomerChange(selectedData.customer);
           }}
           onClose={() => setShowTemplates(false)}
         />
