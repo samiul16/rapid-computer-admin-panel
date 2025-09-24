@@ -41,6 +41,7 @@ interface Invoice {
   city: string;
   remarks: string;
   salesman: string;
+  isDefault: boolean;
   isActive: boolean;
   isDraft: boolean;
   createdAt: Date | null;
@@ -141,6 +142,7 @@ const createInitialData = (): Invoice => ({
   city: "",
   remarks: "",
   salesman: "",
+  isDefault: false,
   isActive: true,
   isDraft: false,
   createdAt: new Date(),
@@ -178,6 +180,9 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
   const [formKey, setFormKey] = useState(0);
   const [isRestoredFromMinimized, setIsRestoredFromMinimized] = useState(false);
   const [isCustomerAutoFilled, setIsCustomerAutoFilled] = useState(false);
+  const [isDefaultState, setIsDefaultState] = useState<"Yes" | "No" | string>(
+    "No"
+  );
 
   // Translation state
   const [translations, setTranslations] = useState([
@@ -189,6 +194,11 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
   const canView = usePermission(detectedModule, "view");
   const canPdf: boolean = usePermission(detectedModule, "pdf");
   const canPrint: boolean = usePermission(detectedModule, "print");
+  const isDefaultPerm: boolean = usePermission(
+    detectedModule,
+    "edit",
+    "isDefault"
+  );
 
   // Form state
   const [formData, setFormData] = useState<Invoice>(() => createInitialData());
@@ -254,6 +264,7 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
       });
 
       setStatusState(moduleData.isDraft ? "Draft" : "Active");
+      setIsDefaultState((moduleData as any)?.isDefault ? "Yes" : "No");
       setIsRestoredFromMinimized(true);
 
       const scrollPosition = getModuleScrollPosition(
@@ -280,6 +291,7 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
       const initialData = createInitialData();
       setFormData(initialData);
       setStatusState(initialData.isDraft ? "Draft" : "Active");
+      setIsDefaultState(initialData.isDefault ? "Yes" : "No");
     }
   }, [isEdit, hasMinimizedData, isRestoredFromMinimized]);
 
@@ -405,6 +417,7 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
     const newData = createInitialData();
     setFormData(newData);
     setStatusState("Active");
+    setIsDefaultState("No");
     setIsRestoredFromMinimized(false);
     setIsCustomerAutoFilled(false);
 
@@ -449,6 +462,7 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
             state: "State",
             city: "City",
             salesman: "Salesman",
+            isDefault: "Default",
             isActive: "Active Status",
             isDraft: labels.draft,
             isDeleted: "Deleted Status",
@@ -686,7 +700,10 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
                   value={formData.paymentDate}
                   disabled={false}
                   labelText="Invoice Date"
-                  className={cn("transition-all", "ring-1 ring-primary")}
+                  className={cn(
+                    "transition-all",
+                    "ring-1 ring-primary w-full!"
+                  )}
                   setStartNextFocus={() => focusNextInput("customer")}
                 />
               </div>
@@ -877,7 +894,7 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
               </div>
             </div>
 
-            {/* Fourth Row: Salesman, Status */}
+            {/* Fourth Row: Salesman, Default, Status */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
               {/* Salesman */}
               <div className="space-y-2">
@@ -891,7 +908,7 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
                   onValueChange={(value: string | null) =>
                     setFormData({ ...formData, salesman: value || "" })
                   }
-                  onEnterPress={() => focusNextInput("status")}
+                  onEnterPress={() => focusNextInput("isDefault")}
                   placeholder=""
                   labelText="Salesman"
                   className="relative"
@@ -907,6 +924,55 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
                   }}
                 />
               </div>
+
+              {/* Default field - only show if user can edit */}
+              {isDefaultPerm && (
+                <div className="space-y-2 relative">
+                  <SwitchSelect
+                    ref={(el: any) => setRef("isDefault")(el)}
+                    id="isDefault"
+                    name="isDefault"
+                    multiSelect={false}
+                    options={[
+                      {
+                        label: "Yes",
+                        value: "Yes",
+                        date: "Set default",
+                      },
+                      {
+                        label: "No",
+                        value: "No",
+                        date: "Unset default",
+                      },
+                    ]}
+                    value={isDefaultState === "Yes" ? "Yes" : "No"}
+                    labelClassName="rounded-lg"
+                    onValueChange={(value: string | string[]) => {
+                      const isYes = Array.isArray(value)
+                        ? value[0] === "Yes"
+                        : value === "Yes";
+                      setIsDefaultState(isYes ? "Yes" : "No");
+                      const newValue = isYes;
+                      setFormData((prev) => ({
+                        ...prev,
+                        isDefault: newValue,
+                      }));
+                    }}
+                    onEnterPress={() => {
+                      if (
+                        formData.isDefault === true ||
+                        formData.isDefault === false
+                      ) {
+                        focusNextInput("status");
+                      }
+                    }}
+                    placeholder=" "
+                    labelText="Default"
+                    className="relative"
+                    tooltipText="Mark as default sales invoice"
+                  />
+                </div>
+              )}
 
               {/* Status */}
               <div className="space-y-2 relative">

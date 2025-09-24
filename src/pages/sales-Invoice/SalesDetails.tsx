@@ -17,23 +17,22 @@ import { ResetFormModal } from "@/components/common/ResetFormModal";
 import { usePermission } from "@/hooks/usePermissions";
 import MinimizablePageLayout from "@/components/MinimizablePageLayout";
 
-// Define Invoice interface to ensure type consistency
+// Define Sales Invoice interface (aligned with Create/Edit pages)
 interface Invoice {
   id: string;
   documentNumber: string;
-  poNumber: string;
-  poDate: string;
-  supplierName: string;
+  invoiceNumber: string;
+  invoiceDate: string;
+  customer: string;
+  trnNumber: string;
   paymentMode: string;
   dueDays: number;
   paymentDate: string;
-  supplierNumber: string;
-  supplierStatus: string;
-  supplierGroup: string;
-  remarks: string;
   country: string;
   state: string;
   city: string;
+  remarks: string;
+  salesman: string;
   isActive: boolean;
   isDraft: boolean;
   isDeleted: boolean;
@@ -44,21 +43,12 @@ interface Invoice {
 }
 
 const MOCK_INVOICES = [
-  {
-    documentNumber: "INV001",
-    supplierName: "AL AHAD CURTAINS TEX & FURNITURE TR.LLC",
-  },
-  { documentNumber: "INV002", supplierName: "SimplyNayela" },
-  {
-    documentNumber: "INV003",
-    supplierName: "BROWN HUT AUTO ACCESSORISE TR L.L.C",
-  },
-  { documentNumber: "INV004", supplierName: "PIDILITE MEA CHEMICALS L.L.C" },
-  {
-    documentNumber: "INV005",
-    supplierName: "TOP LEATHER Vehicles Upholstery Service L.L.C",
-  },
-  { documentNumber: "INV006", supplierName: "AL WESAL AUTO ACCESSORIES LLC" },
+  { documentNumber: "DOC001", customer: "ABC Trading LLC" },
+  { documentNumber: "DOC002", customer: "Global Exports" },
+  { documentNumber: "DOC003", customer: "Sunrise Mart" },
+  { documentNumber: "DOC004", customer: "Blue Ocean Foods" },
+  { documentNumber: "DOC005", customer: "Prime Retailers" },
+  { documentNumber: "DOC006", customer: "Velocity Supplies" },
 ];
 
 // Type definition for TypeScript
@@ -89,32 +79,31 @@ export default function InvoicesDetails() {
   const [showExportModal, setShowExportModal] = useState(false);
 
   // Permission checks
-  // const canCreate: boolean = usePermission("invoices", "create");
-  // const canEdit: boolean = usePermission("invoices", "edit");
-  // const canDelete: boolean = usePermission("invoices", "delete");
-  // const canExport: boolean = usePermission("invoices", "export");
-  const canPdf: boolean = usePermission("invoices", "pdf");
-  const canPrint: boolean = usePermission("invoices", "print");
-  const canSeeHistory: boolean = usePermission("invoices", "history");
+  // const canCreate: boolean = usePermission("sales-invoice", "create");
+  // const canEdit: boolean = usePermission("sales-invoice", "edit");
+  // const canDelete: boolean = usePermission("sales-invoice", "delete");
+  // const canExport: boolean = usePermission("sales-invoice", "export");
+  const canPdf: boolean = usePermission("sales-invoice", "pdf");
+  const canPrint: boolean = usePermission("sales-invoice", "print");
+  const canSeeHistory: boolean = usePermission("sales-invoice", "history");
 
   let invoiceData: Invoice = {
     id: "1",
     documentNumber: selectedInvoice,
-    poNumber: "PO-2024-001",
-    poDate: "2024-07-24",
-    supplierName:
+    invoiceNumber: `INV-2024-${selectedInvoice.replace("DOC", "")}`,
+    invoiceDate: "2024-07-24",
+    customer:
       MOCK_INVOICES.find((i) => i.documentNumber === selectedInvoice)
-        ?.supplierName || "AL AHAD CURTAINS TEX & FURNITURE TR.LLC",
-    paymentMode: "Split",
-    dueDays: 45,
-    paymentDate: "2024-08-15",
-    supplierNumber: "36",
-    supplierStatus: "Active",
-    supplierGroup: "Furniture Suppliers",
+        ?.customer || "ABC Trading LLC",
+    trnNumber: "TRN-1234567890",
+    paymentMode: "Bank Transfer",
+    dueDays: 30,
+    paymentDate: "2024-08-23",
     remarks: "Urgent delivery required",
     country: "UAE",
     state: "Dubai",
     city: "Deira",
+    salesman: "John Smith",
     isActive: true,
     isDraft: false,
     isDeleted: false,
@@ -134,19 +123,18 @@ export default function InvoicesDetails() {
     if (isViewPage) {
       invoiceData = {
         ...invoiceData,
-        poNumber: "",
-        poDate: "",
-        supplierName: "",
+        invoiceNumber: "",
+        invoiceDate: "",
+        customer: "",
+        trnNumber: "",
         paymentMode: "",
         dueDays: 0,
         paymentDate: "",
-        supplierNumber: "",
-        supplierStatus: "",
-        supplierGroup: "",
         remarks: "",
         country: "",
         state: "",
         city: "",
+        salesman: "",
         createdAt: "",
         updatedAt: "",
         draftedAt: "",
@@ -158,24 +146,23 @@ export default function InvoicesDetails() {
   const handlePrintInvoice = (invoiceData: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "Invoice Details",
+        title: "Sales Invoice Details",
         data: [invoiceData],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
           documentNumber: "Document Number",
-          poNumber: "P.O Number",
-          poDate: "P.O Date",
-          supplierName: "Supplier Name",
+          invoiceNumber: "Invoice Number",
+          invoiceDate: "Invoice Date",
+          customer: "Customer",
+          trnNumber: "TRN Number",
           paymentMode: "Payment Mode",
           dueDays: "Due Days",
           paymentDate: "Payment Date",
-          supplierNumber: "Supplier Number",
-          supplierStatus: "Supplier Status",
-          supplierGroup: "Supplier Group",
           remarks: "Remarks",
           country: "Country",
           state: "State",
           city: "City",
+          salesman: "Salesman",
           isActive: "Active Status",
           isDraft: "Draft Status",
           isDeleted: "Deleted Status",
@@ -207,15 +194,15 @@ export default function InvoicesDetails() {
       const blob = await pdf(
         <GenericPDF
           data={[invoiceData]}
-          title="Invoice Details"
-          subtitle="Invoice Information"
+          title="Sales Invoice Details"
+          subtitle="Sales Invoice Information"
         />
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `invoice-${selectedInvoice}-details.pdf`;
+      a.download = `sales-invoice-${selectedInvoice}-details.pdf`;
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
@@ -256,50 +243,27 @@ export default function InvoicesDetails() {
     return value === undefined || value === null || value === "" ? "–" : value;
   };
 
-  // Generate initials for supplier
-  const getSupplierInitials = (name: string) => {
-    return name
-      .split(" ")
-      .slice(0, 2)
-      .map((word) => word[0])
-      .join("")
-      .toUpperCase();
-  };
-
-  const getInitialsColor = (code: string) => {
-    const colors = [
-      "bg-blue-500",
-      "bg-green-500",
-      "bg-purple-500",
-      "bg-pink-500",
-      "bg-indigo-500",
-      "bg-yellow-500",
-    ];
-    const index = parseInt(code.slice(-1)) % colors.length;
-    return colors[index];
-  };
-
   return (
     <>
       <MinimizablePageLayout
-        moduleId="invoice-details-module"
-        moduleName="Invoice Details"
-        moduleRoute="/invoices/view"
+        moduleId="sales-invoice-details-module"
+        moduleName="Sales Invoice Details"
+        moduleRoute="/sales-invoice/view"
         title={t("form.viewingInvoice")}
         videoSrc={video}
         videoHeader="Tutorial video"
-        listPath="invoices"
+        listPath="sales-invoice"
         activePage="view"
         popoverOptions={[
           {
             label: "Create",
             icon: <Plus className="w-5 h-5 text-green-600" />,
-            onClick: () => navigate("/invoices/create"),
+            onClick: () => navigate("/sales-invoice/create"),
           },
           {
             label: "Edit",
             icon: <Edit className="w-5 h-5 text-blue-600" />,
-            onClick: () => navigate(`/invoices/edit/${invoiceData.id}`),
+            onClick: () => navigate(`/sales-invoice/edit/${invoiceData.id}`),
           },
         ]}
         keepChanges={keepChanges}
@@ -328,9 +292,9 @@ export default function InvoicesDetails() {
               }
             : undefined
         }
-        module="invoices"
+        module="sales-invoice"
       >
-        {/* Row 1: Document Number, P.O Number, P.O Date, Supplier Name */}
+        {/* Row 1: Document Number, Invoice Number, Invoice Date, Customer */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
           <div className="mt-1">
             <Autocomplete
@@ -340,7 +304,7 @@ export default function InvoicesDetails() {
               placeholder=""
               displayKey="documentNumber"
               valueKey="documentNumber"
-              searchKey="supplierName"
+              searchKey="customer"
               disabled={false}
               className="w-[96%] bg-gray-100 rounded-xl"
               labelClassName="bg-gray-50 rounded-2xl"
@@ -350,30 +314,30 @@ export default function InvoicesDetails() {
           </div>
 
           <div className="">
-            <h3 className="font-normal mb-1 text-gray-600">P.O Number</h3>
+            <h3 className="font-normal mb-1 text-gray-600">Invoice Number</h3>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(invoiceData.poNumber)}
+              {displayValue(invoiceData.invoiceNumber)}
             </div>
           </div>
 
           <div className="">
-            <h3 className="font-normal mb-1 text-gray-600">P.O Date</h3>
+            <h3 className="font-normal mb-1 text-gray-600">Invoice Date</h3>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(invoiceData.poDate)}
+              {displayValue(invoiceData.invoiceDate)}
             </div>
           </div>
 
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Supplier Name</h3>
+              <h3 className="font-normal text-gray-600">Customer</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(invoiceData.supplierName)}
+              {displayValue(invoiceData.customer)}
             </div>
           </div>
         </div>
 
-        {/* Row 2: Payment Mode, Due Days, Payment Date, Supplier Number */}
+        {/* Row 2: Payment Mode, Due Days, Payment Date, TRN Number */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
           <div className="">
             <h3 className="font-normal mb-1 text-gray-600">Payment Mode</h3>
@@ -397,76 +361,44 @@ export default function InvoicesDetails() {
           </div>
 
           <div className="">
-            <h3 className="font-normal mb-1 text-gray-600">Supplier Number</h3>
+            <h3 className="font-normal mb-1 text-gray-600">TRN Number</h3>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(invoiceData.supplierNumber)}
+              {displayValue(invoiceData.trnNumber)}
             </div>
           </div>
         </div>
 
-        {/* Row 3: Supplier Status, Supplier Group, Remarks, Country */}
+        {/* Row 3: Remarks, Country, State, City */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-          <div className="">
-            <h3 className="font-normal mb-1 text-gray-600">Supplier Status</h3>
-            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {invoiceData.supplierStatus ? (
-                <span
-                  className={`px-2 py-1 rounded-full text-xs ${
-                    invoiceData.supplierStatus === "Active"
-                      ? "bg-green-100 text-green-800"
-                      : invoiceData.supplierStatus === "Pending"
-                      ? "bg-yellow-100 text-yellow-800"
-                      : invoiceData.supplierStatus === "Suspended"
-                      ? "bg-red-100 text-red-800"
-                      : "bg-gray-100 text-gray-800"
-                  }`}
-                >
-                  {invoiceData.supplierStatus}
-                </span>
-              ) : (
-                "–"
-              )}
-            </div>
-          </div>
-
-          <div className="">
-            <h3 className="font-normal mb-1 text-gray-600">Supplier Group</h3>
-            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(invoiceData.supplierGroup)}
-            </div>
-          </div>
-
           <div className="">
             <h3 className="font-normal mb-1 text-gray-600">Remarks</h3>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
               {displayValue(invoiceData.remarks)}
             </div>
           </div>
-
           <div className="">
             <h3 className="font-normal mb-1 text-gray-600">Country</h3>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
               {displayValue(invoiceData.country)}
             </div>
           </div>
-        </div>
 
-        {/* Row 4: State, City, Status, Action */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
           <div className="">
             <h3 className="font-normal mb-1 text-gray-600">State</h3>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
               {displayValue(invoiceData.state)}
             </div>
           </div>
-
           <div className="">
             <h3 className="font-normal mb-1 text-gray-600">City</h3>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
               {displayValue(invoiceData.city)}
             </div>
           </div>
+        </div>
 
+        {/* Row 4: State, City, Status, Salesman */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
           <div className="">
             <h3 className="font-normal mb-1 text-gray-600">Status</h3>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
@@ -479,35 +411,10 @@ export default function InvoicesDetails() {
           </div>
 
           <div className="">
-            <h3 className="font-normal mb-1 text-gray-600">Action</h3>
+            <h3 className="font-normal mb-1 text-gray-600">Salesman</h3>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              Updated
+              {displayValue(invoiceData.salesman)}
             </div>
-          </div>
-        </div>
-
-        {/* Supplier Visual */}
-        <div className="mt-14 relative">
-          {/* Floating Label */}
-          <div className="absolute -top-3 left-3 bg-white px-2 text-sm font-medium text-gray-500 rounded-md">
-            Supplier
-          </div>
-
-          <div className="border-2 border-dashed rounded-lg p-6 text-center focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary py-16">
-            <div className="w-48 h-28 border rounded-md bg-gray-100 overflow-hidden dark:bg-gray-700 mx-auto hover:scale-110 transition duration-300 cursor-pointer">
-              <div
-                className={`w-full h-full flex items-center justify-center text-white font-bold text-lg ${getInitialsColor(
-                  invoiceData.documentNumber
-                )}`}
-              >
-                {invoiceData.supplierName
-                  ? getSupplierInitials(invoiceData.supplierName)
-                  : "–"}
-              </div>
-            </div>
-            <p className="text-sm text-gray-500 mt-2 text-center max-w-xs">
-              {displayValue(invoiceData.supplierName)}
-            </p>
           </div>
         </div>
       </MinimizablePageLayout>
@@ -517,7 +424,7 @@ export default function InvoicesDetails() {
         isOptionModalOpen={isOptionModalOpen}
         setIsOptionModalOpen={setIsOptionModalOpen}
         columnData={mockHistoryData}
-        title="Invoice History"
+        title="Sales Invoice History"
         statusInfo={{
           created: getRelativeTime(invoiceData.createdAt),
           updated: getRelativeTime(invoiceData.updatedAt),

@@ -12,38 +12,38 @@ import { Modal } from "@mantine/core";
 import { pdf } from "@react-pdf/renderer";
 import { Check, Eye, Plus } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useLocation, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { usePermission } from "@/hooks/usePermissions";
 import { useLanguageLabels } from "@/hooks/useLanguageLabels";
 import { useAppSelector } from "@/store/hooks";
-import type { InvoiceModuleData } from "@/types/modules";
 import MinimizablePageLayout from "@/components/MinimizablePageLayout";
-import { useMinimizedModuleData } from "@/hooks/useMinimizedModuleData";
+import { useInvoiceFormData } from "@/hooks/useModuleFormData";
 import { SwitchSelect } from "@/components/common/SwitchAutoComplete";
-import { ActionsAutocomplete } from "@/components/common/ActionsAutocomplete";
 import { TemplateContent } from "@/components/common/TemplateContent";
 import { cn } from "@/lib/utils";
-import { getModuleFromPath } from "@/lib/utils";
 import LanguageTranslatorModal from "@/components/common/LanguageTranslatorModel";
+import DynamicInputTableList from "@/components/common/dynamic-input-table/DynamicInputTableList";
 import EnglishDate from "@/components/EnglishDateInput";
+import { ActionsAutocomplete } from "@/components/common/ActionsAutocomplete";
 
-// Define Invoice interface to ensure type consistency
+// Define Sales Invoice interface
 interface Invoice {
   id: string;
   documentNumber: string;
-  poNumber: string;
-  poDate: string;
-  supplierName: string;
+  invoiceNumber: string;
+  invoiceDate: string;
+  customer: string;
+  trnNumber: string;
   paymentMode: string;
   dueDays: number;
   paymentDate: string;
-  supplierNumber: string;
-  supplierStatus: string;
-  supplierGroup: string;
-  remarks: string;
   country: string;
   state: string;
   city: string;
+  remarks: string;
+  salesman: string;
+  status: "Active" | "Inactive" | "Draft" | "Deleted";
+  isDefault: boolean;
   isActive: boolean;
   isDraft: boolean;
   createdAt: Date | null;
@@ -53,40 +53,37 @@ interface Invoice {
   isDeleted: boolean;
 }
 
-// Mock supplier data for auto-fill functionality
-interface SupplierData {
+// Mock customer data for auto-fill functionality
+interface CustomerData {
   name: string;
-  number: string;
-  status: string;
-  group: string;
+  trnNumber: string;
   country: string;
   state: string;
   city: string;
-  paymentDate: string;
 }
 
-const MOCK_SUPPLIERS: SupplierData[] = [
+const MOCK_CUSTOMERS: CustomerData[] = [
   {
-    name: "AL AHAD CURTAINS TEX & FURNITURE TR.LLC",
-    number: "36",
-    status: "Active",
-    group: "Furniture Suppliers",
+    name: "ABC Trading LLC",
+    trnNumber: "TRN-1234567890",
     country: "UAE",
     state: "Dubai",
     city: "Deira",
-    paymentDate: "2024-08-15",
   },
   {
-    name: "SimplyNayela",
-    number: "12",
-    status: "Active",
-    group: "Fashion",
+    name: "Global Exports",
+    trnNumber: "TRN-2345678901",
     country: "UAE",
     state: "Dubai",
     city: "Business Bay",
-    paymentDate: "2024-08-12",
   },
-  // ... other mock suppliers
+  {
+    name: "Sunrise Mart",
+    trnNumber: "TRN-3456789012",
+    country: "UAE",
+    state: "Abu Dhabi",
+    city: "Mussafah",
+  },
 ];
 
 // Payment mode options
@@ -103,34 +100,33 @@ const PAYMENT_MODES = [
   "Digital Wallet",
 ];
 
-// Supplier status options
-const SUPPLIER_STATUS_OPTIONS = [
-  "Active",
-  "Inactive",
-  "Pending",
-  "Suspended",
-  "Approved",
-  "Rejected",
+// Salesman options
+const SALESMAN_OPTIONS = [
+  "John Smith",
+  "Sarah Johnson",
+  "Michael Brown",
+  "Emily Davis",
 ];
 
 // Mock invoice data for editing
 const MOCK_INVOICES: Invoice[] = [
   {
     id: "1",
-    documentNumber: "INV001",
-    poNumber: "PO-2024-001",
-    poDate: "2024-07-24",
-    supplierName: "AL AHAD CURTAINS TEX & FURNITURE TR.LLC",
-    paymentMode: "Split",
-    dueDays: 45,
-    paymentDate: "2024-09-07",
-    supplierNumber: "36",
-    supplierStatus: "Active",
-    supplierGroup: "Furniture Suppliers",
-    remarks: "Urgent delivery required",
+    documentNumber: "DOC001",
+    invoiceNumber: "INV-2024-001",
+    invoiceDate: "2024-07-24",
+    customer: "ABC Trading LLC",
+    trnNumber: "TRN-1234567890",
+    paymentMode: "Bank Transfer",
+    dueDays: 30,
+    paymentDate: "2024-08-23",
     country: "UAE",
     state: "Dubai",
     city: "Deira",
+    remarks: "Urgent delivery required",
+    salesman: "John Smith",
+    status: "Active",
+    isDefault: false,
     isActive: true,
     isDraft: false,
     createdAt: new Date("2024-07-24"),
@@ -139,7 +135,31 @@ const MOCK_INVOICES: Invoice[] = [
     deletedAt: null,
     isDeleted: false,
   },
-  // ... other mock invoices
+  {
+    id: "2",
+    documentNumber: "DOC002",
+    invoiceNumber: "INV-2024-002",
+    invoiceDate: "2024-07-25",
+    customer: "Global Exports",
+    trnNumber: "TRN-2345678901",
+    paymentMode: "Credit Card",
+    dueDays: 15,
+    paymentDate: "2024-08-09",
+    country: "UAE",
+    state: "Dubai",
+    city: "Business Bay",
+    remarks: "Standard delivery",
+    salesman: "Sarah Johnson",
+    status: "Active",
+    isDefault: false,
+    isActive: true,
+    isDraft: false,
+    createdAt: new Date("2024-07-25"),
+    draftedAt: null,
+    updatedAt: new Date("2024-07-31"),
+    deletedAt: null,
+    isDeleted: false,
+  },
 ];
 
 type Props = {
@@ -148,15 +168,11 @@ type Props = {
 
 export default function InvoiceEditPage({ isEdit = true }: Props) {
   const navigate = useNavigate();
-  const location = useLocation();
   const { id } = useParams();
   const labels = useLanguageLabels();
   const { isRTL } = useAppSelector((state) => state.language);
 
-  const detectedModule = getModuleFromPath(location.pathname);
-
-  // Get module ID for this edit page
-  const moduleId = `${detectedModule}-edit-module-${id || "new"}`;
+  const detectedModule = "sales-invoice";
 
   // Use the custom hook for minimized module data
   const {
@@ -164,25 +180,22 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
     hasMinimizedData,
     resetModuleData,
     getModuleScrollPosition,
-  } = useMinimizedModuleData<InvoiceModuleData>(moduleId);
+  } = useInvoiceFormData();
 
   const [showTemplates, setShowTemplates] = useState(false);
   const [keepCreating, setKeepCreating] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
-  const [statusState, setStatusState] = useState<
-    "Active" | "Draft" | "Delete" | string
-  >("Active");
-  const [selectedAction, setSelectedAction] = useState<string>("");
   const [printEnabled, setPrintEnabled] = useState(false);
   const [pdfChecked, setPdfChecked] = useState(false);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [formKey, setFormKey] = useState(0);
   const [isRestoredFromMinimized, setIsRestoredFromMinimized] = useState(false);
-  const [shouldRestoreFromMinimized, setShouldRestoreFromMinimized] =
-    useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSupplierAutoFilled, setIsSupplierAutoFilled] = useState(false);
+  const [isCustomerAutoFilled, setIsCustomerAutoFilled] = useState(false);
+  const [selectedAction, setSelectedAction] = useState<string>("");
+  const [isDefaultState, setIsDefaultState] = useState<"Yes" | "No" | string>(
+    "No"
+  );
 
   // Translation state
   const [translations, setTranslations] = useState([
@@ -194,24 +207,31 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
   const canView = usePermission(detectedModule, "view");
   const canPdf: boolean = usePermission(detectedModule, "pdf");
   const canPrint: boolean = usePermission(detectedModule, "print");
+  const statusPerm: boolean = usePermission(detectedModule, "edit", "status");
+  const isDefaultPerm: boolean = usePermission(
+    detectedModule,
+    "edit",
+    "isDefault"
+  );
 
   // Form state
   const [formData, setFormData] = useState<Invoice>({
     id: "",
     documentNumber: "",
-    poNumber: "",
-    poDate: "",
-    supplierName: "",
+    invoiceNumber: "",
+    invoiceDate: "",
+    customer: "",
+    trnNumber: "",
     paymentMode: "",
     dueDays: 0,
     paymentDate: "",
-    supplierNumber: "",
-    supplierStatus: "",
-    supplierGroup: "",
-    remarks: "",
     country: "",
     state: "",
     city: "",
+    remarks: "",
+    salesman: "",
+    status: "Active",
+    isDefault: false,
     isActive: true,
     isDraft: false,
     createdAt: new Date(),
@@ -221,46 +241,48 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
     isDeleted: false,
   });
 
-  // Memoize supplier data
-  const memoizedSuppliers = useMemo(() => [...MOCK_SUPPLIERS], []);
+  // Memoize customer data to prevent unnecessary re-renders
+  const memoizedCustomers = useMemo(() => [...MOCK_CUSTOMERS], []);
   const memoizedPaymentModes = useMemo(() => [...PAYMENT_MODES], []);
-  const memoizedStatusOptions = useMemo(() => [...SUPPLIER_STATUS_OPTIONS], []);
+  const memoizedSalesmanOptions = useMemo(() => [...SALESMAN_OPTIONS], []);
 
   // Invoice options for autocomplete
   const invoiceOptions = useMemo(
     () =>
       MOCK_INVOICES.map((invoice) => ({
         value: invoice.documentNumber,
-        label: `${invoice.documentNumber} - ${invoice.supplierName}`,
+        label: `${invoice.documentNumber} - ${invoice.customer}`,
       })),
     []
   );
 
-  // Helper function to check if supplier fields should be disabled
-  const isSupplierFieldsDisabled = () => {
-    return !formData.supplierName || formData.supplierName.trim() === "";
+  // Helper function to check if customer fields should be disabled
+  const isCustomerFieldsDisabled = () => {
+    return !formData.customer || formData.customer.trim() === "";
   };
 
-  // Function to search for supplier by name
-  const findSupplierByName = useCallback(
-    (name: string): SupplierData | null => {
+  // Function to search for customer by name
+  const findCustomerByName = useCallback(
+    (name: string): CustomerData | null => {
       if (!name.trim()) return null;
 
-      let supplier = memoizedSuppliers.find(
+      // Find exact match first
+      let customer = memoizedCustomers.find(
         (s) => s.name.toLowerCase() === name.toLowerCase()
       );
 
-      if (!supplier) {
-        supplier = memoizedSuppliers.find(
+      // If no exact match, find partial match
+      if (!customer) {
+        customer = memoizedCustomers.find(
           (s) =>
             s.name.toLowerCase().includes(name.toLowerCase()) ||
             name.toLowerCase().includes(s.name.toLowerCase())
         );
       }
 
-      return supplier || null;
+      return customer || null;
     },
-    [memoizedSuppliers]
+    [memoizedCustomers]
   );
 
   // Function to find and load invoice data
@@ -274,7 +296,6 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
         ...invoiceData,
         updatedAt: new Date(), // Update the timestamp
       });
-      setStatusState(invoiceData.isDraft ? "Draft" : "Active");
       toastSuccess(`Loaded data for ${documentNumber}`);
     } else {
       toastError(`Invoice ${documentNumber} not found`);
@@ -285,7 +306,7 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
   const handleDocumentNumberChange = useCallback(
     (value: string | null) => {
       if (value) {
-        const documentNumber = value.split(" - ")[0]; // Extract document number from "INV001 - Supplier Name"
+        const documentNumber = value.split(" - ")[0]; // Extract document number from "DOC001 - Customer Name"
         setFormData((prev) => ({ ...prev, documentNumber }));
         loadInvoiceData(documentNumber);
       }
@@ -293,16 +314,16 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
     [loadInvoiceData]
   );
 
-  // Update translation data when supplier name changes
-  const updateTranslations = useCallback((supplierName: string) => {
+  // Update translation data when customer changes
+  const updateTranslations = useCallback((customer: string) => {
     setTranslations([
-      { id: 1, english: supplierName || "", arabic: "", bangla: "" },
+      { id: 1, english: customer || "", arabic: "", bangla: "" },
     ]);
   }, []);
 
   useEffect(() => {
-    updateTranslations(formData.supplierName);
-  }, [formData.supplierName, updateTranslations]);
+    updateTranslations(formData.customer);
+  }, [formData.customer, updateTranslations]);
 
   // Refs for form elements
   const inputRefs = useRef<Record<string, HTMLElement | null>>({});
@@ -313,32 +334,27 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
     inputRefs.current[nextField]?.focus();
   };
 
-  // Check for restore flag from taskbar
-  useEffect(() => {
-    const shouldRestore = localStorage.getItem(`restore-${moduleId}`);
-    if (shouldRestore === "true") {
-      setShouldRestoreFromMinimized(true);
-      localStorage.removeItem(`restore-${moduleId}`);
-    }
-  }, [moduleId]);
-
-  // Restore logic using the custom hook
+  // Simplified restore logic using the custom hook
   useEffect(() => {
     const shouldAutoRestore =
-      shouldRestoreFromMinimized ||
-      (hasMinimizedData &&
-        moduleData &&
-        !isRestoredFromMinimized &&
-        !formData.documentNumber &&
-        !formData.supplierName);
+      hasMinimizedData &&
+      moduleData &&
+      !isRestoredFromMinimized &&
+      !formData.customer &&
+      !formData.documentNumber;
 
-    if (hasMinimizedData && moduleData && shouldAutoRestore) {
-      setFormData(moduleData);
-      setStatusState(moduleData.isDraft ? "Draft" : "Active");
+    if (shouldAutoRestore) {
+      setFormData({
+        ...(moduleData as any),
+        isDraft: (moduleData as any)?.isDraft || false,
+      });
+
+      setIsDefaultState((moduleData as any)?.isDefault ? "Yes" : "No");
       setIsRestoredFromMinimized(true);
-      setShouldRestoreFromMinimized(false);
 
-      const scrollPosition = getModuleScrollPosition(moduleId);
+      const scrollPosition = getModuleScrollPosition(
+        "sales-invoice-edit-module"
+      );
       if (scrollPosition) {
         setTimeout(() => {
           window.scrollTo(0, scrollPosition);
@@ -349,82 +365,73 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
     hasMinimizedData,
     moduleData,
     isRestoredFromMinimized,
-    shouldRestoreFromMinimized,
+    formData.customer,
     formData.documentNumber,
-    formData.supplierName,
-    moduleId,
     getModuleScrollPosition,
   ]);
 
-  // Initialize data on component mount
+  // Initialize with edit data if available
   useEffect(() => {
-    if (!hasMinimizedData && !isRestoredFromMinimized) {
-      setIsLoading(true);
-
+    if (isEdit && !hasMinimizedData && !isRestoredFromMinimized) {
       if (id && id !== "undefined") {
         const invoiceData = MOCK_INVOICES.find((invoice) => invoice.id === id);
         if (invoiceData) {
           setFormData(invoiceData);
-          setStatusState(invoiceData.isDraft ? "Draft" : "Active");
+          setIsDefaultState(invoiceData.isDefault ? "Yes" : "No");
         } else {
           const defaultInvoice = MOCK_INVOICES[0];
           setFormData(defaultInvoice);
-          setStatusState(defaultInvoice.isDraft ? "Draft" : "Active");
+          setIsDefaultState(defaultInvoice.isDefault ? "Yes" : "No");
         }
       } else {
         const defaultInvoice = MOCK_INVOICES[0];
         setFormData(defaultInvoice);
-        setStatusState(defaultInvoice.isDraft ? "Draft" : "Active");
+        setIsDefaultState(defaultInvoice.isDefault ? "Yes" : "No");
       }
-
-      setIsLoading(false);
     }
-  }, [id, hasMinimizedData, isRestoredFromMinimized]);
+  }, [isEdit, hasMinimizedData, isRestoredFromMinimized, id]);
 
-  // Handle supplier name changes and auto-fill related fields
-  const handleSupplierNameChange = useCallback(
+  // Handle customer changes and auto-fill related fields
+  const handleCustomerChange = useCallback(
     (value: string | null) => {
-      const newSupplierName = value || "";
+      const newCustomer = value || "";
 
       setFormData((prev) => ({
         ...prev,
-        supplierName: newSupplierName,
+        customer: newCustomer,
         updatedAt: new Date(),
       }));
 
-      const matchedSupplier = findSupplierByName(newSupplierName);
+      // Search for matching customer
+      const matchedCustomer = findCustomerByName(newCustomer);
 
-      if (matchedSupplier) {
+      if (matchedCustomer) {
+        // Auto-fill related fields
         setFormData((prev) => ({
           ...prev,
-          supplierName: newSupplierName,
-          supplierNumber: matchedSupplier.number,
-          supplierStatus: matchedSupplier.status,
-          supplierGroup: matchedSupplier.group,
-          country: matchedSupplier.country,
-          state: matchedSupplier.state,
-          city: matchedSupplier.city,
-          paymentDate: matchedSupplier.paymentDate,
+          customer: newCustomer,
+          trnNumber: matchedCustomer.trnNumber,
+          country: matchedCustomer.country,
+          state: matchedCustomer.state,
+          city: matchedCustomer.city,
           updatedAt: new Date(),
         }));
-        setIsSupplierAutoFilled(true);
+        setIsCustomerAutoFilled(true);
       } else {
-        setIsSupplierAutoFilled(false);
+        // Clear auto-filled fields when customer is empty or no match
+        setIsCustomerAutoFilled(false);
         setFormData((prev) => ({
           ...prev,
-          supplierName: newSupplierName,
-          supplierNumber: "",
-          supplierStatus: "",
-          supplierGroup: "",
+          customer: newCustomer,
+          trnNumber: "",
           country: "",
           state: "",
           city: "",
-          paymentDate: "",
           updatedAt: new Date(),
         }));
       }
     },
-    [findSupplierByName]
+    [findCustomerByName]
   );
 
   // Handle form field changes
@@ -476,10 +483,9 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
     );
     if (originalData) {
       setFormData(originalData);
-      setStatusState(originalData.isDraft ? "Draft" : "Active");
-      setSelectedAction("");
+      setIsDefaultState(originalData.isDefault ? "Yes" : "No");
       setIsRestoredFromMinimized(false);
-      setIsSupplierAutoFilled(false);
+      setIsCustomerAutoFilled(false);
 
       if (formRef.current) {
         formRef.current.reset();
@@ -489,7 +495,7 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
 
       if (hasMinimizedData) {
         try {
-          await resetModuleData(moduleId);
+          await resetModuleData("sales-invoice-edit-module");
           console.log("Form data reset in Redux");
         } catch (error) {
           console.error("Error resetting form data:", error);
@@ -513,19 +519,20 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
           excludeFields: ["id", "__v", "_id"],
           fieldLabels: {
             documentNumber: "Document Number",
-            poNumber: "P.O Number",
-            poDate: "P.O Date",
-            supplierName: "Supplier Name",
+            invoiceNumber: "Invoice Number",
+            invoiceDate: "Invoice Date",
+            customer: "Customer",
+            trnNumber: "TRN Number",
             paymentMode: "Payment Mode",
             dueDays: "Due Days",
             paymentDate: "Payment Date",
-            supplierNumber: "Supplier Number",
-            supplierStatus: "Supplier Status",
-            supplierGroup: "Supplier Group",
             remarks: "Remarks",
             country: "Country",
             state: "State",
             city: "City",
+            salesman: "Salesman",
+            status: "Status",
+            isDefault: "Default",
             isActive: "Active Status",
             isDraft: labels.draft,
             isDeleted: "Deleted Status",
@@ -633,7 +640,7 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
   }, []);
 
   // Create minimize handler
-  const handleMinimize = useCallback((): InvoiceModuleData => {
+  const handleMinimize = useCallback((): any => {
     return {
       ...formData,
       hasChanges: true,
@@ -641,20 +648,14 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
     };
   }, [formData]);
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Loading invoice data...</div>
-      </div>
-    );
-  }
-
   return (
     <>
       <MinimizablePageLayout
-        moduleId={moduleId}
+        moduleId="sales-invoice-edit-module"
         moduleName={`Edit ${detectedModule}`}
-        moduleRoute={`/${detectedModule}/edit/${id || "new"}`}
+        moduleRoute={`/${detectedModule}/edit/${
+          formData.documentNumber || "new"
+        }`}
         onMinimize={handleMinimize}
         title={`Editing ${detectedModule}`}
         listPath={detectedModule}
@@ -696,10 +697,10 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
             onSubmit={handleSubmit}
             className="space-y-6"
           >
-            {/* Dynamic form fields in responsive grid */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 my-8">
+            {/* First Row: Document Number, Invoice Number, Invoice Date, Customer */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
               {/* Document Number */}
-              <div className="md:col-span-3 space-y-2">
+              <div className="space-y-2">
                 <Autocomplete
                   ref={(el: any) => setRef("documentNumber")(el)}
                   id="documentNumber"
@@ -708,12 +709,12 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
                   options={invoiceOptions.map((opt) => opt.label)}
                   value={
                     formData.documentNumber
-                      ? `${formData.documentNumber} - ${formData.supplierName}`
+                      ? `${formData.documentNumber} - ${formData.customer}`
                       : ""
                   }
                   onValueChange={handleDocumentNumberChange}
                   isShowTemplateIcon={false}
-                  onEnterPress={() => focusNextInput("poNumber")}
+                  onEnterPress={() => focusNextInput("invoiceNumber")}
                   placeholder=""
                   labelText="Document Number"
                   className="relative"
@@ -729,59 +730,41 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
                 />
               </div>
 
-              {/* P.O Number */}
-              <div className="md:col-span-3 space-y-2">
+              {/* Invoice Number */}
+              <div className="space-y-2">
                 <EditableInput
-                  setRef={setRef("poNumber")}
-                  id="poNumber"
-                  name="poNumber"
-                  value={formData.poNumber}
+                  setRef={setRef("invoiceNumber")}
+                  id="invoiceNumber"
+                  name="invoiceNumber"
+                  value={formData.invoiceNumber}
                   onChange={handleChange}
-                  onNext={() => focusNextInput("poDate")}
-                  onCancel={() => setFormData({ ...formData, poNumber: "" })}
-                  labelText="P.O Number"
-                  tooltipText="Purchase order number"
-                />
-              </div>
-
-              {/* P.O Date */}
-              <div className="md:col-span-3 space-y-2">
-                <EnglishDate
-                  isDate={true}
-                  calendarType="gregorian"
-                  userLang="en"
-                  rtl={false}
-                  isShowCalender={true}
-                  onChange={(date: string) =>
+                  onNext={() => focusNextInput("invoiceDate")}
+                  onCancel={() =>
                     setFormData({
                       ...formData,
-                      poDate: date,
-                      updatedAt: new Date(),
+                      invoiceNumber: "",
                     })
                   }
-                  value={formData.poDate}
-                  disabled={false}
-                  labelText="P.O Date"
-                  className={cn("transition-all", "ring-1 ring-primary")}
-                  setStartNextFocus={() => focusNextInput("supplierName")}
+                  labelText="Invoice Number"
+                  tooltipText="Invoice number"
                 />
               </div>
 
-              {/* Supplier Name */}
-              <div className="md:col-span-3 space-y-2">
+              {/* Customer */}
+              <div className="space-y-2">
                 <Autocomplete
-                  ref={(el: any) => setRef("supplierName")(el)}
-                  id="supplierName"
-                  name="supplierName"
+                  ref={(el: any) => setRef("customer")(el)}
+                  id="customer"
+                  name="customer"
+                  labelText="Customer"
                   allowCustomInput={true}
-                  options={memoizedSuppliers.map((s) => s.name)}
-                  value={formData.supplierName}
-                  onValueChange={handleSupplierNameChange}
-                  onEnterPress={() => focusNextInput("paymentMode")}
+                  options={memoizedCustomers.map((s) => s.name)}
+                  value={formData.customer}
+                  onValueChange={handleCustomerChange}
+                  onEnterPress={() => focusNextInput("trnNumber")}
                   placeholder=""
-                  labelText="Supplier Name"
                   className="relative"
-                  tooltipText="Select or type supplier name"
+                  tooltipText="Select or type customer"
                   userLang={isRTL ? "ar" : "en"}
                   styles={{
                     input: {
@@ -793,14 +776,62 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
                   }}
                   setShowTemplates={setShowTemplates}
                   showTemplates={showTemplates}
+                  isShowTemplateIcon={true}
+                />
+              </div>
+
+              {/* Invoice Date */}
+              <div className="space-y-2">
+                <EnglishDate
+                  isDate={true}
+                  isShowCalender={true}
+                  calendarType="gregorian"
+                  userLang="en"
+                  rtl={false}
+                  onChange={(date: string) =>
+                    setFormData({ ...formData, invoiceDate: date })
+                  }
+                  value={formData.invoiceDate}
+                  disabled={false}
+                  labelText="Invoice Date"
+                  className={cn("transition-all", "ring-1 ring-primary")}
+                  setStartNextFocus={() => focusNextInput("customer")}
                 />
               </div>
             </div>
 
-            {/* Second Row: Payment details and supplier info */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 my-8">
+            {/* Second Row: TRN Number, Payment Mode, Due Days, Payment Date */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
+              {/* TRN Number */}
+              <div className="space-y-2">
+                <EditableInput
+                  setRef={setRef("trnNumber")}
+                  id="trnNumber"
+                  name="trnNumber"
+                  value={formData.trnNumber}
+                  onChange={handleChange}
+                  onNext={() => focusNextInput("paymentMode")}
+                  onCancel={() => setFormData({ ...formData, trnNumber: "" })}
+                  labelText="TRN Number"
+                  tooltipText={
+                    isCustomerFieldsDisabled()
+                      ? "Select customer first"
+                      : "Tax Registration Number"
+                  }
+                  readOnly={isCustomerFieldsDisabled() || isCustomerAutoFilled}
+                  disabled={isCustomerFieldsDisabled()}
+                  className={
+                    isCustomerFieldsDisabled()
+                      ? "bg-gray-200 cursor-not-allowed"
+                      : isCustomerAutoFilled
+                      ? "bg-gray-100"
+                      : ""
+                  }
+                />
+              </div>
+
               {/* Payment Mode */}
-              <div className="md:col-span-3 space-y-2">
+              <div className="space-y-2">
                 <Autocomplete
                   ref={(el: any) => setRef("paymentMode")(el)}
                   id="paymentMode"
@@ -809,11 +840,7 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
                   options={memoizedPaymentModes}
                   value={formData.paymentMode}
                   onValueChange={(value: string | null) =>
-                    setFormData({
-                      ...formData,
-                      paymentMode: value || "",
-                      updatedAt: new Date(),
-                    })
+                    setFormData({ ...formData, paymentMode: value || "" })
                   }
                   onEnterPress={() => focusNextInput("dueDays")}
                   placeholder=""
@@ -833,7 +860,7 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
               </div>
 
               {/* Due Days */}
-              <div className="md:col-span-3 space-y-2">
+              <div className="space-y-2">
                 <EditableInput
                   setRef={setRef("dueDays")}
                   id="dueDays"
@@ -849,176 +876,29 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
               </div>
 
               {/* Payment Date */}
-              <div className="md:col-span-3 space-y-2">
+              <div className="space-y-2">
                 <EnglishDate
                   isDate={true}
+                  isShowCalender={true}
                   calendarType="gregorian"
                   userLang="en"
                   rtl={false}
-                  isShowCalender={true}
                   onChange={(date: string) =>
-                    setFormData({
-                      ...formData,
-                      paymentDate: date,
-                      updatedAt: new Date(),
-                    })
+                    setFormData({ ...formData, paymentDate: date })
                   }
                   value={formData.paymentDate}
-                  disabled={isSupplierFieldsDisabled()}
+                  disabled={false}
                   labelText="Payment Date"
-                  className={cn(
-                    "transition-all",
-                    isSupplierFieldsDisabled()
-                      ? "bg-gray-200 cursor-not-allowed"
-                      : isSupplierAutoFilled
-                      ? "bg-gray-100 ring-1 ring-primary"
-                      : "ring-1 ring-primary"
-                  )}
-                  setStartNextFocus={() => focusNextInput("supplierNumber")}
-                />
-              </div>
-
-              {/* Supplier Number */}
-              <div className="md:col-span-3 space-y-2">
-                <EditableInput
-                  setRef={setRef("supplierNumber")}
-                  id="supplierNumber"
-                  name="supplierNumber"
-                  value={formData.supplierNumber}
-                  onChange={handleChange}
-                  onNext={() => focusNextInput("supplierStatus")}
-                  onCancel={() =>
-                    setFormData({ ...formData, supplierNumber: "" })
-                  }
-                  labelText="Supplier Number"
-                  tooltipText={
-                    isSupplierFieldsDisabled()
-                      ? "Select supplier first"
-                      : "Supplier number"
-                  }
-                  readOnly={isSupplierFieldsDisabled() || isSupplierAutoFilled}
-                  disabled={isSupplierFieldsDisabled()}
-                  className={
-                    isSupplierFieldsDisabled()
-                      ? "bg-gray-200 cursor-not-allowed"
-                      : isSupplierAutoFilled
-                      ? "bg-gray-100"
-                      : ""
-                  }
+                  className={cn("transition-all", "ring-1 ring-primary")}
+                  setStartNextFocus={() => focusNextInput("trnNumber")}
                 />
               </div>
             </div>
 
-            {/* Third Row: Supplier details and location */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 my-8">
-              {/* Supplier Status */}
-              <div className="md:col-span-3 space-y-2">
-                {isSupplierAutoFilled || isSupplierFieldsDisabled() ? (
-                  <EditableInput
-                    setRef={setRef("supplierStatus")}
-                    id="supplierStatus"
-                    name="supplierStatus"
-                    value={formData.supplierStatus}
-                    onChange={handleChange}
-                    onNext={() => focusNextInput("supplierGroup")}
-                    onCancel={() =>
-                      setFormData({ ...formData, supplierStatus: "" })
-                    }
-                    labelText="Supplier Status"
-                    tooltipText={
-                      isSupplierFieldsDisabled()
-                        ? "Select supplier first"
-                        : "Supplier status"
-                    }
-                    readOnly
-                    disabled={isSupplierFieldsDisabled()}
-                    className={
-                      isSupplierFieldsDisabled()
-                        ? "bg-gray-200 cursor-not-allowed"
-                        : "bg-gray-100"
-                    }
-                  />
-                ) : (
-                  <Autocomplete
-                    ref={(el: any) => setRef("supplierStatus")(el)}
-                    id="supplierStatus"
-                    name="supplierStatus"
-                    allowCustomInput={true}
-                    options={memoizedStatusOptions}
-                    value={formData.supplierStatus}
-                    onValueChange={(value: string | null) =>
-                      setFormData({
-                        ...formData,
-                        supplierStatus: value || "",
-                        updatedAt: new Date(),
-                      })
-                    }
-                    onEnterPress={() => focusNextInput("supplierGroup")}
-                    placeholder=""
-                    labelText="Supplier Status"
-                    className="relative"
-                    tooltipText="Select supplier status"
-                    userLang={isRTL ? "ar" : "en"}
-                    styles={{
-                      input: {
-                        borderColor: "var(--primary)",
-                        "&:focus": {
-                          borderColor: "var(--primary)",
-                        },
-                      },
-                    }}
-                    disabled={isSupplierFieldsDisabled()}
-                  />
-                )}
-              </div>
-
-              {/* Supplier Group */}
-              <div className="md:col-span-3 space-y-2">
-                <EditableInput
-                  setRef={setRef("supplierGroup")}
-                  id="supplierGroup"
-                  name="supplierGroup"
-                  value={formData.supplierGroup}
-                  onChange={handleChange}
-                  onNext={() => focusNextInput("remarks")}
-                  onCancel={() =>
-                    setFormData({ ...formData, supplierGroup: "" })
-                  }
-                  labelText="Supplier Group"
-                  tooltipText={
-                    isSupplierFieldsDisabled()
-                      ? "Select supplier first"
-                      : "Supplier group"
-                  }
-                  readOnly={isSupplierFieldsDisabled() || isSupplierAutoFilled}
-                  disabled={isSupplierFieldsDisabled()}
-                  className={
-                    isSupplierFieldsDisabled()
-                      ? "bg-gray-200 cursor-not-allowed"
-                      : isSupplierAutoFilled
-                      ? "bg-gray-100"
-                      : ""
-                  }
-                />
-              </div>
-
-              {/* Remarks */}
-              <div className="md:col-span-3 space-y-2">
-                <EditableInput
-                  setRef={setRef("remarks")}
-                  id="remarks"
-                  name="remarks"
-                  value={formData.remarks}
-                  onChange={handleChange}
-                  onNext={() => focusNextInput("country")}
-                  onCancel={() => setFormData({ ...formData, remarks: "" })}
-                  labelText="Remarks"
-                  tooltipText="Additional remarks or notes"
-                />
-              </div>
-
+            {/* Third Row: Country, State, City, Remarks */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
               {/* Country */}
-              <div className="md:col-span-3 space-y-2">
+              <div className="space-y-2">
                 <EditableInput
                   setRef={setRef("country")}
                   id="country"
@@ -1028,28 +908,21 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
                   onNext={() => focusNextInput("state")}
                   onCancel={() => setFormData({ ...formData, country: "" })}
                   labelText="Country"
-                  tooltipText={
-                    isSupplierFieldsDisabled()
-                      ? "Select supplier first"
-                      : "Country"
-                  }
-                  readOnly={isSupplierFieldsDisabled() || isSupplierAutoFilled}
-                  disabled={isSupplierFieldsDisabled()}
+                  tooltipText="Country"
+                  readOnly={isCustomerFieldsDisabled() || isCustomerAutoFilled}
+                  disabled={isCustomerFieldsDisabled()}
                   className={
-                    isSupplierFieldsDisabled()
+                    isCustomerFieldsDisabled()
                       ? "bg-gray-200 cursor-not-allowed"
-                      : isSupplierAutoFilled
+                      : isCustomerAutoFilled
                       ? "bg-gray-100"
                       : ""
                   }
                 />
               </div>
-            </div>
 
-            {/* Fourth Row: Location and actions */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 my-8">
               {/* State */}
-              <div className="md:col-span-3 space-y-2">
+              <div className="space-y-2">
                 <EditableInput
                   setRef={setRef("state")}
                   id="state"
@@ -1059,17 +932,13 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
                   onNext={() => focusNextInput("city")}
                   onCancel={() => setFormData({ ...formData, state: "" })}
                   labelText="State"
-                  tooltipText={
-                    isSupplierFieldsDisabled()
-                      ? "Select supplier first"
-                      : "State"
-                  }
-                  readOnly={isSupplierFieldsDisabled() || isSupplierAutoFilled}
-                  disabled={isSupplierFieldsDisabled()}
+                  tooltipText="State"
+                  readOnly={isCustomerFieldsDisabled() || isCustomerAutoFilled}
+                  disabled={isCustomerFieldsDisabled()}
                   className={
-                    isSupplierFieldsDisabled()
+                    isCustomerFieldsDisabled()
                       ? "bg-gray-200 cursor-not-allowed"
-                      : isSupplierAutoFilled
+                      : isCustomerAutoFilled
                       ? "bg-gray-100"
                       : ""
                   }
@@ -1077,63 +946,65 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
               </div>
 
               {/* City */}
-              <div className="md:col-span-3 space-y-2">
+              <div className="space-y-2">
                 <EditableInput
                   setRef={setRef("city")}
                   id="city"
                   name="city"
                   value={formData.city}
                   onChange={handleChange}
-                  onNext={() => focusNextInput("status")}
+                  onNext={() => focusNextInput("remarks")}
                   onCancel={() => setFormData({ ...formData, city: "" })}
                   labelText="City"
-                  tooltipText={
-                    isSupplierFieldsDisabled()
-                      ? "Select supplier first"
-                      : "City"
-                  }
-                  readOnly={isSupplierFieldsDisabled() || isSupplierAutoFilled}
-                  disabled={isSupplierFieldsDisabled()}
+                  tooltipText="City"
+                  readOnly={isCustomerFieldsDisabled() || isCustomerAutoFilled}
+                  disabled={isCustomerFieldsDisabled()}
                   className={
-                    isSupplierFieldsDisabled()
+                    isCustomerFieldsDisabled()
                       ? "bg-gray-200 cursor-not-allowed"
-                      : isSupplierAutoFilled
+                      : isCustomerAutoFilled
                       ? "bg-gray-100"
                       : ""
                   }
                 />
               </div>
 
-              {/* Status */}
-              <div className="md:col-span-3 space-y-2 relative">
-                <SwitchSelect
-                  ref={(el: any) => setRef("status")(el)}
-                  id="status"
-                  name="status"
-                  labelText="Status"
-                  multiSelect={false}
-                  options={[
-                    {
-                      label: "Active",
-                      value: "Active",
-                      date: "Set active",
-                    },
-                    { label: "Draft", value: "Draft", date: "Set draft" },
-                  ]}
-                  value={statusState}
-                  onValueChange={(value: string | string[]) => {
-                    const stringValue = Array.isArray(value)
-                      ? value[0] || ""
-                      : value;
-                    setStatusState(stringValue);
+              {/* Remarks */}
+              <div className="space-y-2">
+                <EditableInput
+                  setRef={setRef("remarks")}
+                  id="remarks"
+                  name="remarks"
+                  value={formData.remarks}
+                  onChange={handleChange}
+                  onNext={() => focusNextInput("salesman")}
+                  onCancel={() => setFormData({ ...formData, remarks: "" })}
+                  labelText="Remarks"
+                  tooltipText="Additional remarks or notes"
+                />
+              </div>
+            </div>
 
-                    setFormData((prev) => ({
-                      ...prev,
-                      isDraft: stringValue === "Draft",
-                      updatedAt: new Date(),
-                    }));
-                  }}
+            {/* Fourth Row: Salesman, Default, Status, Actions */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
+              {/* Salesman */}
+              <div className="space-y-2">
+                <Autocomplete
+                  ref={(el: any) => setRef("salesman")(el)}
+                  id="salesman"
+                  name="salesman"
+                  allowCustomInput={true}
+                  options={memoizedSalesmanOptions}
+                  value={formData.salesman}
+                  onValueChange={(value: string | null) =>
+                    setFormData({ ...formData, salesman: value || "" })
+                  }
+                  onEnterPress={() => focusNextInput("isDefault")}
                   placeholder=""
+                  labelText="Salesman"
+                  className="relative"
+                  tooltipText="Select salesman"
+                  userLang={isRTL ? "ar" : "en"}
                   styles={{
                     input: {
                       borderColor: "var(--primary)",
@@ -1142,15 +1013,128 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
                       },
                     },
                   }}
-                  tooltipText="Invoice status"
                 />
               </div>
 
+              {/* Default field - only show if user can edit */}
+              {isDefaultPerm && (
+                <div className="space-y-2 relative">
+                  <SwitchSelect
+                    ref={(el: any) => setRef("isDefault")(el)}
+                    id="isDefault"
+                    name="isDefault"
+                    multiSelect={false}
+                    options={[
+                      {
+                        label: "Yes",
+                        value: "Yes",
+                        date: "Set default",
+                      },
+                      {
+                        label: "No",
+                        value: "No",
+                        date: "Unset default",
+                      },
+                    ]}
+                    value={isDefaultState === "Yes" ? "Yes" : "No"}
+                    labelClassName="rounded-lg"
+                    onValueChange={(value: string | string[]) => {
+                      const isYes = Array.isArray(value)
+                        ? value[0] === "Yes"
+                        : value === "Yes";
+                      setIsDefaultState(isYes ? "Yes" : "No");
+                      const newValue = isYes;
+                      setFormData((prev) => ({
+                        ...prev,
+                        isDefault: newValue,
+                      }));
+                    }}
+                    onEnterPress={() => {
+                      if (
+                        formData.isDefault === true ||
+                        formData.isDefault === false
+                      ) {
+                        focusNextInput("status");
+                      }
+                    }}
+                    placeholder=" "
+                    labelText="Default"
+                    className="relative"
+                    tooltipText="Mark as default sales invoice"
+                  />
+                </div>
+              )}
+
+              {/* Status field - only show if user can edit */}
+              {statusPerm && (
+                <div className="space-y-2">
+                  <SwitchSelect
+                    ref={(el: any) => setRef("status")(el)}
+                    id="status"
+                    name="status"
+                    labelText="Status"
+                    multiSelect={false}
+                    options={[
+                      {
+                        label: "Active",
+                        value: "Active",
+                        date: "Set active",
+                      },
+                      {
+                        label: "Inactive",
+                        value: "InActive",
+                        date: "Set inactive",
+                      },
+                      {
+                        label: "Draft",
+                        value: "Draft",
+                        date: "Set draft",
+                      },
+                      {
+                        label: "Delete",
+                        value: "Delete",
+                        date: "Set deleted",
+                      },
+                    ]}
+                    value={formData.status}
+                    onValueChange={(value: string | string[]) => {
+                      const stringValue = Array.isArray(value)
+                        ? value[0] || ""
+                        : value;
+                      setFormData((prev) => ({
+                        ...prev,
+                        status: stringValue as
+                          | "Active"
+                          | "Inactive"
+                          | "Draft"
+                          | "Deleted",
+                        isDeleted: stringValue === "Delete",
+                        isDraft: stringValue === "Draft",
+                        isActive: stringValue === "Active",
+                      }));
+                    }}
+                    placeholder=""
+                    styles={{
+                      input: {
+                        borderColor: "var(--primary)",
+                        "&:focus": {
+                          borderColor: "var(--primary)",
+                        },
+                      },
+                    }}
+                    tooltipText="Set the sales invoice status"
+                  />
+                </div>
+              )}
+
               {/* Actions */}
-              <div className="md:col-span-3 space-y-2 relative">
+              <div className="space-y-2">
                 <ActionsAutocomplete
+                  ref={(el: any) => setRef("actions")(el)}
+                  id="actions"
+                  name="actions"
+                  labelText="Action"
                   value={selectedAction}
-                  onValueChange={setSelectedAction}
                   actions={[
                     {
                       action: "Created",
@@ -1181,10 +1165,25 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
                       value: "deleted",
                     },
                   ]}
-                  labelText="Actions"
+                  placeholder=""
+                  onValueChange={(value: string) => {
+                    setSelectedAction(value);
+                  }}
+                  styles={{
+                    input: {
+                      borderColor: "var(--primary)",
+                      "&:focus": {
+                        borderColor: "var(--primary)",
+                      },
+                    },
+                  }}
+                  tooltipText="Sales Invoice Action History"
                 />
               </div>
             </div>
+
+            {/* Dynamic Input Table */}
+            <DynamicInputTableList />
           </form>
         </div>
       </MinimizablePageLayout>
@@ -1203,7 +1202,7 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
       <LanguageTranslatorModal
         isOpen={isOptionModalOpen}
         onClose={() => setIsOptionModalOpen(false)}
-        title="Invoice Language Translator"
+        title="Sales Invoice Language Translator"
         initialData={translations}
         onSave={handleTranslationSave}
       />
@@ -1221,28 +1220,40 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
         <TemplateContent
           headers={[
             { key: "documentNumber", label: "Document Number" },
-            { key: "supplierName", label: "Supplier Name" },
+            { key: "customer", label: "Customer" },
             { key: "paymentMode", label: "Payment Mode" },
             { key: "dueDays", label: "Due Days" },
           ]}
           data={[
             {
-              documentNumber: "INV001",
-              supplierName: "AL AHAD CURTAINS TEX & FURNITURE TR.LLC",
+              documentNumber: "DOC001",
+              customer: "ABC Trading LLC",
               paymentMode: "Bank Transfer",
               dueDays: "30 days",
             },
             {
-              documentNumber: "INV002",
-              supplierName: "SimplyNayela",
+              documentNumber: "DOC002",
+              customer: "Global Exports",
               paymentMode: "Credit Card",
               dueDays: "15 days",
             },
             {
-              documentNumber: "INV003",
-              supplierName: "BROWN HUT AUTO ACCESSORISE TR L.L.C",
+              documentNumber: "DOC003",
+              customer: "Sunrise Mart",
               paymentMode: "Cash",
               dueDays: "7 days",
+            },
+            {
+              documentNumber: "DOC004",
+              customer: "Blue Ocean Foods",
+              paymentMode: "Wire Transfer",
+              dueDays: "45 days",
+            },
+            {
+              documentNumber: "DOC005",
+              customer: "Prime Retailers",
+              paymentMode: "Check",
+              dueDays: "21 days",
             },
           ]}
           onSelect={(selectedData: any) => {
@@ -1250,12 +1261,12 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
             setShowTemplates(false);
             setFormData((prev) => ({
               ...prev,
-              supplierName: selectedData.supplierName,
+              customer: selectedData.customer,
               paymentMode: selectedData.paymentMode,
               dueDays: parseInt(selectedData.dueDays.replace(" days", "")),
-              updatedAt: new Date(),
             }));
-            handleSupplierNameChange(selectedData.supplierName);
+            // Trigger auto-fill for customer
+            handleCustomerChange(selectedData.customer);
           }}
           onClose={() => setShowTemplates(false)}
         />

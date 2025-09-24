@@ -10363,6 +10363,11 @@ export const userPermission = {
           edit: true,
           create: true,
         },
+        isDefault: {
+          view: true,
+          edit: true,
+          create: true,
+        },
         salesman: {
           view: true,
           edit: true,
