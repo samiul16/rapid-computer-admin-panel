@@ -485,16 +485,10 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
 
   const handleSwitchChange = (checked: boolean) => {
     setPrintEnabled(checked);
-    if (checked && formData) {
-      setTimeout(() => handlePrintInvoice(formData), 100);
-    }
   };
 
   const handlePDFSwitchChange = (pdfChecked: boolean) => {
     setPdfChecked(pdfChecked);
-    if (pdfChecked) {
-      setTimeout(() => handleExportPDF(), 100);
-    }
   };
 
   const handleExportPDF = async () => {
