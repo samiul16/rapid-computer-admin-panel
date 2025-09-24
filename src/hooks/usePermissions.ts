@@ -174,6 +174,8 @@ export function usePermission<T extends string>(
     (state: RootState) => state.auth.user?.permissions
   );
 
+  console.log("permissions in usePermission-->:", permissions);
+
   return useMemo(() => {
     if (!fieldNames) return hasPermission(permissions, moduleName, action);
 
@@ -207,4 +209,19 @@ export const useHasModuleAccess = (moduleName: string): boolean => {
   return useMemo(() => {
     return !!permissions?.modules?.[moduleName];
   }, [permissions, moduleName]);
+};
+
+export const usePermissionsPermissions = (): CountriesPermissions => {
+  const permissions = useSelector((state: RootState) => {
+    return state.auth.user?.permissions;
+  });
+
+  const permissionCheckers = useMemo(() => {
+    return createPermissionCheckers(
+      permissions,
+      "countries"
+    ) as unknown as CountriesPermissions;
+  }, [permissions]);
+
+  return permissionCheckers;
 };

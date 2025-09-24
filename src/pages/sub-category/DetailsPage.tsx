@@ -11,7 +11,6 @@ import { PrintCommonLayout } from "@/lib/printContents/PrintCommonLayout";
 import { toastError } from "@/lib/toast";
 import GenericPDF from "@/components/common/pdf";
 import { pdf } from "@react-pdf/renderer";
-import PageLayout from "@/components/common/PageLayout";
 import { Edit, Plus } from "lucide-react";
 import { ResetFormModal } from "@/components/common/ResetFormModal";
 import { usePermission } from "@/hooks/usePermissions";
@@ -24,6 +23,7 @@ import {
 } from "./config/ModuleLevelConfig";
 import { getModuleFromPath } from "@/lib/utils";
 import FieldSection from "@/components/common/FieldSection";
+import MinimizablePageLayout from "@/components/MinimizablePageLayout";
 
 type DetailsPageTypes = ModuleFieldsType & {
   isDefault: boolean;
@@ -345,13 +345,16 @@ export default function DoctorDetails() {
 
   return (
     <>
-      <PageLayout
+      <MinimizablePageLayout
+        moduleId="subcategory-details-module"
+        moduleName={`Viewing ${location.pathname.split("/")[1]}`}
+        moduleRoute={`/${location.pathname.split("/")[1]}/view/${
+          subCategoryData.slNo
+        }`}
         title={`Viewing ${location.pathname.split("/")[1]}`}
         videoSrc={video}
         videoHeader="Tutorial video"
-        onListClick={() => navigate(`/${location.pathname.split("/")[1]}`)}
-        listText="List"
-        listPath={location.pathname.split("/")[1]}
+        listPath="sub-category"
         activePage="view"
         popoverOptions={[
           {
@@ -476,7 +479,7 @@ export default function DoctorDetails() {
             )}
           </div>
         </div>
-      </PageLayout>
+      </MinimizablePageLayout>
 
       {/* History Modal */}
       <HistoryDataTable

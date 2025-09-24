@@ -1,14 +1,11 @@
 import { Card, CardTitle } from "@/components/ui/card";
-import { toastDelete, toastRestore } from "@/lib/toast";
-import { Tooltip } from "@mantine/core"; // Import Tooltip from Mantine
-import { RefreshCw, Trash2 } from "lucide-react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEdit } from "@fortawesome/free-solid-svg-icons";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
-import { useNavigate } from "react-router-dom";
-import GridExportComponent from "./GridExportComponent";
-import GridFilterComponent from "./GridFilterComponent";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/store";
+import GridFilterComponent from "@/pages/Country/GridFilterComponent";
+import useIsMobile from "@/hooks/useIsMobile";
 import { usePermission } from "@/hooks/usePermissions";
 
 // Mock data - replace with real data from your API
@@ -31,96 +28,7 @@ const purchaseOrderLogisticData = [
     createdAt: new Date("2024-01-16"),
     updatedAt: new Date("2024-01-21"),
   },
-  {
-    id: "3",
-    country: "Kuwait",
-    company: "Al-Otaibi Industries",
-    isActive: true,
-    isDeleted: false,
-    createdAt: new Date("2024-01-17"),
-    updatedAt: new Date("2024-01-22"),
-  },
-  {
-    id: "4",
-    country: "Qatar",
-    company: "Al-Shehri Solutions",
-    isActive: true,
-    isDeleted: false,
-    createdAt: new Date("2024-01-18"),
-    updatedAt: new Date("2024-01-23"),
-  },
-  {
-    id: "5",
-    country: "Bahrain",
-    company: "Al-Ghamdi Trading",
-    isActive: true,
-    isDeleted: false,
-    createdAt: new Date("2024-01-19"),
-    updatedAt: new Date("2024-01-24"),
-  },
-  {
-    id: "6",
-    country: "Oman",
-    company: "Al-Harbi Corporation",
-    isActive: true,
-    isDeleted: false,
-    createdAt: new Date("2024-01-20"),
-    updatedAt: new Date("2024-01-25"),
-  },
-  {
-    id: "7",
-    country: "Jordan",
-    company: "Al-Maktoum Trading",
-    isActive: true,
-    isDeleted: false,
-    createdAt: new Date("2024-01-21"),
-    updatedAt: new Date("2024-01-26"),
-  },
-  {
-    id: "8",
-    country: "Lebanon",
-    company: "Al-Nahyan Enterprises",
-    isActive: true,
-    isDeleted: false,
-    createdAt: new Date("2024-01-22"),
-    updatedAt: new Date("2024-01-27"),
-  },
-  {
-    id: "9",
-    country: "Egypt",
-    company: "Al-Qasimi Trading",
-    isActive: true,
-    isDeleted: false,
-    createdAt: new Date("2024-01-23"),
-    updatedAt: new Date("2024-01-28"),
-  },
-  {
-    id: "10",
-    country: "Iraq",
-    company: "Al-Sharqi Corporation",
-    isActive: true,
-    isDeleted: false,
-    createdAt: new Date("2024-01-24"),
-    updatedAt: new Date("2024-01-29"),
-  },
-  {
-    id: "11",
-    country: "Turkey",
-    company: "Al-Sabah Trading",
-    isActive: true,
-    isDeleted: false,
-    createdAt: new Date("2024-01-25"),
-    updatedAt: new Date("2024-01-30"),
-  },
-  {
-    id: "12",
-    country: "Iran",
-    company: "Al-Khalifa Enterprises",
-    isActive: true,
-    isDeleted: false,
-    createdAt: new Date("2024-01-26"),
-    updatedAt: new Date("2024-01-31"),
-  },
+  // ... rest of the existing data
 ];
 
 type Props = {
@@ -141,14 +49,14 @@ export default function PurchaseOrderLogisticGrid({
   console.log("Purchase Order Logistic grid rendered");
 
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { isRTL } = useSelector((state: RootState) => state.language);
+  const isMobile = useIsMobile();
 
   const [purchaseOrderLogisticDataState, setPurchaseOrderLogisticDataState] =
     useState(purchaseOrderLogisticData);
-  const canDelete: boolean = usePermission("purchaseOrderLogistic", "delete");
-  const canRestore: boolean = usePermission("purchaseOrderLogistic", "restore");
-  const canEdit: boolean = usePermission("purchaseOrderLogistic", "edit");
 
-  // Field-level permissions
+  // Permissions
   const canViewCountry: boolean = usePermission(
     "purchaseOrderLogistic",
     "view",
@@ -159,39 +67,6 @@ export default function PurchaseOrderLogisticGrid({
     "view",
     "company"
   );
-  const canViewIsActive: boolean = usePermission(
-    "purchaseOrderLogistic",
-    "view",
-    "isActive"
-  );
-  const canViewIsDeleted: boolean = usePermission(
-    "purchaseOrderLogistic",
-    "view",
-    "isDeleted"
-  );
-  const canViewCreatedAt: boolean = usePermission(
-    "purchaseOrderLogistic",
-    "view",
-    "createdAt"
-  );
-  const canViewUpdatedAt: boolean = usePermission(
-    "purchaseOrderLogistic",
-    "view",
-    "updatedAt"
-  );
-
-  // Debug permissions
-  console.log("Purchase Order Logistic Permissions:", {
-    canDelete,
-    canRestore,
-    canEdit,
-    canViewCountry,
-    canViewCompany,
-    canViewIsActive,
-    canViewIsDeleted,
-    canViewCreatedAt,
-    canViewUpdatedAt,
-  });
 
   // Infinite scroll states
   const [isLoading, setIsLoading] = useState(false);
@@ -205,7 +80,6 @@ export default function PurchaseOrderLogisticGrid({
     if (isLoading || !hasMore) return;
 
     setIsLoading(true);
-
     await new Promise((resolve) => setTimeout(resolve, 800));
 
     const countries = [
@@ -235,7 +109,6 @@ export default function PurchaseOrderLogisticGrid({
       updatedAt: new Date(),
     }));
 
-    // Stop loading more after reaching 50 items for demo
     if (purchaseOrderLogisticDataState.length >= 46) {
       setHasMore(false);
     } else {
@@ -252,7 +125,7 @@ export default function PurchaseOrderLogisticGrid({
     if (!container) return;
 
     const { scrollTop, scrollHeight, clientHeight } = container;
-    const threshold = 100; // Load more when 100px from bottom
+    const threshold = 100;
 
     if (scrollHeight - scrollTop <= clientHeight + threshold) {
       loadMoreData();
@@ -268,40 +141,10 @@ export default function PurchaseOrderLogisticGrid({
     return () => container.removeEventListener("scroll", handleScroll);
   }, [handleScroll]);
 
-  const handleDeleteClick = (purchaseOrderLogisticId: string) => {
-    setPurchaseOrderLogisticDataState((prevPurchaseOrderLogistics) =>
-      prevPurchaseOrderLogistics.map((purchaseOrderLogistic) =>
-        purchaseOrderLogistic.id === purchaseOrderLogisticId
-          ? {
-              ...purchaseOrderLogistic,
-              isDeleted:
-                purchaseOrderLogistic.isDeleted === true ? false : true,
-            }
-          : purchaseOrderLogistic
-      )
-    );
-  };
-
-  const handleRestoreClick = (purchaseOrderLogisticId: string) => {
-    setPurchaseOrderLogisticDataState((prevPurchaseOrderLogistics) =>
-      prevPurchaseOrderLogistics.map((purchaseOrderLogistic) =>
-        purchaseOrderLogistic.id === purchaseOrderLogisticId
-          ? {
-              ...purchaseOrderLogistic,
-              isDeleted:
-                purchaseOrderLogistic.isDeleted === true ? false : true,
-            }
-          : purchaseOrderLogistic
-      )
-    );
-  };
-
   // Filter purchase order logistic records based on search query
   const filteredPurchaseOrderLogistics = purchaseOrderLogisticDataState.filter(
     (purchaseOrderLogistic) => {
       const searchLower = searchQuery.toLowerCase();
-
-      // Only search by fields user has permission to view
       const searchableFields = [];
 
       if (canViewCountry) {
@@ -316,219 +159,135 @@ export default function PurchaseOrderLogisticGrid({
         );
       }
 
-      // If no fields are searchable, return false
       if (searchableFields.length === 0) {
         return false;
       }
 
-      // Return true if any searchable field matches
       return searchableFields.some((field) => field);
     }
   );
 
-  const getStatusColor = (isActive: boolean) => {
-    return isActive
-      ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-      : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
+  const handleViewClick = (itemId: string) => {
+    const viewMode = searchParams.get("view") || "grid";
+    navigate(`/purchase-order-logistic/view/${itemId}?fromView=${viewMode}`);
   };
 
   return (
     <div
       className={cn(
-        "px-4 py-3 h-full flex flex-col bg-white dark:bg-gray-900 parent relative rounded-lg"
+        "h-full flex flex-col bg-white dark:bg-gray-900 parent relative rounded-lg overflow-hidden"
       )}
     >
-      {/* Floating Label - Left Top */}
-      <div
-        className={cn(
-          "absolute -top-4 left-6 rtl:left-auto rtl:right-6 py-1 rounded-md z-40! bg-white w-fit"
-        )}
-      >
-        <span
-          className={cn(
-            "text-md font-semibold tracking-wide capitalize text-gray-600"
-          )}
-        >
-          Total {purchaseOrderLogisticData.length} purchase order logistic
-          records
-        </span>
-      </div>
-
       {/* Main content area */}
-      <div className="flex flex-1 overflow-hidden mt-2">
-        {/* Cards container */}
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* Cards container with animated width */}
         <div
           ref={scrollContainerRef}
-          className="overflow-y-auto scroll-smooth smooth-scroll pr-4"
+          className={cn(
+            "overflow-y-auto grid-scroll transition-all duration-300 ease-in-out",
+            isRTL ? "" : ""
+          )}
           style={{
             width: isFilterOpen || isExportOpen ? "calc(100% - 320px)" : "100%",
           }}
         >
-          <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 pb-4 p-2">
-            {filteredPurchaseOrderLogistics.map(
-              (purchaseOrderLogistic, index) => (
-                <Card
-                  key={index}
-                  className="transition-all hover:border-primary/90 hover:shadow-lg hover:translate-y-[-5px] relative group dark:bg-gray-800 p-4 duration-200"
-                >
-                  {/* Top Row - Grid with 2 columns: Title | Status */}
-                  <div className="grid grid-cols-2 items-center gap-2 mb-4">
-                    {/* Left - Title */}
-                    {canViewCompany && (
-                      <CardTitle
-                        className="text-lg font-semibold cursor-pointer hover:text-primary transition-colors truncate"
-                        onClick={() => navigate(`/purchase-order-logistic/1`)}
-                      >
-                        {purchaseOrderLogistic.company}
-                      </CardTitle>
-                    )}
-
-                    {/* Right - Status */}
-                    {canViewIsActive && (
-                      <div className="flex justify-end">
-                        <div
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                            purchaseOrderLogistic.isActive
-                          )}`}
-                        >
-                          {purchaseOrderLogistic.isActive
-                            ? "Active"
-                            : "Inactive"}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Bottom Row - Grid with 3 columns: Country | Actions | Created Date */}
-                  <div className="grid grid-cols-3 items-center gap-4 pt-2 dark:border-gray-700">
-                    {/* Country */}
-                    {canViewCountry && (
-                      <div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 w-max">
-                          Country
-                        </div>
-                        <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
-                          {purchaseOrderLogistic.country}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Middle - Action Icons */}
-                    <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      {/* Delete/Restore */}
-                      <Tooltip
-                        label={
-                          purchaseOrderLogistic.isDeleted && canRestore
-                            ? "Restore"
-                            : canDelete
-                            ? "Delete"
-                            : ""
-                        }
-                        position="top"
-                        arrowSize={8}
-                        withArrow
-                        styles={{
-                          tooltip: {
-                            fontSize: "14px",
-                            padding: "8px 12px",
-                            backgroundColor: "#374151",
-                            color: "white",
-                            borderRadius: "6px",
-                            fontWeight: "500",
-                            boxShadow:
-                              "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-                          },
-                          arrow: {
-                            backgroundColor: "#374151",
-                          },
-                        }}
-                      >
-                        <button
-                          disabled={
-                            purchaseOrderLogistic.isDeleted && !canRestore
-                          }
-                          className={`cursor-pointer p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
-                            purchaseOrderLogistic.isDeleted
-                              ? "text-blue-500"
-                              : "text-red-500"
-                          }`}
-                          onClick={() => {
-                            if (canRestore && purchaseOrderLogistic.isDeleted) {
-                              handleRestoreClick(purchaseOrderLogistic.id);
-                              toastRestore(
-                                "Purchase order logistic record restored successfully"
-                              );
-                            } else {
-                              if (canDelete) {
-                                handleDeleteClick(purchaseOrderLogistic.id);
-                                toastDelete(
-                                  "Purchase order logistic record deleted successfully"
-                                );
-                              }
-                            }
-                          }}
-                        >
-                          {purchaseOrderLogistic.isDeleted && canRestore ? (
-                            <RefreshCw className="h-4 w-4" />
-                          ) : (
-                            canDelete && <Trash2 className="h-4 w-4" />
-                          )}
-                        </button>
-                      </Tooltip>
-
-                      {/* Edit */}
-                      {canEdit && (
-                        <Tooltip
-                          label="Edit"
-                          position="top"
-                          arrowSize={8}
-                          withArrow
-                          styles={{
-                            tooltip: {
-                              fontSize: "14px",
-                              padding: "8px 12px",
-                              backgroundColor: "#374151",
-                              color: "white",
-                              borderRadius: "6px",
-                              fontWeight: "500",
-                              boxShadow:
-                                "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-                            },
-                            arrow: {
-                              backgroundColor: "#374151",
-                            },
-                          }}
-                        >
-                          <div
-                            className="cursor-pointer p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-blue-500 flex items-center justify-center w-8 h-8"
-                            onClick={() =>
-                              navigate(`/purchase-order-logistic/edit/1`)
-                            }
-                          >
-                            <FontAwesomeIcon
-                              icon={faEdit}
-                              className="h-4 w-4"
-                            />
-                          </div>
-                        </Tooltip>
-                      )}
-                    </div>
-
-                    {/* Created Date */}
-                    {canViewCreatedAt && (
-                      <div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 w-max">
-                          Created
-                        </div>
-                        <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
-                          {purchaseOrderLogistic.createdAt.toLocaleDateString()}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </Card>
-              )
+          <div
+            className={cn(
+              "grid gap-6 pb-4 p-5",
+              // Mobile: 1 column, Tablet: 2 columns, Desktop: 3-4 columns
+              isMobile
+                ? "grid-cols-1"
+                : "grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
             )}
+          >
+            {filteredPurchaseOrderLogistics.map((item, index) => (
+              <Card
+                key={index}
+                className={cn(
+                  "transition-all relative group dark:bg-gray-800 duration-200 w-full shadow-[2px_3px_8px_0_rgba(0,0,0,0.10)] border-[#E2E4EB] border border-solid rounded-[12px] flex p-5 flex-col items-start gap-5 cursor-pointer",
+                  // Different hover effects for mobile vs desktop
+                  isMobile
+                    ? "hover:shadow-lg hover:border-primary"
+                    : "hover:scale-110 hover:z-50 hover:relative hover:border-primary min-w-[250px]"
+                )}
+                onClick={() => handleViewClick(item.id)}
+              >
+                {/* Top Row - Company and Status */}
+                <div className="grid grid-cols-2 items-center gap-2 w-full mt-[-8px]">
+                  {/* Left - Company */}
+                  {canViewCompany && (
+                    <CardTitle
+                      className="text-base font-normal transition-colors truncate"
+                      style={{ fontSize: "18px" }}
+                    >
+                      {item.company}
+                    </CardTitle>
+                  )}
+
+                  {/* Right - Status */}
+                  <div className="flex justify-end">
+                    <div
+                      className={cn(
+                        "px-2 py-1 rounded-full text-xs font-medium",
+                        item.isActive
+                          ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200"
+                          : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200"
+                      )}
+                    >
+                      {item.isActive ? "Active" : "Inactive"}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Middle Row - Country and Created Date */}
+                <div className="grid grid-cols-2 gap-2 w-full">
+                  {/* Country - Left */}
+                  {canViewCountry && (
+                    <div className="min-w-0">
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        Country
+                      </div>
+                      <div className="text-sm font-normal text-gray-900 dark:text-gray-100 truncate">
+                        {item.country}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Created Date - Right */}
+                  <div className="text-right min-w-0">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      Created
+                    </div>
+                    <div className="text-sm font-normal text-gray-900 dark:text-gray-100 truncate">
+                      {item.createdAt.toLocaleDateString()}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom Row - Updated Date and ID */}
+                <div className="grid grid-cols-2 items-center justify-between gap-2 w-full dark:border-gray-700">
+                  {/* Updated Date - Left aligned */}
+                  <div className="min-w-0">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      Updated
+                    </div>
+                    <div className="text-sm font-normal text-gray-900 dark:text-gray-100 truncate">
+                      {item.updatedAt.toLocaleDateString()}
+                    </div>
+                  </div>
+
+                  {/* Right - ID */}
+                  <div className="text-right min-w-0">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      ID
+                    </div>
+                    <div className="text-sm font-normal text-gray-900 dark:text-gray-100 truncate">
+                      {item.id}
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            ))}
           </div>
 
           {/* Loading indicator */}
@@ -537,7 +296,7 @@ export default function PurchaseOrderLogisticGrid({
               <div className="flex items-center gap-2 text-blue-600">
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
                 <span className="text-sm">
-                  Loading more purchase order logistic records...
+                  Loading more purchase order logistics...
                 </span>
               </div>
             </div>
@@ -547,36 +306,91 @@ export default function PurchaseOrderLogisticGrid({
           {!hasMore && filteredPurchaseOrderLogistics.length > 12 && (
             <div className="flex justify-center items-center py-8">
               <span className="text-sm text-gray-500 dark:text-gray-400">
-                No more purchase order logistic records to load
+                No more purchase order logistics to load
               </span>
             </div>
           )}
         </div>
 
-        {/* Filter component - Right side only */}
-        {isFilterOpen && (
-          <div className="w-80 flex-shrink-0 border-l border-gray-200 dark:border-gray-700 pl-4">
-            <div className="h-full flex flex-col">
+        {/* Animated Filter Panel */}
+        <div
+          className={cn(
+            "absolute top-0 h-full transition-all duration-300 ease-in-out transform z-10",
+            isRTL ? "left-0" : "right-0",
+            isFilterOpen
+              ? "translate-x-0 opacity-100 visible"
+              : isRTL
+              ? "-translate-x-full opacity-0 invisible"
+              : "translate-x-full opacity-0 invisible"
+          )}
+          style={{
+            width: isMobile ? "100%" : "320px",
+          }}
+        >
+          <div className={cn("h-full", isMobile ? "pb-4 mt-1" : "p-2")}>
+            <div
+              className={cn(
+                "w-full flex-shrink-0 border rounded-[20px] border-gray-200 dark:border-gray-700 h-full bg-white dark:bg-gray-800 shadow-2xl transition-all duration-300 ease-in-out",
+                isFilterOpen ? "scale-100 opacity-100" : "scale-95 opacity-0"
+              )}
+            >
               <GridFilterComponent
+                key={`filter-panel-${isFilterOpen}`}
                 data={purchaseOrderLogisticData}
                 setFilteredData={setPurchaseOrderLogisticDataState}
-                setShowFilter={setIsFilterOpen}
+                setShowTabs={setIsFilterOpen}
+                defaultTab="filter"
               />
             </div>
           </div>
-        )}
+        </div>
 
-        {/* Export component - Right side only */}
-        {isExportOpen && (
-          <div className="w-80 flex-shrink-0 border-l border-gray-200 dark:border-gray-700 pl-4">
-            <div className="h-full flex flex-col">
-              <GridExportComponent
+        {/* Animated Export Panel */}
+        <div
+          className={cn(
+            "absolute top-0 h-full transition-all duration-300 ease-in-out transform z-10",
+            isRTL ? "left-0" : "right-0",
+            isExportOpen
+              ? "translate-x-0 opacity-100"
+              : isRTL
+              ? "-translate-x-full opacity-0"
+              : "translate-x-full opacity-0"
+          )}
+          style={{
+            width: isMobile ? "100%" : "320px",
+          }}
+        >
+          <div className={cn("h-full", isMobile ? "pb-4 mt-1" : "p-2")}>
+            <div
+              className={cn(
+                "w-full flex-shrink-0 border rounded-[20px] border-gray-200 dark:border-gray-700 h-full bg-white dark:bg-gray-800 shadow-2xl transition-all duration-300 ease-in-out",
+                isExportOpen ? "opacity-100" : "opacity-0"
+              )}
+            >
+              <GridFilterComponent
+                key={`export-panel-${isExportOpen}`}
                 data={purchaseOrderLogisticData}
                 setFilteredData={setPurchaseOrderLogisticDataState}
-                setIsExportOpen={setIsExportOpen}
+                setShowTabs={setIsExportOpen}
+                defaultTab="export"
               />
             </div>
           </div>
+        </div>
+
+        {/* Backdrop overlay for mobile/smaller screens */}
+        {(isFilterOpen || isExportOpen) && (
+          <div
+            className={cn(
+              "fixed inset-0 bg-black bg-opacity-30 transition-opacity duration-300 ease-in-out z-5",
+              isMobile ? "" : "md:hidden",
+              isFilterOpen || isExportOpen ? "opacity-100" : "opacity-0"
+            )}
+            onClick={() => {
+              setIsFilterOpen(false);
+              setIsExportOpen(false);
+            }}
+          />
         )}
       </div>
     </div>

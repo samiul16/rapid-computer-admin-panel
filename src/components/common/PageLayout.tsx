@@ -48,6 +48,8 @@ interface PageLayoutProps {
   moduleName?: string;
   moduleRoute?: string;
   handleMinimize?: () => void;
+  isShowEdit?: boolean;
+  isShowView?: boolean;
 }
 
 export default function DPageLayout({
@@ -75,7 +77,10 @@ export default function DPageLayout({
   scrollBoxClassNames,
   module,
   handleMinimize,
+  isShowEdit = true,
+  isShowView = true,
 }: PageLayoutProps) {
+  console.log("listPath:", listPath);
   const navigate = useNavigate();
   const location = useLocation();
   // const [companyName, setCompanyName] = useState("Rapid ERP Solutions");
@@ -90,6 +95,7 @@ export default function DPageLayout({
   // Automatically detect module from route if not provided
   const detectedModule = module || getModuleFromPath(location.pathname);
 
+  console.log("detectedModule -->:", detectedModule);
   const canCreate = usePermission(detectedModule, "create");
   const canEdit = usePermission(detectedModule, "edit");
   const [searchParams] = useSearchParams();
@@ -102,9 +108,15 @@ export default function DPageLayout({
       label: "Add",
       content: null,
     },
-    { value: "edit", label: "Edit", content: null },
-    { value: "view", label: "View", content: null },
   ];
+
+  if (isShowEdit) {
+    tabsData.push({ value: "edit", label: "Edit", content: null });
+  }
+
+  if (isShowView) {
+    tabsData.push({ value: "view", label: "View", content: null });
+  }
 
   const onTabChange = (value: string | undefined) => {
     console.log("Tab changed to:", value);
@@ -119,6 +131,7 @@ export default function DPageLayout({
     } else if (value === "edit") {
       // Preserve current view mode when going to edit
       const currentView = searchParams.get("view") || "grid"; // default fallback
+      console.log(`/${listPath}/edit/1?fromView=${currentView}`);
       navigate(`/${listPath}/edit/1?fromView=${currentView}`);
     } else if (value === "view") {
       // Preserve current view mode when going to view
@@ -289,6 +302,11 @@ export default function DPageLayout({
             {/* Tab Navigation */}
             <div className="flex items-center gap-16 sm:gap-8">
               {tabsData.map((tab) => {
+                console.log(
+                  "tabs permission can create,can edit",
+                  canCreate,
+                  canEdit
+                );
                 if (tab.value === "create" && !canCreate) {
                   return null;
                 }

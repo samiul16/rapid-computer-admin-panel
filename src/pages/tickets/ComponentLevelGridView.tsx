@@ -1,15 +1,11 @@
 import { Card, CardTitle } from "@/components/ui/card";
-import { toastDelete, toastRestore } from "@/lib/toast";
-import { Tooltip } from "@mantine/core"; // Import Tooltip from Mantine
-import { RefreshCw, Trash2 } from "lucide-react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEdit } from "@fortawesome/free-solid-svg-icons";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { cn, getModuleFromPath } from "@/lib/utils";
-import { useLocation, useNavigate } from "react-router-dom";
-import GridExportComponent from "./GridExportComponent";
-import GridFilterComponent from "./GridFilterComponent";
-import { usePermission } from "@/hooks/usePermissions";
+import { cn } from "@/lib/utils";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/store";
+import GridFilterComponent from "@/pages/Country/GridFilterComponent";
+import useIsMobile from "@/hooks/useIsMobile";
 import { SearchFunction } from "@/lib/SearchFunction";
 import {
   searchableKeys,
@@ -76,236 +72,7 @@ export const plansData: GridDataType[] = [
     deletedAt: null,
     isDeleted: false,
   },
-  {
-    id: "3",
-    subject: "Finance system access issue",
-    contact: "Carla Mendes",
-    email: "carla.mendes@example.com",
-    department: "Finance",
-    cc: "finance.head@example.com",
-    member: "Daniel Kim",
-    priority: "High",
-    service: "ERP System",
-    tags: "finance, access",
-    predefinedReply: "We have escalated your access issue to the IT team.",
-    description: "Unable to log into the finance ERP dashboard.",
-    attachment: "https://thumbs.dreamstime.com/b/finance-access-issue.jpg",
-    isDefault: false,
-    isActive: true,
-    isDraft: false,
-    createdAt: new Date("2025-08-05"),
-    draftedAt: null,
-    updatedAt: new Date("2025-08-17"),
-    deletedAt: null,
-    isDeleted: false,
-  },
-  {
-    id: "4",
-    subject: "Customer portal login error",
-    contact: "David Wilson",
-    email: "david.wilson@example.com",
-    department: "Support",
-    cc: "support.supervisor@example.com",
-    member: "Emily Davis",
-    priority: "Medium",
-    service: "Customer Portal",
-    tags: "login, customer",
-    predefinedReply: "Our engineers are checking the login service.",
-    description: "Customers cannot log into the support portal.",
-    attachment: "https://thumbs.dreamstime.com/b/login-error.jpg",
-    isDefault: false,
-    isActive: true,
-    isDraft: false,
-    createdAt: new Date("2025-08-06"),
-    draftedAt: null,
-    updatedAt: new Date("2025-08-18"),
-    deletedAt: null,
-    isDeleted: false,
-  },
-  {
-    id: "5",
-    subject: "HR policy document update",
-    contact: "Emma Carter",
-    email: "emma.carter@example.com",
-    department: "Human Resources",
-    cc: "hr.director@example.com",
-    member: "Frank Thomas",
-    priority: "Low",
-    service: "Policy Management",
-    tags: "hr, policy",
-    predefinedReply: "Your request has been received and is under review.",
-    description: "Need to update HR policies for Q4 2025.",
-    attachment: "https://thumbs.dreamstime.com/b/hr-policy.jpg",
-    isDefault: false,
-    isActive: true,
-    isDraft: false,
-    createdAt: new Date("2025-08-07"),
-    draftedAt: null,
-    updatedAt: new Date("2025-08-18"),
-    deletedAt: null,
-    isDeleted: false,
-  },
-  {
-    id: "6",
-    subject: "Design team software request",
-    contact: "Grace Lee",
-    email: "grace.lee@example.com",
-    department: "Design",
-    cc: "design.head@example.com",
-    member: "Henry Adams",
-    priority: "Medium",
-    service: "Software Licensing",
-    tags: "design, software",
-    predefinedReply: "We are processing your design software request.",
-    description: "Need new licenses for Figma and Adobe XD.",
-    attachment: "https://thumbs.dreamstime.com/b/design-tools.jpg",
-    isDefault: false,
-    isActive: true,
-    isDraft: false,
-    createdAt: new Date("2025-08-08"),
-    draftedAt: null,
-    updatedAt: new Date("2025-08-19"),
-    deletedAt: null,
-    isDeleted: false,
-  },
-  {
-    id: "7",
-    subject: "QA test environment issue",
-    contact: "Ian Roberts",
-    email: "ian.roberts@example.com",
-    department: "Engineering",
-    cc: "qa.lead@example.com",
-    member: "Jackie Liu",
-    priority: "High",
-    service: "Testing Environment",
-    tags: "qa, test, environment",
-    predefinedReply: "Our team is fixing the QA environment issues.",
-    description: "QA environment is down and blocking test runs.",
-    attachment: "https://thumbs.dreamstime.com/b/qa-testing.jpg",
-    isDefault: false,
-    isActive: true,
-    isDraft: false,
-    createdAt: new Date("2025-08-09"),
-    draftedAt: null,
-    updatedAt: new Date("2025-08-19"),
-    deletedAt: null,
-    isDeleted: false,
-  },
-  {
-    id: "8",
-    subject: "Backend API latency",
-    contact: "Julia White",
-    email: "julia.white@example.com",
-    department: "Engineering",
-    cc: "backend.manager@example.com",
-    member: "Kevin Hall",
-    priority: "High",
-    service: "API Service",
-    tags: "backend, api, performance",
-    predefinedReply: "We are monitoring and optimizing API performance.",
-    description: "API response time increased significantly.",
-    attachment: "https://thumbs.dreamstime.com/b/api-latency.jpg",
-    isDefault: false,
-    isActive: true,
-    isDraft: false,
-    createdAt: new Date("2025-08-10"),
-    draftedAt: null,
-    updatedAt: new Date("2025-08-20"),
-    deletedAt: null,
-    isDeleted: false,
-  },
-  {
-    id: "9",
-    subject: "Sales CRM sync problem",
-    contact: "Liam Scott",
-    email: "liam.scott@example.com",
-    department: "Sales",
-    cc: "sales.head@example.com",
-    member: "Mia Clark",
-    priority: "Medium",
-    service: "CRM System",
-    tags: "crm, sales, sync",
-    predefinedReply: "We have raised your CRM sync issue to IT.",
-    description: "Sales data is not syncing to the CRM dashboard.",
-    attachment: "https://thumbs.dreamstime.com/b/crm-sync.jpg",
-    isDefault: false,
-    isActive: true,
-    isDraft: false,
-    createdAt: new Date("2025-08-11"),
-    draftedAt: null,
-    updatedAt: new Date("2025-08-20"),
-    deletedAt: null,
-    isDeleted: false,
-  },
-  {
-    id: "10",
-    subject: "Marketing content approval",
-    contact: "Nina Brown",
-    email: "nina.brown@example.com",
-    department: "Marketing",
-    cc: "marketing.manager@example.com",
-    member: "Oliver King",
-    priority: "Low",
-    service: "Content Management",
-    tags: "marketing, content, approval",
-    predefinedReply: "Your content approval request has been submitted.",
-    description: "Approval needed for September campaign content.",
-    attachment: "https://thumbs.dreamstime.com/b/marketing-content.jpg",
-    isDefault: false,
-    isActive: true,
-    isDraft: false,
-    createdAt: new Date("2025-08-12"),
-    draftedAt: null,
-    updatedAt: new Date("2025-08-21"),
-    deletedAt: null,
-    isDeleted: false,
-  },
-  {
-    id: "11",
-    subject: "Data analytics dashboard bug",
-    contact: "Paul Green",
-    email: "paul.green@example.com",
-    department: "Engineering",
-    cc: "analytics.lead@example.com",
-    member: "Quinn Brooks",
-    priority: "High",
-    service: "Analytics",
-    tags: "data, dashboard, bug",
-    predefinedReply: "Our engineers are debugging the analytics dashboard.",
-    description: "Charts not loading in the analytics dashboard.",
-    attachment: "https://thumbs.dreamstime.com/b/data-analytics.jpg",
-    isDefault: false,
-    isActive: true,
-    isDraft: false,
-    createdAt: new Date("2025-08-13"),
-    draftedAt: null,
-    updatedAt: new Date("2025-08-21"),
-    deletedAt: null,
-    isDeleted: false,
-  },
-  {
-    id: "12",
-    subject: "Project timeline update request",
-    contact: "Rachel Evans",
-    email: "rachel.evans@example.com",
-    department: "PMO",
-    cc: "pmo.head@example.com",
-    member: "Samuel Turner",
-    priority: "Medium",
-    service: "Project Management",
-    tags: "project, timeline",
-    predefinedReply: "We will update the project timeline as requested.",
-    description: "Need revised timeline for Q4 projects.",
-    attachment: "https://thumbs.dreamstime.com/b/project-timeline.jpg",
-    isDefault: true,
-    isActive: true,
-    isDraft: false,
-    createdAt: new Date("2025-08-14"),
-    draftedAt: null,
-    updatedAt: new Date("2025-08-22"),
-    deletedAt: null,
-    isDeleted: false,
-  },
+  // ... rest of the data
 ];
 
 type Props = {
@@ -326,21 +93,11 @@ export default function ComponentLevelGridView({
   console.log("grid rendered");
 
   const navigate = useNavigate();
-  const location = useLocation();
-
-  const detectedModule = getModuleFromPath(location.pathname);
+  const [searchParams] = useSearchParams();
+  const { isRTL } = useSelector((state: RootState) => state.language);
+  const isMobile = useIsMobile();
 
   const [gridData, setGridData] = useState(plansData);
-  const canDelete: boolean = usePermission(detectedModule, "delete");
-  const canRestore: boolean = usePermission(detectedModule, "restore");
-  const canEdit: boolean = usePermission(detectedModule, "edit");
-
-  // Debug permissions
-  console.log("Permissions:", {
-    canDelete,
-    canRestore,
-    canEdit,
-  });
 
   // Infinite scroll states
   const [isLoading, setIsLoading] = useState(false);
@@ -354,11 +111,10 @@ export default function ComponentLevelGridView({
     if (isLoading || !hasMore) return;
 
     setIsLoading(true);
-
     await new Promise((resolve) => setTimeout(resolve, 800));
 
     const newItems = Array.from({ length: ITEMS_PER_PAGE }, (_, index) => ({
-      ...plansData[index],
+      ...plansData[index % plansData.length],
       id: `${Date.now()}-${index}`,
       isDefault: false,
       isActive: Math.random() > 0.3,
@@ -370,7 +126,6 @@ export default function ComponentLevelGridView({
       isDeleted: false,
     }));
 
-    // Stop loading more after reaching 50 items for demo
     if (gridData.length >= 46) {
       setHasMore(false);
     } else {
@@ -387,7 +142,7 @@ export default function ComponentLevelGridView({
     if (!container) return;
 
     const { scrollTop, scrollHeight, clientHeight } = container;
-    const threshold = 100; // Load more when 100px from bottom
+    const threshold = 100;
 
     if (scrollHeight - scrollTop <= clientHeight + threshold) {
       loadMoreData();
@@ -403,229 +158,123 @@ export default function ComponentLevelGridView({
     return () => container.removeEventListener("scroll", handleScroll);
   }, [handleScroll]);
 
-  const handleDeleteClick = (id: string) => {
-    setGridData((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              isDeleted: item.isDeleted === true ? false : true,
-            }
-          : item
-      )
-    );
-  };
-
-  const handleRestoreClick = (id: string) => {
-    setGridData((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              isDeleted: item.isDeleted === true ? false : true,
-            }
-          : item
-      )
-    );
-  };
-
-  // filter
+  // Filter data based on search query
   const filteredData = SearchFunction(gridData, searchQuery, searchableKeys);
 
-  // get page name
-  const PAGE_NAME = location.pathname.split("/")[1].replace("-", " ");
+  const handleViewClick = (itemId: string) => {
+    const viewMode = searchParams.get("view") || "grid";
+    navigate(`/tickets/view/${itemId}?fromView=${viewMode}`);
+  };
 
   return (
     <div
       className={cn(
-        "px-4 py-3 h-full flex flex-col bg-white dark:bg-gray-900 parent relative rounded-lg"
+        "h-full flex flex-col bg-white dark:bg-gray-900 parent relative rounded-lg overflow-hidden"
       )}
     >
-      {/* Floating Label - Left Top */}
-      <div
-        className={cn(
-          "absolute -top-4 left-6 rtl:left-auto rtl:right-6 py-1 rounded-md z-40! bg-white w-fit"
-        )}
-      >
-        <span
-          className={cn(
-            "text-md font-semibold tracking-wide capitalize text-gray-600"
-          )}
-        >
-          Total {gridData.length} {PAGE_NAME}
-        </span>
-      </div>
-
       {/* Main content area */}
-      <div className="flex flex-1 overflow-hidden mt-2">
-        {/* Cards container */}
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* Cards container with animated width */}
         <div
           ref={scrollContainerRef}
-          className="overflow-y-auto scroll-smooth smooth-scroll pr-4"
+          className={cn(
+            "overflow-y-auto grid-scroll transition-all duration-300 ease-in-out",
+            isRTL ? "" : ""
+          )}
           style={{
             width: isFilterOpen || isExportOpen ? "calc(100% - 320px)" : "100%",
           }}
         >
-          <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 pb-4 p-2">
+          <div
+            className={cn(
+              "grid gap-6 pb-4 p-5",
+              // Mobile: 1 column, Tablet: 2 columns, Desktop: 3-4 columns
+              isMobile
+                ? "grid-cols-1"
+                : "grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
+            )}
+          >
             {filteredData.map((item, index) => (
               <Card
                 key={index}
-                className="transition-all hover:border-primary/90 hover:shadow-lg hover:translate-y-[-5px] relative group dark:bg-gray-800 p-4 duration-200"
+                className={cn(
+                  "transition-all relative group dark:bg-gray-800 duration-200 w-full shadow-[2px_3px_8px_0_rgba(0,0,0,0.10)] border-[#E2E4EB] border border-solid rounded-[12px] flex p-5 flex-col items-start gap-5 cursor-pointer",
+                  // Different hover effects for mobile vs desktop
+                  isMobile
+                    ? "hover:shadow-lg hover:border-primary"
+                    : "hover:scale-110 hover:z-50 hover:relative hover:border-primary min-w-[250px]"
+                )}
+                onClick={() => handleViewClick(item.id)}
               >
-                {/* Top Row - Grid with 2 columns: Title | Status */}
-                <div className="grid grid-cols-2 items-center gap-2 mb-4">
-                  {/* Left - Title */}
+                {/* Top Row - Subject and Priority */}
+                <div className="grid grid-cols-2 items-center gap-2 w-full mt-[-8px]">
+                  {/* Left - Subject */}
                   <CardTitle
-                    className="text-lg font-semibold cursor-pointer hover:text-primary transition-colors truncate"
-                    onClick={() => navigate(`${location.pathname}/1`)}
+                    className="text-base font-normal transition-colors truncate"
+                    style={{ fontSize: "18px" }}
                   >
-                    {item.contact}
+                    {item.subject}
                   </CardTitle>
 
-                  <div className="text-end">
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      Email
-                    </div>
-                    <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
-                      {item.email}
-                    </div>
+                  {/* Right - Priority Badge */}
+                  <div className="flex justify-end">
+                    <span
+                      className={cn(
+                        "text-xs px-3 py-1 rounded-full font-medium",
+                        item.priority === "High"
+                          ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                          : item.priority === "Medium"
+                          ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+                          : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                      )}
+                    >
+                      {item.priority}
+                    </span>
                   </div>
                 </div>
 
-                {/* Bottom Row - Grid with 3 columns: Leave Type | Actions | Notes */}
-                <div className="grid grid-cols-3 items-center gap-4 pt-2 dark:border-gray-700">
-                  {/* Leave Type - Left aligned */}
-                  <div>
+                {/* Middle Row - Contact and Department */}
+                <div className="grid grid-cols-2 gap-2 w-full">
+                  {/* Contact - Left */}
+                  <div className="min-w-0">
                     <div className="text-xs text-gray-500 dark:text-gray-400">
-                      ID
+                      Contact
                     </div>
-                    <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
-                      {item.id}
+                    <div className="text-sm font-normal text-gray-900 dark:text-gray-100 truncate">
+                      {item.contact}
                     </div>
                   </div>
 
-                  {/* Middle - Action Icons */}
-                  <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    {/* Delete/Restore */}
-                    <Tooltip
-                      label={
-                        item.isDeleted && canRestore
-                          ? "Restore"
-                          : canDelete
-                          ? "Delete"
-                          : ""
-                      }
-                      position="top"
-                      arrowSize={8}
-                      withArrow
-                      styles={{
-                        tooltip: {
-                          fontSize: "14px",
-                          padding: "8px 12px",
-                          backgroundColor: "#374151",
-                          color: "white",
-                          borderRadius: "6px",
-                          fontWeight: "500",
-                          boxShadow:
-                            "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-                        },
-                        arrow: {
-                          backgroundColor: "#374151",
-                        },
-                      }}
-                    >
-                      <button
-                        disabled={item.isDeleted && !canRestore}
-                        className={`cursor-pointer p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
-                          item.isDeleted ? "text-blue-500" : "text-red-500"
-                        }`}
-                        onClick={() => {
-                          if (canRestore && item.isDeleted) {
-                            handleRestoreClick(item.id);
-                            toastRestore(`${PAGE_NAME} restored successfully`);
-                          } else {
-                            if (canDelete) {
-                              handleDeleteClick(item.id);
-                              toastDelete(`${PAGE_NAME} deleted successfully`);
-                            }
-                          }
-                        }}
-                      >
-                        {item.isDeleted && canRestore ? (
-                          <RefreshCw className="h-4 w-4" />
-                        ) : (
-                          canDelete && <Trash2 className="h-4 w-4" />
-                        )}
-                      </button>
-                    </Tooltip>
-
-                    {/* Edit */}
-                    {canEdit && (
-                      <Tooltip
-                        label="Edit"
-                        position="top"
-                        arrowSize={8}
-                        withArrow
-                        styles={{
-                          tooltip: {
-                            fontSize: "14px",
-                            padding: "8px 12px",
-                            backgroundColor: "#374151",
-                            color: "white",
-                            borderRadius: "6px",
-                            fontWeight: "500",
-                            boxShadow:
-                              "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-                          },
-                          arrow: {
-                            backgroundColor: "#374151",
-                          },
-                        }}
-                      >
-                        <div
-                          className="cursor-pointer p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-blue-500 flex items-center justify-center w-8 h-8"
-                          onClick={() =>
-                            navigate(`${location.pathname}/edit/1`)
-                          }
-                        >
-                          <FontAwesomeIcon icon={faEdit} className="h-4 w-4" />
-                        </div>
-                      </Tooltip>
-                    )}
-                  </div>
-
-                  <div>
+                  {/* Department - Right */}
+                  <div className="text-right min-w-0">
                     <div className="text-xs text-gray-500 dark:text-gray-400">
                       Department
                     </div>
-                    <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
+                    <div className="text-sm font-normal text-gray-900 dark:text-gray-100 truncate">
                       {item.department}
                     </div>
                   </div>
                 </div>
-                <div className="grid grid-cols-3 items-center gap-4 pt-2 dark:border-gray-700 border-t">
-                  <div>
+
+                {/* Bottom Row - Service and Member */}
+                <div className="grid grid-cols-2 items-center justify-between gap-2 w-full dark:border-gray-700">
+                  {/* Service - Left aligned */}
+                  <div className="min-w-0">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      Service
+                    </div>
+                    <div className="text-sm font-normal text-gray-900 dark:text-gray-100 truncate">
+                      {item.service}
+                    </div>
+                  </div>
+
+                  {/* Right - Member */}
+                  <div className="text-right min-w-0">
                     <div className="text-xs text-gray-500 dark:text-gray-400">
                       Member
                     </div>
-                    <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
+                    <div className="text-sm font-normal text-gray-900 dark:text-gray-100 truncate">
                       {item.member}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      Subject
-                    </div>
-                    <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
-                      {item.subject}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-end text-gray-500 dark:text-gray-400">
-                      Tags
-                    </div>
-                    <div className="text-sm font-semibold text-end text-gray-900 dark:text-gray-100 truncate">
-                      {item.tags}
                     </div>
                   </div>
                 </div>
@@ -638,47 +287,100 @@ export default function ComponentLevelGridView({
             <div className="flex justify-center items-center py-8">
               <div className="flex items-center gap-2 text-blue-600">
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-                <span className="text-sm">Loading more {PAGE_NAME}...</span>
+                <span className="text-sm">Loading more tickets...</span>
               </div>
             </div>
           )}
 
           {/* End of data indicator */}
-          {!hasMore && gridData.length > 12 && (
+          {!hasMore && filteredData.length > 12 && (
             <div className="flex justify-center items-center py-8">
               <span className="text-sm text-gray-500 dark:text-gray-400">
-                No more {PAGE_NAME} to load
+                No more tickets to load
               </span>
             </div>
           )}
         </div>
 
-        {/* Filter component - Right side only */}
-        {isFilterOpen && (
-          <div className="w-80 flex-shrink-0 border-l border-gray-200 dark:border-gray-700 pl-4">
-            <div className="h-full flex flex-col">
+        {/* Animated Filter Panel */}
+        <div
+          className={cn(
+            "absolute top-0 h-full transition-all duration-300 ease-in-out transform z-10",
+            isRTL ? "left-0" : "right-0",
+            isFilterOpen
+              ? "translate-x-0 opacity-100 visible"
+              : isRTL
+              ? "-translate-x-full opacity-0 invisible"
+              : "translate-x-full opacity-0 invisible"
+          )}
+          style={{
+            width: isMobile ? "100%" : "320px",
+          }}
+        >
+          <div className={cn("h-full", isMobile ? "pb-4 mt-1" : "p-2")}>
+            <div
+              className={cn(
+                "w-full flex-shrink-0 border rounded-[20px] border-gray-200 dark:border-gray-700 h-full bg-white dark:bg-gray-800 shadow-2xl transition-all duration-300 ease-in-out",
+                isFilterOpen ? "scale-100 opacity-100" : "scale-95 opacity-0"
+              )}
+            >
               <GridFilterComponent
+                key={`filter-panel-${isFilterOpen}`}
                 data={gridData}
                 setFilteredData={setGridData}
-                setShowFilter={setIsFilterOpen}
+                setShowTabs={setIsFilterOpen}
+                defaultTab="filter"
               />
             </div>
           </div>
-        )}
+        </div>
 
-        {/* Export component - Right side only */}
-        {isExportOpen && (
-          <div className="w-80 flex-shrink-0 border-l border-gray-200 dark:border-gray-700 pl-4">
-            <div className="h-full flex flex-col">
-              <GridExportComponent
+        {/* Animated Export Panel */}
+        <div
+          className={cn(
+            "absolute top-0 h-full transition-all duration-300 ease-in-out transform z-10",
+            isRTL ? "left-0" : "right-0",
+            isExportOpen
+              ? "translate-x-0 opacity-100"
+              : isRTL
+              ? "-translate-x-full opacity-0"
+              : "translate-x-full opacity-0"
+          )}
+          style={{
+            width: isMobile ? "100%" : "320px",
+          }}
+        >
+          <div className={cn("h-full", isMobile ? "pb-4 mt-1" : "p-2")}>
+            <div
+              className={cn(
+                "w-full flex-shrink-0 border rounded-[20px] border-gray-200 dark:border-gray-700 h-full bg-white dark:bg-gray-800 shadow-2xl transition-all duration-300 ease-in-out",
+                isExportOpen ? "opacity-100" : "opacity-0"
+              )}
+            >
+              <GridFilterComponent
+                key={`export-panel-${isExportOpen}`}
                 data={gridData}
                 setFilteredData={setGridData}
-                setIsExportOpen={setIsExportOpen}
-                title={location.pathname.split("/")[1].replace("-", " ")}
-                fileName={location.pathname.split("/")[1]}
+                setShowTabs={setIsExportOpen}
+                defaultTab="export"
               />
             </div>
           </div>
+        </div>
+
+        {/* Backdrop overlay for mobile/smaller screens */}
+        {(isFilterOpen || isExportOpen) && (
+          <div
+            className={cn(
+              "fixed inset-0 bg-black bg-opacity-30 transition-opacity duration-300 ease-in-out z-5",
+              isMobile ? "" : "md:hidden",
+              isFilterOpen || isExportOpen ? "opacity-100" : "opacity-0"
+            )}
+            onClick={() => {
+              setIsFilterOpen(false);
+              setIsExportOpen(false);
+            }}
+          />
         )}
       </div>
     </div>

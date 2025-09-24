@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import FixedColumnDataTable from "@/components/common/FixedColumnDataTable";
+import FixedColumnDataTable from "@/components/common/country-page-table/FixedColumnDataTable";
 
 const mockInvoices = [
   {
@@ -399,10 +399,26 @@ export default function InvoicesDataTable({
   viewMode,
   setViewMode,
   dataTableFilter,
+  setShowExport,
+  showExport,
+  setShowFilter,
+  showFilter,
+  setShowVisibility,
+  showVisibility,
+  isFilterOpen,
+  setIsFilterOpen,
 }: {
   viewMode: string;
   setViewMode: (viewMode: string) => void;
   dataTableFilter: any;
+  setShowExport: (showExport: boolean) => void;
+  showExport: boolean;
+  setShowFilter: (showFilter: boolean) => void;
+  showFilter: boolean;
+  setShowVisibility: (showVisibility: boolean) => void;
+  showVisibility: boolean;
+  isFilterOpen: boolean;
+  setIsFilterOpen: (isFilterOpen: boolean) => void;
 }) {
   const componentColumns = [
     {
@@ -773,24 +789,7 @@ export default function InvoicesDataTable({
       size: 120,
       minSize: 100,
     },
-    {
-      accessorKey: "status",
-      title: "Status",
-      options: ["active", "inactive", "draft"],
-      filterFn: (row: any, columnId: any, filterValue: any) => {
-        if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as string;
-        return filterValue.includes(cellValue);
-      },
-      sortingFn: (row1: any, row2: any) => {
-        return row1.getValue("status").localeCompare(row2.getValue("status"));
-      },
-      size: 100,
-      minSize: 80,
-      meta: {
-        exportLabel: "status",
-      },
-    },
+
     {
       accessorKey: "createdAt",
       title: "Created",
@@ -863,7 +862,17 @@ export default function InvoicesDataTable({
       componentColumns={componentColumns}
       viewMode={viewMode}
       setViewMode={setViewMode}
-      fixedColumns={[]}
+      fixedColumns={["documentNumber"]}
+      searchQuery={""}
+      pathName={""}
+      setShowExport={setShowExport}
+      showExport={showExport}
+      setShowFilter={setShowFilter}
+      showFilter={showFilter}
+      setShowVisibility={setShowVisibility}
+      showVisibility={showVisibility}
+      isFilterOpen={isFilterOpen}
+      setIsFilterOpen={setIsFilterOpen}
     />
   );
 }

@@ -1,28 +1,13 @@
 import { Card, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import {
-  Trash2,
-  List,
-  Import,
-  Download,
-  Filter,
-  Mic,
-  Search,
-  RefreshCw,
-  CheckCircle2,
-  Circle,
-  Pencil,
-} from "lucide-react";
+import { Package } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/store";
+import GridFilterComponent from "@/pages/Country/GridFilterComponent";
+import useIsMobile from "@/hooks/useIsMobile";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
-import GridFilterComponent from "./GridFilterComponent";
-import GridExportComponent from "./GridExportComponent";
-import { Modal, Tooltip } from "@mantine/core";
-import { useDisclosure } from "@mantine/hooks";
-import ImportStepperTemp from "@/components/common/IMportTemp";
-import { toastSuccess } from "@/lib/toast";
 
 // Define OpeningStock interface
 interface OpeningStock {
@@ -88,220 +73,34 @@ const openingStocks: OpeningStock[] = [
     deletedAt: null,
     isDeleted: false,
   },
-  {
-    id: "4",
-    documentNumber: "OS004",
-    branch: "East Branch",
-    documentDate: new Date("2024-01-18"),
-    remarks: "Stock reconciliation",
-    amount: 9850.0,
-    isActive: true,
-    isDraft: false,
-    createdAt: new Date("2024-01-18"),
-    draftedAt: null,
-    updatedAt: new Date("2024-01-23"),
-    deletedAt: null,
-    isDeleted: false,
-  },
-  {
-    id: "5",
-    documentNumber: "OS005",
-    branch: "West Branch",
-    documentDate: new Date("2024-01-19"),
-    remarks: "Monthly inventory update",
-    amount: 16750.3,
-    isActive: true,
-    isDraft: false,
-    createdAt: new Date("2024-01-19"),
-    draftedAt: null,
-    updatedAt: new Date("2024-01-24"),
-    deletedAt: null,
-    isDeleted: false,
-  },
-  {
-    id: "6",
-    documentNumber: "OS006",
-    branch: "Central Branch",
-    documentDate: new Date("2024-01-20"),
-    remarks: "Year-end stock count",
-    amount: 22100.45,
-    isActive: true,
-    isDraft: false,
-    createdAt: new Date("2024-01-20"),
-    draftedAt: null,
-    updatedAt: new Date("2024-01-25"),
-    deletedAt: null,
-    isDeleted: false,
-  },
-  {
-    id: "7",
-    documentNumber: "OS007",
-    branch: "Downtown Branch",
-    documentDate: new Date("2024-01-21"),
-    remarks: "Seasonal inventory adjustment",
-    amount: 7890.6,
-    isActive: true,
-    isDraft: true,
-    createdAt: new Date("2024-01-21"),
-    draftedAt: new Date("2024-01-21"),
-    updatedAt: new Date("2024-01-26"),
-    deletedAt: null,
-    isDeleted: false,
-  },
-  {
-    id: "8",
-    documentNumber: "OS008",
-    branch: "Suburban Branch",
-    documentDate: new Date("2024-01-22"),
-    remarks: "New product line addition",
-    amount: 13450.8,
-    isActive: true,
-    isDraft: false,
-    createdAt: new Date("2024-01-22"),
-    draftedAt: null,
-    updatedAt: new Date("2024-01-27"),
-    deletedAt: null,
-    isDeleted: false,
-  },
-  {
-    id: "9",
-    documentNumber: "OS009",
-    branch: "Uptown Branch",
-    documentDate: new Date("2024-01-23"),
-    remarks: "Bulk purchase inventory",
-    amount: 18600.9,
-    isActive: true,
-    isDraft: false,
-    createdAt: new Date("2024-01-23"),
-    draftedAt: null,
-    updatedAt: new Date("2024-01-28"),
-    deletedAt: null,
-    isDeleted: false,
-  },
-  {
-    id: "10",
-    documentNumber: "OS010",
-    branch: "Riverside Branch",
-    documentDate: new Date("2024-01-24"),
-    remarks: "Emergency stock replenishment",
-    amount: 5320.15,
-    isActive: true,
-    isDraft: false,
-    createdAt: new Date("2024-01-24"),
-    draftedAt: null,
-    updatedAt: new Date("2024-01-29"),
-    deletedAt: null,
-    isDeleted: false,
-  },
-  {
-    id: "11",
-    documentNumber: "OS011",
-    branch: "Hillside Branch",
-    documentDate: new Date("2024-01-25"),
-    remarks: "Inventory transfer documentation",
-    amount: 11750.25,
-    isActive: true,
-    isDraft: false,
-    createdAt: new Date("2024-01-25"),
-    draftedAt: null,
-    updatedAt: new Date("2024-01-30"),
-    deletedAt: null,
-    isDeleted: false,
-  },
-  {
-    id: "12",
-    documentNumber: "OS012",
-    branch: "Lakeside Branch",
-    documentDate: new Date("2024-01-26"),
-    remarks: "Seasonal clearance stock",
-    amount: 6780.4,
-    isActive: true,
-    isDraft: false,
-    createdAt: new Date("2024-01-26"),
-    draftedAt: null,
-    updatedAt: new Date("2024-01-31"),
-    deletedAt: null,
-    isDeleted: false,
-  },
-  {
-    id: "13",
-    documentNumber: "OS013",
-    branch: "Garden Branch",
-    documentDate: new Date("2024-01-27"),
-    remarks: "Pending audit verification",
-    amount: 14250.75,
-    isActive: true,
-    isDraft: true,
-    createdAt: new Date("2024-01-27"),
-    draftedAt: new Date("2024-01-27"),
-    updatedAt: new Date("2024-02-01"),
-    deletedAt: null,
-    isDeleted: false,
-  },
-  {
-    id: "14",
-    documentNumber: "OS014",
-    branch: "Plaza Branch",
-    documentDate: new Date("2024-01-28"),
-    remarks: "Weekly stock update",
-    amount: 8920.55,
-    isActive: true,
-    isDraft: false,
-    createdAt: new Date("2024-01-28"),
-    draftedAt: null,
-    updatedAt: new Date("2024-02-02"),
-    deletedAt: null,
-    isDeleted: false,
-  },
-  {
-    id: "15",
-    documentNumber: "OS015",
-    branch: "Metro Branch",
-    documentDate: new Date("2024-01-29"),
-    remarks: "Special category inventory",
-    amount: 19850.35,
-    isActive: true,
-    isDraft: false,
-    createdAt: new Date("2024-01-29"),
-    draftedAt: null,
-    updatedAt: new Date("2024-02-03"),
-    deletedAt: null,
-    isDeleted: false,
-  },
-  {
-    id: "16",
-    documentNumber: "OS016",
-    branch: "Business District",
-    documentDate: new Date("2024-01-30"),
-    remarks: "Technology equipment stock",
-    amount: 25600.2,
-    isActive: true,
-    isDraft: false,
-    createdAt: new Date("2024-01-30"),
-    draftedAt: null,
-    updatedAt: new Date("2024-02-04"),
-    deletedAt: null,
-    isDeleted: false,
-  },
+  // ... (rest of your existing mock data)
 ];
 
-export default function OpeningStockGrid({
-  setViewMode,
-}: {
-  setViewMode: (viewMode: "grid" | "list") => void;
-}) {
-  console.log("Opening stock grid rendered");
-  const { t } = useTranslation();
+type Props = {
+  searchQuery: string;
+  setIsFilterOpen: (isFilterOpen: boolean) => void;
+  isFilterOpen: boolean;
+  setIsExportOpen: (isExportOpen: boolean) => void;
+  isExportOpen: boolean;
+};
+
+export default function OpeningStockInventoryGrid({
+  searchQuery,
+  setIsFilterOpen,
+  isFilterOpen,
+  setIsExportOpen,
+  isExportOpen,
+}: Props) {
+  console.log("Opening Stock Inventory grid rendered");
+
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState("");
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const { isRTL } = useSelector((state: RootState) => state.language);
+  const isMobile = useIsMobile();
+  const { t } = useTranslation();
+
   const [stockData, setStockData] = useState(openingStocks);
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [isExportOpen, setIsExportOpen] = useState(false);
-  const [opened, { open, close }] = useDisclosure(false);
-  const [modalData, setModalData] = useState({
-    title: "Import Opening Stock",
-    message: <ImportStepperTemp />,
-  });
 
   // Infinite scroll states
   const [isLoading, setIsLoading] = useState(false);
@@ -315,6 +114,7 @@ export default function OpeningStockGrid({
     if (isLoading || !hasMore) return;
 
     setIsLoading(true);
+
     await new Promise((resolve) => setTimeout(resolve, 800));
 
     const branches = [
@@ -379,7 +179,7 @@ export default function OpeningStockGrid({
     if (!container) return;
 
     const { scrollTop, scrollHeight, clientHeight } = container;
-    const threshold = 100;
+    const threshold = 100; // Load more when 100px from bottom
 
     if (scrollHeight - scrollTop <= clientHeight + threshold) {
       loadMoreData();
@@ -394,52 +194,6 @@ export default function OpeningStockGrid({
     container.addEventListener("scroll", handleScroll);
     return () => container.removeEventListener("scroll", handleScroll);
   }, [handleScroll]);
-
-  const handleDeleteClick = (stockId: string) => {
-    setStockData((prevStock) =>
-      prevStock.map((stock) =>
-        stock.id === stockId
-          ? {
-              ...stock,
-              isDeleted: !stock.isDeleted,
-              deletedAt: !stock.isDeleted ? new Date() : null,
-            }
-          : stock
-      )
-    );
-  };
-
-  const handleRestoreClick = (stockId: string) => {
-    setStockData((prevStock) =>
-      prevStock.map((stock) =>
-        stock.id === stockId
-          ? {
-              ...stock,
-              isDeleted: false,
-              deletedAt: null,
-            }
-          : stock
-      )
-    );
-  };
-
-  const handleViewModeChange = (viewMode: "grid" | "list") => {
-    setViewMode(viewMode);
-  };
-
-  const toggleStatus = (stockId: string) => {
-    setStockData((prevStock) =>
-      prevStock.map((stock) =>
-        stock.id === stockId
-          ? {
-              ...stock,
-              isActive: !stock.isActive,
-              updatedAt: new Date(),
-            }
-          : stock
-      )
-    );
-  };
 
   // Filter stock based on search query
   const filteredStock = stockData.filter(
@@ -459,254 +213,135 @@ export default function OpeningStockGrid({
     }).format(amount);
   };
 
+  const handleViewClick = (stockId: string) => {
+    const viewMode = searchParams.get("view") || "grid";
+    navigate(`${location.pathname}/view/${stockId}?fromView=${viewMode}`);
+  };
+
   return (
-    <div className="px-4 py-3 h-full flex flex-col bg-white dark:bg-gray-900 parent">
-      {/* Fixed header controls */}
-      <div className="sticky top-0 z-20 bg-white dark:bg-gray-900 pb-2">
-        <div className="grid grid-cols-12 gap-4 items-center">
-          {/* Left buttons */}
-          <div className="col-span-4 flex items-center gap-2">
-            <Button
-              variant="outline"
-              className="gap-2 rounded-full min-w-[60px] sm:min-w-[80px]"
-              onClick={() => handleViewModeChange("list")}
-            >
-              <List className="h-4 w-4" />
-              <span className="hidden sm:inline">List</span>
-            </Button>
-            <Button
-              variant="outline"
-              className="gap-2 cursor-pointer rounded-full"
-              onClick={() => {
-                open();
-                setModalData({
-                  title: "Import Opening Stock",
-                  message: <ImportStepperTemp />,
-                });
-              }}
-            >
-              <Import className="h-4 w-4" />
-              <span className="hidden sm:inline">{t("common.import")}</span>
-            </Button>
-          </div>
-
-          {/* Search */}
-          <div className="col-span-4 flex justify-center">
-            <div className="w-full max-w-xs mx-auto">
-              <div className="relative flex items-center rounded-full">
-                <Search className="absolute left-3 h-4 w-4 text-gray-400 z-10" />
-                <Input
-                  placeholder="Search opening stock..."
-                  className="pl-9 pr-9 w-full rounded-full relative z-10"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                <Tooltip
-                  arrowOffset={10}
-                  arrowSize={7}
-                  withArrow
-                  position="top"
-                  label="Search by voice"
-                >
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="absolute right-2 h-6 w-6 rounded-full cursor-pointer p-0 z-10"
-                  >
-                    <Mic className="h-4 w-4 text-blue-700" />
-                  </Button>
-                </Tooltip>
-              </div>
-            </div>
-          </div>
-
-          {/* Right buttons */}
-          <div className="col-span-4 flex items-center justify-end gap-2">
-            <Button
-              variant="outline"
-              className={`gap-2 rounded-full ${
-                isExportOpen ? "bg-primary text-white" : ""
-              }`}
-              onClick={() => {
-                setIsExportOpen(!isExportOpen);
-                setIsFilterOpen(false);
-              }}
-            >
-              <Download className="h-4 w-4" />
-              <span className="hidden sm:inline">{t("common.export")}</span>
-            </Button>
-
-            <Button
-              variant="outline"
-              className={`gap-2 rounded-full ${
-                isFilterOpen ? "bg-primary text-white" : ""
-              }`}
-              onClick={() => {
-                setIsFilterOpen(!isFilterOpen);
-                setIsExportOpen(false);
-              }}
-            >
-              <Filter className="h-4 w-4" />
-              <span className="hidden sm:inline">{t("common.filters")}</span>
-            </Button>
-          </div>
-        </div>
-      </div>
-
+    <div
+      className={cn(
+        "h-full flex flex-col bg-white dark:bg-gray-900 parent relative rounded-lg overflow-hidden"
+      )}
+    >
       {/* Main content area */}
-      <div className="flex flex-1 overflow-hidden mt-2">
-        {/* Cards container */}
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* Cards container with animated width */}
         <div
           ref={scrollContainerRef}
-          className="overflow-y-auto scroll-smooth smooth-scroll pr-4"
+          className={cn(
+            "overflow-y-auto grid-scroll transition-all duration-300 ease-in-out",
+            isRTL ? "" : ""
+          )}
           style={{
             width: isFilterOpen || isExportOpen ? "calc(100% - 320px)" : "100%",
           }}
         >
-          <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 pb-4">
-            {filteredStock.map((stock) => (
+          <div
+            className={cn(
+              "grid gap-6 pb-4 p-5",
+              // Mobile: 1 column, Tablet: 2 columns, Desktop: 3-4 columns
+              isMobile
+                ? "grid-cols-1"
+                : "grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
+            )}
+          >
+            {filteredStock.map((stock, index) => (
               <Card
-                key={stock.id}
-                className="transition-all hover:border-primary hover:shadow-md relative group dark:bg-gray-800 p-4"
+                key={index}
+                className={cn(
+                  "transition-all relative group dark:bg-gray-800 duration-200 w-full shadow-[2px_3px_8px_0_rgba(0,0,0,0.10)] border-[#E2E4EB] border border-solid rounded-[12px] flex p-5 flex-col items-start gap-5 cursor-pointer",
+                  // Different hover effects for mobile vs desktop
+                  isMobile
+                    ? "hover:shadow-lg hover:border-primary"
+                    : "hover:scale-110 hover:z-50 hover:relative hover:border-primary min-w-[250px]"
+                )}
+                onClick={() => handleViewClick(stock.id)}
               >
-                {/* Top Row - 2 Column Grid Layout */}
-                <div className="grid grid-cols-2 items-center gap-4 mb-4">
-                  {/* Left - Title */}
-                  <div className="min-w-0">
-                    <Tooltip label={stock.branch} position="top" withArrow>
-                      <CardTitle
-                        className="text-lg font-semibold cursor-pointer hover:text-primary transition-colors truncate"
-                        onClick={() =>
-                          navigate(`/opening-stock-inventory/${stock.id}`)
-                        }
-                      >
-                        {stock.branch}
-                      </CardTitle>
-                    </Tooltip>
-                  </div>
+                {/* Top Row - Branch Name and Stock Icon */}
+                <div className="grid grid-cols-2 items-center gap-2 w-full mt-[-8px]">
+                  {/* Left - Branch Name */}
+                  <CardTitle
+                    className="text-base font-normal transition-colors truncate"
+                    style={{ fontSize: "18px" }}
+                  >
+                    {stock.branch}
+                  </CardTitle>
 
-                  {/* Right - Action Icons */}
-                  <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    {/* Status Toggle */}
-                    <Tooltip
-                      label={
-                        stock.isActive
-                          ? "Click to Deactivate"
-                          : "Click to Activate"
-                      }
-                      position="top"
-                      withArrow
-                    >
-                      <div
-                        className={`cursor-pointer p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center justify-center ${
-                          stock.isActive ? "text-green-500" : "text-gray-400"
-                        }`}
-                        onClick={() => {
-                          toggleStatus(stock.id);
-                          toastSuccess(
-                            stock.isActive
-                              ? "Opening stock deactivated successfully"
-                              : "Opening stock activated successfully"
-                          );
-                        }}
-                      >
-                        {stock.isActive ? (
-                          <CheckCircle2 className="h-4 w-4" />
-                        ) : (
-                          <Circle className="h-4 w-4" />
-                        )}
-                      </div>
-                    </Tooltip>
-
-                    {/* Delete/Restore */}
-                    <Tooltip
-                      label={stock.isDeleted ? "Restore" : "Delete"}
-                      position="top"
-                      withArrow
-                    >
-                      <div
-                        className={`cursor-pointer p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center justify-center ${
-                          stock.isDeleted ? "text-blue-500" : "text-red-500"
-                        }`}
-                        onClick={() => {
-                          if (stock.isDeleted) {
-                            handleRestoreClick(stock.id);
-                          } else {
-                            handleDeleteClick(stock.id);
-                          }
-                          toastSuccess(
-                            stock.isDeleted
-                              ? "Opening stock restored successfully"
-                              : "Opening stock deleted successfully"
-                          );
-                        }}
-                      >
-                        {stock.isDeleted ? (
-                          <RefreshCw className="h-4 w-4" />
-                        ) : (
-                          <Trash2 className="h-4 w-4" />
-                        )}
-                      </div>
-                    </Tooltip>
-
-                    {/* Edit */}
-                    <Tooltip label="Edit" position="top" withArrow>
-                      <div
-                        className="cursor-pointer p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-blue-500 flex items-center justify-center"
-                        onClick={() =>
-                          navigate(`/opening-stock-inventory/edit/${stock.id}`)
-                        }
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </div>
-                    </Tooltip>
+                  {/* Right - Stock Icon */}
+                  <div className="flex justify-end">
+                    <div className="h-12 w-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white shadow-md">
+                      <Package className="h-6 w-6" />
+                    </div>
                   </div>
                 </div>
 
-                {/* Bottom Row - Grid with 3 columns: Document Number | Status Badges | Amount */}
-                <div className="grid grid-cols-3 items-start gap-4 pt-2 border-t dark:border-gray-700">
-                  {/* Document Number - Left aligned */}
-                  <div>
+                {/* Middle Row - Document Number and Amount */}
+                <div className="grid grid-cols-2 gap-2 w-full">
+                  {/* Document Number - Left */}
+                  <div className="min-w-0">
                     <div className="text-xs text-gray-500 dark:text-gray-400">
                       {t("openingStockInventory.documentNumber")}
                     </div>
-                    <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                    <div className="text-sm font-normal text-gray-900 dark:text-gray-100 truncate">
                       {stock.documentNumber}
                     </div>
                   </div>
 
-                  {/* Status Badges - Center aligned */}
-                  <div className="flex justify-center items-center gap-1 pt-3">
-                    {stock.isActive && (
-                      <span className="text-[10px] sm:text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full font-medium whitespace-nowrap">
-                        {t("openingStockInventory.active")}
-                      </span>
-                    )}
-                    {!stock.isActive && (
-                      <span className="text-[10px] sm:text-xs bg-gray-100 text-gray-800 px-2 py-0.5 rounded-full font-medium whitespace-nowrap">
-                        {t("openingStockInventory.inactive")}
-                      </span>
-                    )}
-                    {stock.isDraft && (
-                      <span className="text-[10px] sm:text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-medium whitespace-nowrap">
-                        {t("openingStockInventory.draft")}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Amount - Right aligned */}
-                  <div className="text-right">
+                  {/* Amount - Right */}
+                  <div className="text-right min-w-0">
                     <div className="text-xs text-gray-500 dark:text-gray-400">
                       {t("openingStockInventory.amount")}
                     </div>
-                    <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                    <div className="text-sm font-normal text-gray-900 dark:text-gray-100 truncate">
                       {formatCurrency(stock.amount)}
                     </div>
                   </div>
                 </div>
 
+                {/* Bottom Row - Date and Status */}
+                <div className="grid grid-cols-2 items-center justify-between gap-2 w-full dark:border-gray-700">
+                  {/* Document Date - Left aligned */}
+                  <div className="min-w-0">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      Date
+                    </div>
+                    <div className="text-sm font-normal text-gray-900 dark:text-gray-100 truncate">
+                      {stock.documentDate.toLocaleDateString()}
+                    </div>
+                  </div>
+
+                  {/* Status - Right */}
+                  <div className="text-right min-w-0">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      Status
+                    </div>
+                    <div className="text-sm font-normal text-gray-900 dark:text-gray-100 truncate">
+                      <span
+                        className={cn(
+                          "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium",
+                          stock.isActive &&
+                            !stock.isDraft &&
+                            "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+                          stock.isDraft &&
+                            "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
+                          !stock.isActive &&
+                            !stock.isDraft &&
+                            "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
+                        )}
+                      >
+                        {stock.isDraft
+                          ? t("openingStockInventory.draft")
+                          : stock.isActive
+                          ? t("openingStockInventory.active")
+                          : t("openingStockInventory.inactive")}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Remarks section - Full width below */}
-                <div className="mt-3 pt-2 border-t dark:border-gray-700">
+                <div className="w-full pt-2 border-t dark:border-gray-700">
                   <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
                     {t("openingStockInventory.remarks")}
                   </div>
@@ -740,55 +375,97 @@ export default function OpeningStockGrid({
           )}
         </div>
 
-        {/* Filter component - Right side only */}
-        {isFilterOpen && (
-          <div className="w-80 flex-shrink-0 border-l border-gray-200 dark:border-gray-700 pl-4">
-            <div className="h-full flex flex-col">
+        {/* Animated Filter Panel */}
+        <div
+          className={cn(
+            "absolute top-0 h-full transition-all duration-300 ease-in-out transform z-10",
+            isRTL ? "left-0" : "right-0",
+            isFilterOpen
+              ? "translate-x-0 opacity-100 visible"
+              : isRTL
+              ? "-translate-x-full opacity-0 invisible"
+              : "translate-x-full opacity-0 invisible"
+          )}
+          style={{
+            width: isMobile ? "100%" : "320px", // Full width on mobile
+          }}
+        >
+          <div
+            className={cn(
+              "h-full",
+              isMobile ? "pb-4 mt-1" : "p-2" // Less padding on mobile
+            )}
+          >
+            <div
+              className={cn(
+                "w-full flex-shrink-0 border rounded-[20px] border-gray-200 dark:border-gray-700 h-full bg-white dark:bg-gray-800 shadow-2xl transition-all duration-300 ease-in-out",
+                isFilterOpen ? "scale-100 opacity-100" : "scale-95 opacity-0"
+              )}
+            >
               <GridFilterComponent
+                key={`filter-panel-${isFilterOpen}`}
                 data={openingStocks}
                 setFilteredData={setStockData}
-                setShowFilter={setIsFilterOpen}
+                setShowTabs={setIsFilterOpen}
+                defaultTab="filter"
               />
             </div>
           </div>
-        )}
+        </div>
 
-        {/* Export component - Right side only */}
-        {isExportOpen && (
-          <div className="w-80 flex-shrink-0 border-l border-gray-200 dark:border-gray-700 pl-4">
-            <div className="h-full flex flex-col">
-              <GridExportComponent
+        {/* Animated Export Panel */}
+        <div
+          className={cn(
+            "absolute top-0 h-full transition-all duration-300 ease-in-out transform z-10",
+            isRTL ? "left-0" : "right-0",
+            isExportOpen
+              ? "translate-x-0 opacity-100"
+              : isRTL
+              ? "-translate-x-full opacity-0"
+              : "translate-x-full opacity-0"
+          )}
+          style={{
+            width: isMobile ? "100%" : "320px", // Full width on mobile
+          }}
+        >
+          <div
+            className={cn(
+              "h-full",
+              isMobile ? "pb-4 mt-1" : "p-2" // Less padding on mobile
+            )}
+          >
+            <div
+              className={cn(
+                "w-full flex-shrink-0 border rounded-[20px] border-gray-200 dark:border-gray-700 h-full bg-white dark:bg-gray-800 shadow-2xl transition-all duration-300 ease-in-out",
+                isExportOpen ? "opacity-100" : "opacity-0"
+              )}
+            >
+              <GridFilterComponent
+                key={`export-panel-${isExportOpen}`}
                 data={openingStocks}
                 setFilteredData={setStockData}
-                setIsExportOpen={setIsExportOpen}
+                setShowTabs={setIsExportOpen}
+                defaultTab="export"
               />
             </div>
           </div>
+        </div>
+
+        {/* Backdrop overlay for mobile/smaller screens */}
+        {(isFilterOpen || isExportOpen) && (
+          <div
+            className={cn(
+              "fixed inset-0 bg-black bg-opacity-30 transition-opacity duration-300 ease-in-out z-5",
+              isMobile ? "" : "md:hidden", // Always show overlay on mobile
+              isFilterOpen || isExportOpen ? "opacity-100" : "opacity-0"
+            )}
+            onClick={() => {
+              setIsFilterOpen(false);
+              setIsExportOpen(false);
+            }}
+          />
         )}
       </div>
-
-      {/* Modal */}
-      <Modal
-        opened={opened}
-        onClose={close}
-        title={
-          <div className="">
-            <h3 className="text-lg font-semibold pl-4">
-              {t("openingStockInventory.importOpeningStock")}
-            </h3>
-          </div>
-        }
-        size="xl"
-        overlayProps={{
-          backgroundOpacity: 0.55,
-          blur: 3,
-        }}
-        style={{ zIndex: 9999 }}
-        className="z-[9999]"
-        centered
-      >
-        <div className="pt-5 pb-14 px-5">{modalData.message}</div>
-      </Modal>
     </div>
   );
 }

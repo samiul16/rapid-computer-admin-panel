@@ -70,7 +70,6 @@ export const tableViewColumnSchema: TableViewDataTableColumnConfig[] = [
   { key: "name", title: "Name" },
   { key: "group", title: "Group" },
   { key: "description", title: "Description" },
-  { key: "status", title: "Status" },
 ];
 
 // dont change variable name "MOCK_TABLE_DATA"
@@ -193,6 +192,7 @@ type FieldConfig = {
   nextFocus?: string;
   tooltip?: string;
   required?: boolean;
+  showTemplate?: boolean;
 };
 
 export const initialDataWithValue: ModuleCreateEditPageTypes = {
@@ -242,14 +242,6 @@ export const formFields: FieldConfig[] = [
     component: "input",
     nextFocus: "status",
     tooltip: "Enter description",
-    required: true,
-  },
-  {
-    name: "status",
-    label: "Status",
-    component: "autocomplete",
-    options: ["Active", "Inactive", "Draft", "Completed", "Cancelled"],
-    tooltip: "Select status",
     required: true,
   },
 ];

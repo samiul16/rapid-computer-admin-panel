@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import FixedColumnDataTable from "./FixedColumnDataTable";
+import FixedColumnDataTable from "@/components/common/country-page-table/FixedColumnDataTable";
 import { usePermission } from "@/hooks/usePermissions";
 
 type MockDataType = {
@@ -340,12 +340,12 @@ export default function CountriesDataTable2({
   setViewMode,
   dataTableFilter,
   searchQuery,
-  setShowExport,
-  showExport,
-  setShowFilter,
-  showFilter,
   setShowVisibility,
   showVisibility,
+  setIsFilterOpen,
+  isFilterOpen,
+  setIsExportOpen,
+  isExportOpen,
 }: {
   viewMode: string;
   setViewMode: (viewMode: string) => void;
@@ -357,6 +357,10 @@ export default function CountriesDataTable2({
   showFilter: boolean;
   setShowVisibility: (showVisibility: boolean) => void;
   showVisibility: boolean;
+  setIsFilterOpen: (isFilterOpen: boolean) => void;
+  isFilterOpen: boolean;
+  setIsExportOpen: (isExportOpen: boolean) => void;
+  isExportOpen: boolean;
 }) {
   const canCreate = usePermission("permissions", "create");
 
@@ -569,14 +573,16 @@ export default function CountriesDataTable2({
       viewMode={viewMode}
       setViewMode={setViewMode}
       componentColumns={componentColumns}
-      fixedColumns={["code", "name"]} // Pin country name column
+      fixedColumns={["title"]} // Pin country name column
       pathName="countries"
-      setShowExport={setShowExport}
-      showExport={showExport}
-      setShowFilter={setShowFilter}
-      showFilter={showFilter}
+      setShowExport={setIsExportOpen}
+      showExport={isExportOpen}
       setShowVisibility={setShowVisibility}
       showVisibility={showVisibility}
+      isFilterOpen={isFilterOpen}
+      setIsFilterOpen={setIsFilterOpen}
+      setShowFilter={setIsFilterOpen}
+      showFilter={isFilterOpen}
     />
   );
 }
