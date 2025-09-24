@@ -6,7 +6,7 @@ import { FixedSizeList as List } from "react-window";
 import VirtualizedInputRow from "./VirtualizedInputRow";
 import { useTranslation } from "react-i18next";
 import { Plus } from "lucide-react";
-import AddItemModal from "../AddItemModal";
+import AddItemModal from "./AddItemModal";
 
 export type FormValuesType = {
   SN: number;
