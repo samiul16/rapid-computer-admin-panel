@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useRef, useState } from "react";
+// import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Autocomplete } from "@/components/common/Autocomplete";
 import HistoryDataTable from "@/components/common/HistoryDataTableNew";
@@ -11,53 +12,82 @@ import { PrintCommonLayout } from "@/lib/printContents/PrintCommonLayout";
 import { toastError } from "@/lib/toast";
 import GenericPDF from "@/components/common/pdf";
 import { pdf } from "@react-pdf/renderer";
-import PageLayout from "@/components/common/PageLayout";
 import { Edit, Plus } from "lucide-react";
 import { ResetFormModal } from "@/components/common/ResetFormModal";
 import { usePermission } from "@/hooks/usePermissions";
-import { useSelector } from "react-redux";
-import type { RootState } from "@/store";
+import MinimizablePageLayout from "@/components/MinimizablePageLayout";
 
-type LeadStatusData = {
-  name: string;
-  order: number;
-  color: string;
-  isActive: boolean;
-  isDraft: boolean;
-  createdAt: Date | null;
-  draftedAt: Date | null;
-  updatedAt: Date | null;
-  deletedAt: Date | null;
-  isDeleted: boolean;
-};
-
-const initialData: LeadStatusData = {
-  name: "New Lead",
-  order: 1,
-  color: "#3B82F6",
-  isActive: true,
-  isDraft: false,
-  createdAt: new Date(),
-  draftedAt: null,
-  updatedAt: new Date(),
-  deletedAt: null,
-  isDeleted: false,
-};
-
-// Lead Status Name options for autocomplete
-const leadStatusNameOptions = [
-  "New Lead",
-  "Contacted",
-  "Qualified",
-  "Proposal Sent",
-  "Negotiation",
-  "Closed Won",
-  "Closed Lost",
-  "On Hold",
-  "Rejected",
-  "Follow Up",
-  "Meeting Scheduled",
-  "Demo Completed",
+const MOCK_LEAD_STATUSES = [
+  {
+    id: "1",
+    name: "New",
+    order: 1,
+    color: "#3B82F6",
+    status: "Active",
+  },
+  {
+    id: "2",
+    name: "Contacted",
+    order: 2,
+    color: "#06B6D4",
+    status: "Active",
+  },
+  {
+    id: "3",
+    name: "Qualified",
+    order: 3,
+    color: "#10B981",
+    status: "Draft",
+  },
+  {
+    id: "4",
+    name: "Proposal Sent",
+    order: 4,
+    color: "#8B5CF6",
+    status: "InActive",
+  },
+  {
+    id: "5",
+    name: "Negotiation",
+    order: 5,
+    color: "#F59E0B",
+    status: "Active",
+  },
+  {
+    id: "6",
+    name: "Won",
+    order: 6,
+    color: "#22C55E",
+    status: "Active",
+  },
+  {
+    id: "7",
+    name: "Lost",
+    order: 7,
+    color: "#EF4444",
+    status: "Active",
+  },
+  {
+    id: "8",
+    name: "On Hold",
+    order: 8,
+    color: "#64748B",
+    status: "Active",
+  },
+  {
+    id: "9",
+    name: "Re-engage",
+    order: 9,
+    color: "#A78BFA",
+    status: "Active",
+  },
+  {
+    id: "10",
+    name: "No Response",
+    order: 10,
+    color: "#94A3B8",
+    status: "Active",
+  },
 ];
 
 // Type definition for TypeScript
@@ -74,140 +104,51 @@ export type HistoryEntry = {
   print: boolean;
 };
 
-export default function LeadSourceDetailsPage() {
+export default function LeadStatusDetailsPage() {
+  // const { t } = useTranslation();
   const navigate = useNavigate();
-  const { isRTL } = useSelector((state: RootState) => state.language);
 
   const [keepChanges, setKeepChanges] = useState(false);
   const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
-  const [selectedLeadStatusName, setSelectedLeadStatusName] =
-    useState("New Lead");
+  const [selectedLeadStatus, setSelectedLeadStatus] = useState("1");
   const location = useLocation();
   const isViewPage = location.pathname.includes("/view");
   const [pdfChecked, setPdfChecked] = useState(false);
   const [printEnabled, setPrintEnabled] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
 
-  // get permission
-  const canCreate: boolean = usePermission("leadStatuses", "create");
-  const canView: boolean = usePermission("leadStatuses", "view");
-  const canEdit: boolean = usePermission("leadStatuses", "edit");
-  const canDelete: boolean = usePermission("leadStatuses", "delete");
-  const canExport: boolean = usePermission("leadStatuses", "export");
-  const canPdf: boolean = usePermission("leadStatuses", "pdf");
-  const canPrint: boolean = usePermission("leadStatuses", "pdf");
-  const canSeeHistory: boolean = usePermission("leadStatuses", "history");
+  // Permission checks
+  // const { canCreate, canView, canEdit, canDelete } = useUserMasterPermissions();
 
   // Field-level permissions
-  const canViewName: boolean = usePermission("leadStatuses", "view", "name");
-  const canViewOrder: boolean = usePermission("leadStatuses", "view", "order");
-  const canViewColor: boolean = usePermission("leadStatuses", "view", "color");
-  const canViewIsActive: boolean = usePermission(
-    "leadStatuses",
-    "view",
-    "isActive"
-  );
-  const canViewIsDraft: boolean = usePermission(
-    "leadStatuses",
-    "view",
-    "isDraft"
-  );
-  const canViewIsDeleted: boolean = usePermission(
-    "leadStatuses",
-    "view",
-    "isDeleted"
-  );
+  const canPdf: boolean = usePermission("lead-status", "pdf");
+  const canPrint: boolean = usePermission("lead-status", "print");
+  const canSeeHistory: boolean = usePermission("lead-status", "history");
 
-  console.log("canCreate", canCreate);
-  console.log("canView", canView);
-  console.log("canEdit", canEdit);
-  console.log("canDelete", canDelete);
-  console.log("canExport", canExport);
-
-  // Get lead status data based on selected lead status name
-  const getLeadStatusData = (leadStatusName: string): LeadStatusData => {
-    const leadStatusMap: Record<string, LeadStatusData> = {
-      "New Lead": {
-        name: "New Lead",
-        order: 1,
-        color: "#3B82F6",
-        isActive: true,
-        isDraft: false,
-        createdAt: new Date("2024-01-15T10:30:00Z"),
-        draftedAt: null,
-        updatedAt: new Date("2024-01-20T14:45:00Z"),
-        deletedAt: null,
-        isDeleted: false,
-      },
-      Contacted: {
-        name: "Contacted",
-        order: 2,
-        color: "#10B981",
-        isActive: true,
-        isDraft: false,
-        createdAt: new Date("2024-01-16T09:15:00Z"),
-        draftedAt: null,
-        updatedAt: new Date("2024-01-21T11:30:00Z"),
-        deletedAt: null,
-        isDeleted: false,
-      },
-      Qualified: {
-        name: "Qualified",
-        order: 3,
-        color: "#F59E0B",
-        isActive: true,
-        isDraft: false,
-        createdAt: new Date("2023-05-15T16:20:00Z"),
-        draftedAt: null,
-        updatedAt: new Date("2024-01-22T13:45:00Z"),
-        deletedAt: null,
-        isDeleted: false,
-      },
-      "Proposal Sent": {
-        name: "Proposal Sent",
-        order: 4,
-        color: "#8B5CF6",
-        isActive: true,
-        isDraft: true,
-        createdAt: new Date("2024-01-18T12:00:00Z"),
-        draftedAt: new Date("2024-01-25T10:00:00Z"),
-        updatedAt: new Date("2024-01-25T10:00:00Z"),
-        deletedAt: null,
-        isDeleted: false,
-      },
-      Negotiation: {
-        name: "Negotiation",
-        order: 5,
-        color: "#EF4444",
-        isActive: true,
-        isDraft: false,
-        createdAt: new Date("2021-12-15T08:30:00Z"),
-        draftedAt: null,
-        updatedAt: new Date("2024-01-28T15:20:00Z"),
-        deletedAt: null,
-        isDeleted: false,
-      },
-    };
-
-    return leadStatusMap[leadStatusName] || initialData;
+  let leadStatusData = {
+    id: selectedLeadStatus,
+    name:
+      MOCK_LEAD_STATUSES.find((ls) => ls.id === selectedLeadStatus)?.name ||
+      "New",
+    order:
+      MOCK_LEAD_STATUSES.find((ls) => ls.id === selectedLeadStatus)?.order || 1,
+    color:
+      MOCK_LEAD_STATUSES.find((ls) => ls.id === selectedLeadStatus)?.color ||
+      "#3B82F6",
+    isDefault: true,
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    status:
+      MOCK_LEAD_STATUSES.find((ls) => ls.id === selectedLeadStatus)?.status ||
+      "Active",
+    createdAt: "2023-05-15T10:30:00Z",
+    updatedAt: "2025-01-15T14:30:00Z",
+    draftedAt: "2025-05-20T14:45:00Z",
+    deletedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(),
   };
-
-  const [leadStatusData, setLeadStatusData] = useState<LeadStatusData>(
-    getLeadStatusData(selectedLeadStatusName)
-  );
 
   const inputRef = useRef<HTMLInputElement>(null);
-
-  // Update lead status data when selection changes
-  useEffect(() => {
-    const newLeadStatusData = getLeadStatusData(selectedLeadStatusName);
-    setLeadStatusData(newLeadStatusData);
-  }, [selectedLeadStatusName]);
-
-  // Handle lead status name change
-  const handleLeadStatusNameChange = (value: string) => {
-    setSelectedLeadStatusName(value);
-  };
 
   // Focus input when dropdown opens
   useEffect(() => {
@@ -215,21 +156,40 @@ export default function LeadSourceDetailsPage() {
       inputRef.current.focus();
     }
     console.log("isViewPage", isViewPage);
+    if (isViewPage) {
+      leadStatusData = {
+        id: selectedLeadStatus,
+        name: "",
+        order: 1,
+        color: "#3B82F6",
+        isDefault: true,
+        isActive: true,
+        isDraft: false,
+        isDeleted: false,
+        status: "Active",
+        createdAt: "",
+        updatedAt: "",
+        draftedAt: "",
+        deletedAt: "",
+      };
+    }
   }, []);
 
   const handlePrintLeadStatus = (leadStatusData: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "Lead Status Details",
+        title: "Lead Status Master Details",
         data: [leadStatusData],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
           name: "Name",
           order: "Order",
           color: "Color",
+          isDefault: "Default Lead Status",
           isActive: "Active Status",
           isDraft: "Draft Status",
           isDeleted: "Deleted Status",
+          status: "Status",
           createdAt: "Created At",
           updatedAt: "Updated At",
           draftedAt: "Drafted At",
@@ -258,21 +218,16 @@ export default function LeadSourceDetailsPage() {
       const blob = await pdf(
         <GenericPDF
           data={[leadStatusData]}
-          title="Lead Status Details"
+          title="Lead Status Master Details"
           subtitle="Lead Status Information"
         />
       ).toBlob();
 
-      console.log("blob", blob);
-
       const url = URL.createObjectURL(blob);
-      console.log("url", url);
       const a = document.createElement("a");
       a.href = url;
       a.download = "lead-status-details.pdf";
       a.click();
-      console.log("a", a);
-      console.log("url", url);
       URL.revokeObjectURL(url);
     } catch (error) {
       console.log(error);
@@ -280,9 +235,10 @@ export default function LeadSourceDetailsPage() {
     }
   };
 
-  const getRelativeTime = (date: Date | null) => {
-    if (!date) return "–";
+  const getRelativeTime = (dateString: string | null) => {
+    if (!dateString) return "–";
 
+    const date = new Date(dateString);
     const now = new Date();
     const diffInMs = now.getTime() - date.getTime();
 
@@ -307,16 +263,22 @@ export default function LeadSourceDetailsPage() {
     }
   };
 
+  const displayValue = (value: any) => {
+    return value === undefined || value === null || value === "" ? "–" : value;
+  };
+
   return (
     <>
-      <PageLayout
+      <MinimizablePageLayout
+        moduleId="lead-status-details-module"
+        moduleName="Lead Status Details"
+        moduleRoute="/lead-status/view"
         title="Viewing Lead Status"
         videoSrc={video}
         videoHeader="Tutorial video"
-        onListClick={() => navigate("/lead-status")}
-        listText="List"
         listPath="lead-status"
         activePage="view"
+        module="lead-status"
         popoverOptions={[
           {
             label: "Create",
@@ -356,109 +318,78 @@ export default function LeadSourceDetailsPage() {
             : undefined
         }
       >
-        <div dir={isRTL ? "rtl" : "ltr"}>
-          {/* Row 1: Lead Status Name */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-            {canViewName && (
-              <div className="mt-1">
-                <Autocomplete
-                  options={leadStatusNameOptions}
-                  value={selectedLeadStatusName}
-                  onValueChange={handleLeadStatusNameChange}
-                  placeholder="Select Lead Status Name..."
-                  displayKey="name"
-                  valueKey="name"
-                  searchKey="name"
-                  disabled={false}
-                  className="w-[96%] bg-gray-100 rounded-xl"
-                  labelClassName="bg-gray-50 rounded-2xl"
-                  labelText="Lead Status Name"
-                  inputClassName="border-none bg-stone-50 focus-visible:ring-offset-0 focus-visible:ring-0 focus-visible:border-2! focus-visible:border-blue-500"
-                />
-              </div>
-            )}
+        {/* Row 1: Lead Status Selection, Name, Order, Color */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+          <div className="mt-1">
+            <Autocomplete
+              options={MOCK_LEAD_STATUSES}
+              value={selectedLeadStatus}
+              onValueChange={setSelectedLeadStatus}
+              placeholder=" "
+              displayKey="name"
+              valueKey="id"
+              searchKey="name"
+              disabled={false}
+              className="w-[96%] bg-gray-100 rounded-xl"
+              labelClassName="bg-gray-50 rounded-2xl"
+              labelText="Lead Status Name"
+              isShowTemplateIcon={false}
+            />
+          </div>
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">Order</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(leadStatusData.order)}
+            </div>
+          </div>
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">Color</h3>
+            </div>
+            <div className="flex items-center gap-2">
+              <div
+                className="w-6 h-6 rounded-full border border-gray-300"
+                style={{ backgroundColor: leadStatusData.color }}
+              />
+              <span className="text-gray-900 text-md dark:text-white">
+                {displayValue(leadStatusData.color)}
+              </span>
+            </div>
+          </div>
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">Status</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(leadStatusData.status)}
+            </div>
+          </div>
 
-            {canViewOrder && (
-              <div className="flex flex-col">
-                <div className="">
-                  <span className="text-[15px] text-gray-600">Order</span>
-                </div>
-                <div className="">
-                  <span className="font-bold text-[15px]">
-                    {leadStatusData.order}
-                  </span>
-                </div>
+          <div className="">
+            <div className="flex flex-col">
+              <div className="">
+                <span className="text-[15px] text-gray-600">Default</span>
               </div>
-            )}
+              <div className="">
+                {leadStatusData.isDefault ? (
+                  <span className="text-black text-[15px]">Yes</span>
+                ) : (
+                  <span className="text-black text-[15px]">No</span>
+                )}
+              </div>
+            </div>
+          </div>
 
-            {canViewColor && (
-              <div className="flex flex-col">
-                <div className="">
-                  <span className="text-[15px] text-gray-600">Color</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div
-                    className="w-6 h-6 rounded border border-gray-300"
-                    style={{ backgroundColor: leadStatusData.color }}
-                  />
-                  <span className="font-bold text-[15px]">
-                    {leadStatusData.color}
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {canViewIsActive && (
-              <div className="flex flex-col">
-                <div className="">
-                  <span className="text-[15px] text-gray-600">Active</span>
-                </div>
-                <div className="">
-                  {leadStatusData.isActive ? (
-                    <span className="font-bold text-[15px]">Yes</span>
-                  ) : (
-                    <span className="font-bold text-[15px]">No</span>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {canViewIsDraft && (
-              <div className="flex flex-col">
-                <div className="">
-                  <span className="text-[15px] text-gray-600">Draft</span>
-                </div>
-                <div className="">
-                  {leadStatusData.isDraft ? (
-                    <span className="text-orange-600 font-bold text-[15px]">
-                      Yes
-                    </span>
-                  ) : (
-                    <span className="text-black font-bold text-[15px]">No</span>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {canViewIsDeleted && (
-              <div className="flex flex-col">
-                <div className="">
-                  <span className="text-[15px] text-gray-600">Deleted</span>
-                </div>
-                <div className="">
-                  {leadStatusData.isDeleted ? (
-                    <span className="text-red-600 font-bold text-[15px]">
-                      Yes
-                    </span>
-                  ) : (
-                    <span className="text-black font-bold text-[15px]">No</span>
-                  )}
-                </div>
-              </div>
-            )}
+          <div className="">
+            <h3 className="font-normal mb-1 text-gray-600">Action</h3>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              Updated
+            </div>
           </div>
         </div>
-      </PageLayout>
+      </MinimizablePageLayout>
 
       {/* History Modal */}
       <HistoryDataTable

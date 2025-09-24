@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useRef, useState } from "react";
+// import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Autocomplete } from "@/components/common/Autocomplete";
 import HistoryDataTable from "@/components/common/HistoryDataTableNew";
@@ -11,57 +12,62 @@ import { PrintCommonLayout } from "@/lib/printContents/PrintCommonLayout";
 import { toastError } from "@/lib/toast";
 import GenericPDF from "@/components/common/pdf";
 import { pdf } from "@react-pdf/renderer";
-import PageLayout from "@/components/common/PageLayout";
 import { Edit, Plus } from "lucide-react";
 import { ResetFormModal } from "@/components/common/ResetFormModal";
 import { usePermission } from "@/hooks/usePermissions";
-import { useSelector } from "react-redux";
-import type { RootState } from "@/store";
+import MinimizablePageLayout from "@/components/MinimizablePageLayout";
 
-type LeadSourceData = {
-  name: string;
-  isActive: boolean;
-  isDraft: boolean;
-  createdAt: Date | null;
-  draftedAt: Date | null;
-  updatedAt: Date | null;
-  deletedAt: Date | null;
-  isDeleted: boolean;
-};
-
-const initialData: LeadSourceData = {
-  name: "Website",
-  isActive: true,
-  isDraft: false,
-  createdAt: new Date(),
-  draftedAt: null,
-  updatedAt: new Date(),
-  deletedAt: null,
-  isDeleted: false,
-};
-
-// Lead Source Name options for autocomplete
-const leadSourceNameOptions = [
-  "Website",
-  "Social Media",
-  "Referral",
-  "Cold Call",
-  "Email Marketing",
-  "Trade Show",
-  "Online Advertisement",
-  "Direct Mail",
-  "Partnership",
-  "Content Marketing",
-  "Search Engine",
-  "Influencer Marketing",
-  "Digital Marketing",
-  "Traditional Marketing",
-  "Networking",
-  "Events",
-  "Publications",
-  "Word of Mouth",
-  "LinkedIn",
-  "Facebook Ads",
+const MOCK_LEAD_SOURCES = [
+  {
+    id: "1",
+    name: "Website",
+    status: "Active",
+  },
+  {
+    id: "2",
+    name: "Social Media",
+    status: "Active",
+  },
+  {
+    id: "3",
+    name: "LinkedIn",
+    status: "Draft",
+  },
+  {
+    id: "4",
+    name: "Facebook",
+    status: "InActive",
+  },
+  {
+    id: "5",
+    name: "Instagram",
+    status: "Active",
+  },
+  {
+    id: "6",
+    name: "Referral",
+    status: "Active",
+  },
+  {
+    id: "7",
+    name: "Email Campaign",
+    status: "Active",
+  },
+  {
+    id: "8",
+    name: "Google Ads",
+    status: "Active",
+  },
+  {
+    id: "9",
+    name: "Organic Search",
+    status: "Active",
+  },
+  {
+    id: "10",
+    name: "Events",
+    status: "Active",
+  },
 ];
 
 // Type definition for TypeScript
@@ -79,127 +85,45 @@ export type HistoryEntry = {
 };
 
 export default function LeadSourceDetailsPage() {
+  // const { t } = useTranslation();
   const navigate = useNavigate();
-  const { isRTL } = useSelector((state: RootState) => state.language);
 
   const [keepChanges, setKeepChanges] = useState(false);
   const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
-  const [selectedLeadSourceName, setSelectedLeadSourceName] =
-    useState("Website");
+  const [selectedLeadSource, setSelectedLeadSource] = useState("1");
   const location = useLocation();
   const isViewPage = location.pathname.includes("/view");
   const [pdfChecked, setPdfChecked] = useState(false);
   const [printEnabled, setPrintEnabled] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
 
-  // get permission
-  const canCreate: boolean = usePermission("leadSources", "create");
-  const canView: boolean = usePermission("leadSources", "view");
-  const canEdit: boolean = usePermission("leadSources", "edit");
-  const canDelete: boolean = usePermission("leadSources", "delete");
-  const canExport: boolean = usePermission("leadSources", "export");
-  const canPdf: boolean = usePermission("leadSources", "pdf");
-  const canPrint: boolean = usePermission("leadSources", "pdf");
-  const canSeeHistory: boolean = usePermission("leadSources", "history");
+  // Permission checks
+  // const { canCreate, canView, canEdit, canDelete } = useUserMasterPermissions();
 
   // Field-level permissions
-  const canViewName: boolean = usePermission("leadSources", "view", "name");
-  const canViewIsActive: boolean = usePermission(
-    "leadSources",
-    "view",
-    "isActive"
-  );
-  const canViewIsDraft: boolean = usePermission(
-    "leadSources",
-    "view",
-    "isDraft"
-  );
-  const canViewIsDeleted: boolean = usePermission(
-    "leadSources",
-    "view",
-    "isDeleted"
-  );
+  const canPdf: boolean = usePermission("lead-sources", "pdf");
+  const canPrint: boolean = usePermission("lead-sources", "print");
+  const canSeeHistory: boolean = usePermission("lead-sources", "history");
 
-  console.log("canCreate", canCreate);
-  console.log("canView", canView);
-  console.log("canEdit", canEdit);
-  console.log("canDelete", canDelete);
-  console.log("canExport", canExport);
-
-  // Get lead source data based on selected lead source name
-  const getLeadSourceData = (leadSourceName: string): LeadSourceData => {
-    const leadSourceMap: Record<string, LeadSourceData> = {
-      Website: {
-        name: "Website",
-        isActive: true,
-        isDraft: false,
-        createdAt: new Date("2024-01-15T10:30:00Z"),
-        draftedAt: null,
-        updatedAt: new Date("2024-01-20T14:45:00Z"),
-        deletedAt: null,
-        isDeleted: false,
-      },
-      "Social Media": {
-        name: "Social Media",
-        isActive: true,
-        isDraft: false,
-        createdAt: new Date("2024-01-16T09:15:00Z"),
-        draftedAt: null,
-        updatedAt: new Date("2024-01-21T11:30:00Z"),
-        deletedAt: null,
-        isDeleted: false,
-      },
-      Referral: {
-        name: "Referral",
-        isActive: true,
-        isDraft: false,
-        createdAt: new Date("2023-05-15T16:20:00Z"),
-        draftedAt: null,
-        updatedAt: new Date("2024-01-22T13:45:00Z"),
-        deletedAt: null,
-        isDeleted: false,
-      },
-      "Cold Call": {
-        name: "Cold Call",
-        isActive: true,
-        isDraft: true,
-        createdAt: new Date("2024-01-18T12:00:00Z"),
-        draftedAt: new Date("2024-01-25T10:00:00Z"),
-        updatedAt: new Date("2024-01-25T10:00:00Z"),
-        deletedAt: null,
-        isDeleted: false,
-      },
-      "Email Marketing": {
-        name: "Email Marketing",
-        isActive: true,
-        isDraft: false,
-        createdAt: new Date("2021-12-15T08:30:00Z"),
-        draftedAt: null,
-        updatedAt: new Date("2024-01-28T15:20:00Z"),
-        deletedAt: null,
-        isDeleted: false,
-      },
-    };
-
-    return leadSourceMap[leadSourceName] || initialData;
+  let leadSourceData = {
+    id: selectedLeadSource,
+    name:
+      MOCK_LEAD_SOURCES.find((ls) => ls.id === selectedLeadSource)?.name ||
+      "Website",
+    isDefault: true,
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    status:
+      MOCK_LEAD_SOURCES.find((ls) => ls.id === selectedLeadSource)?.status ||
+      "Active",
+    createdAt: "2023-05-15T10:30:00Z",
+    updatedAt: "2025-01-15T14:30:00Z",
+    draftedAt: "2025-05-20T14:45:00Z",
+    deletedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(),
   };
-
-  const [leadSourceData, setLeadSourceData] = useState<LeadSourceData>(
-    getLeadSourceData(selectedLeadSourceName)
-  );
 
   const inputRef = useRef<HTMLInputElement>(null);
-
-  // Update lead source data when selection changes
-  useEffect(() => {
-    const newLeadSourceData = getLeadSourceData(selectedLeadSourceName);
-    setLeadSourceData(newLeadSourceData);
-  }, [selectedLeadSourceName]);
-
-  // Handle lead source name change
-  const handleLeadSourceNameChange = (value: string) => {
-    setSelectedLeadSourceName(value);
-  };
 
   // Focus input when dropdown opens
   useEffect(() => {
@@ -207,19 +131,36 @@ export default function LeadSourceDetailsPage() {
       inputRef.current.focus();
     }
     console.log("isViewPage", isViewPage);
+    if (isViewPage) {
+      leadSourceData = {
+        id: selectedLeadSource,
+        name: "",
+        isDefault: true,
+        isActive: true,
+        isDraft: false,
+        isDeleted: false,
+        status: "Active",
+        createdAt: "",
+        updatedAt: "",
+        draftedAt: "",
+        deletedAt: "",
+      };
+    }
   }, []);
 
   const handlePrintLeadSource = (leadSourceData: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "Lead Source Details",
+        title: "Lead Source Master Details",
         data: [leadSourceData],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
-          name: "Name",
+          name: "Lead Source Name",
+          isDefault: "Default Lead Source",
           isActive: "Active Status",
           isDraft: "Draft Status",
           isDeleted: "Deleted Status",
+          status: "Status",
           createdAt: "Created At",
           updatedAt: "Updated At",
           draftedAt: "Drafted At",
@@ -248,21 +189,16 @@ export default function LeadSourceDetailsPage() {
       const blob = await pdf(
         <GenericPDF
           data={[leadSourceData]}
-          title="Lead Source Details"
+          title="Lead Source Master Details"
           subtitle="Lead Source Information"
         />
       ).toBlob();
 
-      console.log("blob", blob);
-
       const url = URL.createObjectURL(blob);
-      console.log("url", url);
       const a = document.createElement("a");
       a.href = url;
       a.download = "lead-source-details.pdf";
       a.click();
-      console.log("a", a);
-      console.log("url", url);
       URL.revokeObjectURL(url);
     } catch (error) {
       console.log(error);
@@ -270,9 +206,10 @@ export default function LeadSourceDetailsPage() {
     }
   };
 
-  const getRelativeTime = (date: Date | null) => {
-    if (!date) return "–";
+  const getRelativeTime = (dateString: string | null) => {
+    if (!dateString) return "–";
 
+    const date = new Date(dateString);
     const now = new Date();
     const diffInMs = now.getTime() - date.getTime();
 
@@ -297,16 +234,22 @@ export default function LeadSourceDetailsPage() {
     }
   };
 
+  const displayValue = (value: any) => {
+    return value === undefined || value === null || value === "" ? "–" : value;
+  };
+
   return (
     <>
-      <PageLayout
+      <MinimizablePageLayout
+        moduleId="lead-source-details-module"
+        moduleName="Lead Source Details"
+        moduleRoute="/lead-sources/view"
         title="Viewing Lead Source"
         videoSrc={video}
         videoHeader="Tutorial video"
-        onListClick={() => navigate("/lead-sources")}
-        listText="List"
         listPath="lead-sources"
         activePage="view"
+        module="lead-sources"
         popoverOptions={[
           {
             label: "Create",
@@ -346,79 +289,56 @@ export default function LeadSourceDetailsPage() {
             : undefined
         }
       >
-        <div dir={isRTL ? "rtl" : "ltr"}>
-          {/* Row 1: Lead Source Name */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-            {canViewName && (
-              <div className="mt-1">
-                <Autocomplete
-                  options={leadSourceNameOptions}
-                  value={selectedLeadSourceName}
-                  onValueChange={handleLeadSourceNameChange}
-                  placeholder="Select Lead Source Name..."
-                  displayKey="name"
-                  valueKey="name"
-                  searchKey="name"
-                  disabled={false}
-                  className="w-[96%] bg-gray-100 rounded-xl"
-                  labelClassName="bg-gray-50 rounded-2xl"
-                  labelText="Lead Source Name"
-                  inputClassName="border-none bg-stone-50 focus-visible:ring-offset-0 focus-visible:ring-0 focus-visible:border-2! focus-visible:border-blue-500"
-                />
-              </div>
-            )}
+        {/* Row 1: Lead Source Selection, Name */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+          <div className="mt-1">
+            <Autocomplete
+              options={MOCK_LEAD_SOURCES}
+              value={selectedLeadSource}
+              onValueChange={setSelectedLeadSource}
+              placeholder=" "
+              displayKey="name"
+              valueKey="id"
+              searchKey="name"
+              disabled={false}
+              className="w-[96%] bg-gray-100 rounded-xl"
+              labelClassName="bg-gray-50 rounded-2xl"
+              labelText="Lead Source Name"
+              isShowTemplateIcon={false}
+            />
+          </div>
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">Status</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(leadSourceData.status)}
+            </div>
+          </div>
 
-            {canViewIsActive && (
-              <div className="flex flex-col">
-                <div className="">
-                  <span className="text-[15px] text-gray-600">Active</span>
-                </div>
-                <div className="">
-                  {leadSourceData.isActive ? (
-                    <span className="font-bold text-[15px]">Yes</span>
-                  ) : (
-                    <span className="font-bold text-[15px]">No</span>
-                  )}
-                </div>
+          <div className="">
+            <div className="flex flex-col">
+              <div className="">
+                <span className="text-[15px] text-gray-600">Default</span>
               </div>
-            )}
+              <div className="">
+                {leadSourceData.isDefault ? (
+                  <span className="text-black text-[15px]">Yes</span>
+                ) : (
+                  <span className="text-black text-[15px]">No</span>
+                )}
+              </div>
+            </div>
+          </div>
 
-            {canViewIsDraft && (
-              <div className="flex flex-col">
-                <div className="">
-                  <span className="text-[15px] text-gray-600">Draft</span>
-                </div>
-                <div className="">
-                  {leadSourceData.isDraft ? (
-                    <span className="text-orange-600 font-bold text-[15px]">
-                      Yes
-                    </span>
-                  ) : (
-                    <span className="text-black font-bold text-[15px]">No</span>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {canViewIsDeleted && (
-              <div className="flex flex-col">
-                <div className="">
-                  <span className="text-[15px] text-gray-600">Deleted</span>
-                </div>
-                <div className="">
-                  {leadSourceData.isDeleted ? (
-                    <span className="text-red-600 font-bold text-[15px]">
-                      Yes
-                    </span>
-                  ) : (
-                    <span className="text-black font-bold text-[15px]">No</span>
-                  )}
-                </div>
-              </div>
-            )}
+          <div className="">
+            <h3 className="font-normal mb-1 text-gray-600">Action</h3>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              Updated
+            </div>
           </div>
         </div>
-      </PageLayout>
+      </MinimizablePageLayout>
 
       {/* History Modal */}
       <HistoryDataTable

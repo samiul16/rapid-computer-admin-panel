@@ -53,7 +53,7 @@ const DynamicInputTableRow: React.FC<DynamicInputTableRowProps> = React.memo(
         key={formData.SN}
       >
         {/* Serial Number */}
-        <div className="w-full flex items-center justify-center px-2 text-sm font-medium">
+        <div className="w-full flex items-center justify-center px-2 text-sm font-medium -mt-4">
           {formData.SN}
         </div>
 
@@ -84,6 +84,7 @@ const DynamicInputTableRow: React.FC<DynamicInputTableRowProps> = React.memo(
                 "&:focus": {
                   borderColor: "var(--primary)",
                 },
+                borderRadius: "12px",
               },
               dropdown: {
                 fontSize: "12px",
@@ -114,7 +115,7 @@ const DynamicInputTableRow: React.FC<DynamicInputTableRowProps> = React.memo(
             type="date"
             id={`expiryDate_${rowIdx}`}
             name="expiryDate"
-            className="w-full h-10 text-xs border rounded"
+            className="w-full h-10 text-xs border rounded-lg px-2"
             value={formData.expiryDate ?? ""}
             onChange={(e) => handleChange(rowIdx, e)}
             required
@@ -171,6 +172,7 @@ const DynamicInputTableRow: React.FC<DynamicInputTableRowProps> = React.memo(
                 "&:focus": {
                   borderColor: "var(--primary)",
                 },
+                borderRadius: "12px",
               },
               dropdown: {
                 fontSize: "12px",
@@ -199,7 +201,7 @@ const DynamicInputTableRow: React.FC<DynamicInputTableRowProps> = React.memo(
 
         {/* Status */}
         <div className="w-full px-1">
-          <div className="w-full h-10 text-xs bg-gray-50 flex items-center px-2 rounded border">
+          <div className="w-full h-10 text-xs bg-gray-50 flex items-center px-2 rounded-lg border">
             <span
               className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
                 formData.status === "Expired"
@@ -222,7 +224,7 @@ const DynamicInputTableRow: React.FC<DynamicInputTableRowProps> = React.memo(
             variant="subtle"
             type="button"
             size="sm"
-            className="cursor-pointer w-8 h-8 p-0 flex justify-center items-center hover:bg-red-50 rounded"
+            className="cursor-pointer w-8 h-8 p-0 flex justify-center items-center hover:bg-red-200! rounded-full! -mt-4"
             onClick={() => handleRemoveRow(rowIdx)}
           >
             <X size={16} className="text-red-500" />

@@ -1,34 +1,43 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import video from "@/assets/videos/test.mp4";
-import PageLayout from "@/components/common/PageLayout";
+import EditableInput from "@/components/common/EditableInput";
 import GenericPDF from "@/components/common/pdf";
 import { ResetFormModal } from "@/components/common/ResetFormModal";
 import { Button } from "@/components/ui/button";
 import { PrintCommonLayout } from "@/lib/printContents/PrintCommonLayout";
 import { printHtmlContent } from "@/lib/printHtmlContent";
-import { Modal } from "@mantine/core";
-import { pdf } from "@react-pdf/renderer";
-import { Check, Edit, Eye, Plus } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { toastError, toastRestore, toastSuccess } from "@/lib/toast";
-import { Autocomplete } from "@/components/common/Autocomplete";
-import EditableInput from "@/components/common/EditableInput";
+import { pdf } from "@react-pdf/renderer";
+import { Check, Eye, Plus } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { usePermission } from "@/hooks/usePermissions";
-import { useSelector } from "react-redux";
-import type { RootState } from "@/store";
+// import { useLanguageLabels } from "@/hooks/useLanguageLabels";
+import { useAppSelector } from "@/store/hooks";
+import MinimizablePageLayout from "@/components/MinimizablePageLayout";
+import { useMinimizedModuleData } from "@/hooks/useMinimizedModuleData";
+import { SwitchSelect } from "@/components/common/SwitchAutoComplete";
+import { ActionsAutocomplete } from "@/components/common/ActionsAutocomplete";
 
 type LeadStatusData = {
   name: string;
   order: number;
   color: string;
+  status: "active" | "inactive" | "draft" | "deleted";
+  isDefault: boolean;
   isActive: boolean;
   isDraft: boolean;
+  isDeleted: boolean;
   createdAt: Date | null;
   draftedAt: Date | null;
   updatedAt: Date | null;
   deletedAt: Date | null;
-  isDeleted: boolean;
+};
+
+type LeadSourceModuleData = {
+  formData: LeadStatusData;
+  hasChanges: boolean;
+  scrollPosition: number;
 };
 
 type Props = {
@@ -36,36 +45,72 @@ type Props = {
 };
 
 const initialData: LeadStatusData = {
-  name: "New Lead",
+  name: "New",
   order: 1,
   color: "#3B82F6",
+  status: "active",
+  isDefault: false,
   isActive: true,
   isDraft: false,
+  isDeleted: false,
   createdAt: new Date(),
   draftedAt: null,
   updatedAt: new Date(),
   deletedAt: null,
-  isDeleted: false,
 };
 
-export default function LeadSourceEditPage({ isEdit = false }: Props) {
+export default function LeadStatusEditPage({ isEdit = true }: Props) {
   const navigate = useNavigate();
-  const { isRTL } = useSelector((state: RootState) => state.language);
+  const { id } = useParams();
+  // const labels = useLanguageLabels();
+  const { isRTL } = useAppSelector((state) => state.language);
+
+  // Get module ID for this edit page
+  const moduleId = `lead-status-edit-module-${id || "new"}`;
+
+  // Use the custom hook for minimized module data
+  const {
+    moduleData,
+    hasMinimizedData,
+    resetModuleData,
+    getModuleScrollPosition,
+  } = useMinimizedModuleData<LeadSourceModuleData>(moduleId);
 
   const [keepCreating, setKeepCreating] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
-
-  const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
+  const [isDefaultState, setIsDefaultState] = useState<"Yes" | "No" | string>(
+    "No"
+  );
 
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [printEnabled, setPrintEnabled] = useState(false);
   const [pdfChecked, setPdfChecked] = useState(false);
+  const [formKey, setFormKey] = useState(0);
+  const [isRestoredFromMinimized, setIsRestoredFromMinimized] = useState(false);
+  const [shouldRestoreFromMinimized, setShouldRestoreFromMinimized] =
+    useState(false);
+  const [selectedAction, setSelectedAction] = useState<string>("");
+
+  // Permission checks
+  const canCreate = usePermission("lead-status", "create");
+  const canView = usePermission("lead-status", "view");
+
+  // Field-level permissions
+  const name: boolean = usePermission("lead-status", "edit", "name");
+  const status: boolean = usePermission("lead-status", "edit", "status");
+  const isDefault: boolean = usePermission("lead-status", "edit", "isDefault");
+  const canPdf: boolean = usePermission("lead-status", "pdf");
+  const canPrint: boolean = usePermission("lead-status", "print");
+  const orderField: boolean = usePermission("lead-status", "edit", "order");
+  const colorField: boolean = usePermission("lead-status", "edit", "color");
 
   // Form state
   const [formData, setFormData] = useState<LeadStatusData>({
     name: "",
     order: 1,
     color: "#3B82F6",
+    status: "active",
+    isDefault: false,
     isActive: true,
     isDraft: false,
     isDeleted: false,
@@ -74,30 +119,6 @@ export default function LeadSourceEditPage({ isEdit = false }: Props) {
     updatedAt: null,
     deletedAt: null,
   });
-
-  // Field-level permissions
-  const name: boolean = usePermission("leadStatuses", "edit", "name");
-  const order: boolean = usePermission("leadStatuses", "edit", "order");
-  const color: boolean = usePermission("leadStatuses", "edit", "color");
-
-  const canPdf: boolean = usePermission("leadStatuses", "pdf");
-  const canPrint: boolean = usePermission("leadStatuses", "pdf");
-
-  // Options for autocomplete fields
-  const nameOptions = [
-    "New Lead",
-    "Contacted",
-    "Qualified",
-    "Proposal Sent",
-    "Negotiation",
-    "Closed Won",
-    "Closed Lost",
-    "On Hold",
-    "Rejected",
-    "Follow Up",
-    "Meeting Scheduled",
-    "Demo Completed",
-  ];
 
   // focus next input field
   const inputRefs = useRef<Record<string, HTMLElement | null>>({});
@@ -108,19 +129,78 @@ export default function LeadSourceEditPage({ isEdit = false }: Props) {
     inputRefs.current[nextField]?.focus();
   };
 
+  // Check for restore flag from taskbar
+  useEffect(() => {
+    const shouldRestore = localStorage.getItem(`restore-${moduleId}`);
+    if (shouldRestore === "true") {
+      setShouldRestoreFromMinimized(true);
+      localStorage.removeItem(`restore-${moduleId}`);
+    }
+  }, [moduleId]);
+
+  // Restore logic using the custom hook
+  useEffect(() => {
+    const shouldAutoRestore =
+      shouldRestoreFromMinimized ||
+      (hasMinimizedData &&
+        moduleData?.formData &&
+        !isRestoredFromMinimized &&
+        !formData.name);
+
+    if (hasMinimizedData && moduleData?.formData && shouldAutoRestore) {
+      setFormData(moduleData.formData);
+
+      // Restore UI states based on form data
+      setIsDefaultState(moduleData.formData.isDefault ? "Yes" : "No");
+
+      setIsRestoredFromMinimized(true);
+      setShouldRestoreFromMinimized(false);
+
+      // Restore scroll position
+      const scrollPosition = getModuleScrollPosition(moduleId);
+      if (scrollPosition) {
+        setTimeout(() => {
+          window.scrollTo(0, scrollPosition);
+        }, 200);
+      }
+    }
+  }, [
+    hasMinimizedData,
+    moduleData,
+    isRestoredFromMinimized,
+    shouldRestoreFromMinimized,
+    formData.name,
+    moduleId,
+    getModuleScrollPosition,
+  ]);
+
   // Initialize with edit data if available
   useEffect(() => {
-    if (isEdit && initialData) {
-      setFormData({
-        ...initialData,
-      });
+    if (
+      isEdit &&
+      initialData &&
+      !hasMinimizedData &&
+      !isRestoredFromMinimized
+    ) {
+      setFormData(initialData);
+      setIsDefaultState(initialData.isDefault ? "Yes" : "No");
     }
-  }, [isEdit, initialData]);
+  }, [isEdit, hasMinimizedData, isRestoredFromMinimized, moduleId]);
+
+  // Handle form field changes
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type, checked } = e.target;
+    const parsedValue = name === "order" ? Number(value) : value;
+    const newFormData = {
+      ...formData,
+      [name]: type === "checkbox" ? checked : parsedValue,
+    } as LeadStatusData;
+    setFormData(newFormData);
+  };
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
 
     if (pdfChecked) {
       await handleExportPDF();
@@ -128,22 +208,25 @@ export default function LeadSourceEditPage({ isEdit = false }: Props) {
     if (printEnabled) {
       handlePrintLeadSource(formData);
     }
+
+    // keep switch functionality
     if (keepCreating) {
+      toastSuccess("Lead status updated successfully!");
       handleReset();
-      focusNextInput("name");
     } else {
+      toastSuccess("Lead status updated successfully!");
       navigate("/lead-status");
     }
-    toastSuccess("Lead status edited successfully");
   };
 
-  const [formKey, setFormKey] = useState(0);
-
-  const handleReset = () => {
+  // Update handleReset function to use the custom hook
+  const handleReset = async () => {
     setFormData({
       name: "",
       order: 1,
       color: "#3B82F6",
+      status: "active",
+      isDefault: false,
       isActive: true,
       isDraft: false,
       isDeleted: false,
@@ -152,13 +235,27 @@ export default function LeadSourceEditPage({ isEdit = false }: Props) {
       updatedAt: new Date(),
       deletedAt: null,
     });
+    setIsDefaultState("No");
+
+    setIsRestoredFromMinimized(false);
 
     if (formRef.current) {
       formRef.current.reset();
     }
 
+    // Force re-render of all inputs by changing key
     setFormKey((prev) => prev + 1);
 
+    // Reset form data using the custom hook
+    if (hasMinimizedData) {
+      try {
+        await resetModuleData(moduleId);
+      } catch (error) {
+        console.error("Error resetting form data:", error);
+      }
+    }
+
+    // Focus the first input field after reset
     setTimeout(() => {
       inputRefs.current["name"]?.focus();
     }, 100);
@@ -171,12 +268,15 @@ export default function LeadSourceEditPage({ isEdit = false }: Props) {
   const handlePrintLeadSource = (leadSourceData: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "Lead Source Details",
+        title: "Lead Status Details",
         data: [leadSourceData],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
           name: "Name",
-          isDefault: "Default Source",
+          order: "Order",
+          color: "Color",
+          status: "Status",
+          isDefault: "Default Lead Status",
           isActive: "Active Status",
           isDraft: "Draft Status",
           isDeleted: "Deleted Status",
@@ -202,21 +302,19 @@ export default function LeadSourceEditPage({ isEdit = false }: Props) {
   };
 
   const handleExportPDF = async () => {
-    console.log("Export PDF clicked");
     try {
-      console.log("leadSourceData on pdf click", formData);
       const blob = await pdf(
         <GenericPDF
           data={[formData]}
-          title="Lead Source Details"
-          subtitle="Lead Source Information"
+          title="Lead Status Details"
+          subtitle="Lead Status Information"
         />
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "lead-source-details.pdf";
+      a.download = "lead-status-details.pdf";
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
@@ -227,19 +325,12 @@ export default function LeadSourceEditPage({ isEdit = false }: Props) {
 
   const [popoverOptions, setPopoverOptions] = useState([
     {
-      label: isEdit ? "Create" : "Edit",
-      icon: isEdit ? (
-        <Plus className="w-5 h-5 text-green-500" />
-      ) : (
-        <Edit className="w-5 h-5 text-blue-500" />
-      ),
+      label: "Create",
+      icon: <Plus className="w-5 h-5 text-green-500" />,
       onClick: () => {
-        if (isEdit) {
-          navigate("/lead-status/create");
-        } else {
-          navigate("/lead-status/edit/undefined");
-        }
+        navigate("/lead-status/create");
       },
+      show: canCreate,
     },
     {
       label: "View",
@@ -247,6 +338,7 @@ export default function LeadSourceEditPage({ isEdit = false }: Props) {
       onClick: () => {
         navigate("/lead-status/view");
       },
+      show: canView,
     },
   ]);
 
@@ -267,50 +359,64 @@ export default function LeadSourceEditPage({ isEdit = false }: Props) {
                 ...prev,
                 isDraft: true,
               }));
-              toastRestore("Lead status saved as draft successfully");
+              toastRestore("Lead source saved as draft successfully");
             },
+            show: canCreate,
           },
         ];
       }
       return filteredOptions;
     });
-  }, [formData.isDraft]);
+  }, [formData.isDraft, canCreate]);
+
+  // Create minimize handler using the custom hook
+  const handleMinimize = useCallback((): LeadSourceModuleData => {
+    return {
+      formData,
+      hasChanges: true,
+      scrollPosition: window.scrollY,
+    };
+  }, [formData]);
 
   return (
     <>
-      <PageLayout
-        title={isEdit ? "Editing Lead Status" : "Creating Lead Status"}
+      <MinimizablePageLayout
+        moduleId={moduleId}
+        moduleName={`Edit Lead Status`}
+        moduleRoute={`/lead-status/edit/${id || "new"}`}
+        onMinimize={handleMinimize}
+        title="Edit Lead Status"
+        listPath="lead-status"
+        popoverOptions={popoverOptions}
         videoSrc={video}
         videoHeader="Tutorial video"
-        listPath="lead-status"
-        activePage="edit"
-        popoverOptions={popoverOptions}
         keepChanges={keepCreating}
         onKeepChangesChange={setKeepCreating}
         pdfChecked={pdfChecked}
         onPdfToggle={canPdf ? handlePDFSwitchChange : undefined}
         printEnabled={printEnabled}
         onPrintToggle={canPrint ? handleSwitchChange : undefined}
+        activePage="edit"
+        module="lead-status"
         additionalFooterButtons={
-          <div className="flex gap-4 items-center">
-            <Button
-              variant="outline"
-              className="gap-2 text-primary bg-sky-200 hover:bg-primary rounded-full border-primary w-32 font-semibold!"
-              onClick={handleResetClick}
-            >
-              Reset
-            </Button>
-            <Button
-              ref={(el) => setRef("submitButton")(el as HTMLButtonElement)}
-              id="submitButton"
-              name="submitButton"
-              variant="outline"
-              className={`gap-2 text-primary rounded-full border-primary w-32 bg-sky-200 hover:bg-primary font-semibold! focus:ring-2 focus:ring-blue-400 focus:shadow-lg focus:transform focus:scale-105 focus:transition-all focus:duration-300`}
-              onClick={() => formRef.current?.requestSubmit()}
-            >
-              Submit
-            </Button>
-          </div>
+          canCreate ? (
+            <div className="flex gap-4 max-[435px]:gap-2">
+              <Button
+                variant="outline"
+                className="gap-2 hover:bg-primary/90 bg-white rounded-full border-primary w-28 max-[435px]:w-20 font-semibold! text-primary!"
+                onClick={handleResetClick}
+              >
+                Reset
+              </Button>
+              <Button
+                variant="outline"
+                className="gap-2 hover:bg-primary/90 bg-white rounded-full border-primary w-28 max-[435px]:w-20 font-semibold! text-primary!"
+                onClick={handleSubmit}
+              >
+                Submit
+              </Button>
+            </div>
+          ) : null
         }
         className="w-full"
       >
@@ -321,122 +427,259 @@ export default function LeadSourceEditPage({ isEdit = false }: Props) {
             onSubmit={handleSubmit}
             className="space-y-6"
           >
-            {/* First row */}
+            {/* First Row: Lead Status Fields (keep Default, Status, and Action unchanged) */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
-              {/* Name field */}
+              {/* Lead Status Name field - only show if user can edit */}
               {name && (
                 <div className="space-y-2">
-                  <div className="relative">
-                    <Autocomplete
-                      ref={(el: any) => setRef("name")(el)}
-                      id="name"
-                      name="name"
-                      allowCustomInput={true}
-                      options={nameOptions}
-                      value={formData.name}
-                      onValueChange={(value: string) => {
-                        setFormData({ ...formData, name: value });
-                        if (value) {
-                          focusNextInput("order");
-                        }
-                      }}
-                      onEnterPress={() => {
-                        if (formData.name) {
-                          focusNextInput("order");
-                        }
-                      }}
-                      placeholder=" "
-                      labelText="Name"
-                      className="relative"
-                      styles={{
-                        input: {
-                          borderColor: "var(--primary)",
-                          "&:focus": {
-                            borderColor: "var(--primary)",
-                          },
-                        },
-                      }}
-                    />
-                  </div>
+                  <EditableInput
+                    setRef={setRef("name")}
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    onNext={() =>
+                      focusNextInput(orderField ? "order" : "status")
+                    }
+                    onCancel={() => setFormData({ ...formData, name: "" })}
+                    labelText="Lead Status Name"
+                    tooltipText="Enter the lead status name (e.g., New, Qualified, Won)"
+                    required
+                  />
                 </div>
               )}
 
-              {/* Order field */}
-              {order && (
+              {/* Order field (new) */}
+              {orderField && (
                 <div className="space-y-2">
                   <EditableInput
-                    ref={(el: any) => setRef("order")(el)}
+                    setRef={setRef("order")}
                     id="order"
                     name="order"
-                    type="number"
-                    value={formData.order.toString()}
-                    onChange={(e) => {
-                      setFormData({
-                        ...formData,
-                        order: parseInt(e.target.value) || 1,
-                      });
-                      if (e.target.value) {
-                        focusNextInput("color");
-                      }
+                    value={String(formData.order)}
+                    onChange={handleChange}
+                    onNext={() =>
+                      focusNextInput(colorField ? "color" : "status")
+                    }
+                    onCancel={() => setFormData({ ...formData, order: 1 })}
+                    labelText="Order"
+                    tooltipText="Enter display order (number)"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Color field (new) */}
+              {colorField && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("color")}
+                    id="color"
+                    name="color"
+                    value={formData.color}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("status")}
+                    onCancel={() =>
+                      setFormData({ ...formData, color: "#3B82F6" })
+                    }
+                    labelText="Color"
+                    tooltipText="Enter hex color (e.g., #3B82F6)"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Status field - only show if user can edit */}
+              {status && (
+                <div className="space-y-2">
+                  <SwitchSelect
+                    ref={(el: any) => setRef("status")(el)}
+                    id="status"
+                    name="status"
+                    labelText="Status"
+                    multiSelect={false}
+                    options={[
+                      {
+                        label: "Active",
+                        value: "active",
+                        date: "Set active",
+                      },
+                      {
+                        label: "Inactive",
+                        value: "Inactive",
+                        date: "Set inactive",
+                      },
+                      {
+                        label: "Draft",
+                        value: "Draft",
+                        date: "Set draft",
+                      },
+                      {
+                        label: "Delete",
+                        value: "Delete",
+                        date: "Set delete",
+                      },
+                    ]}
+                    value={formData.status}
+                    onValueChange={(value: string | string[]) => {
+                      const stringValue = Array.isArray(value)
+                        ? value[0] || ""
+                        : value;
+
+                      setFormData((prev) => ({
+                        ...prev,
+                        status: stringValue as
+                          | "active"
+                          | "inactive"
+                          | "draft"
+                          | "deleted",
+                        isDraft: stringValue === "Draft",
+                        isActive: stringValue === "Active",
+                        isDeleted: stringValue === "Delete",
+                      }));
+
+                      // Update your form data
+                      setFormData((prev) => ({
+                        ...prev,
+                        isDeleted: stringValue === "Delete",
+                        isDraft: stringValue === "Draft",
+                        isActive: stringValue === "Active",
+                      }));
+                      focusNextInput("isDefault");
                     }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && formData.order) {
-                        focusNextInput("color");
+                    onEnterPress={() => {
+                      focusNextInput("isDefault");
+                    }}
+                    placeholder=""
+                    styles={{
+                      input: {
+                        borderColor: "var(--primary)",
+                        "&:focus": {
+                          borderColor: "var(--primary)",
+                        },
+                      },
+                    }}
+                    tooltipText="Set the lead source status"
+                  />
+                </div>
+              )}
+
+              {/* Default field - only show if user can edit */}
+              {isDefault && (
+                <div className="space-y-2 relative">
+                  <SwitchSelect
+                    ref={(el: any) => setRef("isDefault")(el)}
+                    id="isDefault"
+                    name="isDefault"
+                    multiSelect={false}
+                    options={[
+                      {
+                        label: "Yes",
+                        value: "Yes",
+                        date: "Set default color",
+                      },
+                      {
+                        label: "No",
+                        value: "No",
+                        date: "Remove default color",
+                      },
+                    ]}
+                    value={isDefaultState === "Yes" ? "Yes" : "No"}
+                    labelClassName="rounded-lg"
+                    onValueChange={(value: string | string[]) => {
+                      const isYes = Array.isArray(value)
+                        ? value[0] === "Yes"
+                        : value === "Yes";
+                      setIsDefaultState(isYes ? "Yes" : "No");
+                      const newValue = isYes;
+                      setFormData((prev) => ({
+                        ...prev,
+                        isDefault: newValue,
+                      }));
+                    }}
+                    onEnterPress={() => {
+                      if (
+                        formData.isDefault === true ||
+                        formData.isDefault === false
+                      ) {
+                        focusNextInput("actions");
                       }
                     }}
                     placeholder=" "
-                    labelText="Order"
+                    labelText="Default"
                     className="relative"
+                    tooltipText="Set as default lead source"
                   />
                 </div>
               )}
 
-              {/* Color field */}
-              {color && (
-                <div className="space-y-2">
-                  <EditableInput
-                    ref={(el: any) => setRef("color")(el)}
-                    id="color"
-                    name="color"
-                    type="color"
-                    value={formData.color}
-                    onChange={(e) => {
-                      setFormData({ ...formData, color: e.target.value });
-                      if (e.target.value) {
-                        focusNextInput("submitButton");
-                      }
-                    }}
-                    className="relative"
-                    labelText="Color"
-                    title="Choose color"
-                  />
-                </div>
-              )}
+              {/* Actions */}
+              <div className="space-y-2">
+                <ActionsAutocomplete
+                  ref={(el: any) => setRef("actions")(el)}
+                  id="actions"
+                  name="actions"
+                  labelText="Action"
+                  value={selectedAction}
+                  actions={[
+                    {
+                      action: "Created",
+                      user: "John",
+                      role: "Super User",
+                      date: "06 Aug 2025",
+                      value: "created",
+                    },
+                    {
+                      action: "Updated",
+                      user: "Sarah",
+                      role: "Admin",
+                      date: "08 Aug 2025",
+                      value: "updated",
+                    },
+                    {
+                      action: "Inactive",
+                      user: "Mike",
+                      role: "Admin",
+                      date: "08 Aug 2025",
+                      value: "inactive",
+                    },
+                    {
+                      action: "Drafted",
+                      user: "John",
+                      role: "Super User",
+                      date: "07 Aug 2025",
+                      value: "drafted",
+                    },
+                  ]}
+                  placeholder=""
+                  onValueChange={(value: string) => {
+                    setSelectedAction(value);
+                  }}
+                  styles={{
+                    input: {
+                      borderColor: "var(--primary)",
+                      "&:focus": {
+                        borderColor: "var(--primary)",
+                      },
+                    },
+                  }}
+                  tooltipText="Lead Source Action History"
+                />
+              </div>
             </div>
           </form>
         </div>
-      </PageLayout>
+      </MinimizablePageLayout>
 
       <ResetFormModal
         opened={isResetModalOpen}
         onClose={() => setIsResetModalOpen(false)}
         onConfirm={handleReset}
         title="Reset Form"
-        message="Are you sure you want to reset the form? All changes will be lost."
+        message="Are you sure you want to reset the form?"
         confirmText="Reset"
         cancelText="Cancel"
       />
-
-      {/* Options Modal */}
-      <Modal
-        opened={isOptionModalOpen}
-        onClose={() => setIsOptionModalOpen(false)}
-        title="Options"
-        size="xl"
-        overlayProps={{ backgroundOpacity: 0.55, blur: 3 }}
-      >
-        <div className="pt-5 pb-14 px-5">Modal Content</div>
-      </Modal>
     </>
   );
 }

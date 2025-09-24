@@ -1,10 +1,11 @@
 import video from "@/assets/videos/test.mp4";
 import VideoModal from "@/components/common/VideoModal";
-import { Button } from "@/components/ui/button";
-import { useTranslation } from "react-i18next";
+// import { Button } from "@/components/ui/button";
+// import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import HeaderSearch from "./HeaderSearch";
 import { useCountriesPermissions } from "@/hooks/usePermissions";
+import { MaterialButton } from "@/components/ui/material-button";
 
 type Props = {
   title: string;
@@ -35,43 +36,45 @@ const PageHeader = ({
   setIsExportOpen,
 }: Props) => {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  // const { t } = useTranslation();
   const { canCreate } = useCountriesPermissions();
 
   return (
-    <div className="flex items-center justify-between mb-8">
+    <div className="flex items-center justify-between border-b border-b-[#dee2e6] h-[70px] px-4 mb-2">
       {/* Left side - Title and Video */}
       <div className="flex items-center gap-4">
         <VideoModal src={video} header={"Tutorial video"} />
         <h1 className="text-2xl font-bold text-primary">{title}</h1>
       </div>
 
+      {/* Search */}
+      <HeaderSearch
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        setIsFilterOpen={setIsFilterOpen}
+        isFilterOpen={isFilterOpen}
+        setShowVisibility={setShowVisibility}
+        showVisibility={showVisibility}
+        viewMode={viewMode}
+        setTimeLabel={setTimeLabel}
+        setIsExportOpen={setIsExportOpen}
+      />
       {/* Right side - Search and Create Button */}
       <div className="flex items-center gap-4">
-        {/* Search */}
-        <HeaderSearch
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          setIsFilterOpen={setIsFilterOpen}
-          isFilterOpen={isFilterOpen}
-          setShowVisibility={setShowVisibility}
-          showVisibility={showVisibility}
-          viewMode={viewMode}
-          setTimeLabel={setTimeLabel}
-          setIsExportOpen={setIsExportOpen}
-        />
-
         {/* Create Button */}
         {canCreate && (
-          <Button
-            className="bg-sky-200 hover:bg-primary text-black rounded-full cursor-pointer"
-            onClick={() => navigate(createPath)}
-          >
-            <span className="hidden sm:inline font-semibold">
-              {t("button.add")}
-            </span>
-            <span className="sm:hidden">{t("button.add")}</span>
-          </Button>
+          // <Button
+          //   className="bg-sky-200 hover:bg-primary text-black rounded-full cursor-pointer"
+          //   onClick={() => navigate(createPath)}
+          // >
+          //   <span className="hidden sm:inline font-semibold">
+          //     {t("button.add")}
+          //   </span>
+          //   <span className="sm:hidden">{t("button.add")}</span>
+          // </Button>
+          <MaterialButton size="sm" onClick={() => navigate(createPath)}>
+            <span className="font-semibold">Add</span>
+          </MaterialButton>
         )}
       </div>
     </div>

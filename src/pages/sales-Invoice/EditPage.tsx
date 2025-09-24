@@ -1,39 +1,49 @@
-import { useState, useRef, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { useTranslation } from "react-i18next";
-import { Trash2, Undo2, MoreVertical } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import EditableInput, {
-  type EditableInputRef,
-} from "@/components/common/EditableInput";
-import { Autocomplete } from "@mantine/core";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import video from "@/assets/videos/test.mp4";
+import { Autocomplete } from "@/components/common/Autocomplete";
+import EditableInput from "@/components/common/EditableInput";
 import GenericPDF from "@/components/common/pdf";
-import { printHtmlContent } from "@/lib/printHtmlContent";
-import { toastError } from "@/lib/toast";
-import { pdf } from "@react-pdf/renderer";
-import PageLayout from "@/components/common/PageLayout";
-import LanguageTranslatorModal from "@/components/common/LanguageTranslatorModel";
+import { ResetFormModal } from "@/components/common/ResetFormModal";
+import { Button } from "@/components/ui/button";
 import { PrintCommonLayout } from "@/lib/printContents/PrintCommonLayout";
-import DynamicInputTableList from "@/components/common/dynamic-input-table/DynamicInputTableList";
+import { printHtmlContent } from "@/lib/printHtmlContent";
+import { toastError, toastRestore, toastSuccess } from "@/lib/toast";
+import { Modal } from "@mantine/core";
+import { pdf } from "@react-pdf/renderer";
+import { Check, Eye, Plus } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
+import { usePermission } from "@/hooks/usePermissions";
+import { useLanguageLabels } from "@/hooks/useLanguageLabels";
+import { useAppSelector } from "@/store/hooks";
+import type { InvoiceModuleData } from "@/types/modules";
+import MinimizablePageLayout from "@/components/MinimizablePageLayout";
+import { useMinimizedModuleData } from "@/hooks/useMinimizedModuleData";
+import { SwitchSelect } from "@/components/common/SwitchAutoComplete";
+import { ActionsAutocomplete } from "@/components/common/ActionsAutocomplete";
+import { TemplateContent } from "@/components/common/TemplateContent";
+import { cn } from "@/lib/utils";
+import { getModuleFromPath } from "@/lib/utils";
+import LanguageTranslatorModal from "@/components/common/LanguageTranslatorModel";
+import EnglishDate from "@/components/EnglishDateInput";
 
 // Define Invoice interface to ensure type consistency
 interface Invoice {
   id: string;
   documentNumber: string;
-  invoiceNumber: string;
-  invoiceDate: Date | string;
-  customer: string;
-  trnNumber: string;
+  poNumber: string;
+  poDate: string;
+  supplierName: string;
   paymentMode: string;
   dueDays: number;
-  paymentDate: Date | string;
+  paymentDate: string;
+  supplierNumber: string;
+  supplierStatus: string;
+  supplierGroup: string;
   remarks: string;
   country: string;
   state: string;
   city: string;
-  salesman: string;
   isActive: boolean;
   isDraft: boolean;
   createdAt: Date | null;
@@ -43,575 +53,500 @@ interface Invoice {
   isDeleted: boolean;
 }
 
-// Mock customer data for auto-fill functionality
-interface CustomerData {
+// Mock supplier data for auto-fill functionality
+interface SupplierData {
   name: string;
-  trn: string;
+  number: string;
+  status: string;
+  group: string;
   country: string;
   state: string;
   city: string;
   paymentDate: string;
-  salesman: string;
 }
 
-const MOCK_CUSTOMERS: CustomerData[] = [
+const MOCK_SUPPLIERS: SupplierData[] = [
   {
-    name: "John Doe",
-    trn: "TRN123456789",
+    name: "AL AHAD CURTAINS TEX & FURNITURE TR.LLC",
+    number: "36",
+    status: "Active",
+    group: "Furniture Suppliers",
     country: "UAE",
     state: "Dubai",
     city: "Deira",
     paymentDate: "2024-08-15",
-    salesman: "Alice Smith",
   },
   {
-    name: "Jane Smith",
-    trn: "TRN987654321",
-    country: "UAE",
-    state: "Sharjah",
-    city: "Industrial Area",
-    paymentDate: "2024-08-10",
-    salesman: "Bob Johnson",
-  },
-  {
-    name: "Peter Jones",
-    trn: "TRN112233445",
-    country: "UAE",
-    state: "Abu Dhabi",
-    city: "Mussafah",
-    paymentDate: "2024-08-05",
-    salesman: "Charlie Brown",
-  },
-  {
-    name: "Mary White",
-    trn: "TRN556677889",
+    name: "SimplyNayela",
+    number: "12",
+    status: "Active",
+    group: "Fashion",
     country: "UAE",
     state: "Dubai",
-    city: "Al Qusais",
-    paymentDate: "2024-08-03",
-    salesman: "Diana Prince",
+    city: "Business Bay",
+    paymentDate: "2024-08-12",
   },
+  // ... other mock suppliers
+];
+
+// Payment mode options
+const PAYMENT_MODES = [
+  "Cash",
+  "Credit Card",
+  "Debit Card",
+  "Bank Transfer",
+  "Check",
+  "Split",
+  "PayPal",
+  "Wire Transfer",
+  "ACH",
+  "Digital Wallet",
+];
+
+// Supplier status options
+const SUPPLIER_STATUS_OPTIONS = [
+  "Active",
+  "Inactive",
+  "Pending",
+  "Suspended",
+  "Approved",
+  "Rejected",
+];
+
+// Mock invoice data for editing
+const MOCK_INVOICES: Invoice[] = [
   {
-    name: "David Lee",
-    trn: "TRN123123123",
-    country: "UAE",
-    state: "Sharjah",
-    city: "Al Nahda",
-    paymentDate: "2024-07-20",
-    salesman: "Ethan Hunt",
-  },
-  {
-    name: "Lisa Green",
-    trn: "TRN456456456",
-    country: "UAE",
-    state: "Dubai",
-    city: "Jumeirah",
-    paymentDate: "2024-07-18",
-    salesman: "Fiona Smith",
-  },
-  {
-    name: "Mike Black",
-    trn: "TRN789789789",
-    country: "UAE",
-    state: "Dubai",
-    city: "Al Karama",
-    paymentDate: "2024-07-30",
-    salesman: "George Washington",
-  },
-  {
-    name: "Susan Red",
-    trn: "TRN101101101",
-    country: "Bangladesh",
-    state: "Dhaka",
-    city: "Gulshan",
-    paymentDate: "2024-07-28",
-    salesman: "Henry Ford",
-  },
-  {
-    name: "Tom Brown",
-    trn: "TRN202202202",
-    country: "UAE",
-    state: "Dubai",
-    city: "Bur Dubai",
-    paymentDate: "2024-07-25",
-    salesman: "Isaac Newton",
-  },
-  {
-    name: "Jerry White",
-    trn: "TRN303303303",
-    country: "UAE",
-    state: "Abu Dhabi",
-    city: "Al Ain",
-    paymentDate: "2024-07-22",
-    salesman: "James Bond",
-  },
-  {
-    name: "Harry Potter",
-    trn: "TRN404404404",
-    country: "UAE",
-    state: "Sharjah",
-    city: "Al Nahda",
-    paymentDate: "2024-07-20",
-    salesman: "John Wick",
-  },
-  {
-    name: "Ron Weasley",
-    trn: "TRN505505505",
+    id: "1",
+    documentNumber: "INV001",
+    poNumber: "PO-2024-001",
+    poDate: "2024-07-24",
+    supplierName: "AL AHAD CURTAINS TEX & FURNITURE TR.LLC",
+    paymentMode: "Split",
+    dueDays: 45,
+    paymentDate: "2024-09-07",
+    supplierNumber: "36",
+    supplierStatus: "Active",
+    supplierGroup: "Furniture Suppliers",
+    remarks: "Urgent delivery required",
     country: "UAE",
     state: "Dubai",
-    city: "Jumeirah",
-    paymentDate: "2024-07-18",
-    salesman: "Kyle Reese",
+    city: "Deira",
+    isActive: true,
+    isDraft: false,
+    createdAt: new Date("2024-07-24"),
+    draftedAt: null,
+    updatedAt: new Date("2024-07-30"),
+    deletedAt: null,
+    isDeleted: false,
   },
-  {
-    name: "Hermione Granger",
-    trn: "TRN606606606",
-    country: "UAE",
-    state: "Dubai",
-    city: "Downtown",
-    paymentDate: "2024-07-15",
-    salesman: "Lara Croft",
-  },
-  {
-    name: "Rubeus Hagrid",
-    trn: "TRN707707707",
-    country: "UAE",
-    state: "Abu Dhabi",
-    city: "Khalifa City",
-    paymentDate: "2024-07-12",
-    salesman: "Mario Bros",
-  },
+  // ... other mock invoices
 ];
 
 type Props = {
   isEdit?: boolean;
 };
 
-const initialData: Invoice = {
-  id: "1",
-  documentNumber: "7",
-  invoiceNumber: "INV-2024-001",
-  invoiceDate: "2024-07-24",
-  customer: "John Doe",
-  trnNumber: "TRN123456789",
-  paymentMode: "Split",
-  dueDays: 45,
-  paymentDate: "2024-08-15",
-  remarks: "44",
-  country: "UAE",
-  state: "Dubai",
-  city: "Deira",
-  salesman: "Alice Smith",
-  isActive: true,
-  isDraft: false,
-  createdAt: new Date(),
-  draftedAt: null,
-  updatedAt: new Date(),
-  deletedAt: null,
-  isDeleted: false,
-};
-
-export default function EditPage({ isEdit = true }: Props) {
-  const { id } = useParams<{ id: string }>();
-  const { t } = useTranslation();
+export default function InvoiceEditPage({ isEdit = true }: Props) {
   const navigate = useNavigate();
-  const [keepCreating, setKeepCreating] = useState(false);
+  const location = useLocation();
+  const { id } = useParams();
+  const labels = useLanguageLabels();
+  const { isRTL } = useAppSelector((state) => state.language);
 
+  const detectedModule = getModuleFromPath(location.pathname);
+
+  // Get module ID for this edit page
+  const moduleId = `${detectedModule}-edit-module-${id || "new"}`;
+
+  // Use the custom hook for minimized module data
+  const {
+    moduleData,
+    hasMinimizedData,
+    resetModuleData,
+    getModuleScrollPosition,
+  } = useMinimizedModuleData<InvoiceModuleData>(moduleId);
+
+  const [showTemplates, setShowTemplates] = useState(false);
+  const [keepCreating, setKeepCreating] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
-
-  const documentNumberInputRef = useRef<EditableInputRef>(null);
-  const invoiceNumberInputRef = useRef<EditableInputRef>(null);
-  const invoiceDateInputRef = useRef<EditableInputRef>(null);
-  const customerInputRef = useRef<EditableInputRef>(null);
-  const trnNumberInputRef = useRef<EditableInputRef>(null);
-  const activeSwitchRef = useRef<HTMLButtonElement>(null);
-  const draftSwitchRef = useRef<HTMLButtonElement>(null);
-  const deleteButtonRef = useRef<HTMLButtonElement>(null);
+  const [statusState, setStatusState] = useState<
+    "Active" | "Draft" | "Delete" | string
+  >("Active");
+  const [selectedAction, setSelectedAction] = useState<string>("");
   const [printEnabled, setPrintEnabled] = useState(false);
   const [pdfChecked, setPdfChecked] = useState(false);
-
-  // State to track if customer fields are auto-filled (and should be read-only)
-  const [isCustomerAutoFilled, setIsCustomerAutoFilled] = useState(false);
-
-  // Helper function to check if customer fields should be disabled
-  const isCustomerFieldsDisabled = () => {
-    return !formData.customer || formData.customer.trim() === "";
-  };
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  const [formKey, setFormKey] = useState(0);
+  const [isRestoredFromMinimized, setIsRestoredFromMinimized] = useState(false);
+  const [shouldRestoreFromMinimized, setShouldRestoreFromMinimized] =
+    useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSupplierAutoFilled, setIsSupplierAutoFilled] = useState(false);
 
   // Translation state
   const [translations, setTranslations] = useState([
     { id: 1, english: "", arabic: "", bangla: "" },
   ]);
 
+  // Permission checks
+  const canCreate = usePermission(detectedModule, "create");
+  const canView = usePermission(detectedModule, "view");
+  const canPdf: boolean = usePermission(detectedModule, "pdf");
+  const canPrint: boolean = usePermission(detectedModule, "print");
+
   // Form state
   const [formData, setFormData] = useState<Invoice>({
     id: "",
     documentNumber: "",
-    invoiceNumber: "",
-    invoiceDate: "",
-    customer: "",
-    trnNumber: "",
+    poNumber: "",
+    poDate: "",
+    supplierName: "",
     paymentMode: "",
     dueDays: 0,
     paymentDate: "",
+    supplierNumber: "",
+    supplierStatus: "",
+    supplierGroup: "",
     remarks: "",
     country: "",
     state: "",
     city: "",
-    salesman: "",
     isActive: true,
     isDraft: false,
-    createdAt: null,
+    createdAt: new Date(),
     draftedAt: null,
-    updatedAt: null,
+    updatedAt: new Date(),
     deletedAt: null,
     isDeleted: false,
   });
 
-  // Function to search for customer by name
-  const findCustomerByName = (name: string): CustomerData | null => {
-    if (!name.trim()) return null;
+  // Memoize supplier data
+  const memoizedSuppliers = useMemo(() => [...MOCK_SUPPLIERS], []);
+  const memoizedPaymentModes = useMemo(() => [...PAYMENT_MODES], []);
+  const memoizedStatusOptions = useMemo(() => [...SUPPLIER_STATUS_OPTIONS], []);
 
-    // Find exact match first
-    let customer = MOCK_CUSTOMERS.find(
-      (c) => c.name.toLowerCase() === name.toLowerCase()
+  // Invoice options for autocomplete
+  const invoiceOptions = useMemo(
+    () =>
+      MOCK_INVOICES.map((invoice) => ({
+        value: invoice.documentNumber,
+        label: `${invoice.documentNumber} - ${invoice.supplierName}`,
+      })),
+    []
+  );
+
+  // Helper function to check if supplier fields should be disabled
+  const isSupplierFieldsDisabled = () => {
+    return !formData.supplierName || formData.supplierName.trim() === "";
+  };
+
+  // Function to search for supplier by name
+  const findSupplierByName = useCallback(
+    (name: string): SupplierData | null => {
+      if (!name.trim()) return null;
+
+      let supplier = memoizedSuppliers.find(
+        (s) => s.name.toLowerCase() === name.toLowerCase()
+      );
+
+      if (!supplier) {
+        supplier = memoizedSuppliers.find(
+          (s) =>
+            s.name.toLowerCase().includes(name.toLowerCase()) ||
+            name.toLowerCase().includes(s.name.toLowerCase())
+        );
+      }
+
+      return supplier || null;
+    },
+    [memoizedSuppliers]
+  );
+
+  // Function to find and load invoice data
+  const loadInvoiceData = useCallback((documentNumber: string) => {
+    const invoiceData = MOCK_INVOICES.find(
+      (invoice) => invoice.documentNumber === documentNumber
     );
 
-    // If no exact match, find partial match
-    if (!customer) {
-      customer = MOCK_CUSTOMERS.find(
-        (c) =>
-          c.name.toLowerCase().includes(name.toLowerCase()) ||
-          name.toLowerCase().includes(c.name.toLowerCase())
-      );
-    }
-
-    return customer || null;
-  };
-
-  // Handle customer name changes and auto-fill related fields
-  const handleCustomerNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newCustomerName = e.target.value;
-
-    // Update customer name first
-    setFormData((prev) => ({
-      ...prev,
-      customer: newCustomerName,
-    }));
-
-    // Search for matching customer
-    const matchedCustomer = findCustomerByName(newCustomerName);
-
-    if (matchedCustomer) {
-      // Auto-fill related fields
-      setFormData((prev) => ({
-        ...prev,
-        customer: newCustomerName,
-        trnNumber: matchedCustomer.trn,
-        country: matchedCustomer.country,
-        state: matchedCustomer.state,
-        city: matchedCustomer.city,
-        paymentDate: matchedCustomer.paymentDate,
-        salesman: matchedCustomer.salesman,
-      }));
-      setIsCustomerAutoFilled(true);
-    } else {
-      // Clear auto-filled fields and disable editing when customer name is empty
-      setIsCustomerAutoFilled(false);
-      setFormData((prev) => ({
-        ...prev,
-        customer: newCustomerName,
-        trnNumber: "",
-        country: "",
-        state: "",
-        city: "",
-        paymentDate: "",
-        salesman: "",
-      }));
-    }
-  };
-
-  // Update translation data when customer name changes
-  useEffect(() => {
-    setTranslations([
-      { id: 1, english: formData.customer || "", arabic: "", bangla: "" },
-    ]);
-  }, [formData.customer]);
-
-  // Payment mode options
-  const PAYMENT_MODES = [
-    "Cash",
-    "Credit Card",
-    "Debit Card",
-    "Bank Transfer",
-    "Check",
-    "Split",
-    "PayPal",
-    "Wire Transfer",
-    "ACH",
-    "Digital Wallet",
-  ];
-
-  // Update the focusNextInput function to include all form elements
-  const focusNextInput = (currentField: string) => {
-    console.log("Current field:", currentField);
-    switch (currentField) {
-      case "documentNumber":
-        invoiceNumberInputRef.current?.focus();
-        break;
-      case "invoiceNumber": {
-        // Focus on the Invoice Date input
-        const invoiceDateInput = document.querySelector(
-          'input[name="invoiceDate"]'
-        ) as HTMLInputElement;
-        invoiceDateInput?.focus();
-        break;
-      }
-      case "invoiceDate":
-        customerInputRef.current?.focus();
-        break;
-      case "customer": {
-        // Focus on TRN Number input
-        const trnNumberInput = document.querySelector(
-          'input[name="trnNumber"]'
-        ) as HTMLInputElement;
-        trnNumberInput?.focus();
-        break;
-      }
-      case "trnNumber": {
-        // Focus on payment mode autocomplete
-        const paymentModeInput = document.querySelector(
-          'input[placeholder="Select payment mode..."]'
-        ) as HTMLInputElement;
-        paymentModeInput?.focus();
-        break;
-      }
-      case "paymentMode": {
-        // Focus on due days field
-        const dueDaysInput = document.querySelector(
-          'input[name="dueDays"]'
-        ) as HTMLInputElement;
-        dueDaysInput?.focus();
-        break;
-      }
-      case "dueDays": {
-        // Focus on payment date field
-        const paymentDateInput = document.querySelector(
-          'input[name="paymentDate"]'
-        ) as HTMLInputElement;
-        paymentDateInput?.focus();
-        break;
-      }
-      case "paymentDate": {
-        // Focus on remarks field
-        const remarksInput = document.querySelector(
-          'input[name="remarks"]'
-        ) as HTMLInputElement;
-        remarksInput?.focus();
-        break;
-      }
-      case "remarks": {
-        // Focus on salesman field
-        const salesmanInput = document.querySelector(
-          'input[name="salesman"]'
-        ) as HTMLInputElement;
-        salesmanInput?.focus();
-        break;
-      }
-      case "salesman": {
-        // Focus on country field
-        const countryInput = document.querySelector(
-          'input[name="country"]'
-        ) as HTMLInputElement;
-        countryInput?.focus();
-        break;
-      }
-      case "country": {
-        // Focus on state field
-        const stateInput = document.querySelector(
-          'input[name="state"]'
-        ) as HTMLInputElement;
-        stateInput?.focus();
-        break;
-      }
-      case "state": {
-        // Focus on city field
-        const cityInput = document.querySelector(
-          'input[name="city"]'
-        ) as HTMLInputElement;
-        cityInput?.focus();
-        break;
-      }
-      case "city":
-        activeSwitchRef.current?.focus();
-        break;
-      case "active":
-        draftSwitchRef.current?.focus();
-        break;
-      case "draft":
-        deleteButtonRef.current?.focus();
-        break;
-      default:
-        break;
-    }
-  };
-
-  const getRelativeTime = (dateString: string | null | Date) => {
-    if (!dateString) return "--/--/----";
-
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInMs = now.getTime() - date.getTime();
-
-    const minutes = Math.floor(diffInMs / (1000 * 60));
-    const hours = Math.floor(diffInMs / (1000 * 60 * 60));
-    const days = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
-    const months = Math.floor(diffInMs / (1000 * 60 * 60 * 24 * 30));
-    const years = Math.floor(diffInMs / (1000 * 60 * 60 * 24 * 365));
-
-    if (years > 0) {
-      return `${years}y ago`;
-    } else if (months > 0) {
-      return `${months}mo ago`;
-    } else if (days > 0) {
-      return `${days}d ago`;
-    } else if (hours > 0) {
-      return `${hours}h ago`;
-    } else if (minutes > 0) {
-      return `${minutes}m ago`;
-    } else {
-      return "Just now";
-    }
-  };
-
-  // Add this function to handle key navigation for switches and buttons
-  const handleSwitchKeyDown = (
-    e: React.KeyboardEvent,
-    currentField: string
-  ) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      // Trigger the switch/button action first
-      switch (currentField) {
-        case "active":
-          setFormData({ ...formData, isActive: !formData.isActive });
-          break;
-        case "draft":
-          setFormData({ ...formData, isDraft: !formData.isDraft });
-          break;
-        case "delete":
-          setFormData({ ...formData, isDeleted: !formData.isDeleted });
-          break;
-      }
-      // Then move to next field
-      setTimeout(() => focusNextInput(currentField), 50);
-    }
-  };
-
-  // Initialize with edit data if available
-  useEffect(() => {
-    if (isEdit && initialData) {
+    if (invoiceData) {
       setFormData({
-        ...initialData,
+        ...invoiceData,
+        updatedAt: new Date(), // Update the timestamp
       });
+      setStatusState(invoiceData.isDraft ? "Draft" : "Active");
+      toastSuccess(`Loaded data for ${documentNumber}`);
+    } else {
+      toastError(`Invoice ${documentNumber} not found`);
     }
-  }, [isEdit, initialData]);
+  }, []);
+
+  // Handle document number selection
+  const handleDocumentNumberChange = useCallback(
+    (value: string | null) => {
+      if (value) {
+        const documentNumber = value.split(" - ")[0]; // Extract document number from "INV001 - Supplier Name"
+        setFormData((prev) => ({ ...prev, documentNumber }));
+        loadInvoiceData(documentNumber);
+      }
+    },
+    [loadInvoiceData]
+  );
+
+  // Update translation data when supplier name changes
+  const updateTranslations = useCallback((supplierName: string) => {
+    setTranslations([
+      { id: 1, english: supplierName || "", arabic: "", bangla: "" },
+    ]);
+  }, []);
 
   useEffect(() => {
-    if (id && id !== "undefined") {
-      const fetchedData = initialData;
-      setFormData(fetchedData);
+    updateTranslations(formData.supplierName);
+  }, [formData.supplierName, updateTranslations]);
+
+  // Refs for form elements
+  const inputRefs = useRef<Record<string, HTMLElement | null>>({});
+  const setRef = (name: string) => (el: HTMLElement | null) => {
+    inputRefs.current[name] = el;
+  };
+  const focusNextInput = (nextField: string) => {
+    inputRefs.current[nextField]?.focus();
+  };
+
+  // Check for restore flag from taskbar
+  useEffect(() => {
+    const shouldRestore = localStorage.getItem(`restore-${moduleId}`);
+    if (shouldRestore === "true") {
+      setShouldRestoreFromMinimized(true);
+      localStorage.removeItem(`restore-${moduleId}`);
     }
-  }, [id]);
+  }, [moduleId]);
+
+  // Restore logic using the custom hook
+  useEffect(() => {
+    const shouldAutoRestore =
+      shouldRestoreFromMinimized ||
+      (hasMinimizedData &&
+        moduleData &&
+        !isRestoredFromMinimized &&
+        !formData.documentNumber &&
+        !formData.supplierName);
+
+    if (hasMinimizedData && moduleData && shouldAutoRestore) {
+      setFormData(moduleData);
+      setStatusState(moduleData.isDraft ? "Draft" : "Active");
+      setIsRestoredFromMinimized(true);
+      setShouldRestoreFromMinimized(false);
+
+      const scrollPosition = getModuleScrollPosition(moduleId);
+      if (scrollPosition) {
+        setTimeout(() => {
+          window.scrollTo(0, scrollPosition);
+        }, 200);
+      }
+    }
+  }, [
+    hasMinimizedData,
+    moduleData,
+    isRestoredFromMinimized,
+    shouldRestoreFromMinimized,
+    formData.documentNumber,
+    formData.supplierName,
+    moduleId,
+    getModuleScrollPosition,
+  ]);
+
+  // Initialize data on component mount
+  useEffect(() => {
+    if (!hasMinimizedData && !isRestoredFromMinimized) {
+      setIsLoading(true);
+
+      if (id && id !== "undefined") {
+        const invoiceData = MOCK_INVOICES.find((invoice) => invoice.id === id);
+        if (invoiceData) {
+          setFormData(invoiceData);
+          setStatusState(invoiceData.isDraft ? "Draft" : "Active");
+        } else {
+          const defaultInvoice = MOCK_INVOICES[0];
+          setFormData(defaultInvoice);
+          setStatusState(defaultInvoice.isDraft ? "Draft" : "Active");
+        }
+      } else {
+        const defaultInvoice = MOCK_INVOICES[0];
+        setFormData(defaultInvoice);
+        setStatusState(defaultInvoice.isDraft ? "Draft" : "Active");
+      }
+
+      setIsLoading(false);
+    }
+  }, [id, hasMinimizedData, isRestoredFromMinimized]);
+
+  // Handle supplier name changes and auto-fill related fields
+  const handleSupplierNameChange = useCallback(
+    (value: string | null) => {
+      const newSupplierName = value || "";
+
+      setFormData((prev) => ({
+        ...prev,
+        supplierName: newSupplierName,
+        updatedAt: new Date(),
+      }));
+
+      const matchedSupplier = findSupplierByName(newSupplierName);
+
+      if (matchedSupplier) {
+        setFormData((prev) => ({
+          ...prev,
+          supplierName: newSupplierName,
+          supplierNumber: matchedSupplier.number,
+          supplierStatus: matchedSupplier.status,
+          supplierGroup: matchedSupplier.group,
+          country: matchedSupplier.country,
+          state: matchedSupplier.state,
+          city: matchedSupplier.city,
+          paymentDate: matchedSupplier.paymentDate,
+          updatedAt: new Date(),
+        }));
+        setIsSupplierAutoFilled(true);
+      } else {
+        setIsSupplierAutoFilled(false);
+        setFormData((prev) => ({
+          ...prev,
+          supplierName: newSupplierName,
+          supplierNumber: "",
+          supplierStatus: "",
+          supplierGroup: "",
+          country: "",
+          state: "",
+          city: "",
+          paymentDate: "",
+          updatedAt: new Date(),
+        }));
+      }
+    },
+    [findSupplierByName]
+  );
 
   // Handle form field changes
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
-      [name]: type === "checkbox" ? checked : value,
-    });
-  };
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { name, value, type, checked } = e.target;
+      const newFormData = {
+        ...formData,
+        [name]: type === "checkbox" ? checked : value,
+        updatedAt: new Date(), // Update timestamp on any change
+      };
+      setFormData(newFormData);
+    },
+    [formData]
+  );
 
   // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
+
+    if (pdfChecked) {
+      await handleExportPDF();
+    }
+    if (printEnabled) {
+      handlePrintInvoice(formData);
+    }
+
+    if (keepCreating) {
+      toastSuccess(
+        `${detectedModule} ${isEdit ? "updated" : "created"} successfully!`
+      );
+      handleReset();
+    } else {
+      toastSuccess(
+        `${detectedModule} ${isEdit ? "updated" : "created"} successfully!`
+      );
+      navigate(`/${detectedModule}`);
+    }
   };
 
-  // Handle form reset
-  const handleReset = () => {
-    if (window.confirm(t("form.resetConfirm"))) {
-      setFormData({
-        id: "",
-        documentNumber: "",
-        invoiceNumber: "",
-        invoiceDate: "",
-        customer: "",
-        trnNumber: "",
-        paymentMode: "",
-        dueDays: 0,
-        paymentDate: "",
-        remarks: "",
-        country: "",
-        state: "",
-        city: "",
-        salesman: "",
-        isActive: true,
-        isDraft: false,
-        createdAt: new Date(),
-        draftedAt: null,
-        updatedAt: new Date(),
-        deletedAt: null,
-        isDeleted: false,
-      });
+  const handleResetClick = () => {
+    setIsResetModalOpen(true);
+  };
+
+  // Update handleReset function
+  const handleReset = async () => {
+    const originalData = MOCK_INVOICES.find(
+      (invoice) => invoice.documentNumber === formData.documentNumber
+    );
+    if (originalData) {
+      setFormData(originalData);
+      setStatusState(originalData.isDraft ? "Draft" : "Active");
+      setSelectedAction("");
+      setIsRestoredFromMinimized(false);
+      setIsSupplierAutoFilled(false);
+
       if (formRef.current) {
         formRef.current.reset();
       }
+
+      setFormKey((prev) => prev + 1);
+
+      if (hasMinimizedData) {
+        try {
+          await resetModuleData(moduleId);
+          console.log("Form data reset in Redux");
+        } catch (error) {
+          console.error("Error resetting form data:", error);
+        }
+      }
+
+      toastSuccess("Form reset to original values");
+
+      setTimeout(() => {
+        inputRefs.current["documentNumber"]?.focus();
+      }, 100);
     }
   };
 
-  const handlePrintInvoice = (invoiceData: Invoice) => {
-    try {
-      const html = PrintCommonLayout({
-        title: "Invoice Details",
-        data: [invoiceData as unknown as Record<string, unknown>],
-        excludeFields: ["id", "__v", "_id"],
-        fieldLabels: {
-          documentNumber: "Document Number",
-          invoiceNumber: "Invoice Number",
-          invoiceDate: "Invoice Date",
-          customer: "Customer",
-          trnNumber: "TRN Number",
-          paymentMode: "Payment Mode",
-          dueDays: "Due Days",
-          paymentDate: "Payment Date",
-          remarks: "Remarks",
-          salesman: "Salesman",
-          country: "Country",
-          state: "State",
-          city: "City",
-          isActive: "Active Status",
-          isDraft: "Draft Status",
-          isDeleted: "Deleted Status",
-          createdAt: "Created At",
-          updatedAt: "Updated At",
-          draftedAt: "Drafted At",
-          deletedAt: "Deleted At",
-        },
-      });
-      printHtmlContent(html);
-    } catch (error) {
-      console.log(error);
-      toastError("Something went wrong when printing");
-    }
-  };
+  const handlePrintInvoice = useCallback(
+    (invoiceData: any) => {
+      try {
+        const html = PrintCommonLayout({
+          title: `${detectedModule} Details`,
+          data: [invoiceData],
+          excludeFields: ["id", "__v", "_id"],
+          fieldLabels: {
+            documentNumber: "Document Number",
+            poNumber: "P.O Number",
+            poDate: "P.O Date",
+            supplierName: "Supplier Name",
+            paymentMode: "Payment Mode",
+            dueDays: "Due Days",
+            paymentDate: "Payment Date",
+            supplierNumber: "Supplier Number",
+            supplierStatus: "Supplier Status",
+            supplierGroup: "Supplier Group",
+            remarks: "Remarks",
+            country: "Country",
+            state: "State",
+            city: "City",
+            isActive: "Active Status",
+            isDraft: labels.draft,
+            isDeleted: "Deleted Status",
+            createdAt: "Created At",
+            updatedAt: "Updated At",
+            draftedAt: "Drafted At",
+            deletedAt: "Deleted At",
+          },
+        });
+        printHtmlContent(html);
+      } catch (error) {
+        console.log(error);
+        toastError("Something went wrong when printing");
+      }
+    },
+    [detectedModule, labels]
+  );
 
   const handleSwitchChange = (checked: boolean) => {
     setPrintEnabled(checked);
     if (checked && formData) {
-      // Small delay to allow switch animation to complete
       setTimeout(() => handlePrintInvoice(formData), 100);
     }
   };
@@ -619,33 +554,25 @@ export default function EditPage({ isEdit = true }: Props) {
   const handlePDFSwitchChange = (pdfChecked: boolean) => {
     setPdfChecked(pdfChecked);
     if (pdfChecked) {
-      // Small delay to allow switch animation to complete
       setTimeout(() => handleExportPDF(), 100);
     }
   };
 
   const handleExportPDF = async () => {
-    console.log("Export PDF clicked");
     try {
-      console.log("orderData on pdf click", formData);
       const blob = await pdf(
         <GenericPDF
           data={[formData]}
-          title="Order Details"
-          subtitle="Order Information"
+          title={`${detectedModule} Details`}
+          subtitle={`${detectedModule} Information`}
         />
       ).toBlob();
 
-      console.log("blob", blob);
-
       const url = URL.createObjectURL(blob);
-      console.log("url", url);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "order-details.pdf";
+      a.download = `${detectedModule}-${formData.documentNumber}.pdf`;
       a.click();
-      console.log("a", a);
-      console.log("url", url);
       URL.revokeObjectURL(url);
     } catch (error) {
       console.log(error);
@@ -653,458 +580,624 @@ export default function EditPage({ isEdit = true }: Props) {
     }
   };
 
+  const [popoverOptions, setPopoverOptions] = useState([
+    {
+      label: "Create",
+      icon: <Plus className="w-5 h-5 text-green-500" />,
+      onClick: () => {
+        navigate(`/${detectedModule}/create`);
+      },
+      show: canCreate,
+    },
+    {
+      label: "View",
+      icon: <Eye className="w-5 h-5 text-green-600" />,
+      onClick: () => {
+        navigate(`/${detectedModule}/view`);
+      },
+      show: canView,
+    },
+  ]);
+
+  useEffect(() => {
+    setPopoverOptions((prevOptions) => {
+      const filteredOptions = prevOptions.filter(
+        (opt) => opt.label !== "Draft"
+      );
+
+      if (!formData.isDraft) {
+        return [
+          ...filteredOptions,
+          {
+            label: labels.draft || "Draft",
+            icon: <Check className="text-green-500" />,
+            onClick: () => {
+              setFormData((prev) => ({
+                ...prev,
+                isDraft: true,
+              }));
+              toastRestore(`${detectedModule} saved as draft successfully`);
+            },
+            show: canCreate,
+          },
+        ];
+      }
+      return filteredOptions;
+    });
+  }, [formData.isDraft, labels, canCreate, detectedModule]);
+
+  // Translation handlers
+  const handleTranslationSave = useCallback((data: any) => {
+    setTranslations(data);
+    console.log("Invoice translations saved:", data);
+  }, []);
+
+  // Create minimize handler
+  const handleMinimize = useCallback((): InvoiceModuleData => {
+    return {
+      ...formData,
+      hasChanges: true,
+      scrollPosition: window.scrollY,
+    };
+  }, [formData]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg">Loading invoice data...</div>
+      </div>
+    );
+  }
+
   return (
     <>
-      <PageLayout
-        title={isEdit ? t("form.editingSalesInvoice") : t("form.creatingSalesInvoice")}
+      <MinimizablePageLayout
+        moduleId={moduleId}
+        moduleName={`Edit ${detectedModule}`}
+        moduleRoute={`/${detectedModule}/edit/${id || "new"}`}
+        onMinimize={handleMinimize}
+        title={`Editing ${detectedModule}`}
+        listPath={detectedModule}
+        popoverOptions={popoverOptions}
         videoSrc={video}
-        videoHeader="Rapid ERP Video"
-        listPath="/sales-invoice"
-        popoverOptions={[
-          {
-            label: isEdit ? "Create" : "Edit",
-            onClick: () => {
-              // Handle navigation based on current state
-              if (isEdit) {
-                // Navigate to create page
-                navigate("/sales-invoice/create");
-              } else {
-                // Navigate to edit page
-                navigate("/sales-invoice/edit/undefined");
-              }
-            },
-          },
-          {
-            label: "View",
-            onClick: () => {
-              navigate("/sales-invoice/view");
-            },
-          },
-        ]}
+        videoHeader="Tutorial video"
         keepChanges={keepCreating}
         onKeepChangesChange={setKeepCreating}
         pdfChecked={pdfChecked}
-        onPdfToggle={handlePDFSwitchChange}
+        onPdfToggle={canPdf ? handlePDFSwitchChange : undefined}
         printEnabled={printEnabled}
-        onPrintToggle={handleSwitchChange}
+        onPrintToggle={canPrint ? handleSwitchChange : undefined}
+        activePage="edit"
+        module={detectedModule}
         additionalFooterButtons={
-          <div className="flex gap-4">
+          <div className="flex gap-4 max-[435px]:gap-2">
             <Button
               variant="outline"
-              className="gap-2 text-primary rounded-full border-primary"
-              onClick={handleReset}
+              className="gap-2 hover:bg-primary/90 bg-white rounded-full border-primary w-28 max-[435px]:w-20 font-semibold! text-primary!"
+              onClick={handleResetClick}
             >
-              {t("button.reset")}
+              {labels.reset}
             </Button>
             <Button
               variant="outline"
-              className="gap-2 text-primary rounded-full border-primary"
-              onClick={() => formRef.current?.requestSubmit()}
+              className="gap-2 hover:bg-primary/90 bg-white rounded-full border-primary w-28 max-[435px]:w-20 font-semibold! text-primary!"
+              onClick={handleSubmit}
             >
-              {t("button.submit")}
+              {labels.submit}
             </Button>
           </div>
         }
         className="w-full"
       >
-        <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
-          {/* First Row: Document Number, Invoice Number, Invoice Date, Customer */}
-          <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">
-                Document Number <span className="text-red-500">*</span>
-              </h3>
-              <EditableInput
-                ref={documentNumberInputRef}
-                id="documentNumber"
-                name="documentNumber"
-                className="w-full h-10 bg-gray-100"
-                value={formData.documentNumber}
-                onChange={handleChange}
-                onNext={() => focusNextInput("documentNumber")}
-                onCancel={() => {}}
-                tooltipText="Auto-generated document number"
-                readOnly
-              />
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">Invoice Number</h3>
-              <EditableInput
-                ref={invoiceNumberInputRef}
-                id="invoiceNumber"
-                name="invoiceNumber"
-                className="w-full h-10"
-                value={formData.invoiceNumber}
-                onChange={handleChange}
-                onNext={() => focusNextInput("invoiceNumber")}
-                onCancel={() => {}}
-                tooltipText="Please enter invoice number"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">
-                Invoice Date <span className="text-red-500">*</span>
-              </h3>
-              <EditableInput
-                ref={invoiceDateInputRef}
-                id="invoiceDate"
-                name="invoiceDate"
-                type="date"
-                className="w-full h-10"
-                value={formData.invoiceDate.toString()}
-                onChange={handleChange}
-                onNext={() => focusNextInput("invoiceDate")}
-                onCancel={() => {}}
-                tooltipText="Please select invoice date"
-                required
-              />
-            </div>
-
-            <div className="space-y-2 col-span-2">
-              <div className="flex justify-between items-center mb-1">
-                <h3 className="font-medium">
-                  Customer <span className="text-red-500">*</span>
-                </h3>
-                <MoreVertical
-                  className="h-4 w-4 cursor-pointer"
-                  onClick={() => setIsOptionModalOpen(true)}
-                />
-              </div>
-              <Autocomplete
-                data={MOCK_CUSTOMERS.map((c) => c.name)}
-                value={formData.customer}
-                onChange={(value) => {
-                  // Create a fake event to pass to our handler
-                  const fakeEvent = {
-                    target: {
-                      value: value || "",
-                      name: "customer",
-                    },
-                  } as React.ChangeEvent<HTMLInputElement>;
-                  handleCustomerNameChange(fakeEvent);
-                }}
-                placeholder="Type customer name..."
-                className="w-full"
-                styles={{
-                  input: {
-                    "&:focus": {
+        <div dir={isRTL ? "rtl" : "ltr"}>
+          <form
+            ref={formRef}
+            key={formKey}
+            onSubmit={handleSubmit}
+            className="space-y-6"
+          >
+            {/* Dynamic form fields in responsive grid */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 my-8">
+              {/* Document Number */}
+              <div className="md:col-span-3 space-y-2">
+                <Autocomplete
+                  ref={(el: any) => setRef("documentNumber")(el)}
+                  id="documentNumber"
+                  name="documentNumber"
+                  allowCustomInput={false}
+                  options={invoiceOptions.map((opt) => opt.label)}
+                  value={
+                    formData.documentNumber
+                      ? `${formData.documentNumber} - ${formData.supplierName}`
+                      : ""
+                  }
+                  onValueChange={handleDocumentNumberChange}
+                  isShowTemplateIcon={false}
+                  onEnterPress={() => focusNextInput("poNumber")}
+                  placeholder=""
+                  labelText="Document Number"
+                  className="relative"
+                  styles={{
+                    input: {
                       borderColor: "var(--primary)",
+                      "&:focus": {
+                        borderColor: "var(--primary)",
+                      },
                     },
-                    height: "40px",
-                  },
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    focusNextInput("customer");
-                  }
-                }}
-                limit={10}
-                maxDropdownHeight={200}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">TRN Number</h3>
-              <EditableInput
-                ref={trnNumberInputRef}
-                id="trnNumber"
-                name="trnNumber"
-                className={`w-full h-10 ${
-                  isCustomerFieldsDisabled()
-                    ? "bg-gray-200 cursor-not-allowed"
-                    : "bg-gray-100"
-                }`}
-                value={formData.trnNumber}
-                onChange={handleChange}
-                onNext={() => focusNextInput("trnNumber")}
-                onCancel={() => {}}
-                tooltipText={
-                  isCustomerFieldsDisabled()
-                    ? "Select customer first"
-                    : "TRN number"
-                }
-                readOnly={isCustomerFieldsDisabled() || isCustomerAutoFilled}
-                disabled={isCustomerFieldsDisabled()}
-              />
-            </div>
-          </div>
-
-          {/* Second Row: Payment Mode, Due Days, Payment Date, Country, State, City */}
-          <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">Payment Mode</h3>
-              <Autocomplete
-                data={PAYMENT_MODES}
-                value={formData.paymentMode}
-                onChange={(value) => {
-                  setFormData({ ...formData, paymentMode: value || "" });
-                }}
-                placeholder="Select payment mode..."
-                className="w-full"
-                styles={{
-                  input: {
-                    "&:focus": {
-                      borderColor: "var(--primary)",
-                    },
-                    height: "40px",
-                  },
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    focusNextInput("paymentMode");
-                  }
-                }}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">Due Days</h3>
-              <EditableInput
-                id="dueDays"
-                name="dueDays"
-                type="number"
-                className="w-full h-10"
-                value={formData.dueDays.toString()}
-                onChange={handleChange}
-                onNext={() => focusNextInput("dueDays")}
-                onCancel={() => {}}
-                tooltipText="Number of days until payment is due"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">Payment Date</h3>
-              <EditableInput
-                id="paymentDate"
-                name="paymentDate"
-                type="date"
-                className={`w-full h-10 ${
-                  isCustomerFieldsDisabled()
-                    ? "bg-gray-200 cursor-not-allowed"
-                    : isCustomerAutoFilled
-                    ? "bg-gray-100"
-                    : ""
-                }`}
-                value={formData.paymentDate.toString()}
-                onChange={handleChange}
-                onNext={() => focusNextInput("paymentDate")}
-                onCancel={() => {}}
-                tooltipText={
-                  isCustomerFieldsDisabled()
-                    ? "Select customer first"
-                    : "Payment date"
-                }
-                readOnly={isCustomerFieldsDisabled() || isCustomerAutoFilled}
-                disabled={isCustomerFieldsDisabled()}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">Country</h3>
-              <EditableInput
-                id="country"
-                name="country"
-                className={`w-full h-10 ${
-                  isCustomerFieldsDisabled()
-                    ? "bg-gray-200 cursor-not-allowed"
-                    : isCustomerAutoFilled
-                    ? "bg-gray-100"
-                    : ""
-                }`}
-                value={formData.country}
-                onChange={handleChange}
-                onNext={() => focusNextInput("country")}
-                onCancel={() => {}}
-                tooltipText={
-                  isCustomerFieldsDisabled()
-                    ? "Select customer first"
-                    : "Country"
-                }
-                readOnly={isCustomerFieldsDisabled() || isCustomerAutoFilled}
-                disabled={isCustomerFieldsDisabled()}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">State</h3>
-              <EditableInput
-                id="state"
-                name="state"
-                className={`w-full h-10 ${
-                  isCustomerFieldsDisabled()
-                    ? "bg-gray-200 cursor-not-allowed"
-                    : isCustomerAutoFilled
-                    ? "bg-gray-100"
-                    : ""
-                }`}
-                value={formData.state}
-                onChange={handleChange}
-                onNext={() => focusNextInput("state")}
-                onCancel={() => {}}
-                tooltipText={
-                  isCustomerFieldsDisabled() ? "Select customer first" : "State"
-                }
-                readOnly={isCustomerFieldsDisabled() || isCustomerAutoFilled}
-                disabled={isCustomerFieldsDisabled()}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">City</h3>
-              <EditableInput
-                id="city"
-                name="city"
-                className={`w-full h-10 ${
-                  isCustomerFieldsDisabled()
-                    ? "bg-gray-200 cursor-not-allowed"
-                    : isCustomerAutoFilled
-                    ? "bg-gray-100"
-                    : ""
-                }`}
-                value={formData.city}
-                onChange={handleChange}
-                onNext={() => focusNextInput("city")}
-                onCancel={() => {}}
-                tooltipText={
-                  isCustomerFieldsDisabled() ? "Select customer first" : "City"
-                }
-                readOnly={isCustomerFieldsDisabled() || isCustomerAutoFilled}
-                disabled={isCustomerFieldsDisabled()}
-              />
-            </div>
-          </div>
-
-          {/* Third Row: Remarks, Salesman */}
-          <div className="grid grid-cols-6 gap-4">
-            <div className="space-y-2 col-span-3">
-              <h3 className="font-medium mb-1">Remarks</h3>
-              <EditableInput
-                id="remarks"
-                name="remarks"
-                className="w-full h-10"
-                value={formData.remarks}
-                onChange={handleChange}
-                onNext={() => focusNextInput("remarks")}
-                onCancel={() => {}}
-                tooltipText="Additional remarks or notes"
-              />
-            </div>
-
-            <div className="space-y-2 col-span-3">
-              <h3 className="font-medium mb-1">Salesman</h3>
-              <EditableInput
-                id="salesman"
-                name="salesman"
-                className={`w-full h-10 ${
-                  isCustomerFieldsDisabled()
-                    ? "bg-gray-200 cursor-not-allowed"
-                    : isCustomerAutoFilled
-                    ? "bg-gray-100"
-                    : ""
-                }`}
-                value={formData.salesman}
-                onChange={handleChange}
-                onNext={() => focusNextInput("salesman")}
-                onCancel={() => {}}
-                tooltipText={
-                  isCustomerFieldsDisabled()
-                    ? "Select customer first"
-                    : "Salesman"
-                }
-                readOnly={isCustomerFieldsDisabled() || isCustomerAutoFilled}
-                disabled={isCustomerFieldsDisabled()}
-              />
-            </div>
-          </div>
-
-          {/* Fourth Row: Active, Draft, Delete */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">{t("common.active")}</h3>
-              <div className="h-10 flex items-center">
-                <Switch
-                  ref={activeSwitchRef}
-                  id="isActive"
-                  name="isActive"
-                  className=""
-                  checked={formData.isActive}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, isActive: checked })
-                  }
-                  onKeyDown={(e) => handleSwitchKeyDown(e, "active")}
+                  }}
+                  tooltipText="Select document number to edit"
                 />
               </div>
-            </div>
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">{t("common.draft")}</h3>
-              <div className="h-10 flex items-center">
-                <Switch
-                  ref={draftSwitchRef}
-                  id="isDraft"
-                  name="isDraft"
-                  className=""
-                  checked={formData.isDraft}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, isDraft: checked })
-                  }
-                  onKeyDown={(e) => handleSwitchKeyDown(e, "draft")}
+
+              {/* P.O Number */}
+              <div className="md:col-span-3 space-y-2">
+                <EditableInput
+                  setRef={setRef("poNumber")}
+                  id="poNumber"
+                  name="poNumber"
+                  value={formData.poNumber}
+                  onChange={handleChange}
+                  onNext={() => focusNextInput("poDate")}
+                  onCancel={() => setFormData({ ...formData, poNumber: "" })}
+                  labelText="P.O Number"
+                  tooltipText="Purchase order number"
                 />
               </div>
-            </div>
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">
-                {formData.isDeleted ? t("button.restore") : t("button.delete")}
-              </h3>
-              <div className="h-10 flex items-center">
-                <Button
-                  ref={deleteButtonRef}
-                  variant="ghost"
-                  size="icon"
-                  onClick={() =>
+
+              {/* P.O Date */}
+              <div className="md:col-span-3 space-y-2">
+                <EnglishDate
+                  isDate={true}
+                  calendarType="gregorian"
+                  userLang="en"
+                  rtl={false}
+                  isShowCalender={true}
+                  onChange={(date: string) =>
                     setFormData({
                       ...formData,
-                      isDeleted: !formData.isDeleted,
+                      poDate: date,
+                      updatedAt: new Date(),
                     })
                   }
-                  onKeyDown={(e) => handleSwitchKeyDown(e, "delete")}
-                >
-                  {formData.isDeleted ? (
-                    <Undo2 className="text-green-500" />
-                  ) : (
-                    <Trash2 className="text-red-500" />
-                  )}
-                </Button>
+                  value={formData.poDate}
+                  disabled={false}
+                  labelText="P.O Date"
+                  className={cn("transition-all", "ring-1 ring-primary")}
+                  setStartNextFocus={() => focusNextInput("supplierName")}
+                />
+              </div>
+
+              {/* Supplier Name */}
+              <div className="md:col-span-3 space-y-2">
+                <Autocomplete
+                  ref={(el: any) => setRef("supplierName")(el)}
+                  id="supplierName"
+                  name="supplierName"
+                  allowCustomInput={true}
+                  options={memoizedSuppliers.map((s) => s.name)}
+                  value={formData.supplierName}
+                  onValueChange={handleSupplierNameChange}
+                  onEnterPress={() => focusNextInput("paymentMode")}
+                  placeholder=""
+                  labelText="Supplier Name"
+                  className="relative"
+                  tooltipText="Select or type supplier name"
+                  userLang={isRTL ? "ar" : "en"}
+                  styles={{
+                    input: {
+                      borderColor: "var(--primary)",
+                      "&:focus": {
+                        borderColor: "var(--primary)",
+                      },
+                    },
+                  }}
+                  setShowTemplates={setShowTemplates}
+                  showTemplates={showTemplates}
+                />
               </div>
             </div>
-          </div>
 
-          {/* Sixth Row: Dates */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <h3 className="font-medium mb-1">Created</h3>
-              <p>{getRelativeTime(formData.createdAt)}</p>
-            </div>
-            <div>
-              <h3 className="font-medium mb-1">Updated</h3>
-              <p>{getRelativeTime(formData.updatedAt)}</p>
-            </div>
-            <div>
-              <h3 className="font-medium mb-1">Drafted</h3>
-              <p>{getRelativeTime(formData.draftedAt)}</p>
-            </div>
-            <div>
-              <h3 className="font-medium mb-1">Deleted</h3>
-              <p>{getRelativeTime(formData.deletedAt)}</p>
-            </div>
-          </div>
+            {/* Second Row: Payment details and supplier info */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 my-8">
+              {/* Payment Mode */}
+              <div className="md:col-span-3 space-y-2">
+                <Autocomplete
+                  ref={(el: any) => setRef("paymentMode")(el)}
+                  id="paymentMode"
+                  name="paymentMode"
+                  allowCustomInput={true}
+                  options={memoizedPaymentModes}
+                  value={formData.paymentMode}
+                  onValueChange={(value: string | null) =>
+                    setFormData({
+                      ...formData,
+                      paymentMode: value || "",
+                      updatedAt: new Date(),
+                    })
+                  }
+                  onEnterPress={() => focusNextInput("dueDays")}
+                  placeholder=""
+                  labelText="Payment Mode"
+                  className="relative"
+                  tooltipText="Select payment mode"
+                  userLang={isRTL ? "ar" : "en"}
+                  styles={{
+                    input: {
+                      borderColor: "var(--primary)",
+                      "&:focus": {
+                        borderColor: "var(--primary)",
+                      },
+                    },
+                  }}
+                />
+              </div>
 
-          {/* Edit Dynamic Input Table */}
-          <DynamicInputTableList />
-        </form>
-      </PageLayout>
+              {/* Due Days */}
+              <div className="md:col-span-3 space-y-2">
+                <EditableInput
+                  setRef={setRef("dueDays")}
+                  id="dueDays"
+                  name="dueDays"
+                  type="number"
+                  value={formData.dueDays.toString()}
+                  onChange={handleChange}
+                  onNext={() => focusNextInput("paymentDate")}
+                  onCancel={() => setFormData({ ...formData, dueDays: 0 })}
+                  labelText="Due Days"
+                  tooltipText="Number of days until payment is due"
+                />
+              </div>
+
+              {/* Payment Date */}
+              <div className="md:col-span-3 space-y-2">
+                <EnglishDate
+                  isDate={true}
+                  calendarType="gregorian"
+                  userLang="en"
+                  rtl={false}
+                  isShowCalender={true}
+                  onChange={(date: string) =>
+                    setFormData({
+                      ...formData,
+                      paymentDate: date,
+                      updatedAt: new Date(),
+                    })
+                  }
+                  value={formData.paymentDate}
+                  disabled={isSupplierFieldsDisabled()}
+                  labelText="Payment Date"
+                  className={cn(
+                    "transition-all",
+                    isSupplierFieldsDisabled()
+                      ? "bg-gray-200 cursor-not-allowed"
+                      : isSupplierAutoFilled
+                      ? "bg-gray-100 ring-1 ring-primary"
+                      : "ring-1 ring-primary"
+                  )}
+                  setStartNextFocus={() => focusNextInput("supplierNumber")}
+                />
+              </div>
+
+              {/* Supplier Number */}
+              <div className="md:col-span-3 space-y-2">
+                <EditableInput
+                  setRef={setRef("supplierNumber")}
+                  id="supplierNumber"
+                  name="supplierNumber"
+                  value={formData.supplierNumber}
+                  onChange={handleChange}
+                  onNext={() => focusNextInput("supplierStatus")}
+                  onCancel={() =>
+                    setFormData({ ...formData, supplierNumber: "" })
+                  }
+                  labelText="Supplier Number"
+                  tooltipText={
+                    isSupplierFieldsDisabled()
+                      ? "Select supplier first"
+                      : "Supplier number"
+                  }
+                  readOnly={isSupplierFieldsDisabled() || isSupplierAutoFilled}
+                  disabled={isSupplierFieldsDisabled()}
+                  className={
+                    isSupplierFieldsDisabled()
+                      ? "bg-gray-200 cursor-not-allowed"
+                      : isSupplierAutoFilled
+                      ? "bg-gray-100"
+                      : ""
+                  }
+                />
+              </div>
+            </div>
+
+            {/* Third Row: Supplier details and location */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 my-8">
+              {/* Supplier Status */}
+              <div className="md:col-span-3 space-y-2">
+                {isSupplierAutoFilled || isSupplierFieldsDisabled() ? (
+                  <EditableInput
+                    setRef={setRef("supplierStatus")}
+                    id="supplierStatus"
+                    name="supplierStatus"
+                    value={formData.supplierStatus}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("supplierGroup")}
+                    onCancel={() =>
+                      setFormData({ ...formData, supplierStatus: "" })
+                    }
+                    labelText="Supplier Status"
+                    tooltipText={
+                      isSupplierFieldsDisabled()
+                        ? "Select supplier first"
+                        : "Supplier status"
+                    }
+                    readOnly
+                    disabled={isSupplierFieldsDisabled()}
+                    className={
+                      isSupplierFieldsDisabled()
+                        ? "bg-gray-200 cursor-not-allowed"
+                        : "bg-gray-100"
+                    }
+                  />
+                ) : (
+                  <Autocomplete
+                    ref={(el: any) => setRef("supplierStatus")(el)}
+                    id="supplierStatus"
+                    name="supplierStatus"
+                    allowCustomInput={true}
+                    options={memoizedStatusOptions}
+                    value={formData.supplierStatus}
+                    onValueChange={(value: string | null) =>
+                      setFormData({
+                        ...formData,
+                        supplierStatus: value || "",
+                        updatedAt: new Date(),
+                      })
+                    }
+                    onEnterPress={() => focusNextInput("supplierGroup")}
+                    placeholder=""
+                    labelText="Supplier Status"
+                    className="relative"
+                    tooltipText="Select supplier status"
+                    userLang={isRTL ? "ar" : "en"}
+                    styles={{
+                      input: {
+                        borderColor: "var(--primary)",
+                        "&:focus": {
+                          borderColor: "var(--primary)",
+                        },
+                      },
+                    }}
+                    disabled={isSupplierFieldsDisabled()}
+                  />
+                )}
+              </div>
+
+              {/* Supplier Group */}
+              <div className="md:col-span-3 space-y-2">
+                <EditableInput
+                  setRef={setRef("supplierGroup")}
+                  id="supplierGroup"
+                  name="supplierGroup"
+                  value={formData.supplierGroup}
+                  onChange={handleChange}
+                  onNext={() => focusNextInput("remarks")}
+                  onCancel={() =>
+                    setFormData({ ...formData, supplierGroup: "" })
+                  }
+                  labelText="Supplier Group"
+                  tooltipText={
+                    isSupplierFieldsDisabled()
+                      ? "Select supplier first"
+                      : "Supplier group"
+                  }
+                  readOnly={isSupplierFieldsDisabled() || isSupplierAutoFilled}
+                  disabled={isSupplierFieldsDisabled()}
+                  className={
+                    isSupplierFieldsDisabled()
+                      ? "bg-gray-200 cursor-not-allowed"
+                      : isSupplierAutoFilled
+                      ? "bg-gray-100"
+                      : ""
+                  }
+                />
+              </div>
+
+              {/* Remarks */}
+              <div className="md:col-span-3 space-y-2">
+                <EditableInput
+                  setRef={setRef("remarks")}
+                  id="remarks"
+                  name="remarks"
+                  value={formData.remarks}
+                  onChange={handleChange}
+                  onNext={() => focusNextInput("country")}
+                  onCancel={() => setFormData({ ...formData, remarks: "" })}
+                  labelText="Remarks"
+                  tooltipText="Additional remarks or notes"
+                />
+              </div>
+
+              {/* Country */}
+              <div className="md:col-span-3 space-y-2">
+                <EditableInput
+                  setRef={setRef("country")}
+                  id="country"
+                  name="country"
+                  value={formData.country}
+                  onChange={handleChange}
+                  onNext={() => focusNextInput("state")}
+                  onCancel={() => setFormData({ ...formData, country: "" })}
+                  labelText="Country"
+                  tooltipText={
+                    isSupplierFieldsDisabled()
+                      ? "Select supplier first"
+                      : "Country"
+                  }
+                  readOnly={isSupplierFieldsDisabled() || isSupplierAutoFilled}
+                  disabled={isSupplierFieldsDisabled()}
+                  className={
+                    isSupplierFieldsDisabled()
+                      ? "bg-gray-200 cursor-not-allowed"
+                      : isSupplierAutoFilled
+                      ? "bg-gray-100"
+                      : ""
+                  }
+                />
+              </div>
+            </div>
+
+            {/* Fourth Row: Location and actions */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 my-8">
+              {/* State */}
+              <div className="md:col-span-3 space-y-2">
+                <EditableInput
+                  setRef={setRef("state")}
+                  id="state"
+                  name="state"
+                  value={formData.state}
+                  onChange={handleChange}
+                  onNext={() => focusNextInput("city")}
+                  onCancel={() => setFormData({ ...formData, state: "" })}
+                  labelText="State"
+                  tooltipText={
+                    isSupplierFieldsDisabled()
+                      ? "Select supplier first"
+                      : "State"
+                  }
+                  readOnly={isSupplierFieldsDisabled() || isSupplierAutoFilled}
+                  disabled={isSupplierFieldsDisabled()}
+                  className={
+                    isSupplierFieldsDisabled()
+                      ? "bg-gray-200 cursor-not-allowed"
+                      : isSupplierAutoFilled
+                      ? "bg-gray-100"
+                      : ""
+                  }
+                />
+              </div>
+
+              {/* City */}
+              <div className="md:col-span-3 space-y-2">
+                <EditableInput
+                  setRef={setRef("city")}
+                  id="city"
+                  name="city"
+                  value={formData.city}
+                  onChange={handleChange}
+                  onNext={() => focusNextInput("status")}
+                  onCancel={() => setFormData({ ...formData, city: "" })}
+                  labelText="City"
+                  tooltipText={
+                    isSupplierFieldsDisabled()
+                      ? "Select supplier first"
+                      : "City"
+                  }
+                  readOnly={isSupplierFieldsDisabled() || isSupplierAutoFilled}
+                  disabled={isSupplierFieldsDisabled()}
+                  className={
+                    isSupplierFieldsDisabled()
+                      ? "bg-gray-200 cursor-not-allowed"
+                      : isSupplierAutoFilled
+                      ? "bg-gray-100"
+                      : ""
+                  }
+                />
+              </div>
+
+              {/* Status */}
+              <div className="md:col-span-3 space-y-2 relative">
+                <SwitchSelect
+                  ref={(el: any) => setRef("status")(el)}
+                  id="status"
+                  name="status"
+                  labelText="Status"
+                  multiSelect={false}
+                  options={[
+                    {
+                      label: "Active",
+                      value: "Active",
+                      date: "Set active",
+                    },
+                    { label: "Draft", value: "Draft", date: "Set draft" },
+                  ]}
+                  value={statusState}
+                  onValueChange={(value: string | string[]) => {
+                    const stringValue = Array.isArray(value)
+                      ? value[0] || ""
+                      : value;
+                    setStatusState(stringValue);
+
+                    setFormData((prev) => ({
+                      ...prev,
+                      isDraft: stringValue === "Draft",
+                      updatedAt: new Date(),
+                    }));
+                  }}
+                  placeholder=""
+                  styles={{
+                    input: {
+                      borderColor: "var(--primary)",
+                      "&:focus": {
+                        borderColor: "var(--primary)",
+                      },
+                    },
+                  }}
+                  tooltipText="Invoice status"
+                />
+              </div>
+
+              {/* Actions */}
+              <div className="md:col-span-3 space-y-2 relative">
+                <ActionsAutocomplete
+                  value={selectedAction}
+                  onValueChange={setSelectedAction}
+                  actions={[
+                    {
+                      action: "Created",
+                      user: "Karim",
+                      role: "Super User",
+                      date: "06 Aug 2025",
+                      value: "created",
+                    },
+                    {
+                      action: "Updated",
+                      user: "Rahim",
+                      role: "Admin",
+                      date: "08 Aug 2025",
+                      value: "updated",
+                    },
+                    {
+                      action: "Drafted",
+                      user: "Karim",
+                      role: "Super User",
+                      date: "07 Aug 2025",
+                      value: "drafted",
+                    },
+                    {
+                      action: "Deleted",
+                      user: "Abdullah",
+                      role: "Super Admin",
+                      date: "09 Aug 2025",
+                      value: "deleted",
+                    },
+                  ]}
+                  labelText="Actions"
+                />
+              </div>
+            </div>
+          </form>
+        </div>
+      </MinimizablePageLayout>
+
+      <ResetFormModal
+        opened={isResetModalOpen}
+        onClose={() => setIsResetModalOpen(false)}
+        onConfirm={handleReset}
+        title={labels.resetForm}
+        message={labels.resetFormMessage}
+        confirmText={labels.resetFormConfirm}
+        cancelText={labels.cancel}
+      />
 
       {/* Language Translator Modal */}
       <LanguageTranslatorModal
@@ -1112,11 +1205,61 @@ export default function EditPage({ isEdit = true }: Props) {
         onClose={() => setIsOptionModalOpen(false)}
         title="Invoice Language Translator"
         initialData={translations}
-        onSave={(data) => {
-          setTranslations(data);
-          console.log("Invoice translations saved:", data);
-        }}
+        onSave={handleTranslationSave}
       />
+
+      {/* Templates Modal */}
+      <Modal
+        opened={showTemplates}
+        onClose={() => setShowTemplates(false)}
+        size="xl"
+        radius={20}
+        overlayProps={{ backgroundOpacity: 0.25, blur: 1 }}
+        withCloseButton={false}
+        centered
+      >
+        <TemplateContent
+          headers={[
+            { key: "documentNumber", label: "Document Number" },
+            { key: "supplierName", label: "Supplier Name" },
+            { key: "paymentMode", label: "Payment Mode" },
+            { key: "dueDays", label: "Due Days" },
+          ]}
+          data={[
+            {
+              documentNumber: "INV001",
+              supplierName: "AL AHAD CURTAINS TEX & FURNITURE TR.LLC",
+              paymentMode: "Bank Transfer",
+              dueDays: "30 days",
+            },
+            {
+              documentNumber: "INV002",
+              supplierName: "SimplyNayela",
+              paymentMode: "Credit Card",
+              dueDays: "15 days",
+            },
+            {
+              documentNumber: "INV003",
+              supplierName: "BROWN HUT AUTO ACCESSORISE TR L.L.C",
+              paymentMode: "Cash",
+              dueDays: "7 days",
+            },
+          ]}
+          onSelect={(selectedData: any) => {
+            console.log("Selected:", selectedData);
+            setShowTemplates(false);
+            setFormData((prev) => ({
+              ...prev,
+              supplierName: selectedData.supplierName,
+              paymentMode: selectedData.paymentMode,
+              dueDays: parseInt(selectedData.dueDays.replace(" days", "")),
+              updatedAt: new Date(),
+            }));
+            handleSupplierNameChange(selectedData.supplierName);
+          }}
+          onClose={() => setShowTemplates(false)}
+        />
+      </Modal>
     </>
   );
 }

@@ -6,7 +6,7 @@ import { FixedSizeList as List } from "react-window";
 import VirtualizedInputRow from "./VirtualizedInputRow";
 import { useTranslation } from "react-i18next";
 import { Plus } from "lucide-react";
-import AddItemModal from "../AddItemModal";
+import AddItemModal from "./AddItemModal";
 
 export type FormValuesType = {
   SN: number;
@@ -334,14 +334,14 @@ const DynamicInputTableList = ({ isEdit = false }: Props) => {
       <div className="relative">
         <Button
           variant="filled"
-          className="my-4 h-[50px]"
+          className="my-4 h-[50px] rounded-full! bg-sky-500! hover:bg-sky-400! shadow!"
           onClick={formRows.length > 0 ? handleAddRowAndFocus : handleAddRow}
         >
           {t("common.addRow")}
         </Button>
 
         {/* Single scroll container for both header and rows */}
-        <div className="overflow-auto border rounded-lg h-[250px]">
+        <div className="overflow-auto border rounded-lg h-[250px] grid-scroll">
           {/* Sticky header */}
           <div
             className="grid sticky top-0 z-20 h-[50px] bg-gray-100 dark:bg-gray-900 gap-[1px]"
@@ -359,26 +359,25 @@ const DynamicInputTableList = ({ isEdit = false }: Props) => {
                 className="text-sm font-semibold items-center justify-center flex border-r border-gray-300 dark:border-gray-600 last:border-r-0 px-2"
                 key={item.id}
               >
-                {/* Check if this is the Item column and add the button */}
-                {item.label.toLowerCase() === "item" ? (
-                  <div className="flex items-center justify-between w-full">
-                    <span>{item.label}</span>
+                {/* Check if this is the Item Name column and add the button */}
+                {item.label.toLowerCase() === "item name" ? (
+                  <div className="flex items-center justify-between w-full px-1">
+                    <span className="text-xs font-semibold truncate">
+                      {item.label}
+                    </span>
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
                       onClick={() => setIsAddItemModalOpen(true)}
-                      className="h-6 w-6 p-0 hover:bg-blue-100 dark:hover:bg-blue-900 rounded-full ml-2"
+                      className="h-5 w-5 p-0 bg-sky-500! rounded-full! hover:bg-sky-400! ml-1 shadow! flex-shrink-0"
                       title="Create Item"
                     >
-                      <Plus
-                        size={12}
-                        className="text-blue-600 dark:text-blue-400"
-                      />
+                      <Plus size={12} className="text-blue-50 font-bold!" />
                     </Button>
                   </div>
                 ) : (
-                  <span>{item.label}</span>
+                  <span className="text-xs font-semibold">{item.label}</span>
                 )}
               </div>
             ))}
@@ -412,7 +411,7 @@ const DynamicInputTableList = ({ isEdit = false }: Props) => {
 
         {/* Total Summary */}
         <div
-          className="grid h-[50px] items-center gap-2 p-4 bg-gray-50 dark:bg-gray-800 border-t"
+          className="grid items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 border-t mt-4 rounded-lg"
           style={{
             gridTemplateColumns: "1fr auto 1fr 1fr 1fr",
             minWidth: "1300px",
@@ -432,7 +431,7 @@ const DynamicInputTableList = ({ isEdit = false }: Props) => {
             </span>
           </div>
 
-          <div className="flex items-center gap-2 text-sm bg-white dark:bg-gray-700 p-2 rounded border">
+          <div className="flex items-center gap-2 text-sm bg-white dark:bg-gray-700 p-2 rounded-full border">
             <span className="font-medium">Discount:</span>
             <select
               name="discount_type"
@@ -441,7 +440,7 @@ const DynamicInputTableList = ({ isEdit = false }: Props) => {
               onChange={(e) =>
                 setDiscountType(e.target.value as "amount" | "percentage")
               }
-              className="border rounded p-1 text-xs min-w-[40px]"
+              className="border rounded-full p-1 text-xs min-w-[40px]"
             >
               <option value="amount">$</option>
               <option value="percentage">%</option>
@@ -450,7 +449,7 @@ const DynamicInputTableList = ({ isEdit = false }: Props) => {
               type="number"
               value={discount}
               onChange={(e) => setDiscount(Number(e.target.value) || 0)}
-              className="w-20 border rounded p-1 text-xs"
+              className="w-20 border rounded-full p-1 text-xs"
               min="0"
               step={discountType === "percentage" ? "0.01" : "1"}
               max={discountType === "percentage" ? "100" : undefined}
@@ -492,7 +491,7 @@ const DynamicInputTableList = ({ isEdit = false }: Props) => {
                     {vatAmount.toFixed(2)} SAR
                   </span>
                 </div>
-                <div className="text-sm font-bold bg-blue-100 dark:bg-blue-900 p-2 rounded">
+                <div className="text-sm font-bold bg-blue-100 dark:bg-blue-900 p-2 rounded-full">
                   Net Total:{" "}
                   <span className="text-blue-800 dark:text-blue-200">
                     {netTotal.toFixed(2)} SAR

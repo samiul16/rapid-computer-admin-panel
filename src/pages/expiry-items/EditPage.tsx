@@ -1,350 +1,158 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useRef, useEffect } from "react";
-import { useTranslation } from "react-i18next";
-import { Trash2, Undo2, CalendarIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
-import EditableInput, {
-  type EditableInputRef,
-} from "@/components/common/EditableInput";
-import { Autocomplete } from "@mantine/core";
 import video from "@/assets/videos/test.mp4";
+import EditableInput from "@/components/common/EditableInput";
 import GenericPDF from "@/components/common/pdf";
-import { printHtmlContent } from "@/lib/printHtmlContent";
-import { toastError, toastSuccess } from "@/lib/toast";
-import { pdf } from "@react-pdf/renderer";
-import PageLayout from "@/components/common/PageLayout";
-import LanguageTranslatorModal from "@/components/common/LanguageTranslatorModel";
-import { useNavigate, useParams } from "react-router-dom";
+import { ResetFormModal } from "@/components/common/ResetFormModal";
+import { Button } from "@/components/ui/button";
 import { PrintCommonLayout } from "@/lib/printContents/PrintCommonLayout";
+import { printHtmlContent } from "@/lib/printHtmlContent";
+import { toastError, toastRestore, toastSuccess } from "@/lib/toast";
+import { pdf } from "@react-pdf/renderer";
+import { Check, Eye, Plus } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useColorsPermissions, usePermission } from "@/hooks/usePermissions";
+// import { useLanguageLabels } from "@/hooks/useLanguageLabels";
+import { useAppSelector } from "@/store/hooks";
+import MinimizablePageLayout from "@/components/MinimizablePageLayout";
+import { useMinimizedModuleData } from "@/hooks/useMinimizedModuleData";
+import { SwitchSelect } from "@/components/common/SwitchAutoComplete";
+import { ActionsAutocomplete } from "@/components/common/ActionsAutocomplete";
 import DynamicInputTableList from "./dynamic-input-table/DynamicInputTableList";
 
-// Define ExpiryItem interface
-interface ExpiryItem {
-  id: string;
+type ExpiryItemData = {
   itemName: string;
   batchNumber: string;
-  expiryDate: Date | string;
+  expiryDate: Date | null;
   quantity: number;
   unit: string;
   location: string;
   category: string;
   supplier: string;
-  daysUntilExpiry: number;
-  status: "Expired" | "Near Expiry" | "Warning" | "Good";
-  isActive: boolean;
+  status: "Active" | "Inactive" | "Draft" | "Deleted";
   isDefault: boolean;
+  isActive: boolean;
   isDraft: boolean;
+  isDeleted: boolean;
   createdAt: Date | null;
   draftedAt: Date | null;
   updatedAt: Date | null;
   deletedAt: Date | null;
-  isDeleted: boolean;
-}
-
-// Mock data
-const MOCK_LOCATIONS = [
-  "Main Branch - Dairy Section",
-  "North Branch - Refrigerated",
-  "South Branch - Bakery",
-  "East Branch - Meat Section",
-  "West Branch - Canned Goods",
-  "Central Branch - Seafood",
-  "Downtown Branch - Vegetables",
-  "Suburban Branch - Condiments",
-  "Uptown Branch - Fruits",
-  "Riverside Branch - Cheese",
-  "Hillside Branch - Frozen",
-  "Lakeside Branch - Vegetables",
-  "Garden Branch - Natural Products",
-  "Plaza Branch - Dairy",
-  "Metro Branch - Deli",
-  "Business District - Bakery",
-];
-
-const MOCK_CATEGORIES = [
-  "Dairy Products",
-  "Fresh Vegetables",
-  "Bakery Items",
-  "Meat & Poultry",
-  "Canned Foods",
-  "Seafood",
-  "Fresh Fruits",
-  "Frozen Foods",
-  "Sauces & Condiments",
-  "Deli Meats",
-  "Breakfast Cereals",
-  "Natural Sweeteners",
-];
-
-const MOCK_SUPPLIERS = [
-  "Fresh Dairy Co.",
-  "Organic Foods Ltd.",
-  "Golden Bakery",
-  "Premium Meats",
-  "Garden Fresh Foods",
-  "Ocean Fresh",
-  "Green Fields Farm",
-  "Italian Delights",
-  "Berry Farm Co.",
-  "Mediterranean Foods",
-  "Quick Meals Inc.",
-  "Crisp Greens Farm",
-  "Pure Honey Co.",
-  "Artisan Cheese",
-  "Gourmet Deli",
-  "Artisan Bakehouse",
-];
-
-const MOCK_UNITS = [
-  "bottles",
-  "cups",
-  "loaves",
-  "kg",
-  "cans",
-  "heads",
-  "jars",
-  "balls",
-  "packages",
-  "boxes",
-  "pieces",
-  "bags",
-  "punnets",
-  "blocks",
-];
-
-// Calculate days until expiry
-const calculateDaysUntilExpiry = (expiryDate: Date | string): number => {
-  const expiry = new Date(expiryDate);
-  const today = new Date();
-  const diffTime = expiry.getTime() - today.getTime();
-  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 };
 
-// Calculate status based on days until expiry
-const calculateStatus = (
-  daysUntilExpiry: number
-): "Expired" | "Near Expiry" | "Warning" | "Good" => {
-  if (daysUntilExpiry < 0) return "Expired";
-  if (daysUntilExpiry <= 2) return "Near Expiry";
-  if (daysUntilExpiry <= 7) return "Warning";
-  return "Good";
+type ExpiryItemModuleData = {
+  formData: ExpiryItemData;
+  hasChanges: boolean;
+  scrollPosition: number;
 };
-
-// Mock expiry items data for selection
-const MOCK_EXPIRY_ITEMS: ExpiryItem[] = [
-  {
-    id: "1",
-    itemName: "Fresh Milk 1L",
-    batchNumber: "MLK001",
-    expiryDate: new Date("2024-02-15"),
-    quantity: 24,
-    unit: "bottles",
-    location: "Main Branch - Dairy Section",
-    category: "Dairy Products",
-    supplier: "Fresh Dairy Co.",
-    daysUntilExpiry: 5,
-    status: "Warning",
-    isActive: true,
-    isDefault: false,
-    isDraft: false,
-    createdAt: new Date("2024-01-15T10:30:00Z"),
-    draftedAt: null,
-    updatedAt: new Date("2024-01-20T14:45:00Z"),
-    deletedAt: null,
-    isDeleted: false,
-  },
-  {
-    id: "2",
-    itemName: "Organic Yogurt 500ml",
-    batchNumber: "YGT002",
-    expiryDate: new Date("2024-02-12"),
-    quantity: 18,
-    unit: "cups",
-    location: "North Branch - Refrigerated",
-    category: "Dairy Products",
-    supplier: "Organic Foods Ltd.",
-    daysUntilExpiry: 2,
-    status: "Near Expiry",
-    isActive: true,
-    isDefault: true,
-    isDraft: false,
-    createdAt: new Date("2024-01-16T09:15:00Z"),
-    draftedAt: null,
-    updatedAt: new Date("2024-01-21T16:30:00Z"),
-    deletedAt: null,
-    isDeleted: false,
-  },
-  {
-    id: "3",
-    itemName: "Whole Wheat Bread",
-    batchNumber: "BRD003",
-    expiryDate: new Date("2024-02-08"),
-    quantity: 12,
-    unit: "loaves",
-    location: "South Branch - Bakery",
-    category: "Bakery Items",
-    supplier: "Golden Bakery",
-    daysUntilExpiry: -2,
-    status: "Expired",
-    isActive: false,
-    isDefault: false,
-    isDraft: true,
-    createdAt: new Date("2024-01-17T11:45:00Z"),
-    draftedAt: new Date("2024-01-17T11:45:00Z"),
-    updatedAt: new Date("2024-01-22T13:20:00Z"),
-    deletedAt: null,
-    isDeleted: false,
-  },
-  {
-    id: "4",
-    itemName: "Fresh Chicken Breast",
-    batchNumber: "CHK004",
-    expiryDate: new Date("2024-02-14"),
-    quantity: 8,
-    unit: "kg",
-    location: "East Branch - Meat Section",
-    category: "Meat & Poultry",
-    supplier: "Premium Meats",
-    daysUntilExpiry: 4,
-    status: "Warning",
-    isActive: false,
-    isDefault: false,
-    isDraft: false,
-    createdAt: new Date("2024-01-18T14:20:00Z"),
-    draftedAt: null,
-    updatedAt: new Date("2024-01-23T10:15:00Z"),
-    deletedAt: null,
-    isDeleted: false,
-  },
-  {
-    id: "5",
-    itemName: "Canned Tomatoes 400g",
-    batchNumber: "TOM005",
-    expiryDate: new Date("2024-08-15"),
-    quantity: 48,
-    unit: "cans",
-    location: "West Branch - Canned Goods",
-    category: "Canned Foods",
-    supplier: "Garden Fresh Foods",
-    daysUntilExpiry: 186,
-    status: "Good",
-    isActive: true,
-    isDefault: false,
-    isDraft: false,
-    createdAt: new Date("2024-01-19T08:30:00Z"),
-    draftedAt: null,
-    updatedAt: new Date("2024-01-24T15:45:00Z"),
-    deletedAt: null,
-    isDeleted: false,
-  },
-  {
-    id: "6",
-    itemName: "Fresh Salmon Fillet",
-    batchNumber: "SAL006",
-    expiryDate: new Date("2024-02-11"),
-    quantity: 6,
-    unit: "kg",
-    location: "Central Branch - Seafood",
-    category: "Seafood",
-    supplier: "Ocean Fresh",
-    daysUntilExpiry: 1,
-    status: "Near Expiry",
-    isActive: true,
-    isDefault: false,
-    isDraft: false,
-    createdAt: new Date("2024-01-20T12:00:00Z"),
-    draftedAt: null,
-    updatedAt: new Date("2024-01-25T09:30:00Z"),
-    deletedAt: null,
-    isDeleted: false,
-  },
-  {
-    id: "7",
-    itemName: "Organic Spinach 250g",
-    batchNumber: "SPN007",
-    expiryDate: new Date("2024-02-13"),
-    quantity: 15,
-    unit: "bags",
-    location: "Downtown Branch - Vegetables",
-    category: "Fresh Vegetables",
-    supplier: "Green Fields Farm",
-    daysUntilExpiry: 3,
-    status: "Warning",
-    isActive: true,
-    isDefault: false,
-    isDraft: true,
-    createdAt: new Date("2024-01-21T16:15:00Z"),
-    draftedAt: new Date("2024-01-21T16:15:00Z"),
-    updatedAt: new Date("2024-01-26T11:40:00Z"),
-    deletedAt: null,
-    isDeleted: false,
-  },
-  {
-    id: "8",
-    itemName: "Pasta Sauce 350ml",
-    batchNumber: "PST008",
-    expiryDate: new Date("2024-06-20"),
-    quantity: 32,
-    unit: "jars",
-    location: "Suburban Branch - Condiments",
-    category: "Sauces & Condiments",
-    supplier: "Italian Delights",
-    daysUntilExpiry: 130,
-    status: "Good",
-    isActive: true,
-    isDefault: false,
-    isDraft: false,
-    createdAt: new Date("2024-01-22T13:45:00Z"),
-    draftedAt: null,
-    updatedAt: new Date("2024-01-27T14:20:00Z"),
-    deletedAt: null,
-    isDeleted: false,
-  },
-];
 
 type Props = {
   isEdit?: boolean;
 };
 
-export default function ExpiryItemEditPage({ isEdit = false }: Props) {
-  const { t } = useTranslation();
+const initialData: ExpiryItemData = {
+  itemName: "Aspirin Tablets",
+  batchNumber: "BATCH-001",
+  expiryDate: new Date("2025-12-31"),
+  quantity: 100,
+  unit: "Tablets",
+  location: "Warehouse A",
+  category: "Pharmaceuticals",
+  supplier: "MedSupply Co",
+  status: "Active",
+  isDefault: false,
+  isActive: true,
+  isDraft: false,
+  isDeleted: false,
+  createdAt: new Date(),
+  draftedAt: null,
+  updatedAt: new Date(),
+  deletedAt: null,
+};
+
+export default function ExpiryItemEditPage({ isEdit = true }: Props) {
   const navigate = useNavigate();
   const { id } = useParams();
-  const [keepChanges, setKeepChanges] = useState(false);
+  // const labels = useLanguageLabels();
+  const { isRTL } = useAppSelector((state) => state.language);
 
+  // Get module ID for this edit page
+  const moduleId = `expiry-item-edit-module-${id || "new"}`;
+
+  // Use the custom hook for minimized module data
+  const {
+    moduleData,
+    hasMinimizedData,
+    resetModuleData,
+    getModuleScrollPosition,
+  } = useMinimizedModuleData<ExpiryItemModuleData>(moduleId);
+
+  const [keepCreating, setKeepCreating] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
-  const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
+  const [isDefaultState, setIsDefaultState] = useState<"Yes" | "No" | string>(
+    "No"
+  );
 
-  const itemNameInputRef = useRef<EditableInputRef>(null);
-  const batchNumberInputRef = useRef<EditableInputRef>(null);
-  const quantityInputRef = useRef<EditableInputRef>(null);
-  const activeSwitchRef = useRef<HTMLButtonElement>(null);
-  const defaultSwitchRef = useRef<HTMLButtonElement>(null);
-  const draftSwitchRef = useRef<HTMLButtonElement>(null);
-  const deleteButtonRef = useRef<HTMLButtonElement>(null);
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [printEnabled, setPrintEnabled] = useState(false);
   const [pdfChecked, setPdfChecked] = useState(false);
+  const [formKey, setFormKey] = useState(0);
+  const [isRestoredFromMinimized, setIsRestoredFromMinimized] = useState(false);
+  const [shouldRestoreFromMinimized, setShouldRestoreFromMinimized] =
+    useState(false);
+  const [selectedAction, setSelectedAction] = useState<string>("");
 
-  // Date picker state
-  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  // Permission checks
+  const { canCreate, canView } = useColorsPermissions();
 
-  // Translation state
-  const [translations, setTranslations] = useState([
-    { id: 1, english: "", arabic: "", bangla: "" },
-  ]);
+  // Field-level permissions
+  const itemNamePerm: boolean = usePermission(
+    "expiry-items",
+    "edit",
+    "itemName"
+  );
+  const batchNumberPerm: boolean = usePermission(
+    "expiry-items",
+    "edit",
+    "batchNumber"
+  );
+  const expiryDatePerm: boolean = usePermission(
+    "expiry-items",
+    "edit",
+    "expiryDate"
+  );
+  const quantityPerm: boolean = usePermission(
+    "expiry-items",
+    "edit",
+    "quantity"
+  );
+  const unitPerm: boolean = usePermission("expiry-items", "edit", "unit");
+  const locationPerm: boolean = usePermission(
+    "expiry-items",
+    "edit",
+    "location"
+  );
+  const categoryPerm: boolean = usePermission(
+    "expiry-items",
+    "edit",
+    "category"
+  );
+  const supplierPerm: boolean = usePermission(
+    "expiry-items",
+    "edit",
+    "supplier"
+  );
+  const statusPerm: boolean = usePermission("expiry-items", "edit", "status");
+  const isDefaultPerm: boolean = usePermission(
+    "expiry-items",
+    "edit",
+    "isDefault"
+  );
+  const canPdf: boolean = usePermission("expiry-items", "pdf");
+  const canPrint: boolean = usePermission("expiry-items", "print");
 
-  // Form state - Initialize with default values
-  const [formData, setFormData] = useState<ExpiryItem>({
-    id: "",
+  // Form state
+  const [formData, setFormData] = useState<ExpiryItemData>({
     itemName: "",
     batchNumber: "",
     expiryDate: new Date(),
@@ -353,229 +161,176 @@ export default function ExpiryItemEditPage({ isEdit = false }: Props) {
     location: "",
     category: "",
     supplier: "",
-    daysUntilExpiry: 0,
-    status: "Good",
-    isActive: true,
+    status: "Active",
     isDefault: false,
+    isActive: true,
     isDraft: false,
-    createdAt: new Date(),
-    draftedAt: null,
-    updatedAt: new Date(),
-    deletedAt: null,
     isDeleted: false,
+    createdAt: null,
+    draftedAt: null,
+    updatedAt: null,
+    deletedAt: null,
   });
 
-  // Loading state
-  const [isLoading, setIsLoading] = useState(true);
+  // focus next input field
+  const inputRefs = useRef<Record<string, HTMLElement | null>>({});
+  const setRef = (name: string) => (el: HTMLElement | null) => {
+    inputRefs.current[name] = el;
+  };
+  const focusNextInput = (nextField: string) => {
+    inputRefs.current[nextField]?.focus();
+  };
 
-  // Initialize data on component mount
+  // Check for restore flag from taskbar
   useEffect(() => {
-    setIsLoading(true);
-
-    // If ID is provided in URL, load that specific record
-    if (id && id !== "undefined") {
-      const itemData = MOCK_EXPIRY_ITEMS.find((item) => item.id === id);
-      if (itemData) {
-        setFormData(itemData);
-      } else {
-        // If ID not found, load the first record as default
-        setFormData(MOCK_EXPIRY_ITEMS[0]);
-      }
-    } else {
-      // Load the first record as default for editing
-      setFormData(MOCK_EXPIRY_ITEMS[0]);
+    const shouldRestore = localStorage.getItem(`restore-${moduleId}`);
+    if (shouldRestore === "true") {
+      setShouldRestoreFromMinimized(true);
+      localStorage.removeItem(`restore-${moduleId}`);
     }
+  }, [moduleId]);
 
-    setIsLoading(false);
-  }, [id]);
-
-  // Update translation data when remarks change
+  // Restore logic using the custom hook
   useEffect(() => {
-    setTranslations([
-      { id: 1, english: formData.itemName || "", arabic: "", bangla: "" },
-    ]);
-  }, [formData.itemName]);
+    const shouldAutoRestore =
+      shouldRestoreFromMinimized ||
+      (hasMinimizedData &&
+        moduleData?.formData &&
+        !isRestoredFromMinimized &&
+        !formData.itemName);
 
-  // Update the focusNextInput function
-  const focusNextInput = (currentField: string) => {
-    console.log("Current field:", currentField);
-    switch (currentField) {
-      case "itemName":
-        batchNumberInputRef.current?.focus();
-        break;
-      case "batchNumber": {
-        // Focus on expiry date picker trigger
-        const datePickerTrigger = document.querySelector(
-          '[data-testid="date-picker-trigger"]'
-        ) as HTMLButtonElement;
-        datePickerTrigger?.focus();
-        break;
+    if (hasMinimizedData && moduleData?.formData && shouldAutoRestore) {
+      setFormData(moduleData.formData);
+
+      // Restore UI states based on form data
+      setIsDefaultState(moduleData.formData.isDefault ? "Yes" : "No");
+
+      setIsRestoredFromMinimized(true);
+      setShouldRestoreFromMinimized(false);
+
+      // Restore scroll position
+      const scrollPosition = getModuleScrollPosition(moduleId);
+      if (scrollPosition) {
+        setTimeout(() => {
+          window.scrollTo(0, scrollPosition);
+        }, 200);
       }
-      case "expiryDate":
-        quantityInputRef.current?.focus();
-        break;
-      case "quantity": {
-        // Focus on unit dropdown
-        const unitInput = document.querySelector(
-          'input[placeholder="Select unit..."]'
-        ) as HTMLInputElement;
-        unitInput?.focus();
-        break;
-      }
-      case "unit": {
-        // Focus on location dropdown
-        const locationInput = document.querySelector(
-          'input[placeholder="Select location..."]'
-        ) as HTMLInputElement;
-        locationInput?.focus();
-        break;
-      }
-      case "location": {
-        // Focus on category dropdown
-        const categoryInput = document.querySelector(
-          'input[placeholder="Select category..."]'
-        ) as HTMLInputElement;
-        categoryInput?.focus();
-        break;
-      }
-      case "category": {
-        // Focus on supplier dropdown
-        const supplierInput = document.querySelector(
-          'input[placeholder="Select supplier..."]'
-        ) as HTMLInputElement;
-        supplierInput?.focus();
-        break;
-      }
-      case "supplier":
-        activeSwitchRef.current?.focus();
-        break;
-      case "active":
-        defaultSwitchRef.current?.focus();
-        break;
-      case "default":
-        draftSwitchRef.current?.focus();
-        break;
-      case "draft":
-        deleteButtonRef.current?.focus();
-        break;
-      default:
-        break;
     }
-  };
+  }, [
+    hasMinimizedData,
+    moduleData,
+    isRestoredFromMinimized,
+    shouldRestoreFromMinimized,
+    formData.itemName,
+    moduleId,
+    getModuleScrollPosition,
+  ]);
 
-  const getRelativeTime = (dateString: string | null | Date) => {
-    if (!dateString) return "--/--/----";
-
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInMs = now.getTime() - date.getTime();
-
-    const minutes = Math.floor(diffInMs / (1000 * 60));
-    const hours = Math.floor(diffInMs / (1000 * 60 * 60));
-    const days = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
-    const months = Math.floor(diffInMs / (1000 * 60 * 60 * 24 * 30));
-    const years = Math.floor(diffInMs / (1000 * 60 * 60 * 24 * 365));
-
-    if (years > 0) {
-      return `${years}y ago`;
-    } else if (months > 0) {
-      return `${months}mo ago`;
-    } else if (days > 0) {
-      return `${days}d ago`;
-    } else if (hours > 0) {
-      return `${hours}h ago`;
-    } else if (minutes > 0) {
-      return `${minutes}m ago`;
-    } else {
-      return "Just now";
+  // Initialize with edit data if available
+  useEffect(() => {
+    if (
+      isEdit &&
+      initialData &&
+      !hasMinimizedData &&
+      !isRestoredFromMinimized
+    ) {
+      setFormData(initialData);
+      setIsDefaultState(initialData.isDefault ? "Yes" : "No");
     }
-  };
-
-  // Handle key navigation for switches and buttons
-  const handleSwitchKeyDown = (
-    e: React.KeyboardEvent,
-    currentField: string
-  ) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      // Trigger the switch/button action first
-      switch (currentField) {
-        case "active":
-          setFormData({ ...formData, isActive: !formData.isActive });
-          break;
-        case "default":
-          setFormData({ ...formData, isDefault: !formData.isDefault });
-          break;
-        case "draft":
-          setFormData({ ...formData, isDraft: !formData.isDraft });
-          break;
-        case "delete":
-          setFormData({ ...formData, isDeleted: !formData.isDeleted });
-          break;
-      }
-      // Then move to next field
-      setTimeout(() => focusNextInput(currentField), 50);
-    }
-  };
+  }, [isEdit, hasMinimizedData, isRestoredFromMinimized, moduleId]);
 
   // Handle form field changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
-    let processedValue: any = type === "checkbox" ? checked : value;
-
-    // Convert quantity to number
-    if (name === "quantity") {
-      processedValue = parseFloat(value) || 0;
-    }
-
-    setFormData({
+    const newFormData = {
       ...formData,
-      [name]: processedValue,
-      updatedAt: new Date(), // Update timestamp on any change
-    });
+      [name]:
+        type === "checkbox"
+          ? checked
+          : type === "number"
+          ? Number(value)
+          : value,
+    };
+    setFormData(newFormData);
   };
-
-  // Update days until expiry and status when expiry date changes
-  useEffect(() => {
-    if (formData.expiryDate) {
-      const daysUntilExpiry = calculateDaysUntilExpiry(formData.expiryDate);
-      const status = calculateStatus(daysUntilExpiry);
-
-      setFormData((prev) => ({
-        ...prev,
-        daysUntilExpiry,
-        status,
-        isActive: status !== "Expired", // Automatically deactivate expired items
-      }));
-    }
-  }, [formData.expiryDate]);
 
   // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Expiry Item Edit Form submitted:", formData);
-    toastSuccess("Expiry item updated successfully!");
-  };
 
-  // Handle form reset
-  const handleReset = () => {
-    if (window.confirm(t("form.resetConfirm"))) {
-      // Reset to original loaded data
-      const originalData = MOCK_EXPIRY_ITEMS.find(
-        (item) => item.batchNumber === formData.batchNumber
-      );
-      if (originalData) {
-        setFormData(originalData);
-        toastSuccess("Form reset to original values");
-      }
+    if (pdfChecked) {
+      await handleExportPDF();
+    }
+    if (printEnabled) {
+      handlePrintExpiryItem(formData);
+    }
+
+    // keep switch functionality
+    if (keepCreating) {
+      toastSuccess("Expiry item updated successfully!");
+      handleReset();
+    } else {
+      toastSuccess("Expiry item updated successfully!");
+      navigate("/expiry-items");
     }
   };
 
-  const handlePrintExpiryItem = (itemData: any) => {
+  // Update handleReset function to use the custom hook
+  const handleReset = async () => {
+    setFormData({
+      itemName: "",
+      batchNumber: "",
+      expiryDate: new Date(),
+      quantity: 0,
+      unit: "",
+      location: "",
+      category: "",
+      supplier: "",
+      status: "Active",
+      isDefault: false,
+      isActive: true,
+      isDraft: false,
+      isDeleted: false,
+      createdAt: new Date(),
+      draftedAt: null,
+      updatedAt: new Date(),
+      deletedAt: null,
+    });
+    setIsDefaultState("No");
+
+    setIsRestoredFromMinimized(false);
+
+    if (formRef.current) {
+      formRef.current.reset();
+    }
+
+    // Force re-render of all inputs by changing key
+    setFormKey((prev) => prev + 1);
+
+    // Reset form data using the custom hook
+    if (hasMinimizedData) {
+      try {
+        await resetModuleData(moduleId);
+      } catch (error) {
+        console.error("Error resetting form data:", error);
+      }
+    }
+
+    // Focus the first input field after reset
+    setTimeout(() => {
+      inputRefs.current["itemName"]?.focus();
+    }, 100);
+  };
+
+  const handleResetClick = () => {
+    setIsResetModalOpen(true);
+  };
+
+  const handlePrintExpiryItem = (expiryData: any) => {
     try {
       const html = PrintCommonLayout({
         title: "Expiry Item Details",
-        data: [itemData],
+        data: [expiryData],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
           itemName: "Item Name",
@@ -586,10 +341,9 @@ export default function ExpiryItemEditPage({ isEdit = false }: Props) {
           location: "Location",
           category: "Category",
           supplier: "Supplier",
-          daysUntilExpiry: "Days Until Expiry",
           status: "Status",
+          isDefault: "Default",
           isActive: "Active Status",
-          isDefault: "Default Status",
           isDraft: "Draft Status",
           isDeleted: "Deleted Status",
           createdAt: "Created At",
@@ -607,20 +361,13 @@ export default function ExpiryItemEditPage({ isEdit = false }: Props) {
 
   const handleSwitchChange = (checked: boolean) => {
     setPrintEnabled(checked);
-    if (checked && formData) {
-      setTimeout(() => handlePrintExpiryItem(formData), 100);
-    }
   };
 
   const handlePDFSwitchChange = (pdfChecked: boolean) => {
     setPdfChecked(pdfChecked);
-    if (pdfChecked) {
-      setTimeout(() => handleExportPDF(), 100);
-    }
   };
 
   const handleExportPDF = async () => {
-    console.log("Export PDF clicked");
     try {
       const blob = await pdf(
         <GenericPDF
@@ -633,7 +380,7 @@ export default function ExpiryItemEditPage({ isEdit = false }: Props) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `expiry-item-${formData.batchNumber}.pdf`;
+      a.download = "expiry-item-details.pdf";
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
@@ -642,438 +389,469 @@ export default function ExpiryItemEditPage({ isEdit = false }: Props) {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Loading expiry item data...</div>
-      </div>
-    );
-  }
+  const [popoverOptions, setPopoverOptions] = useState([
+    {
+      label: "Create",
+      icon: <Plus className="w-5 h-5 text-green-500" />,
+      onClick: () => {
+        navigate("/expiry-items/create");
+      },
+      show: canCreate,
+    },
+    {
+      label: "View",
+      icon: <Eye className="w-5 h-5 text-green-600" />,
+      onClick: () => {
+        navigate("/expiry-items/view");
+      },
+      show: canView,
+    },
+  ]);
+
+  useEffect(() => {
+    setPopoverOptions((prevOptions) => {
+      const filteredOptions = prevOptions.filter(
+        (opt) => opt.label !== "Draft"
+      );
+
+      if (!formData.isDraft) {
+        return [
+          ...filteredOptions,
+          {
+            label: "Draft",
+            icon: <Check className="text-green-500" />,
+            onClick: () => {
+              setFormData((prev) => ({
+                ...prev,
+                isDraft: true,
+              }));
+              toastRestore("Expiry item saved as draft successfully");
+            },
+            show: canCreate,
+          },
+        ];
+      }
+      return filteredOptions;
+    });
+  }, [formData.isDraft, canCreate]);
+
+  // Create minimize handler using the custom hook
+  const handleMinimize = useCallback((): ExpiryItemModuleData => {
+    return {
+      formData,
+      hasChanges: true,
+      scrollPosition: window.scrollY,
+    };
+  }, [formData]);
 
   return (
     <>
-      <PageLayout
-        title={t("form.editingExpiryItem")}
+      <MinimizablePageLayout
+        moduleId={moduleId}
+        moduleName={`Edit Expiry Item`}
+        moduleRoute={`/expiry-items/edit/${id || "new"}`}
+        onMinimize={handleMinimize}
+        title="Edit Expiry Item"
+        listPath="expiry-items"
+        popoverOptions={popoverOptions}
         videoSrc={video}
-        videoHeader="Rapid ERP Video"
-        listPath="/expiry-items"
-        popoverOptions={[
-          {
-            label: "Create",
-            onClick: () => navigate("/expiry-items/create"),
-          },
-          {
-            label: "View",
-            onClick: () => navigate(`/expiry-items/${formData.id}`),
-          },
-        ]}
-        keepChanges={keepChanges}
-        onKeepChangesChange={setKeepChanges}
+        videoHeader="Tutorial video"
+        keepChanges={keepCreating}
+        onKeepChangesChange={setKeepCreating}
         pdfChecked={pdfChecked}
-        onPdfToggle={handlePDFSwitchChange}
+        onPdfToggle={canPdf ? handlePDFSwitchChange : undefined}
         printEnabled={printEnabled}
-        onPrintToggle={handleSwitchChange}
+        onPrintToggle={canPrint ? handleSwitchChange : undefined}
+        activePage="edit"
+        module="expiry-items"
         additionalFooterButtons={
-          <div className="flex gap-4">
-            <Button
-              variant="outline"
-              className="gap-2 text-primary rounded-full border-primary"
-              onClick={handleReset}
-            >
-              {t("button.reset")}
-            </Button>
-            <Button
-              variant="outline"
-              className="gap-2 text-primary rounded-full border-primary"
-              onClick={() => formRef.current?.requestSubmit()}
-            >
-              {t("button.update")}
-            </Button>
-          </div>
+          canCreate ? (
+            <div className="flex gap-4 max-[435px]:gap-2">
+              <Button
+                variant="outline"
+                className="gap-2 hover:bg-primary/90 bg-white rounded-full border-primary w-28 max-[435px]:w-20 font-semibold! text-primary!"
+                onClick={handleResetClick}
+              >
+                Reset
+              </Button>
+              <Button
+                variant="outline"
+                className="gap-2 hover:bg-primary/90 bg-white rounded-full border-primary w-28 max-[435px]:w-20 font-semibold! text-primary!"
+                onClick={handleSubmit}
+              >
+                Submit
+              </Button>
+            </div>
+          ) : null
         }
         className="w-full"
       >
-        <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
-          {/* First Row: Item Name, Batch Number, Expiry Date, Quantity */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">
-                Item Name <span className="text-red-500">*</span>
-              </h3>
-              <EditableInput
-                ref={itemNameInputRef}
-                id="itemName"
-                name="itemName"
-                className="w-full h-10"
-                value={formData.itemName}
-                onChange={handleChange}
-                onNext={() => focusNextInput("itemName")}
-                onCancel={() => {}}
-                tooltipText="Please enter item name"
-              />
+        <div dir={isRTL ? "rtl" : "ltr"}>
+          <form
+            ref={formRef}
+            key={formKey}
+            onSubmit={handleSubmit}
+            className="space-y-6"
+          >
+            {/* First Row: Item Name, Batch Number, Expiry Date, Quantity */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
+              {/* Item Name */}
+              {itemNamePerm && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("itemName")}
+                    id="itemName"
+                    name="itemName"
+                    value={formData.itemName}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("batchNumber")}
+                    onCancel={() => setFormData({ ...formData, itemName: "" })}
+                    labelText="Item Name"
+                    tooltipText="Enter the item name"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Batch Number */}
+              {batchNumberPerm && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("batchNumber")}
+                    id="batchNumber"
+                    name="batchNumber"
+                    value={formData.batchNumber}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("expiryDate")}
+                    onCancel={() =>
+                      setFormData({ ...formData, batchNumber: "" })
+                    }
+                    labelText="Batch Number"
+                    tooltipText="Enter the batch number"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Expiry Date (native) */}
+              {expiryDatePerm && (
+                <div className="space-y-2">
+                  <div className="relative">
+                    <input
+                      ref={(el) => setRef("expiryDate")(el as any)}
+                      type="date"
+                      id="expiryDate"
+                      name="expiryDate"
+                      value={
+                        formData.expiryDate
+                          ? formData.expiryDate.toISOString().split("T")[0]
+                          : ""
+                      }
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        const val = e.target.value;
+                        setFormData((prev) => ({
+                          ...prev,
+                          expiryDate: val ? new Date(val) : null,
+                        }));
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          focusNextInput("quantity");
+                        }
+                      }}
+                      required
+                      className="block px-2.5 pb-2.5 pt-4 w-full text-sm text-gray-900 rounded-[12px] border border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-[#70D3FC80] focus:outline-none focus:ring-0 focus:border-[#70D3FC80] peer h-[50px] focus:border"
+                      placeholder=" "
+                    />
+                    <label
+                      htmlFor="expiryDate"
+                      className="absolute text-base text-gray-800 dark:text-gray-400 duration-300 transform -translate-y-4 scale-75 top-1 z-10 origin-[0] bg-white dark:bg-gray-900 px-2 peer-focus:px-2 peer-focus:text-primary peer-focus:dark:text-primary peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-1 peer-focus:scale-75 peer-focus:-translate-y-4 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto start-1 transition-all rounded-lg"
+                    >
+                      Expiry Date
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {/* Quantity */}
+              {quantityPerm && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("quantity")}
+                    id="quantity"
+                    name="quantity"
+                    type="number"
+                    value={String(formData.quantity)}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("unit")}
+                    onCancel={() => setFormData({ ...formData, quantity: 0 })}
+                    labelText="Quantity"
+                    tooltipText="Enter the quantity"
+                    required
+                  />
+                </div>
+              )}
             </div>
 
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">
-                Batch Number <span className="text-red-500">*</span>
-              </h3>
-              <EditableInput
-                ref={batchNumberInputRef}
-                id="batchNumber"
-                name="batchNumber"
-                className="w-full h-10"
-                value={formData.batchNumber}
-                onChange={handleChange}
-                onNext={() => focusNextInput("batchNumber")}
-                onCancel={() => {}}
-                tooltipText="Unique identifier for the batch"
-                readOnly
-              />
+            {/* Second Row: Unit, Location, Category, Supplier */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
+              {/* Unit */}
+              {unitPerm && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("unit")}
+                    id="unit"
+                    name="unit"
+                    value={formData.unit}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("location")}
+                    onCancel={() => setFormData({ ...formData, unit: "" })}
+                    labelText="Unit"
+                    tooltipText="Enter the unit of measurement"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Location */}
+              {locationPerm && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("location")}
+                    id="location"
+                    name="location"
+                    value={formData.location}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("category")}
+                    onCancel={() => setFormData({ ...formData, location: "" })}
+                    labelText="Location"
+                    tooltipText="Enter the location"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Category */}
+              {categoryPerm && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("category")}
+                    id="category"
+                    name="category"
+                    value={formData.category}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("supplier")}
+                    onCancel={() => setFormData({ ...formData, category: "" })}
+                    labelText="Category"
+                    tooltipText="Enter the category"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Supplier */}
+              {supplierPerm && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("supplier")}
+                    id="supplier"
+                    name="supplier"
+                    value={formData.supplier}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("isDefault")}
+                    onCancel={() => setFormData({ ...formData, supplier: "" })}
+                    labelText="Supplier"
+                    tooltipText="Enter the supplier name"
+                    required
+                  />
+                </div>
+              )}
             </div>
 
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">
-                Expiry Date <span className="text-red-500">*</span>
-              </h3>
-              <Popover
-                open={isDatePickerOpen}
-                onOpenChange={setIsDatePickerOpen}
-              >
-                <PopoverTrigger asChild>
-                  <Button
-                    data-testid="date-picker-trigger"
-                    variant="outline"
-                    className={cn(
-                      "w-full h-10 justify-start text-left font-normal",
-                      !formData.expiryDate && "text-muted-foreground"
-                    )}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        focusNextInput("expiryDate");
+            {/* Third Row: Default, Status, Actions */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
+              {/* Default field - only show if user can edit */}
+              {isDefaultPerm && (
+                <div className="space-y-2 relative">
+                  <SwitchSelect
+                    ref={(el: any) => setRef("isDefault")(el)}
+                    id="isDefault"
+                    name="isDefault"
+                    multiSelect={false}
+                    options={[
+                      {
+                        label: "Yes",
+                        value: "Yes",
+                        date: "Set default",
+                      },
+                      {
+                        label: "No",
+                        value: "No",
+                        date: "Unset default",
+                      },
+                    ]}
+                    value={isDefaultState === "Yes" ? "Yes" : "No"}
+                    labelClassName="rounded-lg"
+                    onValueChange={(value: string | string[]) => {
+                      const isYes = Array.isArray(value)
+                        ? value[0] === "Yes"
+                        : value === "Yes";
+                      setIsDefaultState(isYes ? "Yes" : "No");
+                      const newValue = isYes;
+                      setFormData((prev) => ({
+                        ...prev,
+                        isDefault: newValue,
+                      }));
+                    }}
+                    onEnterPress={() => {
+                      if (
+                        formData.isDefault === true ||
+                        formData.isDefault === false
+                      ) {
+                        focusNextInput("actions");
                       }
                     }}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.expiryDate ? (
-                      format(new Date(formData.expiryDate), "PPP")
-                    ) : (
-                      <span>Pick a date</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={
-                      formData.expiryDate
-                        ? new Date(formData.expiryDate)
-                        : undefined
-                    }
-                    onSelect={(date) => {
-                      setFormData({
-                        ...formData,
-                        expiryDate: date || new Date(),
-                        updatedAt: new Date(),
-                      });
-                      setIsDatePickerOpen(false);
-                      focusNextInput("expiryDate");
-                    }}
-                    initialFocus
+                    placeholder=" "
+                    labelText="Default"
+                    className="relative"
+                    tooltipText="Mark as default damage item"
                   />
-                </PopoverContent>
-              </Popover>
-            </div>
+                </div>
+              )}
+              {/* Status field - only show if user can edit */}
+              {statusPerm && (
+                <div className="space-y-2">
+                  <SwitchSelect
+                    ref={(el: any) => setRef("status")(el)}
+                    id="status"
+                    name="status"
+                    labelText="Status"
+                    multiSelect={false} // Single select mode
+                    options={[
+                      {
+                        label: "Active",
+                        value: "Active",
+                        date: "Set active",
+                      },
+                      {
+                        label: "Inactive",
+                        value: "InActive",
+                        date: "Set inactive",
+                      },
+                      {
+                        label: "Draft",
+                        value: "Draft",
+                        date: "Set draft",
+                      },
+                      {
+                        label: "Delete",
+                        value: "Delete",
+                        date: "Set deleted",
+                      },
+                    ]}
+                    value={formData.status}
+                    onValueChange={(value: string | string[]) => {
+                      const stringValue = Array.isArray(value)
+                        ? value[0] || ""
+                        : value;
+                      setFormData((prev) => ({
+                        ...prev,
+                        status: stringValue as
+                          | "Active"
+                          | "Inactive"
+                          | "Draft"
+                          | "Deleted",
+                        isDeleted: stringValue === "Delete",
+                        isDraft: stringValue === "Draft",
+                        isActive: stringValue === "Active",
+                      }));
+                    }}
+                    placeholder=""
+                    styles={{
+                      input: {
+                        borderColor: "var(--primary)",
+                        "&:focus": {
+                          borderColor: "var(--primary)",
+                        },
+                      },
+                    }}
+                    tooltipText="Set the damage item status"
+                  />
+                </div>
+              )}
 
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">
-                Quantity <span className="text-red-500">*</span>
-              </h3>
-              <EditableInput
-                ref={quantityInputRef}
-                id="quantity"
-                name="quantity"
-                className="w-full h-10"
-                value={formData.quantity.toString()}
-                onChange={handleChange}
-                onNext={() => focusNextInput("quantity")}
-                onCancel={() => {}}
-                tooltipText="Total quantity of the item"
-                type="number"
-                required
-              />
-            </div>
-          </div>
-
-          {/* Second Row: Unit, Location, Category, Supplier */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">Unit</h3>
-              <Autocomplete
-                data={MOCK_UNITS}
-                value={formData.unit}
-                onChange={(value) => {
-                  setFormData({
-                    ...formData,
-                    unit: value || "",
-                    updatedAt: new Date(),
-                  });
-                }}
-                placeholder="Select unit..."
-                className="w-full"
-                styles={{
-                  input: {
-                    "&:focus": {
-                      borderColor: "var(--primary)",
+              {/* Actions */}
+              <div className="space-y-2">
+                <ActionsAutocomplete
+                  ref={(el: any) => setRef("actions")(el)}
+                  id="actions"
+                  name="actions"
+                  labelText="Action"
+                  value={selectedAction}
+                  actions={[
+                    {
+                      action: "Created",
+                      user: "John",
+                      role: "Super User",
+                      date: "06 Aug 2025",
+                      value: "created",
                     },
-                    height: "40px",
-                  },
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    focusNextInput("unit");
-                  }
-                }}
-                limit={10}
-                maxDropdownHeight={200}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">Location</h3>
-              <Autocomplete
-                data={MOCK_LOCATIONS}
-                value={formData.location}
-                onChange={(value) => {
-                  setFormData({
-                    ...formData,
-                    location: value || "",
-                    updatedAt: new Date(),
-                  });
-                }}
-                placeholder="Select location..."
-                className="w-full"
-                styles={{
-                  input: {
-                    "&:focus": {
-                      borderColor: "var(--primary)",
+                    {
+                      action: "Updated",
+                      user: "Sarah",
+                      role: "Admin",
+                      date: "08 Aug 2025",
+                      value: "updated",
                     },
-                    height: "40px",
-                  },
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    focusNextInput("location");
-                  }
-                }}
-                limit={10}
-                maxDropdownHeight={200}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">
-                Category <span className="text-red-500">*</span>
-              </h3>
-              <Autocomplete
-                data={MOCK_CATEGORIES}
-                value={formData.category}
-                onChange={(value) => {
-                  setFormData({
-                    ...formData,
-                    category: value || "",
-                    updatedAt: new Date(),
-                  });
-                }}
-                placeholder="Select category..."
-                className="w-full"
-                styles={{
-                  input: {
-                    "&:focus": {
-                      borderColor: "var(--primary)",
+                    {
+                      action: "Inactive",
+                      user: "Mike",
+                      role: "Admin",
+                      date: "08 Aug 2025",
+                      value: "inactive",
                     },
-                    height: "40px",
-                  },
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    focusNextInput("category");
-                  }
-                }}
-                limit={10}
-                maxDropdownHeight={200}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">Supplier</h3>
-              <Autocomplete
-                data={MOCK_SUPPLIERS}
-                value={formData.supplier}
-                onChange={(value) => {
-                  setFormData({
-                    ...formData,
-                    supplier: value || "",
-                    updatedAt: new Date(),
-                  });
-                }}
-                placeholder="Select supplier..."
-                className="w-full"
-                styles={{
-                  input: {
-                    "&:focus": {
-                      borderColor: "var(--primary)",
+                    {
+                      action: "Drafted",
+                      user: "John",
+                      role: "Super User",
+                      date: "07 Aug 2025",
+                      value: "drafted",
                     },
-                    height: "40px",
-                  },
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    focusNextInput("supplier");
-                  }
-                }}
-                limit={10}
-                maxDropdownHeight={200}
-                required
-              />
-            </div>
-          </div>
-
-          {/* Third Row: Status Switches */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">{t("common.active")}</h3>
-              <div className="h-10 flex items-center">
-                <Switch
-                  ref={activeSwitchRef}
-                  id="isActive"
-                  name="isActive"
-                  checked={formData.isActive}
-                  onCheckedChange={(checked) =>
-                    setFormData({
-                      ...formData,
-                      isActive: checked,
-                      updatedAt: new Date(),
-                    })
-                  }
-                  onKeyDown={(e) => handleSwitchKeyDown(e, "active")}
+                  ]}
+                  placeholder=""
+                  onValueChange={(value: string) => {
+                    setSelectedAction(value);
+                  }}
+                  styles={{
+                    input: {
+                      borderColor: "var(--primary)",
+                      "&:focus": {
+                        borderColor: "var(--primary)",
+                      },
+                    },
+                  }}
+                  tooltipText="Expiry Item Action History"
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">Is Default</h3>
-              <div className="h-10 flex items-center">
-                <Switch
-                  ref={defaultSwitchRef}
-                  id="isDefault"
-                  name="isDefault"
-                  checked={formData.isDefault}
-                  onCheckedChange={(checked) =>
-                    setFormData({
-                      ...formData,
-                      isDefault: checked,
-                      updatedAt: new Date(),
-                    })
-                  }
-                  onKeyDown={(e) => handleSwitchKeyDown(e, "default")}
-                />
-              </div>
+            {/* Dynamic Input Table List */}
+            <div className="mt-8">
+              <DynamicInputTableList isEdit={isEdit} />
             </div>
+          </form>
+        </div>
+      </MinimizablePageLayout>
 
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">{t("common.draft")}</h3>
-              <div className="h-10 flex items-center">
-                <Switch
-                  ref={draftSwitchRef}
-                  id="isDraft"
-                  name="isDraft"
-                  checked={formData.isDraft}
-                  onCheckedChange={(checked) =>
-                    setFormData({
-                      ...formData,
-                      isDraft: checked,
-                      updatedAt: new Date(),
-                    })
-                  }
-                  onKeyDown={(e) => handleSwitchKeyDown(e, "draft")}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">
-                {formData.isDeleted ? t("button.restore") : t("button.delete")}
-              </h3>
-              <div className="h-10 flex items-center">
-                <Button
-                  ref={deleteButtonRef}
-                  variant="ghost"
-                  size="icon"
-                  onClick={() =>
-                    setFormData({
-                      ...formData,
-                      isDeleted: !formData.isDeleted,
-                      updatedAt: new Date(),
-                    })
-                  }
-                  onKeyDown={(e) => handleSwitchKeyDown(e, "delete")}
-                >
-                  {formData.isDeleted ? (
-                    <Undo2 className="text-green-500" />
-                  ) : (
-                    <Trash2 className="text-red-500" />
-                  )}
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Third Row: Timestamps */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <h3 className="font-medium mb-1">{t("common.created")}</h3>
-              <p className="text-gray-500 text-sm">
-                {getRelativeTime(formData.createdAt)}
-              </p>
-            </div>
-            <div>
-              <h3 className="font-medium mb-1">{t("common.updated")}</h3>
-              <p className="text-gray-500 text-sm font-semibold">
-                {getRelativeTime(formData.updatedAt)}
-              </p>
-            </div>
-            <div>
-              <h3 className="font-medium mb-1">{t("common.drafted")}</h3>
-              <p className="text-gray-500 text-sm">
-                {getRelativeTime(formData.draftedAt)}
-              </p>
-            </div>
-            <div>
-              <h3 className="font-medium mb-1">{t("common.deleted")}</h3>
-              <p className="text-gray-500 text-sm">
-                {getRelativeTime(formData.deletedAt)}
-              </p>
-            </div>
-          </div>
-
-          {/* Dynamic Input Table */}
-          <DynamicInputTableList isEdit={isEdit} />
-        </form>
-      </PageLayout>
-
-      {/* Language Translator Modal */}
-      <LanguageTranslatorModal
-        isOpen={isOptionModalOpen}
-        onClose={() => setIsOptionModalOpen(false)}
-        title="Expiry Item Language Translator"
-        initialData={translations}
-        onSave={(data) => {
-          setTranslations(data);
-          console.log("Expiry Item translations saved:", data);
-        }}
+      <ResetFormModal
+        opened={isResetModalOpen}
+        onClose={() => setIsResetModalOpen(false)}
+        onConfirm={handleReset}
+        title="Reset Form"
+        message="Are you sure you want to reset the form?"
+        confirmText="Reset"
+        cancelText="Cancel"
       />
     </>
   );

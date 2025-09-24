@@ -9904,6 +9904,97 @@ export const userPermission = {
         },
       },
     },
+    "damage-items": {
+      formPermissions: {
+        create: true,
+        view: true,
+        edit: true,
+        delete: true,
+        restore: true,
+        export: true,
+        import: true,
+        pdf: true,
+        print: true,
+        history: true,
+      },
+      fieldPermissions: {
+        itemId: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        quantityDamaged: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        documentDate: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        reportedBy: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        location: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        damageType: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        status: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        isDraft: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        isActive: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        isDeleted: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        createdAt: {
+          view: true,
+          edit: false,
+          create: true,
+        },
+        updatedAt: {
+          view: true,
+          edit: false,
+          create: true,
+        },
+        draftedAt: {
+          view: true,
+          edit: false,
+          create: true,
+        },
+        deletedAt: {
+          view: true,
+          edit: false,
+          create: true,
+        },
+        isDefault: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+      },
+    },
     brands: {
       formPermissions: {
         create: true,
@@ -10194,6 +10285,179 @@ export const userPermission = {
         deletedAt: {
           view: true,
           edit: false,
+          create: true,
+        },
+      },
+    },
+    "lead-sources": {
+      formPermissions: {
+        create: true,
+        view: true,
+        edit: true,
+        delete: true,
+        restore: true,
+        export: true,
+        import: true,
+        pdf: true,
+        print: true,
+        history: true,
+      },
+      fieldPermissions: {
+        name: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        status: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        isDefault: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        isDraft: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        isActive: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        isDeleted: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        createdAt: {
+          view: true,
+          edit: false,
+          create: true,
+        },
+        updatedAt: {
+          view: true,
+          edit: false,
+          create: true,
+        },
+        draftedAt: {
+          view: true,
+          edit: false,
+          create: true,
+        },
+        deletedAt: {
+          view: true,
+          edit: false,
+          create: true,
+        },
+      },
+    },
+    "lead-status": {
+      formPermissions: {
+        create: true,
+        view: true,
+        edit: true,
+        delete: true,
+        restore: true,
+        export: true,
+        import: true,
+        pdf: true,
+        print: true,
+        history: true,
+      },
+      fieldPermissions: {
+        name: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        order: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        color: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        status: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        isDefault: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+      },
+    },
+    "expiry-items": {
+      formPermissions: {
+        create: true,
+        view: true,
+        edit: true,
+        delete: true,
+        restore: true,
+        export: true,
+        import: true,
+        pdf: true,
+        print: true,
+        history: true,
+      },
+      fieldPermissions: {
+        itemName: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        batchNumber: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        expiryDate: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        quantity: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        unit: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        location: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        category: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        supplier: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        status: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        isDefault: {
+          view: true,
+          edit: true,
           create: true,
         },
       },
