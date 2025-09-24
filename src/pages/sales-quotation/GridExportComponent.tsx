@@ -13,10 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { exportToCSV } from "@/lib/exportToCSV";
 import { exportToExcel } from "@/lib/exportToExcel";
-import { pdf } from "@react-pdf/renderer";
-
 import { toastError } from "@/lib/toast";
-import PDF from "@/components/common/pdf";
 
 interface SimpleFilterProps {
   data: any[];
@@ -24,55 +21,24 @@ interface SimpleFilterProps {
   setIsExportOpen: (visible: boolean) => void;
 }
 
-const FILENAME = "SalesQuotations";
-
 const mockData = [
   {
-    documentNumber: "SQG-001",
-    customer: "Digital Mart Ltd.",
-    quotationNumber: "QG-2001",
-    quotationDate: "2025-07-01",
-    vatNumber: "VAT20230001",
-    paymentMode: "Bank Transfer",
-    dueDays: 15,
-    paymentDate: "2025-07-16",
-    country: "Bangladesh",
-    state: "Dhaka",
-    city: "Mohakhali",
-    remarks: "Urgent processing",
-    salesMan: "Sabbir Hossain",
-
-    status: "active",
+    code: "A001",
+    Area: "Downtown District",
+    Country: "United States",
+    State: "California",
+    City: "Los Angeles",
     isActive: true,
-    isDeleted: false,
-    isDraft: false,
-    isUpdated: false,
-    actionMessage: "Color created",
-    created_at: "2024-06-01",
+    created_at: "2024-01-15",
   },
-
   {
-    documentNumber: "SQG-002",
-    customer: "NextGen Tech",
-    quotationNumber: "QG-2002",
-    quotationDate: "2025-07-03",
-    vatNumber: "VAT20230002",
-    paymentMode: "Cash",
-    dueDays: 0,
-    paymentDate: "2025-07-03",
-    country: "Bangladesh",
-    state: "Chattogram",
-    city: "Panchlaish",
-    remarks: "Immediate payment confirmed",
-    salesMan: "Rafsan Jamil",
-
-    status: "active",
+    code: "A002",
+    Area: "Business Center",
+    Country: "Canada",
+    State: "Ontario",
+    City: "Toronto",
     isActive: true,
-    isDeleted: false,
-    isDraft: false,
-    isUpdated: false,
-    actionMessage: "Color updated",
-    created_at: "2024-06-01",
+    created_at: "2024-01-16",
   },
 ];
 
@@ -124,63 +90,16 @@ export default function SimpleFilterComponent({
     });
   };
 
-  const handleCSV = () => exportToCSV(mockData, `${FILENAME}.csv`);
-  const handleExcel = () => exportToExcel(mockData, `${FILENAME}.xlsx`);
+  const handleCSV = () => exportToCSV(mockData, "areas.csv");
+  const handleExcel = () => exportToExcel(mockData, "areas.xlsx");
   const handleExport = async () => {
     console.log("Export clicked");
     try {
-      const blob = await pdf(
-        <PDF
-          data={[
-            {
-              documentNumber: "SQG-001",
-              customer: "Digital Mart Ltd.",
-              quotationNumber: "QG-2001",
-              quotationDate: "2025-07-01",
-              vatNumber: "VAT20230001",
-              paymentMode: "Bank Transfer",
-              dueDays: 30,
-              paymentDate: "2025-07-10",
-              country: "Bangladesh",
-              state: "Dhaka",
-              city: "Dhaka",
-
-              status: "active",
-              isActive: true,
-              isDeleted: false,
-              isDraft: false,
-              isUpdated: false,
-              actionMessage: "Color created",
-              created_at: "2025-06-26T12:00:00.000Z",
-              updated_at: "2025-06-26T12:00:00.000Z",
-              deleted_at: null,
-              drafted_at: null,
-              is_active: true,
-              is_draft: false,
-              is_deleted: false,
-              is_default: true,
-              is_drafted: false,
-            },
-          ]}
-          title={FILENAME + " Details"}
-          subtitle={FILENAME + " Information Report"}
-        />
-      ).toBlob();
-
-      console.log("blob", blob);
-
-      const url = URL.createObjectURL(blob);
-      console.log("url", url);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${FILENAME}-summary.pdf`;
-      a.click();
-      console.log("a", a);
-      console.log("url", url);
-      URL.revokeObjectURL(url);
+      // For now, just export as CSV since we don't have area-specific PDF component
+      exportToCSV(mockData, "areas-summary.csv");
     } catch (error) {
       console.log(error);
-      toastError("Something went wrong when generating PDF");
+      toastError("Something went wrong when generating export");
     }
   };
 
@@ -246,49 +165,51 @@ export default function SimpleFilterComponent({
           <Button
             variant="ghost"
             size="icon"
-            className="w-14 h-14 rounded-full bg-gray-100 border-2 border-primary hover:scale-110 transition-all"
+            className="h-10 w-10 text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20"
+            onClick={handleCSV}
+            title="Export as CSV"
+          >
+            <FileText className="h-4 w-4" />
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-10 w-10 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+            onClick={handleExcel}
+            title="Export as Excel"
+          >
+            <FileSpreadsheet className="h-4 w-4" />
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-10 w-10 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+            onClick={handleExport}
+            title="Export as PDF"
+          >
+            <Download className="h-4 w-4" />
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-10 w-10 text-gray-600 hover:text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
             title="Print"
-            onClick={() => console.log("Print clicked")}
           >
-            <Printer className="h-5 w-5 text-primary group-hover:text-white transition-colors" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="w-14 h-14 rounded-full bg-gray-100 dark:hover:bg-gray-700 border-2 border-primary hover:scale-110 transition-all"
-            title="Export to Excel"
-            onClick={() => handleExcel()}
-          >
-            <FileSpreadsheet className="h-5 w-5 text-primary" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="w-14 h-14 rounded-full bg-gray-100 dark:hover:bg-gray-700 border-2 border-primary hover:scale-110 transition-all"
-            title="Export to PDF"
-            onClick={() => handleExport()}
-          >
-            <FileText className="h-5 w-5 text-primary" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="w-14 h-14 rounded-full bg-gray-100 dark:hover:bg-gray-700 border-2 border-primary hover:scale-110 transition-all"
-            title="Export to CSV"
-            onClick={() => handleCSV()}
-          >
-            <Download className="h-5 w-5 text-primary" />
+            <Printer className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
-      {/* Bottom Bar - Full Width */}
-      <div className="border-t px-3 py-2 flex-shrink-0">
+      {/* Bottom Bar - Apply/Reset Buttons */}
+      <div className="bg-white dark:bg-gray-900 border-t px-4 py-2">
         <div className="flex justify-between">
           <Button
             variant="outline"
             size="sm"
-            className="rounded-full"
+            className="dark:hover:bg-gray-800 rounded-full"
             onClick={resetFilters}
           >
             Reset
@@ -299,7 +220,7 @@ export default function SimpleFilterComponent({
             className="rounded-full"
             onClick={applyFilters}
           >
-            Export
+            Apply
           </Button>
         </div>
       </div>

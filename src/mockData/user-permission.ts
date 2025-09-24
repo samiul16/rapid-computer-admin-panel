@@ -10378,7 +10378,133 @@ export const userPermission = {
           edit: true,
           create: true,
         },
+        isDraft: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        isActive: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        isDeleted: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        createdAt: {
+          view: true,
+          edit: false,
+          create: true,
+        },
+        updatedAt: {
+          view: true,
+          edit: false,
+          create: true,
+        },
+        draftedAt: {
+          view: true,
+          edit: false,
+          create: true,
+        },
+        deletedAt: {
+          view: true,
+          edit: false,
+          create: true,
+        },
+      },
+    },
+    "sales-return": {
+      formPermissions: {
+        create: true,
+        view: true,
+        edit: true,
+        delete: true,
+        restore: true,
+        export: true,
+        import: true,
+        pdf: true,
+        print: true,
+        history: true,
+      },
+      fieldPermissions: {
+        documentNumber: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        salesInvoiceNumber: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        poNumber: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        poDate: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        customer: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        vatNumber: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        paymentMode: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        dueDays: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        paymentDate: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        country: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        state: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        city: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        remarks: {
+          view: true,
+          edit: true,
+          create: true,
+        },
         isDefault: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        salesman: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        status: {
           view: true,
           edit: true,
           create: true,
@@ -10416,6 +10542,132 @@ export const userPermission = {
         deletedAt: {
           view: true,
           edit: false,
+          create: true,
+        },
+      },
+    },
+    "sales-quotation": {
+      formPermissions: {
+        create: true,
+        view: true,
+        edit: true,
+        delete: true,
+        restore: true,
+        export: true,
+        import: true,
+        pdf: true,
+        print: true,
+        history: true,
+      },
+      fieldPermissions: {
+        documentNumber: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        quotationNumber: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        quotationDate: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        customer: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        vatNumber: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        paymentMode: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        dueDays: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        paymentDate: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        country: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        state: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        city: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        remarks: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        salesman: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        status: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        isDraft: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        isActive: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        isDeleted: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        createdAt: {
+          view: true,
+          edit: false,
+          create: true,
+        },
+        updatedAt: {
+          view: true,
+          edit: false,
+          create: true,
+        },
+        draftedAt: {
+          view: true,
+          edit: false,
+          create: true,
+        },
+        deletedAt: {
+          view: true,
+          edit: false,
+          create: true,
+        },
+        isDefault: {
+          view: true,
+          edit: true,
           create: true,
         },
       },
