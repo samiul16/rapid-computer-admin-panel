@@ -11,10 +11,7 @@ import { pdf } from "@react-pdf/renderer";
 import { Check, Eye, Plus } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import {
-  useLeadSourcesPermissions,
-  usePermission,
-} from "@/hooks/usePermissions";
+import { usePermission } from "@/hooks/usePermissions";
 // import { useLanguageLabels } from "@/hooks/useLanguageLabels";
 import { useAppSelector } from "@/store/hooks";
 import MinimizablePageLayout from "@/components/MinimizablePageLayout";
@@ -22,8 +19,10 @@ import { useMinimizedModuleData } from "@/hooks/useMinimizedModuleData";
 import { SwitchSelect } from "@/components/common/SwitchAutoComplete";
 import { ActionsAutocomplete } from "@/components/common/ActionsAutocomplete";
 
-type LeadSourceData = {
+type LeadStatusData = {
   name: string;
+  order: number;
+  color: string;
   status: "active" | "inactive" | "draft" | "deleted";
   isDefault: boolean;
   isActive: boolean;
@@ -36,7 +35,7 @@ type LeadSourceData = {
 };
 
 type LeadSourceModuleData = {
-  formData: LeadSourceData;
+  formData: LeadStatusData;
   hasChanges: boolean;
   scrollPosition: number;
 };
@@ -45,8 +44,10 @@ type Props = {
   isEdit?: boolean;
 };
 
-const initialData: LeadSourceData = {
-  name: "Website",
+const initialData: LeadStatusData = {
+  name: "New",
+  order: 1,
+  color: "#3B82F6",
   status: "active",
   isDefault: false,
   isActive: true,
@@ -58,14 +59,14 @@ const initialData: LeadSourceData = {
   deletedAt: null,
 };
 
-export default function LeadSourceEditPage({ isEdit = true }: Props) {
+export default function LeadStatusEditPage({ isEdit = true }: Props) {
   const navigate = useNavigate();
   const { id } = useParams();
   // const labels = useLanguageLabels();
   const { isRTL } = useAppSelector((state) => state.language);
 
   // Get module ID for this edit page
-  const moduleId = `lead-source-edit-module-${id || "new"}`;
+  const moduleId = `lead-status-edit-module-${id || "new"}`;
 
   // Use the custom hook for minimized module data
   const {
@@ -91,18 +92,23 @@ export default function LeadSourceEditPage({ isEdit = true }: Props) {
   const [selectedAction, setSelectedAction] = useState<string>("");
 
   // Permission checks
-  const { canCreate, canView } = useLeadSourcesPermissions();
+  const canCreate = usePermission("lead-status", "create");
+  const canView = usePermission("lead-status", "view");
 
   // Field-level permissions
-  const name: boolean = usePermission("lead-sources", "edit", "name");
-  const status: boolean = usePermission("lead-sources", "edit", "status");
-  const isDefault: boolean = usePermission("lead-sources", "edit", "isDefault");
-  const canPdf: boolean = usePermission("lead-sources", "pdf");
-  const canPrint: boolean = usePermission("lead-sources", "print");
+  const name: boolean = usePermission("lead-status", "edit", "name");
+  const status: boolean = usePermission("lead-status", "edit", "status");
+  const isDefault: boolean = usePermission("lead-status", "edit", "isDefault");
+  const canPdf: boolean = usePermission("lead-status", "pdf");
+  const canPrint: boolean = usePermission("lead-status", "print");
+  const orderField: boolean = usePermission("lead-status", "edit", "order");
+  const colorField: boolean = usePermission("lead-status", "edit", "color");
 
   // Form state
-  const [formData, setFormData] = useState<LeadSourceData>({
+  const [formData, setFormData] = useState<LeadStatusData>({
     name: "",
+    order: 1,
+    color: "#3B82F6",
     status: "active",
     isDefault: false,
     isActive: true,
@@ -184,10 +190,11 @@ export default function LeadSourceEditPage({ isEdit = true }: Props) {
   // Handle form field changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
+    const parsedValue = name === "order" ? Number(value) : value;
     const newFormData = {
       ...formData,
-      [name]: type === "checkbox" ? checked : value,
-    };
+      [name]: type === "checkbox" ? checked : parsedValue,
+    } as LeadStatusData;
     setFormData(newFormData);
   };
 
@@ -204,11 +211,11 @@ export default function LeadSourceEditPage({ isEdit = true }: Props) {
 
     // keep switch functionality
     if (keepCreating) {
-      toastSuccess("Lead source updated successfully!");
+      toastSuccess("Lead status updated successfully!");
       handleReset();
     } else {
-      toastSuccess("Lead source updated successfully!");
-      navigate("/lead-sources");
+      toastSuccess("Lead status updated successfully!");
+      navigate("/lead-status");
     }
   };
 
@@ -216,6 +223,8 @@ export default function LeadSourceEditPage({ isEdit = true }: Props) {
   const handleReset = async () => {
     setFormData({
       name: "",
+      order: 1,
+      color: "#3B82F6",
       status: "active",
       isDefault: false,
       isActive: true,
@@ -259,13 +268,15 @@ export default function LeadSourceEditPage({ isEdit = true }: Props) {
   const handlePrintLeadSource = (leadSourceData: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "Lead Source Details",
+        title: "Lead Status Details",
         data: [leadSourceData],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
-          name: "Lead Source Name",
+          name: "Name",
+          order: "Order",
+          color: "Color",
           status: "Status",
-          isDefault: "Default Lead Source",
+          isDefault: "Default Lead Status",
           isActive: "Active Status",
           isDraft: "Draft Status",
           isDeleted: "Deleted Status",
@@ -295,15 +306,15 @@ export default function LeadSourceEditPage({ isEdit = true }: Props) {
       const blob = await pdf(
         <GenericPDF
           data={[formData]}
-          title="Lead Source Details"
-          subtitle="Lead Source Information"
+          title="Lead Status Details"
+          subtitle="Lead Status Information"
         />
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "lead-source-details.pdf";
+      a.download = "lead-status-details.pdf";
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
@@ -317,7 +328,7 @@ export default function LeadSourceEditPage({ isEdit = true }: Props) {
       label: "Create",
       icon: <Plus className="w-5 h-5 text-green-500" />,
       onClick: () => {
-        navigate("/lead-sources/create");
+        navigate("/lead-status/create");
       },
       show: canCreate,
     },
@@ -325,7 +336,7 @@ export default function LeadSourceEditPage({ isEdit = true }: Props) {
       label: "View",
       icon: <Eye className="w-5 h-5 text-green-600" />,
       onClick: () => {
-        navigate("/lead-sources/view");
+        navigate("/lead-status/view");
       },
       show: canView,
     },
@@ -371,11 +382,11 @@ export default function LeadSourceEditPage({ isEdit = true }: Props) {
     <>
       <MinimizablePageLayout
         moduleId={moduleId}
-        moduleName={`Edit Lead Source`}
-        moduleRoute={`/lead-sources/edit/${id || "new"}`}
+        moduleName={`Edit Lead Status`}
+        moduleRoute={`/lead-status/edit/${id || "new"}`}
         onMinimize={handleMinimize}
-        title="Edit Lead Source"
-        listPath="lead-sources"
+        title="Edit Lead Status"
+        listPath="lead-status"
         popoverOptions={popoverOptions}
         videoSrc={video}
         videoHeader="Tutorial video"
@@ -386,7 +397,7 @@ export default function LeadSourceEditPage({ isEdit = true }: Props) {
         printEnabled={printEnabled}
         onPrintToggle={canPrint ? handleSwitchChange : undefined}
         activePage="edit"
-        module="lead-sources"
+        module="lead-status"
         additionalFooterButtons={
           canCreate ? (
             <div className="flex gap-4 max-[435px]:gap-2">
@@ -416,9 +427,9 @@ export default function LeadSourceEditPage({ isEdit = true }: Props) {
             onSubmit={handleSubmit}
             className="space-y-6"
           >
-            {/* First Row: Lead Source Name */}
+            {/* First Row: Lead Status Fields (keep Default, Status, and Action unchanged) */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
-              {/* Lead Source Name field - only show if user can edit */}
+              {/* Lead Status Name field - only show if user can edit */}
               {name && (
                 <div className="space-y-2">
                   <EditableInput
@@ -427,10 +438,52 @@ export default function LeadSourceEditPage({ isEdit = true }: Props) {
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    onNext={() => focusNextInput("status")}
+                    onNext={() =>
+                      focusNextInput(orderField ? "order" : "status")
+                    }
                     onCancel={() => setFormData({ ...formData, name: "" })}
-                    labelText="Lead Source Name"
-                    tooltipText="Enter the lead source name (e.g., Website, Social Media, LinkedIn)"
+                    labelText="Lead Status Name"
+                    tooltipText="Enter the lead status name (e.g., New, Qualified, Won)"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Order field (new) */}
+              {orderField && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("order")}
+                    id="order"
+                    name="order"
+                    value={String(formData.order)}
+                    onChange={handleChange}
+                    onNext={() =>
+                      focusNextInput(colorField ? "color" : "status")
+                    }
+                    onCancel={() => setFormData({ ...formData, order: 1 })}
+                    labelText="Order"
+                    tooltipText="Enter display order (number)"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Color field (new) */}
+              {colorField && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("color")}
+                    id="color"
+                    name="color"
+                    value={formData.color}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("status")}
+                    onCancel={() =>
+                      setFormData({ ...formData, color: "#3B82F6" })
+                    }
+                    labelText="Color"
+                    tooltipText="Enter hex color (e.g., #3B82F6)"
                     required
                   />
                 </div>

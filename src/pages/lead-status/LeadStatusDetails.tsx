@@ -17,55 +17,75 @@ import { ResetFormModal } from "@/components/common/ResetFormModal";
 import { usePermission } from "@/hooks/usePermissions";
 import MinimizablePageLayout from "@/components/MinimizablePageLayout";
 
-const MOCK_LEAD_SOURCES = [
+const MOCK_LEAD_STATUSES = [
   {
     id: "1",
-    name: "Website",
+    name: "New",
+    order: 1,
+    color: "#3B82F6",
     status: "Active",
   },
   {
     id: "2",
-    name: "Social Media",
+    name: "Contacted",
+    order: 2,
+    color: "#06B6D4",
     status: "Active",
   },
   {
     id: "3",
-    name: "LinkedIn",
+    name: "Qualified",
+    order: 3,
+    color: "#10B981",
     status: "Draft",
   },
   {
     id: "4",
-    name: "Facebook",
+    name: "Proposal Sent",
+    order: 4,
+    color: "#8B5CF6",
     status: "InActive",
   },
   {
     id: "5",
-    name: "Instagram",
+    name: "Negotiation",
+    order: 5,
+    color: "#F59E0B",
     status: "Active",
   },
   {
     id: "6",
-    name: "Referral",
+    name: "Won",
+    order: 6,
+    color: "#22C55E",
     status: "Active",
   },
   {
     id: "7",
-    name: "Email Campaign",
+    name: "Lost",
+    order: 7,
+    color: "#EF4444",
     status: "Active",
   },
   {
     id: "8",
-    name: "Google Ads",
+    name: "On Hold",
+    order: 8,
+    color: "#64748B",
     status: "Active",
   },
   {
     id: "9",
-    name: "Organic Search",
+    name: "Re-engage",
+    order: 9,
+    color: "#A78BFA",
     status: "Active",
   },
   {
     id: "10",
-    name: "Events",
+    name: "No Response",
+    order: 10,
+    color: "#94A3B8",
     status: "Active",
   },
 ];
@@ -84,13 +104,13 @@ export type HistoryEntry = {
   print: boolean;
 };
 
-export default function LeadSourceDetailsPage() {
+export default function LeadStatusDetailsPage() {
   // const { t } = useTranslation();
   const navigate = useNavigate();
 
   const [keepChanges, setKeepChanges] = useState(false);
   const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
-  const [selectedLeadSource, setSelectedLeadSource] = useState("1");
+  const [selectedLeadStatus, setSelectedLeadStatus] = useState("1");
   const location = useLocation();
   const isViewPage = location.pathname.includes("/view");
   const [pdfChecked, setPdfChecked] = useState(false);
@@ -101,21 +121,26 @@ export default function LeadSourceDetailsPage() {
   // const { canCreate, canView, canEdit, canDelete } = useUserMasterPermissions();
 
   // Field-level permissions
-  const canPdf: boolean = usePermission("lead-sources", "pdf");
-  const canPrint: boolean = usePermission("lead-sources", "print");
-  const canSeeHistory: boolean = usePermission("lead-sources", "history");
+  const canPdf: boolean = usePermission("lead-status", "pdf");
+  const canPrint: boolean = usePermission("lead-status", "print");
+  const canSeeHistory: boolean = usePermission("lead-status", "history");
 
-  let leadSourceData = {
-    id: selectedLeadSource,
+  let leadStatusData = {
+    id: selectedLeadStatus,
     name:
-      MOCK_LEAD_SOURCES.find((ls) => ls.id === selectedLeadSource)?.name ||
-      "Website",
+      MOCK_LEAD_STATUSES.find((ls) => ls.id === selectedLeadStatus)?.name ||
+      "New",
+    order:
+      MOCK_LEAD_STATUSES.find((ls) => ls.id === selectedLeadStatus)?.order || 1,
+    color:
+      MOCK_LEAD_STATUSES.find((ls) => ls.id === selectedLeadStatus)?.color ||
+      "#3B82F6",
     isDefault: true,
     isActive: true,
     isDraft: false,
     isDeleted: false,
     status:
-      MOCK_LEAD_SOURCES.find((ls) => ls.id === selectedLeadSource)?.status ||
+      MOCK_LEAD_STATUSES.find((ls) => ls.id === selectedLeadStatus)?.status ||
       "Active",
     createdAt: "2023-05-15T10:30:00Z",
     updatedAt: "2025-01-15T14:30:00Z",
@@ -132,9 +157,11 @@ export default function LeadSourceDetailsPage() {
     }
     console.log("isViewPage", isViewPage);
     if (isViewPage) {
-      leadSourceData = {
-        id: selectedLeadSource,
+      leadStatusData = {
+        id: selectedLeadStatus,
         name: "",
+        order: 1,
+        color: "#3B82F6",
         isDefault: true,
         isActive: true,
         isDraft: false,
@@ -148,15 +175,17 @@ export default function LeadSourceDetailsPage() {
     }
   }, []);
 
-  const handlePrintLeadSource = (leadSourceData: any) => {
+  const handlePrintLeadStatus = (leadStatusData: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "Lead Source Master Details",
-        data: [leadSourceData],
+        title: "Lead Status Master Details",
+        data: [leadStatusData],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
-          name: "Lead Source Name",
-          isDefault: "Default Lead Source",
+          name: "Name",
+          order: "Order",
+          color: "Color",
+          isDefault: "Default Lead Status",
           isActive: "Active Status",
           isDraft: "Draft Status",
           isDeleted: "Deleted Status",
@@ -185,19 +214,19 @@ export default function LeadSourceDetailsPage() {
   const handleExportPDF = async () => {
     console.log("Export PDF clicked");
     try {
-      console.log("leadSourceData on pdf click", leadSourceData);
+      console.log("leadStatusData on pdf click", leadStatusData);
       const blob = await pdf(
         <GenericPDF
-          data={[leadSourceData]}
-          title="Lead Source Master Details"
-          subtitle="Lead Source Information"
+          data={[leadStatusData]}
+          title="Lead Status Master Details"
+          subtitle="Lead Status Information"
         />
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "lead-source-details.pdf";
+      a.download = "lead-status-details.pdf";
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
@@ -241,25 +270,25 @@ export default function LeadSourceDetailsPage() {
   return (
     <>
       <MinimizablePageLayout
-        moduleId="lead-source-details-module"
-        moduleName="Lead Source Details"
-        moduleRoute="/lead-sources/view"
-        title="Viewing Lead Source"
+        moduleId="lead-status-details-module"
+        moduleName="Lead Status Details"
+        moduleRoute="/lead-status/view"
+        title="Viewing Lead Status"
         videoSrc={video}
         videoHeader="Tutorial video"
-        listPath="lead-sources"
+        listPath="lead-status"
         activePage="view"
-        module="lead-sources"
+        module="lead-status"
         popoverOptions={[
           {
             label: "Create",
             icon: <Plus className="w-5 h-5 text-green-600" />,
-            onClick: () => navigate("/lead-sources/create"),
+            onClick: () => navigate("/lead-status/create"),
           },
           {
             label: "Edit",
             icon: <Edit className="w-5 h-5 text-blue-600" />,
-            onClick: () => navigate("/lead-sources/edit/1"),
+            onClick: () => navigate("/lead-status/edit/1"),
           },
         ]}
         keepChanges={keepChanges}
@@ -283,19 +312,19 @@ export default function LeadSourceDetailsPage() {
                   handleExportPDF();
                 }
                 if (printEnabled) {
-                  handlePrintLeadSource(leadSourceData);
+                  handlePrintLeadStatus(leadStatusData);
                 }
               }
             : undefined
         }
       >
-        {/* Row 1: Lead Source Selection, Name */}
+        {/* Row 1: Lead Status Selection, Name, Order, Color */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
           <div className="mt-1">
             <Autocomplete
-              options={MOCK_LEAD_SOURCES}
-              value={selectedLeadSource}
-              onValueChange={setSelectedLeadSource}
+              options={MOCK_LEAD_STATUSES}
+              value={selectedLeadStatus}
+              onValueChange={setSelectedLeadStatus}
               placeholder=" "
               displayKey="name"
               valueKey="id"
@@ -303,16 +332,38 @@ export default function LeadSourceDetailsPage() {
               disabled={false}
               className="w-[96%] bg-gray-100 rounded-xl"
               labelClassName="bg-gray-50 rounded-2xl"
-              labelText="Lead Source Name"
+              labelText="Lead Status Name"
               isShowTemplateIcon={false}
             />
+          </div>
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">Order</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(leadStatusData.order)}
+            </div>
+          </div>
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">Color</h3>
+            </div>
+            <div className="flex items-center gap-2">
+              <div
+                className="w-6 h-6 rounded-full border border-gray-300"
+                style={{ backgroundColor: leadStatusData.color }}
+              />
+              <span className="text-gray-900 text-md dark:text-white">
+                {displayValue(leadStatusData.color)}
+              </span>
+            </div>
           </div>
           <div className="">
             <div className="flex justify-between items-center mb-1">
               <h3 className="font-normal text-gray-600">Status</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(leadSourceData.status)}
+              {displayValue(leadStatusData.status)}
             </div>
           </div>
 
@@ -322,7 +373,7 @@ export default function LeadSourceDetailsPage() {
                 <span className="text-[15px] text-gray-600">Default</span>
               </div>
               <div className="">
-                {leadSourceData.isDefault ? (
+                {leadStatusData.isDefault ? (
                   <span className="text-black text-[15px]">Yes</span>
                 ) : (
                   <span className="text-black text-[15px]">No</span>
@@ -347,10 +398,10 @@ export default function LeadSourceDetailsPage() {
         columnData={mockHistoryData}
         title="History"
         statusInfo={{
-          created: getRelativeTime(leadSourceData.createdAt),
-          updated: getRelativeTime(leadSourceData.updatedAt),
-          drafted: getRelativeTime(leadSourceData.draftedAt),
-          deleted: getRelativeTime(leadSourceData.deletedAt),
+          created: getRelativeTime(leadStatusData.createdAt),
+          updated: getRelativeTime(leadStatusData.updatedAt),
+          drafted: getRelativeTime(leadStatusData.draftedAt),
+          deleted: getRelativeTime(leadStatusData.deletedAt),
         }}
       />
 
