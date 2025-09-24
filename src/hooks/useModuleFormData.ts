@@ -7,6 +7,7 @@ import type {
   SubCategoryFormData,
   PurchaseReturnModuleData,
   TicketModuleData,
+  BlogModuleData,
 } from "@/types/modules";
 
 export function useSubCategoryFormData() {
@@ -39,4 +40,8 @@ export function usePurchaseReturnFormData() {
 
 export function useTicketFormData() {
   return useMinimizedModuleData<TicketModuleData>("ticket-form-module");
+}
+
+export function useBlogFormData() {
+  return useMinimizedModuleData<BlogModuleData>("blog-form-module");
 }

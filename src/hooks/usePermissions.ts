@@ -136,8 +136,6 @@ export function usePermission<T extends string>(
     (state: RootState) => state.auth.user?.permissions
   );
 
-  console.log("permissions in usePermission-->:", permissions);
-
   return useMemo(() => {
     if (!fieldNames) return hasPermission(permissions, moduleName, action);
 

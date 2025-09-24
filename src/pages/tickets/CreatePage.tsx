@@ -539,6 +539,12 @@ export default function TicketsCreatePage({ isEdit = false }: Props) {
                 }
 
                 if (field.component === "mutiselect") {
+                  console.log(
+                    "name ",
+                    field.name,
+                    "field.options ",
+                    field.options
+                  );
                   return (
                     <div key={field.name} className="space-y-2 relative">
                       <FloatingMultiSelect
@@ -552,11 +558,22 @@ export default function TicketsCreatePage({ isEdit = false }: Props) {
                                 .filter(Boolean)
                             : []
                         }
-                        onChange={(value: string[]) => {
+                        onChange={(selectedOptions) => {
+                          console.log(
+                            "FIrst selected as object",
+                            selectedOptions
+                          );
+                          const selectedValues = selectedOptions.map(
+                            (o) => o.value
+                          );
+
+                          console.log("Selected values 566:", selectedValues);
+
                           setFormData((prev) => ({
                             ...prev,
-                            [field.name]: value.join(", "),
+                            [field.name]: selectedValues.join(", "),
                           }));
+
                           if (field.nextFocus) focusNextInput(field.nextFocus);
                         }}
                       />

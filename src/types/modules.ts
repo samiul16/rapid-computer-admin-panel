@@ -128,6 +128,14 @@ export interface InvoiceModuleData {
   scrollPosition: number;
 }
 
+// Blog Module Data Interface
+export interface BlogModuleData {
+  formData: any; // Use your specific blog form type here
+  hasChanges: boolean;
+  scrollPosition: number;
+  blogLanguageValues: Record<string, string>;
+}
+
 interface StockTransfer {
   id: string;
   documentNumber: string;
