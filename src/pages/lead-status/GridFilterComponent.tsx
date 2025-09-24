@@ -1,197 +1,152 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useMemo, useEffect } from "react";
-import { Search, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
+import { useState, useEffect } from "react";
+// import { cn } from "@/lib/utils";
+import FilterComponent from "@/components/Filters/FilterComponent";
+import ExportComponent from "@/components/Filters/ExportComponent";
 
-interface SimpleFilterProps {
+interface GridTabsComponentProps {
   data: any[];
   setFilteredData: (filtered: any[]) => void;
-  setShowFilter: (visible: boolean) => void;
+  setShowTabs: (visible: boolean) => void;
+  defaultTab?: "filter" | "export";
 }
 
-export default function SimpleFilterComponent({
+type TabType = "filter" | "export";
+
+export default function GridTabsComponent({
   data,
   setFilteredData,
-  setShowFilter,
-}: SimpleFilterProps) {
-  const [search, setSearch] = useState("");
-  const [selectedFilters, setSelectedFilters] = useState<
-    Record<string, Set<any>>
-  >({});
-  const [isInitialized, setIsInitialized] = useState(false);
+  setShowTabs,
+  defaultTab = "filter",
+}: GridTabsComponentProps) {
+  // Initialize state with defaultTab and force re-render when defaultTab changes
+  const [activeTab, setActiveTab] = useState<TabType>(() => {
+    console.log("GridTabsComponent initialized with defaultTab:", defaultTab);
+    return defaultTab;
+  });
 
-  const filterableFields = useMemo(() => {
-    if (data.length === 0) return [];
-    // Return string fields (exclude id or non-string if needed)
-    return Object.keys(data[0]).filter((key) => key !== "id");
-  }, [data]);
-
-  const fieldOptions = useMemo(() => {
-    const result: Record<string, Set<string>> = {};
-    for (const row of data) {
-      for (const key of filterableFields) {
-        if (!result[key]) result[key] = new Set();
-        if (row[key] !== undefined && row[key] !== null) {
-          result[key].add(String(row[key]));
-        }
-      }
-    }
-    return result;
-  }, [data, filterableFields]);
-
-  // Initialize filters on data change
+  // Reset active tab when defaultTab changes
   useEffect(() => {
-    if (data.length > 0 && !isInitialized) {
-      setSelectedFilters(fieldOptions);
-      setIsInitialized(true);
+    console.log("useEffect triggered - setting activeTab to:", defaultTab);
+    setActiveTab(defaultTab);
+  }, [defaultTab]);
+
+  // Debug current state
+  useEffect(() => {
+    console.log("Current activeTab:", activeTab, "defaultTab:", defaultTab);
+  }, [activeTab, defaultTab]);
+
+  const tabs = [
+    { id: "export" as const, label: "Export", value: "export" },
+    { id: "filter" as const, label: "Filter", value: "filter" },
+  ];
+
+  const handleReset = () => {
+    // Reset logic based on active tab
+    if (activeTab === "filter") {
+      // Reset filters
+      setFilteredData(data);
     }
-  }, [data, fieldOptions, isInitialized]);
-
-  const resetFilters = () => {
-    setSelectedFilters({});
-    setSearch("");
   };
 
-  const applyFilters = () => {
-    let filtered = data;
-    for (const key in selectedFilters) {
-      const values = selectedFilters[key];
-      if (values.size > 0) {
-        filtered = filtered.filter((row) => values.has(String(row[key])));
-      }
+  const handleApply = () => {
+    // Apply logic based on active tab
+    if (activeTab === "filter") {
+      // Apply filters
+      console.log("Apply filters");
     }
-    setFilteredData(filtered);
-    setShowFilter(false);
+    setShowTabs(false);
   };
 
-  const handleParentCheck = (key: string, checked: boolean | string) => {
-    const allValues = Array.from(fieldOptions[key] ?? []);
-    setSelectedFilters((prev) => {
-      const updated = new Set(checked ? allValues : []);
-      return { ...prev, [key]: updated };
-    });
+  const renderActiveComponent = () => {
+    switch (activeTab) {
+      case "filter":
+        return (
+          <FilterComponent
+            data={data}
+            setFilteredData={setFilteredData}
+            onReset={handleReset}
+            onApply={handleApply}
+            onClose={() => setShowTabs(false)}
+          />
+        );
+      case "export":
+        return (
+          <ExportComponent
+            data={data}
+            onReset={() => {}} // Empty function since no reset needed for export
+            onApply={() => setShowTabs(false)} // Just close the tabs
+            onClose={() => setShowTabs(false)}
+          />
+        );
+      default:
+        return null;
+    }
   };
 
-  const handleChildCheck = (
-    key: string,
-    value: string,
-    checked: boolean | string
-  ) => {
-    setSelectedFilters((prev) => {
-      const prevSet = new Set(prev[key] ?? []);
-      if (checked) prevSet.add(value);
-      else prevSet.delete(value);
-      return { ...prev, [key]: prevSet };
-    });
-  };
+  // Show only the relevant tab without navigation when defaultTab is specified
+  if (defaultTab) {
+    return (
+      <div
+        className="flex flex-col bg-white dark:bg-gray-900 h-full"
+        style={{ borderRadius: "20px" }}
+      >
+        {/* Header with Single Tab Label */}
+        {/* <div className="flex-shrink-0 p-4 border-b">
+          <div className="flex gap-8 relative">
+            <div className="relative">
+              <div className="text-lg font-medium font-['Inter'] leading-tight text-sky-400">
+                {defaultTab === "filter" ? "Filter" : "Export"}
+              </div>
 
-  return (
-    <div className="w-72 h-[100vh] child flex flex-col border rounded-lg overflow-hidden">
-      {/* Fixed Header */}
-      <div className="border-b px-3 py-2 flex-shrink-0">
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1 rounded-full">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-            <Input
-              placeholder="Search..."
-              className="pl-8 h-8 w-full rounded-full"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+              <div className="absolute -bottom-[18px] left-1/2 transform -translate-x-1/2 w-11 h-[5px] bg-sky-400 rounded-full" />
+            </div>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => {
-              setSearch("");
-              setShowFilter(false);
-            }}
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
+        </div> */}
+
+        {/* Active Component */}
+        <div className="flex-1 overflow-hidden">{renderActiveComponent()}</div>
       </div>
+    );
+  }
 
-      {/* Scrollable Body */}
-      <div className="flex-1 overflow-y-auto px-2 py-2 space-y-4">
-        {filterableFields
-          .filter((key) => {
-            const values = Array.from(fieldOptions[key] ?? []);
-            return (
-              key.toLowerCase().includes(search.toLowerCase()) ||
-              values.some((val) =>
-                val.toLowerCase().includes(search.toLowerCase())
-              )
-            );
-          })
-          .map((key) => {
-            const values = Array.from(fieldOptions[key] ?? []);
-            const selected = Array.from(selectedFilters[key] ?? []);
-            const isParentChecked = selected.length > 0;
+  // Original behavior with both tabs when no defaultTab is specified
+  return (
+    <div
+      className="flex flex-col bg-white dark:bg-gray-900 h-full"
+      style={{ borderRadius: "20px" }}
+    >
+      {/* Header with Custom Tab Navigation */}
+      <div className="flex-shrink-0 p-4 border-b">
+        <div className="flex gap-8 relative">
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab.value;
 
             return (
-              <div key={key}>
-                <div className="flex items-center gap-2 font-medium mb-1">
-                  <Checkbox
-                    checked={isParentChecked}
-                    onCheckedChange={(checked) =>
-                      handleParentCheck(key, checked)
-                    }
-                    className="data-[state=checked]:text-white"
-                  />
-                  <span className="text-black">{key}</span>
-                </div>
+              <div key={tab.value} className="relative cursor-pointer">
+                <button
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`text-lg font-medium font-['Inter'] leading-tight transition-colors cursor-pointer ${
+                    isActive
+                      ? "text-sky-400"
+                      : "text-black/40 hover:text-black/60"
+                  }`}
+                >
+                  {tab.label}
+                </button>
 
-                <div className="ml-4 space-y-1">
-                  {values
-                    .filter((val) =>
-                      val.toLowerCase().includes(search.toLowerCase())
-                    )
-                    .map((val) => (
-                      <div
-                        key={val}
-                        className="flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded px-2 py-1"
-                      >
-                        <Checkbox
-                          checked={selected.includes(val)}
-                          onCheckedChange={(checked) =>
-                            handleChildCheck(key, val, checked)
-                          }
-                          className="data-[state=checked]:text-white text-black"
-                        />
-                        <span className="text-sm text-black">{val}</span>
-                      </div>
-                    ))}
-                </div>
+                {/* Active indicator line */}
+                {isActive && (
+                  <div className="absolute -bottom-[18px] left-1/2 transform -translate-x-1/2 w-11 h-[5px] bg-sky-400 rounded-full" />
+                )}
               </div>
             );
           })}
-      </div>
-
-      {/* Fixed Footer */}
-      <div className="bg-white dark:bg-gray-900 border-t px-4 py-2 mb-2">
-        <div className="flex justify-between">
-          <Button
-            variant="outline"
-            size="sm"
-            className=" rounded-full"
-            onClick={resetFilters}
-          >
-            Reset
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="rounded-full"
-            onClick={applyFilters}
-          >
-            Apply
-          </Button>
         </div>
       </div>
+
+      {/* Active Component */}
+      <div className="flex-1 overflow-hidden">{renderActiveComponent()}</div>
     </div>
   );
 }

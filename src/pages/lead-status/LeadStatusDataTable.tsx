@@ -1,179 +1,287 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import FixedColumnDataTable from "@/components/common/country-page-table/FixedColumnDataTable";
-import { usePermission } from "@/hooks/usePermissions";
+import useIsMobile from "@/hooks/useIsMobile";
+import { useLeadSourcesPermissions } from "@/hooks/usePermissions";
 
-const mockLeadStatuses = [
+// Lead Source interface (name and status fields)
+interface LeadSource {
+  id: string;
+  name: string;
+  status: "active" | "inactive" | "draft";
+  createdAt: string;
+  updatedAt: string;
+  draftedAt: string;
+  isActive: boolean;
+  isDraft: boolean;
+  isDeleted: boolean;
+  isUpdated: boolean;
+  actionMessage: string;
+}
+
+const mockLeadSources: LeadSource[] = [
   {
     id: "1",
-    name: "New Lead",
-    order: 1,
-    color: "#3B82F6",
-    createdAt: "2024-01-15",
-    updatedAt: "2024-01-20",
-    draftedAt: null,
-    actionMessage: "2h",
+    name: "Website",
+    status: "active",
+    createdAt: "2023-01-15",
+    updatedAt: "2023-11-20",
+    draftedAt: "2023-01-10",
     isActive: true,
     isDraft: false,
     isDeleted: false,
     isUpdated: false,
+    actionMessage: "Yesterday",
   },
   {
     id: "2",
-    name: "Contacted",
-    order: 2,
-    color: "#10B981",
-    createdAt: "2024-01-16",
-    updatedAt: "2024-01-21",
-    draftedAt: null,
-    actionMessage: "2h",
+    name: "Social Media",
+    status: "active",
+    createdAt: "2023-01-18",
+    updatedAt: "2023-10-15",
+    draftedAt: "2023-01-12",
     isActive: true,
     isDraft: false,
     isDeleted: false,
     isUpdated: false,
+    actionMessage: "Yesterday",
   },
   {
     id: "3",
-    name: "Qualified",
-    order: 3,
-    color: "#F59E0B",
-    createdAt: "2023-05-15",
-    updatedAt: "2024-01-22",
-    draftedAt: null,
-    actionMessage: "20m",
+    name: "LinkedIn",
+    status: "active",
+    createdAt: "2023-02-01",
+    updatedAt: "2023-11-10",
+    draftedAt: "2023-01-25",
     isActive: true,
     isDraft: false,
     isDeleted: false,
     isUpdated: false,
+    actionMessage: "Yesterday",
   },
   {
     id: "4",
-    name: "Proposal Sent",
-    order: 4,
-    color: "#8B5CF6",
-    createdAt: "2024-01-18",
-    updatedAt: "2024-01-23",
-    draftedAt: "2024-01-25",
-    actionMessage: "15 Apr",
+    name: "Facebook",
+    status: "active",
+    createdAt: "2023-02-10",
+    updatedAt: "2023-11-05",
+    draftedAt: "2023-02-05",
     isActive: true,
-    isDraft: true,
+    isDraft: false,
     isDeleted: false,
     isUpdated: false,
+    actionMessage: "Yesterday",
   },
   {
     id: "5",
-    name: "Negotiation",
-    order: 5,
-    color: "#EF4444",
-    createdAt: "2023-12-15",
-    updatedAt: "2024-01-24",
-    draftedAt: null,
-    actionMessage: "15 Apr 2023",
+    name: "Instagram",
+    status: "active",
+    createdAt: "2023-02-15",
+    updatedAt: "2023-10-28",
+    draftedAt: "2023-02-08",
     isActive: true,
     isDraft: false,
     isDeleted: false,
     isUpdated: false,
+    actionMessage: "1 day ago",
   },
   {
     id: "6",
-    name: "Closed Won",
-    order: 6,
-    color: "#059669",
-    createdAt: "2024-01-20",
-    updatedAt: "2024-01-25",
-    draftedAt: null,
-    actionMessage: "15 Apr 2024",
-    isActive: true,
-    isDraft: false,
+    name: "Twitter / X",
+    status: "draft",
+    createdAt: "2023-03-01",
+    updatedAt: "2023-11-15",
+    draftedAt: "2023-02-20",
+    isActive: false,
+    isDraft: true,
     isDeleted: false,
     isUpdated: false,
+    actionMessage: "1 day ago",
   },
   {
     id: "7",
-    name: "Closed Lost",
-    order: 7,
-    color: "#DC2626",
-    createdAt: "2024-01-21",
-    updatedAt: "2024-01-26",
-    draftedAt: null,
-    actionMessage: "15 Apr 2024",
+    name: "Referral",
+    status: "active",
+    createdAt: "2023-03-10",
+    updatedAt: "2023-11-08",
+    draftedAt: "2023-03-05",
     isActive: true,
     isDraft: false,
     isDeleted: false,
     isUpdated: false,
+    actionMessage: "1 day ago",
   },
   {
     id: "8",
-    name: "On Hold",
-    order: 8,
-    color: "#6B7280",
-    createdAt: "2024-01-22",
-    updatedAt: "2024-01-27",
-    draftedAt: null,
-    actionMessage: "15 Apr 2024",
-    isActive: true,
+    name: "Email Campaign",
+    status: "inactive",
+    createdAt: "2023-03-20",
+    updatedAt: "2023-10-22",
+    draftedAt: "2023-03-15",
+    isActive: false,
     isDraft: false,
     isDeleted: false,
     isUpdated: false,
+    actionMessage: "1 day ago",
   },
   {
     id: "9",
-    name: "Rejected",
-    order: 9,
-    color: "#991B1B",
-    createdAt: "2021-12-15",
-    updatedAt: "2024-01-28",
-    draftedAt: null,
-    actionMessage: "15 Apr 2024",
+    name: "Google Ads",
+    status: "active",
+    createdAt: "2023-04-01",
+    updatedAt: "2023-11-25",
+    draftedAt: "2023-03-25",
     isActive: true,
     isDraft: false,
     isDeleted: false,
     isUpdated: false,
+    actionMessage: "1 day ago",
   },
   {
     id: "10",
-    name: "Follow Up",
-    order: 10,
-    color: "#F97316",
-    createdAt: "2024-01-24",
-    updatedAt: "2024-01-29",
-    draftedAt: null,
-    actionMessage: "2h",
-    isActive: true,
-    isDraft: false,
+    name: "Organic Search",
+    status: "draft",
+    createdAt: "2023-04-10",
+    updatedAt: "2023-11-18",
+    draftedAt: "2023-04-05",
+    isActive: false,
+    isDraft: true,
     isDeleted: false,
     isUpdated: false,
+    actionMessage: "1 day ago",
   },
   {
     id: "11",
-    name: "Meeting Scheduled",
-    order: 11,
-    color: "#06B6D4",
-    createdAt: "2024-02-15",
-    updatedAt: "2024-01-30",
-    draftedAt: null,
-    actionMessage: "2h",
+    name: "Events",
+    status: "active",
+    createdAt: "2023-04-15",
+    updatedAt: "2023-09-10",
+    draftedAt: "2023-04-10",
     isActive: true,
     isDraft: false,
     isDeleted: false,
     isUpdated: false,
+    actionMessage: "1 day ago",
   },
   {
     id: "12",
-    name: "Demo Completed",
-    order: 12,
-    color: "#EC4899",
-    createdAt: "2024-01-26",
-    updatedAt: "2024-01-31",
-    draftedAt: null,
-    actionMessage: "2h",
+    name: "YouTube",
+    status: "inactive",
+    createdAt: "2023-05-01",
+    updatedAt: "2023-11-12",
+    draftedAt: "2023-04-25",
+    isActive: false,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "1 day ago",
+  },
+  {
+    id: "13",
+    name: "WhatsApp",
+    status: "active",
+    createdAt: "2023-05-10",
+    updatedAt: "2023-10-30",
+    draftedAt: "2023-05-05",
     isActive: true,
     isDraft: false,
     isDeleted: false,
     isUpdated: false,
+    actionMessage: "1 day ago",
+  },
+  {
+    id: "14",
+    name: "Cold Call",
+    status: "draft",
+    createdAt: "2023-05-20",
+    updatedAt: "2023-11-02",
+    draftedAt: "2023-05-15",
+    isActive: false,
+    isDraft: true,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "1 day ago",
+  },
+  {
+    id: "15",
+    name: "Flyer",
+    status: "active",
+    createdAt: "2023-06-01",
+    updatedAt: "2023-11-08",
+    draftedAt: "2023-05-25",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "1 day ago",
+  },
+  {
+    id: "16",
+    name: "TV",
+    status: "active",
+    createdAt: "2023-06-10",
+    updatedAt: "2023-10-25",
+    draftedAt: "2023-06-05",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "1 day ago",
+  },
+  {
+    id: "17",
+    name: "Radio",
+    status: "inactive",
+    createdAt: "2023-06-15",
+    updatedAt: "2023-06-20",
+    draftedAt: "2023-06-12",
+    isActive: false,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "1 day ago",
+  },
+  {
+    id: "18",
+    name: "Marketplace",
+    status: "draft",
+    createdAt: "2023-07-01",
+    updatedAt: "2023-11-15",
+    draftedAt: "2023-06-25",
+    isActive: false,
+    isDraft: true,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "1 day ago",
+  },
+  {
+    id: "19",
+    name: "Partner",
+    status: "active",
+    createdAt: "2023-07-10",
+    updatedAt: "2023-10-18",
+    draftedAt: "2023-07-05",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "1 day ago",
+  },
+  {
+    id: "20",
+    name: "Other",
+    status: "inactive",
+    createdAt: "2023-07-20",
+    updatedAt: "2023-09-15",
+    draftedAt: "2023-07-15",
+    isActive: false,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "1 day ago",
   },
 ];
 
-export default function LeadStatusesDataTable({
+export default function LeadSourcesDataTable({
   viewMode,
   setViewMode,
   dataTableFilter,
@@ -184,6 +292,8 @@ export default function LeadStatusesDataTable({
   showFilter,
   setShowVisibility,
   showVisibility,
+  isFilterOpen,
+  setIsFilterOpen,
 }: {
   viewMode: string;
   setViewMode: (viewMode: string) => void;
@@ -195,14 +305,17 @@ export default function LeadStatusesDataTable({
   showFilter: boolean;
   setShowVisibility: (showVisibility: boolean) => void;
   showVisibility: boolean;
+  isFilterOpen: boolean;
+  setIsFilterOpen: (isFilterOpen: boolean) => void;
 }) {
-  const canCreate = usePermission("leadStatuses", "create");
+  const { canCreate } = useLeadSourcesPermissions();
+  const isMobile = useIsMobile();
 
   const componentColumns = [
     {
       accessorKey: "name",
       title: "Name",
-      options: [...new Set(mockLeadStatuses.map((item: any) => item.name))],
+      options: [...new Set(mockLeadSources.map((item) => item.name))],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
         const cellValue = row.getValue(columnId) as string;
@@ -213,69 +326,43 @@ export default function LeadStatusesDataTable({
       sortingFn: (row1: any, row2: any) => {
         return row1.getValue("name").localeCompare(row2.getValue("name"));
       },
-      size: 180,
-      minSize: 150,
+      size: isMobile ? 120 : 180,
+      minSize: 120,
       meta: {
-        exportLabel: "name",
+        exportLabel: "Name",
         readOnly: !canCreate,
       },
     },
-    {
-      accessorKey: "order",
-      title: "Order",
-      options: [...new Set(mockLeadStatuses.map((item: any) => item.order))],
-      filterFn: (row: any, columnId: any, filterValue: any) => {
-        if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as number;
-        return filterValue.some((filterVal: number) => cellValue === filterVal);
-      },
-      sortingFn: (row1: any, row2: any) => {
-        return row1.getValue("order") - row2.getValue("order");
-      },
-      size: 120,
-      minSize: 100,
-      meta: {
-        exportLabel: "order",
-        readOnly: !canCreate,
-      },
-    },
-    {
-      accessorKey: "color",
-      title: "Color",
-      options: [...new Set(mockLeadStatuses.map((item: any) => item.color))],
-      filterFn: (row: any, columnId: any, filterValue: any) => {
-        if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as string;
-        return filterValue.some((filterVal: string) => cellValue === filterVal);
-      },
-      sortingFn: (row1: any, row2: any) => {
-        return row1.getValue("color").localeCompare(row2.getValue("color"));
-      },
-      size: 120,
-      minSize: 100,
-      meta: {
-        exportLabel: "color",
-        readOnly: !canCreate,
-      },
-    },
+
     {
       accessorKey: "createdAt",
       title: "Created",
-      options: [],
+      options: [], // Dates are typically not filtered with predefined options
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = new Date(row.getValue(columnId) as string)
-          .toISOString()
-          .split("T")[0];
+        const dateValue = row.getValue(columnId) as string;
+        const date = new Date(dateValue);
+
+        // Check if the date is valid before calling toISOString
+        if (isNaN(date.getTime())) {
+          return false; // Invalid date, exclude from results
+        }
+
+        const cellValue = date.toISOString().split("T")[0];
         return filterValue.includes(cellValue);
       },
       sortingFn: (row1: any, row2: any) => {
-        return (
-          new Date(row1.getValue("createdAt")).getTime() -
-          new Date(row2.getValue("createdAt")).getTime()
-        );
+        const date1 = new Date(row1.getValue("createdAt"));
+        const date2 = new Date(row2.getValue("createdAt"));
+
+        // Handle invalid dates by placing them at the end
+        if (isNaN(date1.getTime()) && isNaN(date2.getTime())) return 0;
+        if (isNaN(date1.getTime())) return 1;
+        if (isNaN(date2.getTime())) return -1;
+
+        return date1.getTime() - date2.getTime();
       },
-      size: 180,
+      size: isMobile ? 150 : 180,
       minSize: 150,
       meta: {
         exportLabel: "createdAt",
@@ -285,21 +372,32 @@ export default function LeadStatusesDataTable({
     {
       accessorKey: "updatedAt",
       title: "Updated",
-      options: [],
+      options: [], // Dates are typically not filtered with predefined options
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = new Date(row.getValue(columnId) as string)
-          .toISOString()
-          .split("T")[0];
+        const dateValue = row.getValue(columnId) as string;
+        const date = new Date(dateValue);
+
+        // Check if the date is valid before calling toISOString
+        if (isNaN(date.getTime())) {
+          return false; // Invalid date, exclude from results
+        }
+
+        const cellValue = date.toISOString().split("T")[0];
         return filterValue.includes(cellValue);
       },
       sortingFn: (row1: any, row2: any) => {
-        return (
-          new Date(row1.getValue("updatedAt")).getTime() -
-          new Date(row2.getValue("updatedAt")).getTime()
-        );
+        const date1 = new Date(row1.getValue("updatedAt"));
+        const date2 = new Date(row2.getValue("updatedAt"));
+
+        // Handle invalid dates by placing them at the end
+        if (isNaN(date1.getTime()) && isNaN(date2.getTime())) return 0;
+        if (isNaN(date1.getTime())) return 1;
+        if (isNaN(date2.getTime())) return -1;
+
+        return date1.getTime() - date2.getTime();
       },
-      size: 180,
+      size: isMobile ? 150 : 180,
       minSize: 150,
       meta: {
         exportLabel: "updatedAt",
@@ -309,25 +407,31 @@ export default function LeadStatusesDataTable({
     {
       accessorKey: "draftedAt",
       title: "Drafted",
-      options: [],
+      options: [], // Dates are typically not filtered with predefined options
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId);
-        if (!cellValue) return false;
-        const dateValue = new Date(cellValue as string)
-          .toISOString()
-          .split("T")[0];
-        return filterValue.includes(dateValue);
+        const dateValue = row.getValue(columnId) as string;
+        const date = new Date(dateValue);
+
+        // Check if the date is valid before calling toISOString
+        if (isNaN(date.getTime())) {
+          return false; // Invalid date, exclude from results
+        }
+
+        const cellValue = date.toISOString().split("T")[0];
+        return filterValue.includes(cellValue);
       },
       sortingFn: (row1: any, row2: any) => {
-        const date1 = row1.getValue("draftedAt");
-        const date2 = row2.getValue("draftedAt");
-        if (!date1 && !date2) return 0;
-        if (!date1) return 1;
-        if (!date2) return -1;
-        return new Date(date1).getTime() - new Date(date2).getTime();
+        const date1 = new Date(row1.getValue("draftedAt"));
+        const date2 = new Date(row2.getValue("draftedAt"));
+
+        // Handle invalid dates by placing them at the end
+        if (isNaN(date1.getTime())) return 1;
+        if (isNaN(date2.getTime())) return -1;
+
+        return date1.getTime() - date2.getTime();
       },
-      size: 180,
+      size: isMobile ? 150 : 180,
       minSize: 150,
       meta: {
         exportLabel: "draftedAt",
@@ -336,17 +440,17 @@ export default function LeadStatusesDataTable({
     },
   ];
 
-  const filteredData = mockLeadStatuses.filter((source: any) => {
+  const filteredData = mockLeadSources.filter((leadSource) => {
     if (dataTableFilter.status === "Active") {
-      return source.isActive;
+      return leadSource.isActive;
     } else if (dataTableFilter.status === "Inactive") {
-      return !source.isActive;
+      return !leadSource.isActive;
     } else if (dataTableFilter.status === "Draft") {
-      return source.isDraft;
+      return leadSource.isDraft;
     } else if (dataTableFilter.status === "Deleted") {
-      return source.isDeleted;
+      return leadSource.isDeleted;
     } else if (dataTableFilter.status === "Updated") {
-      return source.isUpdated;
+      return leadSource.isUpdated;
     }
     return true;
   });
@@ -358,14 +462,17 @@ export default function LeadStatusesDataTable({
       viewMode={viewMode}
       setViewMode={setViewMode}
       componentColumns={componentColumns}
-      fixedColumns={["name"]}
-      pathName="lead-status"
+      fixedColumns={["name", "status"]} // Pin lead source name and status columns
+      pathName="lead-sources"
       setShowExport={setShowExport}
       showExport={showExport}
       setShowFilter={setShowFilter}
       showFilter={showFilter}
       setShowVisibility={setShowVisibility}
       showVisibility={showVisibility}
+      isFilterOpen={isFilterOpen}
+      setIsFilterOpen={setIsFilterOpen}
+      showImages={false}
     />
   );
 }

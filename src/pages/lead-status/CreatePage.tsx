@@ -1,28 +1,30 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import video from "@/assets/videos/test.mp4";
-import { Autocomplete } from "@/components/common/Autocomplete";
 import EditableInput from "@/components/common/EditableInput";
-
-import PageLayout from "@/components/common/PageLayout";
 import GenericPDF from "@/components/common/pdf";
 import { ResetFormModal } from "@/components/common/ResetFormModal";
 import { Button } from "@/components/ui/button";
 import { PrintCommonLayout } from "@/lib/printContents/PrintCommonLayout";
 import { printHtmlContent } from "@/lib/printHtmlContent";
 import { toastError, toastRestore, toastSuccess } from "@/lib/toast";
-import { Modal } from "@mantine/core";
 import { pdf } from "@react-pdf/renderer";
 import { Check, Edit, Eye, Plus } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { usePermission } from "@/hooks/usePermissions";
-import { useSelector } from "react-redux";
-import type { RootState } from "@/store";
+import {
+  useLeadSourcesPermissions,
+  usePermission,
+} from "@/hooks/usePermissions";
+import { useLanguageLabels } from "@/hooks/useLanguageLabels";
+import { useAppSelector } from "@/store/hooks";
+import MinimizablePageLayout from "@/components/MinimizablePageLayout";
+import { SwitchSelect } from "@/components/common/SwitchAutoComplete";
 
-type LeadStatusData = {
+type LeadSourceData = {
   name: string;
-  order: number;
-  color: string;
+  status: "active" | "inactive" | "draft";
+  isDefault: boolean;
+  isStatusActive: boolean;
   isActive: boolean;
   isDraft: boolean;
   createdAt: Date | null;
@@ -36,10 +38,11 @@ type Props = {
   isEdit?: boolean;
 };
 
-const initialData: LeadStatusData = {
-  name: "New Lead",
-  order: 1,
-  color: "#3B82F6",
+const initialData: LeadSourceData = {
+  name: "Website",
+  status: "active",
+  isDefault: false,
+  isStatusActive: true,
   isActive: true,
   isDraft: false,
   createdAt: new Date(),
@@ -51,60 +54,37 @@ const initialData: LeadStatusData = {
 
 export default function LeadSourceFormPage({ isEdit = false }: Props) {
   const navigate = useNavigate();
-  const { isRTL } = useSelector((state: RootState) => state.language);
+  const labels = useLanguageLabels();
+  const { isRTL } = useAppSelector((state) => state.language);
 
   const [keepCreating, setKeepCreating] = useState(false);
-  const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
-
+  const formRef = useRef<HTMLFormElement>(null);
+  const [isDefaultState, setIsDefaultState] = useState<"Yes" | "No">("No");
   const [printEnabled, setPrintEnabled] = useState(false);
   const [pdfChecked, setPdfChecked] = useState(false);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  const [formKey, setFormKey] = useState(0);
 
   // Permission checks
-  const canCreate = usePermission("leadStatuses", "create");
-  const canView = usePermission("leadStatuses", "view");
-  const canEdit = usePermission("leadStatuses", "edit");
-  const canDelete = usePermission("leadStatuses", "delete");
-
-  console.log("canCreate", canCreate);
-  console.log("canView", canView);
-  console.log("canEdit", canEdit);
-  console.log("canDelete", canDelete);
+  const { canCreate, canView } = useLeadSourcesPermissions();
 
   // Field-level permissions
-  const name: boolean = usePermission("leadStatuses", "create", "name");
-  const order: boolean = usePermission("leadStatuses", "create", "order");
-  const color: boolean = usePermission("leadStatuses", "create", "color");
-  const isDraft: boolean = usePermission("leadStatuses", "create", "isDraft");
-  const canPdf: boolean = usePermission("leadStatuses", "pdf");
-  const canPrint: boolean = usePermission("leadStatuses", "print");
-
-  console.log("name", name);
-  console.log("isDraft", isDraft);
-  console.log("canPdf", canPdf);
-  console.log("canPrint", canPrint);
-
-  // Options for autocomplete fields
-  const nameOptions = [
-    "New Lead",
-    "Contacted",
-    "Qualified",
-    "Proposal Sent",
-    "Negotiation",
-    "Closed Won",
-    "Closed Lost",
-    "On Hold",
-    "Rejected",
-    "Follow Up",
-    "Meeting Scheduled",
-    "Demo Completed",
-  ];
+  const name: boolean = usePermission("lead-sources", "create", "name");
+  const status: boolean = usePermission("lead-sources", "create", "status");
+  const isDefault: boolean = usePermission(
+    "lead-sources",
+    "create",
+    "isDefault"
+  );
+  const canPdf: boolean = usePermission("lead-sources", "pdf");
+  const canPrint: boolean = usePermission("lead-sources", "print");
 
   // Form state
-  const [formData, setFormData] = useState<LeadStatusData>({
+  const [formData, setFormData] = useState<LeadSourceData>({
     name: "",
-    order: 1,
-    color: "#3B82F6",
+    status: "active",
+    isDefault: false,
+    isStatusActive: true,
     isActive: true,
     isDraft: false,
     isDeleted: false,
@@ -113,6 +93,14 @@ export default function LeadSourceFormPage({ isEdit = false }: Props) {
     updatedAt: null,
     deletedAt: null,
   });
+
+  // Initialize with edit data if available
+  useEffect(() => {
+    if (isEdit && initialData) {
+      setFormData(initialData);
+      setIsDefaultState(initialData.isDefault ? "Yes" : "No");
+    }
+  }, [isEdit]);
 
   const [popoverOptions, setPopoverOptions] = useState([
     {
@@ -124,9 +112,9 @@ export default function LeadSourceFormPage({ isEdit = false }: Props) {
       ),
       onClick: () => {
         if (isEdit) {
-          navigate("/lead-status/create");
+          navigate("/lead-sources/create");
         } else {
-          navigate("/lead-status/edit/undefined");
+          navigate("/lead-sources/edit/undefined");
         }
       },
       show: canCreate,
@@ -135,7 +123,7 @@ export default function LeadSourceFormPage({ isEdit = false }: Props) {
       label: "View",
       icon: <Eye className="w-5 h-5 text-green-600" />,
       onClick: () => {
-        navigate("/lead-status/view");
+        navigate("/lead-sources/view");
       },
       show: canView,
     },
@@ -150,19 +138,19 @@ export default function LeadSourceFormPage({ isEdit = false }: Props) {
     inputRefs.current[nextField]?.focus();
   };
 
-  // Initialize with edit data if available
-  useEffect(() => {
-    if (isEdit && initialData) {
-      setFormData({
-        ...initialData,
-      });
-    }
-  }, [isEdit, initialData]);
+  // Handle form field changes
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type, checked } = e.target;
+    const newFormData = {
+      ...formData,
+      [name]: type === "checkbox" ? checked : value,
+    };
+    setFormData(newFormData);
+  };
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
 
     if (pdfChecked) {
       await handleExportPDF();
@@ -171,12 +159,13 @@ export default function LeadSourceFormPage({ isEdit = false }: Props) {
       handlePrintLeadSource(formData);
     }
 
+    // keep switch functionality
     if (keepCreating) {
-      toastSuccess("Lead status created successfully!");
+      toastSuccess("Lead source created successfully!");
       handleReset();
     } else {
-      toastSuccess("Lead status created successfully!");
-      navigate("/lead-status");
+      toastSuccess("Lead source created successfully!");
+      navigate("/lead-sources");
     }
   };
 
@@ -184,13 +173,12 @@ export default function LeadSourceFormPage({ isEdit = false }: Props) {
     setIsResetModalOpen(true);
   };
 
-  const [formKey, setFormKey] = useState(0);
-
-  const handleReset = () => {
+  const handleReset = async () => {
     setFormData({
       name: "",
-      order: 1,
-      color: "#3B82F6",
+      status: "active",
+      isDefault: false,
+      isStatusActive: true,
       isActive: true,
       isDraft: false,
       isDeleted: false,
@@ -199,19 +187,20 @@ export default function LeadSourceFormPage({ isEdit = false }: Props) {
       updatedAt: new Date(),
       deletedAt: null,
     });
+    setIsDefaultState("No");
 
     if (formRef.current) {
       formRef.current.reset();
     }
 
+    // Force re-render of all inputs by changing key
     setFormKey((prev) => prev + 1);
 
+    // Focus the first input field after reset
     setTimeout(() => {
       inputRefs.current["name"]?.focus();
     }, 100);
   };
-
-  const formRef = useRef<HTMLFormElement>(null);
 
   const handlePrintLeadSource = (leadSourceData: any) => {
     try {
@@ -220,8 +209,9 @@ export default function LeadSourceFormPage({ isEdit = false }: Props) {
         data: [leadSourceData],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
-          name: "Name",
-          isDefault: "Default Source",
+          name: "Lead Source Name",
+          status: "Status",
+          isDefault: "Default Lead Source",
           isActive: "Active Status",
           isDraft: "Draft Status",
           isDeleted: "Deleted Status",
@@ -247,9 +237,7 @@ export default function LeadSourceFormPage({ isEdit = false }: Props) {
   };
 
   const handleExportPDF = async () => {
-    console.log("Export PDF clicked");
     try {
-      console.log("leadSourceData on pdf click", formData);
       const blob = await pdf(
         <GenericPDF
           data={[formData]}
@@ -272,10 +260,12 @@ export default function LeadSourceFormPage({ isEdit = false }: Props) {
 
   useEffect(() => {
     setPopoverOptions((prevOptions) => {
+      // Filter out any existing draft option first
       const filteredOptions = prevOptions.filter(
         (opt) => opt.label !== "Draft"
       );
 
+      // Add draft option only if not already a draft
       if (!formData.isDraft) {
         return [
           ...filteredOptions,
@@ -287,7 +277,7 @@ export default function LeadSourceFormPage({ isEdit = false }: Props) {
                 ...prev,
                 isDraft: true,
               }));
-              toastRestore("Lead status saved as draft successfully");
+              toastRestore("Lead source saved as draft successfully");
             },
             show: canCreate,
           },
@@ -297,14 +287,31 @@ export default function LeadSourceFormPage({ isEdit = false }: Props) {
     });
   }, [formData.isDraft, canCreate]);
 
+  // Create minimize handler
+  const handleMinimize = useCallback(() => {
+    return {
+      formData,
+      hasChanges: true,
+      scrollPosition: window.scrollY,
+    };
+  }, [formData]);
+
   return (
     <>
-      <PageLayout
-        title={isEdit ? "Editing Lead Status" : "Creating Lead Status"}
+      <MinimizablePageLayout
+        moduleId="lead-source-form-module"
+        moduleName={isEdit ? "Edit Lead Source" : "Adding Lead Source"}
+        moduleRoute={
+          isEdit
+            ? `/lead-sources/edit/${formData.name || "new"}`
+            : "/lead-sources/create"
+        }
+        onMinimize={handleMinimize}
+        title={isEdit ? "Edit Lead Source" : "Add Lead Source"}
+        listPath="lead-sources"
+        popoverOptions={popoverOptions}
         videoSrc={video}
         videoHeader="Tutorial video"
-        listPath="lead-status"
-        popoverOptions={popoverOptions}
         keepChanges={keepCreating}
         onKeepChangesChange={setKeepCreating}
         pdfChecked={pdfChecked}
@@ -312,25 +319,23 @@ export default function LeadSourceFormPage({ isEdit = false }: Props) {
         printEnabled={printEnabled}
         onPrintToggle={canPrint ? handleSwitchChange : undefined}
         activePage="create"
+        module="lead-sources"
         additionalFooterButtons={
           canCreate ? (
-            <div className="flex gap-4 items-center">
+            <div className="flex gap-4 max-[435px]:gap-2">
               <Button
                 variant="outline"
-                className="gap-2 text-primary bg-sky-200 hover:bg-primary rounded-full border-primary w-32 font-semibold!"
+                className="gap-2 hover:bg-primary/90! bg-white dark:bg-gray-900 rounded-full border-primary w-28 max-[435px]:w-20 font-semibold! text-primary!"
                 onClick={handleResetClick}
               >
-                Reset
+                {labels.reset}
               </Button>
               <Button
-                ref={(el) => setRef("submitButton")(el as HTMLButtonElement)}
-                id="submitButton"
-                name="submitButton"
                 variant="outline"
-                className={`gap-2 text-primary rounded-full border-primary w-32 bg-sky-200 hover:bg-primary font-semibold!`}
-                onClick={() => formRef.current?.requestSubmit()}
+                className="gap-2 hover:bg-primary/90 bg-white dark:bg-gray-900 rounded-full border-primary w-28 max-[435px]:w-20 font-semibold! text-primary!"
+                onClick={handleSubmit}
               >
-                Submit
+                {labels.submit}
               </Button>
             </div>
           ) : null
@@ -344,122 +349,141 @@ export default function LeadSourceFormPage({ isEdit = false }: Props) {
             onSubmit={handleSubmit}
             className="space-y-6 relative"
           >
-            {/* First row */}
+            {/* First Row: Lead Source Name */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
-              {/* Name field */}
+              {/* Lead Source Name field - only show if user can create */}
               {name && (
                 <div className="space-y-2">
-                  <div className="relative">
-                    <Autocomplete
-                      ref={(el: any) => setRef("name")(el)}
-                      id="name"
-                      name="name"
-                      allowCustomInput={true}
-                      options={nameOptions}
-                      value={formData.name}
-                      onValueChange={(value: string) => {
-                        setFormData({ ...formData, name: value });
-                        if (value) {
-                          focusNextInput("order");
-                        }
-                      }}
-                      onEnterPress={() => {
-                        if (formData.name) {
-                          focusNextInput("order");
-                        }
-                      }}
-                      placeholder=" "
-                      labelText="Name"
-                      className="relative"
-                      styles={{
-                        input: {
-                          borderColor: "var(--primary)",
-                          "&:focus": {
-                            borderColor: "var(--primary)",
-                          },
-                        },
-                      }}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Order field */}
-              {order && (
-                <div className="space-y-2">
                   <EditableInput
-                    ref={(el: any) => setRef("order")(el)}
-                    id="order"
-                    name="order"
-                    type="number"
-                    value={formData.order.toString()}
-                    onChange={(e) => {
-                      setFormData({
-                        ...formData,
-                        order: parseInt(e.target.value) || 1,
-                      });
-                      if (e.target.value) {
-                        focusNextInput("color");
-                      }
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && formData.order) {
-                        focusNextInput("color");
-                      }
-                    }}
-                    placeholder=" "
-                    labelText="Order"
-                    className="relative"
+                    setRef={setRef("name")}
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("status")}
+                    onCancel={() => setFormData({ ...formData, name: "" })}
+                    labelText="Lead Source Name"
+                    tooltipText="Enter the lead source name (e.g., Website, Social Media, LinkedIn)"
+                    required
                   />
                 </div>
               )}
 
-              {/* Color field */}
-              {color && (
-                <div className="space-y-2">
-                  <EditableInput
-                    ref={(el: any) => setRef("color")(el)}
-                    id="color"
-                    name="color"
-                    type="color"
-                    value={formData.color}
-                    onChange={(e) => {
-                      setFormData({ ...formData, color: e.target.value });
-                      if (e.target.value) {
-                        focusNextInput("submitButton");
+              {/* Default field - only show if user can create */}
+              {isDefault && (
+                <div className="space-y-2 relative">
+                  <SwitchSelect
+                    ref={(el: any) => setRef("isDefault")(el)}
+                    id="isDefault"
+                    name="isDefault"
+                    multiSelect={false}
+                    options={[
+                      {
+                        label: labels.yes,
+                        value: labels.yes,
+                        date: "Set default color",
+                      },
+                      {
+                        label: labels.no,
+                        value: labels.no,
+                        date: "Remove default color",
+                      },
+                    ]}
+                    value={isDefaultState === "Yes" ? labels.yes : labels.no}
+                    labelClassName="rounded-lg"
+                    onValueChange={(value: string | string[]) => {
+                      const isYes = Array.isArray(value)
+                        ? value[0] === labels.yes
+                        : value === labels.yes;
+                      setIsDefaultState(isYes ? "Yes" : "No");
+                      const newValue = isYes;
+                      setFormData((prev) => ({
+                        ...prev,
+                        isDefault: newValue,
+                      }));
+                    }}
+                    onEnterPress={() => {
+                      if (
+                        formData.isDefault === true ||
+                        formData.isDefault === false
+                      ) {
+                        // Form submission or next action
                       }
                     }}
+                    placeholder=" "
+                    labelText="Default"
                     className="relative"
-                    labelText="Color"
-                    title="Choose color"
+                    tooltipText="Set as default lead source"
+                  />
+                </div>
+              )}
+
+              {/* Status field - only show if user can create */}
+              {status && (
+                <div className="space-y-2">
+                  <SwitchSelect
+                    ref={(el: any) => setRef("statusSwitch")(el)}
+                    id="statusSwitch"
+                    name="statusSwitch"
+                    labelText="Status"
+                    multiSelect={false}
+                    options={[
+                      {
+                        label: "Active",
+                        value: "active",
+                        date: "Set active",
+                      },
+                      {
+                        label: "Inactive",
+                        value: "inactive",
+                        date: "Set inactive",
+                      },
+                      {
+                        label: "Draft",
+                        value: "draft",
+                        date: "Set draft",
+                      },
+                    ]}
+                    value={formData.status}
+                    onValueChange={(value: string | string[]) => {
+                      const stringValue = Array.isArray(value)
+                        ? value[0] || ""
+                        : value;
+
+                      setFormData((prev) => ({
+                        ...prev,
+                        status: stringValue as "active" | "inactive" | "draft",
+                        isDraft: stringValue === "draft",
+                        isActive: stringValue === "active",
+                      }));
+                    }}
+                    placeholder=""
+                    styles={{
+                      input: {
+                        borderColor: "var(--primary)",
+                        "&:focus": {
+                          borderColor: "var(--primary)",
+                        },
+                      },
+                    }}
+                    tooltipText="Set the lead source status"
                   />
                 </div>
               )}
             </div>
           </form>
         </div>
-      </PageLayout>
+      </MinimizablePageLayout>
 
       <ResetFormModal
         opened={isResetModalOpen}
         onClose={() => setIsResetModalOpen(false)}
         onConfirm={handleReset}
-        title="Reset Form"
-        message="Are you sure you want to reset the form? All changes will be lost."
-        confirmText="Reset"
-        cancelText="Cancel"
+        title={labels.resetForm}
+        message={labels.resetFormMessage}
+        confirmText={labels.resetFormConfirm}
+        cancelText={labels.cancel}
       />
-
-      {/* Options Modal */}
-      <Modal
-        opened={isOptionModalOpen}
-        onClose={() => setIsOptionModalOpen(false)}
-        title="Options"
-        size="xl"
-        overlayProps={{ backgroundOpacity: 0.55, blur: 3 }}
-      >
-        <div className="pt-5 pb-14 px-5">Modal Content</div>
-      </Modal>
     </>
   );
 }

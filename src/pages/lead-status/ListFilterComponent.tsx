@@ -1,18 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useEffect } from "react";
-import { Search, X } from "lucide-react";
+import FloatingCloseButton from "@/components/common/FloatingCloseButton";
+import HeaderSearch from "@/components/HeaderSearch";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useEffect, useState } from "react";
 
 interface FilterComponentProps {
   table: any; // TanStack table instance
-  setShowFilter: (visible: boolean) => void;
+  onClose: () => void;
+  columnOrder?: string[];
 }
 
 export default function FilterComponent({
   table,
-  setShowFilter,
+  onClose,
 }: FilterComponentProps) {
   const [search, setSearch] = useState("");
   const [isInitialized, setIsInitialized] = useState(false);
@@ -49,35 +51,29 @@ export default function FilterComponent({
   };
 
   return (
-    <div className="w-72 h-full flex flex-col border rounded-lg overflow-hidden">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-900 border-b px-3 py-2">
-        <div className="flex items-center gap-2 ">
-          <div className="relative flex-1 rounded-full">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-            <Input
-              placeholder="Search..."
-              className="pl-8 h-8 w-full rounded-full"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => {
-              setSearch("");
-              setShowFilter(false);
-            }}
-          >
-            <X className="h-4 w-4" />
-          </Button>
+    <div className="w-full flex-shrink-0 border rounded-[20px] border-gray-200 dark:border-gray-700  h-full bg-white dark:bg-gray-800 shadow-2xl transition-all duration-300 ease-in-out overflow-visible relative flex flex-col">
+      {/* Floating X Button */}
+      <FloatingCloseButton onClose={onClose} />
+
+      {/* Header - Enhanced Search */}
+      {/* <div className="bg-white dark:bg-gray-900 border-b px-3 py-3 sticky top-0 z-10 flex-shrink-0">
+        <div className="relative mt-5">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
+          <Input
+            placeholder="Search..."
+            className="pl-10 pr-10 h-10 w-full rounded-full"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <Mic className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary cursor-pointer hover:text-gray-700 transition-colors" />
         </div>
+      </div> */}
+      <div className="pl-2 pr-3 py-4 border-b flex-shrink-0">
+        <HeaderSearch searchQuery={search} setSearchQuery={setSearch} />
       </div>
 
-      {/* Body */}
-      <div className="flex-1 overflow-y-auto px-2 py-2 space-y-4">
+      {/* Body - Scrollable */}
+      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-4 grid-scroll [&::-webkit-scrollbar-track]:!m-0">
         {filterableColumns
           .filter((col: any) => {
             const values = [...col.getFacetedUniqueValues().keys()].map((v) =>
@@ -105,44 +101,63 @@ export default function FilterComponent({
 
             return (
               <div key={col.id}>
-                {/* Column header as parent */}
-                <div className="flex items-center gap-2 font-medium mb-1">
+                {/* Column header as parent - Checkbox Left, Text Right */}
+                <div className="flex items-center gap-2 font-medium mb-2 pb-2 border-b">
+                  {/* checkbox */}
                   <Checkbox
+                    id={col.id}
                     checked={isParentChecked}
                     onCheckedChange={(checked) => {
-                      if (checked) {
+                      if (checked === true) {
                         col.setFilterValue(options.map(([val]) => val));
                       } else {
                         col.setFilterValue([]);
                       }
                     }}
-                    className=""
+                    className="bg-white! border! border-sky-400! data-[state=checked]:bg-white! data-[state=checked]:border-sky-400! data-[state=checked]:text-black!"
                   />
-                  <span className="">{col.id}</span>
+                  <Label
+                    htmlFor={col.id}
+                    className="text-gray-900 dark:text-gray-100 capitalize"
+                  >
+                    {col.id}
+                  </Label>
                 </div>
 
-                {/* Children */}
-                <div className="ml-4 space-y-1">
-                  {options.map(([value, count]) => (
-                    <div
-                      key={String(value)}
-                      className="flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded px-2 py-1"
-                    >
-                      <Checkbox
-                        checked={selected.includes(value)}
-                        onCheckedChange={(checked) => {
-                          const newValues = new Set(selected);
-                          if (checked) newValues.add(value);
-                          else newValues.delete(value);
-                          col.setFilterValue([...newValues]);
-                        }}
-                        className=""
-                      />
-                      <span className="text-sm">
-                        {String(value)} ({count})
-                      </span>
-                    </div>
-                  ))}
+                {/* Children - Checkbox Left, Text Right */}
+                <div className="ml-6 space-y-1">
+                  {options.map(([value, count]) => {
+                    const isSelected = selected.includes(value);
+
+                    return (
+                      <div
+                        key={String(value)}
+                        className="flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded px-2 py-1"
+                      >
+                        <Checkbox
+                          id={String(value)}
+                          checked={isSelected}
+                          onCheckedChange={(checked) => {
+                            const newValues = new Set(selected);
+                            if (checked === true) {
+                              newValues.add(value);
+                            } else {
+                              newValues.delete(value);
+                            }
+                            col.setFilterValue([...newValues]);
+                          }}
+                          aria-label={`Toggle ${String(value)}`}
+                          className="size-4 bg-white! border! border-sky-400! data-[state=checked]:bg-white! data-[state=checked]:border-sky-400! data-[state=checked]:text-black!"
+                        />
+                        <Label
+                          htmlFor={String(value)}
+                          className="text-sm text-gray-700 dark:text-gray-300 flex-1"
+                        >
+                          {String(value)} ({count})
+                        </Label>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             );
@@ -150,15 +165,23 @@ export default function FilterComponent({
       </div>
 
       {/* Footer */}
-      <div className="bg-white dark:bg-gray-900 border-t px-3 py-2">
-        <div className="flex justify-end">
+      <div className="bg-white dark:bg-gray-900 border-t px-3 py-2 justify-between flex-shrink-0">
+        <div className="flex justify-between">
           <Button
-            variant="outline"
+            variant="default"
             size="sm"
-            className="rounded-full"
             onClick={resetFilters}
+            className="min-w-[60px] cursor-pointer border border-primary hover:text-white hover:bg-primary bg-white text-primary!"
           >
             Reset
+          </Button>
+          <Button
+            variant="default"
+            size="sm"
+            onClick={resetFilters}
+            className="min-w-[60px] cursor-pointer border border-primary bg-white text-primary! hover:bg-primary"
+          >
+            Apply
           </Button>
         </div>
       </div>
