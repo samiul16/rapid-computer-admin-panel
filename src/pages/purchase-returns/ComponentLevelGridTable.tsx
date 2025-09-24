@@ -1,29 +1,17 @@
 import { Card, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import {
-  Trash2,
-  List,
-  Import,
-  Download,
-  Filter,
-  Mic,
-  Search,
-  RefreshCw,
-  CheckCircle2,
-  Circle,
-  Pencil,
-} from "lucide-react";
+import { Trash2, RefreshCw, CheckCircle2, Circle, Pencil } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Input } from "@/components/ui/input";
-import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
-import { Modal, Tooltip } from "@mantine/core"; // Import Tooltip from Mantine
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Modal, Tooltip } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import ImportStepperTemp from "@/components/common/IMportTemp";
 import { toastSuccess } from "@/lib/toast";
+import { cn } from "@/lib/utils";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/store";
+import useIsMobile from "@/hooks/useIsMobile";
 
-import GridFilterComponent from "./GridFilterComponent";
-import GridExportComponent from "./GridExportComponent";
+import GridFilterComponent from "@/pages/Country/GridFilterComponent";
 
 interface GridCardDataType {
   documentNumber: string;
@@ -41,8 +29,6 @@ interface GridCardDataType {
   country: string;
   state: string;
   city: string;
-
-  // same for all
   id: string;
   status: "active" | "inactive" | "draft";
   isDeleted: boolean;
@@ -212,22 +198,32 @@ const gridCardData: GridCardDataType[] = [
   },
 ];
 
-export default function ComponentLevelGridTable({
-  setViewMode,
-}: {
+type Props = {
+  searchQuery: string;
+  setIsFilterOpen: (isFilterOpen: boolean) => void;
+  isFilterOpen: boolean;
+  setIsExportOpen: (isExportOpen: boolean) => void;
+  isExportOpen: boolean;
   setViewMode: (viewMode: "grid" | "list") => void;
-}) {
-  console.log("Reservation grid rendered");
-  const { t } = useTranslation();
+};
+
+export default function PurchaseReturnsGrid({
+  searchQuery,
+  setIsFilterOpen,
+  isFilterOpen,
+  setIsExportOpen,
+  isExportOpen,
+}: Props) {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchParams] = useSearchParams();
+  const { isRTL } = useSelector((state: RootState) => state.language);
+  const isMobile = useIsMobile();
+
   const [gridData, setGridData] = useState(gridCardData);
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [isExportOpen, setIsExportOpen] = useState(false);
-  const [opened, { open, close }] = useDisclosure(false);
-  const [modalData, setModalData] = useState({
+  const [opened, { close }] = useDisclosure(false);
+  const [modalData] = useState({
     title: "Import purchase returns",
-    message: <ImportStepperTemp />,
+    message: <ImportStepperTemp opened={opened} onClose={close} />,
   });
 
   // Infinite scroll states
@@ -237,7 +233,6 @@ export default function ComponentLevelGridTable({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const ITEMS_PER_PAGE = 4;
 
-  // ... (keep all your existing functions: loadMoreData, handleScroll, etc.)
   // Simulate API call to load more data
   const loadMoreData = useCallback(async () => {
     if (isLoading || !hasMore) return;
@@ -331,10 +326,6 @@ export default function ComponentLevelGridTable({
     );
   };
 
-  const handleViewModeChange = (viewMode: "grid" | "list") => {
-    setViewMode(viewMode);
-  };
-
   const toggleStatus = (id: string) => {
     setGridData((prev) =>
       prev.map((item) =>
@@ -348,7 +339,7 @@ export default function ComponentLevelGridTable({
     );
   };
 
-  // Filter waiters based on search query
+  // Filter purchase returns based on search query
   const filteredGridData = gridData.filter(
     (item) =>
       item.documentNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -370,136 +361,120 @@ export default function ComponentLevelGridTable({
       item.city.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const handleEditClick = (id: string) => {
+    const viewMode = searchParams.get("view") || "grid";
+    navigate(`/purchase-returns/edit/${id}?fromView=${viewMode}`);
+  };
+
+  const handleViewClick = (id: string) => {
+    const viewMode = searchParams.get("view") || "grid";
+    navigate(`/purchase-returns/view/${id}?fromView=${viewMode}`);
+  };
+
   return (
-    <div className="px-4 py-3 h-full flex flex-col bg-white dark:bg-gray-900 parent">
-      {/* Fixed header controls - keep existing header */}
-      <div className="sticky top-0 z-20 bg-white dark:bg-gray-900 pb-2">
-        <div className="grid grid-cols-12 gap-4 items-center">
-          {/* Left buttons */}
-          <div className="col-span-4 flex items-center gap-2">
-            <Button
-              variant="outline"
-              className="gap-  rounded-full min-w-[60px] sm:min-w-[80px]"
-              onClick={() => handleViewModeChange("list")}
-            >
-              <List className="h-4 w-4" />
-              <span className="hidden sm:inline">List</span>
-            </Button>
-            <Button
-              variant="outline"
-              className="gap-2 cursor-pointer rounded-full"
-              onClick={() => {
-                open();
-                setModalData({
-                  title: "Import Purchase Returns",
-                  message: <ImportStepperTemp />,
-                });
-              }}
-            >
-              <Import className="h-4 w-4" />
-              <span className="hidden sm:inline">{t("common.import")}</span>
-            </Button>
-          </div>
-
-          {/* Search */}
-          <div className="col-span-4 flex justify-center">
-            <div className="w-full max-w-xs mx-auto">
-              <div className="relative flex items-center rounded-full">
-                <Search className="absolute left-3 h-4 w-4 text-gray-400 z-10" />
-                <Input
-                  placeholder="Search..."
-                  className="pl-9 pr-9 w-full rounded-full relative z-10"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                <Tooltip
-                  arrowOffset={10}
-                  arrowSize={7}
-                  withArrow
-                  position="top"
-                  label="Search by voice"
-                >
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="absolute right-2 h-6 w-6 rounded-full cursor-pointer p-0 z-10"
-                  >
-                    <Mic className="h-4 w-4 text-blue-700" />
-                  </Button>
-                </Tooltip>
-              </div>
-            </div>
-          </div>
-
-          {/* Right buttons */}
-          <div className="col-span-4 flex items-center justify-end gap-2">
-            <Button
-              variant="outline"
-              className={`gap-2 rounded-full ${
-                isExportOpen ? "bg-primary text-white" : ""
-              }`}
-              onClick={() => {
-                setIsExportOpen(!isExportOpen);
-                setIsFilterOpen(false);
-              }}
-            >
-              <Download className="h-4 w-4" />
-              <span className="hidden sm:inline">{t("common.export")}</span>
-            </Button>
-
-            <Button
-              variant="outline"
-              className={`gap-2 rounded-full ${
-                isFilterOpen ? "bg-primary text-white" : ""
-              }`}
-              onClick={() => {
-                setIsFilterOpen(!isFilterOpen);
-                setIsExportOpen(false);
-              }}
-            >
-              <Filter className="h-4 w-4" />
-              <span className="hidden sm:inline">{t("common.filters")}</span>
-            </Button>
-          </div>
-        </div>
-      </div>
-
+    <div
+      className={cn(
+        "h-full flex flex-col bg-white dark:bg-gray-900 parent relative rounded-lg overflow-hidden"
+      )}
+    >
       {/* Main content area */}
-      <div className="flex flex-1 overflow-hidden mt-2">
-        {/* Cards container */}
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* Cards container with animated width */}
         <div
           ref={scrollContainerRef}
-          className="overflow-y-auto scroll-smooth smooth-scroll pr-4"
+          className={cn(
+            "overflow-y-auto grid-scroll transition-all duration-300 ease-in-out",
+            isRTL ? "" : ""
+          )}
           style={{
             width: isFilterOpen || isExportOpen ? "calc(100% - 320px)" : "100%",
           }}
         >
-          <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 pb-4">
+          <div
+            className={cn(
+              "grid gap-6 pb-4 p-5",
+              isMobile
+                ? "grid-cols-1"
+                : "grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
+            )}
+          >
             {filteredGridData.map((item) => (
               <Card
                 key={item.id}
-                className="transition-all hover:border-primary hover:shadow-md relative group dark:bg-gray-800 p-4"
+                className={cn(
+                  "transition-all relative group dark:bg-gray-800 duration-200 w-full shadow-[2px_3px_8px_0_rgba(0,0,0,0.10)] border-[#E2E4EB] border border-solid rounded-[12px] flex p-5 flex-col items-start gap-5 cursor-pointer",
+                  isMobile
+                    ? "hover:shadow-lg hover:border-primary"
+                    : "hover:scale-110 hover:z-50 hover:relative hover:border-primary min-w-[250px]"
+                )}
+                onClick={() => handleViewClick(item.id)}
               >
-                {/* Top Row - Grid with 3 columns: Title | Icons | Flag */}
-                <div className="grid grid-cols-3 items-center gap-2 mb-4">
-                  {/* Left - Title */}
-                  <Tooltip label={item.documentNumber} position="top" withArrow>
-                    <CardTitle
-                      className="text-lg font-semibold cursor-pointer hover:text-primary transition-colors truncate"
-                      onClick={() => navigate(`/purchase-returns/1`)}
-                    >
-                      {item.documentNumber}
-                    </CardTitle>
-                  </Tooltip>
+                {/* Top Row - Document Number and Due Days */}
+                <div className="grid grid-cols-2 items-center gap-2 w-full mt-[-8px]">
+                  {/* Left - Document Number */}
+                  <CardTitle
+                    className="text-base font-normal transition-colors truncate"
+                    style={{ fontSize: "18px" }}
+                  >
+                    {item.documentNumber}
+                  </CardTitle>
 
-                  {/* Middle - Action Icons */}
-                  <div className="flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  {/* Right - Due Days */}
+                  <div className="flex justify-end">
+                    <div className="text-right">
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        Due Days
+                      </div>
+                      <div className="text-sm font-normal text-gray-900 dark:text-gray-100">
+                        {item.dueDays}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Middle Row - Purchase Invoice Number and PO Date */}
+                <div className="grid grid-cols-2 gap-2 w-full">
+                  {/* Purchase Invoice Number - Left */}
+                  <div className="min-w-0">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      Invoice Number
+                    </div>
+                    <div className="text-sm font-normal text-gray-900 dark:text-gray-100 truncate">
+                      {item.purchaseInvoiceNumber}
+                    </div>
+                  </div>
+
+                  {/* PO Date - Right */}
+                  <div className="text-right min-w-0">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      PO Date
+                    </div>
+                    <div className="text-sm font-normal text-gray-900 dark:text-gray-100 truncate">
+                      {item.poDate}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom Row - Supplier Name and Action Icons */}
+                <div className="grid grid-cols-2 items-center justify-between gap-2 w-full dark:border-gray-700 border-t pt-4">
+                  {/* Supplier Name - Left aligned */}
+                  <div className="min-w-0">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      Supplier
+                    </div>
+                    <div className="text-sm font-normal text-gray-900 dark:text-gray-100 truncate">
+                      {item.supplierName}
+                    </div>
+                  </div>
+
+                  {/* Right - Action Icons */}
+                  <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     {/* Status Toggle */}
                     <Tooltip
                       label={
                         item.status === "active"
-                          ? "CLick to Inactivate"
-                          : "CLick to Activate"
+                          ? "Click to Inactivate"
+                          : "Click to Activate"
                       }
                       position="top"
                       withArrow
@@ -510,12 +485,13 @@ export default function ComponentLevelGridTable({
                             ? "text-green-500"
                             : "text-gray-400"
                         }`}
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           toggleStatus(item.id);
                           toastSuccess(
                             item.status === "active"
-                              ? "Purchase Return activated successfully"
-                              : "Purchase Return inactivated successfully"
+                              ? "Purchase Return inactivated successfully"
+                              : "Purchase Return activated successfully"
                           );
                         }}
                       >
@@ -537,7 +513,8 @@ export default function ComponentLevelGridTable({
                         className={`cursor-pointer p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
                           item.isDeleted ? "text-blue-500" : "text-red-500"
                         }`}
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           if (item.isDeleted) {
                             handleRestoreClick(item.id);
                           } else {
@@ -562,43 +539,14 @@ export default function ComponentLevelGridTable({
                     <Tooltip label="Edit" position="top" withArrow>
                       <div
                         className="cursor-pointer p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-blue-500"
-                        onClick={() => navigate(`/purchase-returns/edit/1`)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditClick(item.id);
+                        }}
                       >
                         <Pencil className="h-4 w-4" />
                       </div>
                     </Tooltip>
-                  </div>
-
-                  {/* Right - Image */}
-                  <div className="flex justify-end">
-                    <div className="text-left">
-                      <div className="text-[11px] text-gray-500 dark:text-gray-400">
-                        Due Days
-                      </div>
-                      <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                        {item.dueDays}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Bottom Row - Grid with 2 columns: country | Currency */}
-                <div className="grid grid-cols-2 items-center gap-4 pt-2 dark:border-gray-700 border-t">
-                  <div className="text-left">
-                    <div className="text-[11px] text-gray-500 dark:text-gray-400">
-                      Purchase Invoice Number
-                    </div>
-                    <div className="text-sm font-semibold text-gray-900 line-clamp-2 dark:text-gray-100 truncate">
-                      {item.purchaseInvoiceNumber}
-                    </div>
-                  </div>
-                  <div className="text-end">
-                    <div className="text-[11px] text-gray-500 dark:text-gray-400">
-                      PO Date
-                    </div>
-                    <div className="text-sm font-semibold text-gray-900 line-clamp-2 dark:text-gray-100 truncate">
-                      {item.poDate}
-                    </div>
                   </div>
                 </div>
               </Card>
@@ -618,7 +566,7 @@ export default function ComponentLevelGridTable({
           )}
 
           {/* End of data indicator */}
-          {!hasMore && gridData.length > 12 && (
+          {!hasMore && filteredGridData.length > 12 && (
             <div className="flex justify-center items-center py-8">
               <span className="text-sm text-gray-500 dark:text-gray-400">
                 No more purchase returns to load
@@ -627,30 +575,85 @@ export default function ComponentLevelGridTable({
           )}
         </div>
 
-        {/* Filter component - Right side only */}
-        {isFilterOpen && (
-          <div className="w-80 flex-shrink-0 border-l border-gray-200 dark:border-gray-700 pl-4">
-            <div className="h-full flex flex-col">
+        {/* Animated Filter Panel */}
+        <div
+          className={cn(
+            "absolute top-0 h-full transition-all duration-300 ease-in-out transform z-10",
+            isRTL ? "left-0" : "right-0",
+            isFilterOpen
+              ? "translate-x-0 opacity-100 visible"
+              : isRTL
+              ? "-translate-x-full opacity-0 invisible"
+              : "translate-x-full opacity-0 invisible"
+          )}
+          style={{
+            width: isMobile ? "100%" : "320px",
+          }}
+        >
+          <div className={cn("h-full", isMobile ? "pb-4 mt-1" : "p-2")}>
+            <div
+              className={cn(
+                "w-full flex-shrink-0 border rounded-[20px] border-gray-200 dark:border-gray-700 h-full bg-white dark:bg-gray-800 shadow-2xl transition-all duration-300 ease-in-out",
+                isFilterOpen ? "scale-100 opacity-100" : "scale-95 opacity-0"
+              )}
+            >
               <GridFilterComponent
+                key={`filter-panel-${isFilterOpen}`}
                 data={gridData}
                 setFilteredData={setGridData}
-                setShowFilter={setIsFilterOpen}
+                setShowTabs={setIsFilterOpen}
+                defaultTab="filter"
               />
             </div>
           </div>
-        )}
+        </div>
 
-        {/* Export component - Right side only */}
-        {isExportOpen && (
-          <div className="w-80 flex-shrink-0 border-l border-gray-200 dark:border-gray-700 pl-4">
-            <div className="h-full flex flex-col">
-              <GridExportComponent
+        {/* Animated Export Panel */}
+        <div
+          className={cn(
+            "absolute top-0 h-full transition-all duration-300 ease-in-out transform z-10",
+            isRTL ? "left-0" : "right-0",
+            isExportOpen
+              ? "translate-x-0 opacity-100"
+              : isRTL
+              ? "-translate-x-full opacity-0"
+              : "translate-x-full opacity-0"
+          )}
+          style={{
+            width: isMobile ? "100%" : "320px",
+          }}
+        >
+          <div className={cn("h-full", isMobile ? "pb-4 mt-1" : "p-2")}>
+            <div
+              className={cn(
+                "w-full flex-shrink-0 border rounded-[20px] border-gray-200 dark:border-gray-700 h-full bg-white dark:bg-gray-800 shadow-2xl transition-all duration-300 ease-in-out",
+                isExportOpen ? "opacity-100" : "opacity-0"
+              )}
+            >
+              <GridFilterComponent
+                key={`export-panel-${isExportOpen}`}
                 data={gridData}
                 setFilteredData={setGridData}
-                setIsExportOpen={setIsExportOpen}
+                setShowTabs={setIsExportOpen}
+                defaultTab="export"
               />
             </div>
           </div>
+        </div>
+
+        {/* Backdrop overlay for mobile/smaller screens */}
+        {(isFilterOpen || isExportOpen) && (
+          <div
+            className={cn(
+              "fixed inset-0 bg-black bg-opacity-30 transition-opacity duration-300 ease-in-out z-5",
+              isMobile ? "" : "md:hidden",
+              isFilterOpen || isExportOpen ? "opacity-100" : "opacity-0"
+            )}
+            onClick={() => {
+              setIsFilterOpen(false);
+              setIsExportOpen(false);
+            }}
+          />
         )}
       </div>
 

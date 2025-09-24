@@ -10198,5 +10198,86 @@ export const userPermission = {
         },
       },
     },
+    purchaseReturns: {
+      formPermissions: {
+        create: true,
+        view: true,
+        edit: true,
+        delete: true,
+        restore: true,
+        export: true,
+        import: true,
+        pdf: true,
+        print: true,
+        history: true,
+      },
+      fieldPermissions: {
+        name: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        code: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        value: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        description: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        status: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        isDefault: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        isDraft: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        isActive: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        isDeleted: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        createdAt: {
+          view: true,
+          edit: false,
+          create: true,
+        },
+        updatedAt: {
+          view: true,
+          edit: false,
+          create: true,
+        },
+        draftedAt: {
+          view: true,
+          edit: false,
+          create: true,
+        },
+        deletedAt: {
+          view: true,
+          edit: false,
+          create: true,
+        },
+      },
+    },
   },
 };

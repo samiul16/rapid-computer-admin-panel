@@ -281,6 +281,8 @@ export default function CommonDataTable({
   isFilterOpen,
   setIsFilterOpen,
   showImages = true,
+  showStatus = true,
+  showAction = true,
 }: {
   viewMode: string;
   setViewMode: (viewMode: string) => void;
@@ -298,6 +300,8 @@ export default function CommonDataTable({
   isFilterOpen: boolean;
   setIsFilterOpen: (isFilterOpen: boolean) => void;
   showImages?: boolean;
+  showStatus?: boolean;
+  showAction?: boolean;
 }) {
   const [data, setData] = useState(columnData);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -571,61 +575,65 @@ export default function CommonDataTable({
       }
     });
 
-    columns.push({
-      id: "status",
-      header: () => <div className="w-full text-center">Status</div>,
-      cell: (info) => (
-        <StatusEditableCell
-          info={info}
-          editingCell={editingCell}
-          setEditingCell={setEditingCell}
-          editValue={editValue}
-          setEditValue={setEditValue}
-          handleEdit={handleEdit}
-          selectedCell={selectedCell}
-          setSelectedCell={setSelectedCell}
-        />
-      ),
-      size: 180,
-      minSize: 150,
-      meta: {
-        fixedPosition: "right",
-      },
-    });
+    if (showStatus) {
+      columns.push({
+        id: "status",
+        header: () => <div className="w-full text-center">Status</div>,
+        cell: (info) => (
+          <StatusEditableCell
+            info={info}
+            editingCell={editingCell}
+            setEditingCell={setEditingCell}
+            editValue={editValue}
+            setEditValue={setEditValue}
+            handleEdit={handleEdit}
+            selectedCell={selectedCell}
+            setSelectedCell={setSelectedCell}
+          />
+        ),
+        size: 180,
+        minSize: 150,
+        meta: {
+          fixedPosition: "right",
+        },
+      });
+    }
 
-    columns.push({
-      id: "action",
-      header: () => <div className="w-full text-start">Action</div>,
-      cell: (info) => {
-        const rowHasSelectedCell = isRowSelected(info.row.index);
-        return (
-          <div className="flex items-center justify-between group/cell">
-            <div className="flex-1 flex justify-start text-gray-600 dark:text-white! pr-2 truncate">
-              {info.row.original.actionMessage}
+    if (showAction) {
+      columns.push({
+        id: "action",
+        header: () => <div className="w-full text-start">Action</div>,
+        cell: (info) => {
+          const rowHasSelectedCell = isRowSelected(info.row.index);
+          return (
+            <div className="flex items-center justify-between group/cell">
+              <div className="flex-1 flex justify-start text-gray-600 dark:text-white! pr-2 truncate">
+                {info.row.original.actionMessage}
+              </div>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => goToDetails("1")}
+                className={cn(
+                  "cursor-pointer transition-all rounded-[50px] duration-200 hover:bg-[#20B7FA] hover:text-white bg-transparent text-center opacity-0 group-hover/cell:opacity-100 group-hover/cell:bg-[#20B7FA] group-hover/cell:text-white",
+                  rowHasSelectedCell ? "" : "",
+                  ""
+                )}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
-
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => goToDetails("1")}
-              className={cn(
-                "cursor-pointer transition-all rounded-[50px] duration-200 hover:bg-[#20B7FA] hover:text-white bg-transparent text-center opacity-0 group-hover/cell:opacity-100 group-hover/cell:bg-[#20B7FA] group-hover/cell:text-white",
-                rowHasSelectedCell ? "" : "",
-                ""
-              )}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        );
-      },
-      size: 180,
-      minSize: 150,
-      meta: {
-        isFixed: isMobile ? false : true,
-        fixedPosition: "right",
-      },
-    });
+          );
+        },
+        size: 180,
+        minSize: 150,
+        meta: {
+          isFixed: isMobile ? false : true,
+          fixedPosition: "right",
+        },
+      });
+    }
 
     return columns;
   }, [data, editingCell, editValue, selectedCell, fixedColumns]);

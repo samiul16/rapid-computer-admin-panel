@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import FixedColumnDataTable from "@/components/common/FixedColumnDataTable";
+import FixedColumnDataTable from "@/components/common/country-page-table/FixedColumnDataTable";
 
 type ListTableDataType = {
   documentNumber: string;
@@ -308,10 +308,26 @@ export default function ComponentLevelDataTable({
   viewMode,
   setViewMode,
   dataTableFilter,
+  setShowExport,
+  showExport,
+  setShowFilter,
+  showFilter,
+  setShowVisibility,
+  showVisibility,
+  isFilterOpen,
+  setIsFilterOpen,
 }: {
   viewMode: string;
   setViewMode: (viewMode: string) => void;
   dataTableFilter: any;
+  setShowExport: (showExport: boolean) => void;
+  showExport: boolean;
+  setShowFilter: (showFilter: boolean) => void;
+  showFilter: boolean;
+  setShowVisibility: (showVisibility: boolean) => void;
+  showVisibility: boolean;
+  isFilterOpen: boolean;
+  setIsFilterOpen: (isFilterOpen: boolean) => void;
 }) {
   const componentColumns = [
     {
@@ -470,25 +486,6 @@ export default function ComponentLevelDataTable({
     },
 
     {
-      accessorKey: "status",
-      title: "Status",
-      options: ["active", "inactive", "draft"],
-      filterFn: (row: any, columnId: any, filterValue: any) => {
-        if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as string;
-        return filterValue.includes(cellValue);
-      },
-      sortingFn: (row1: any, row2: any) => {
-        return row1.getValue("status").localeCompare(row2.getValue("status"));
-      },
-      size: 120,
-      minSize: 80,
-      meta: {
-        exportLabel: "status",
-      },
-    },
-
-    {
       accessorKey: "createdAt",
       title: "Created",
       options: [], // Dates are typically not filtered with predefined options
@@ -557,6 +554,16 @@ export default function ComponentLevelDataTable({
       setViewMode={setViewMode}
       componentColumns={componentColumns}
       fixedColumns={[]} // Pin country name column
+      pathName={"purchase-returns"}
+      setShowExport={setShowExport}
+      showExport={showExport}
+      setShowFilter={setShowFilter}
+      showFilter={showFilter}
+      setShowVisibility={setShowVisibility}
+      showVisibility={showVisibility}
+      isFilterOpen={isFilterOpen}
+      setIsFilterOpen={setIsFilterOpen}
+      searchQuery={""}
     />
   );
 }
