@@ -10,6 +10,7 @@ import type {
   UserMasterPermissions,
   ColorsPermissions,
   LeadSourcesPermissions,
+  ExpiryItemsPermissions,
 } from "@/types/permissions.types";
 
 // Define your root state type
@@ -120,6 +121,24 @@ export const useLeadSourcesPermissions = (): LeadSourcesPermissions => {
       permissions,
       "lead-sources"
     ) as unknown as LeadSourcesPermissions;
+  }, [permissions]);
+
+  return permissionCheckers;
+};
+
+/**
+ * Typed hook specifically for expiry-items module
+ */
+export const useExpiryItemsPermissions = (): ExpiryItemsPermissions => {
+  const permissions = useSelector((state: RootState) => {
+    return state.auth.user?.permissions;
+  });
+
+  const permissionCheckers = useMemo(() => {
+    return createPermissionCheckers(
+      permissions,
+      "expiry-items"
+    ) as unknown as ExpiryItemsPermissions;
   }, [permissions]);
 
   return permissionCheckers;

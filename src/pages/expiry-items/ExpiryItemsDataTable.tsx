@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import FixedColumnDataTable from "@/components/common/country-page-table/FixedColumnDataTable";
 import useIsMobile from "@/hooks/useIsMobile";
-import { usePermission } from "@/hooks/usePermissions";
+import { useExpiryItemsPermissions } from "@/hooks/usePermissions";
 
 // Expiry Items data table types and mock data
 interface ExpiryItem {
@@ -255,7 +255,7 @@ export default function ExpiryItemsDataTable({
   isFilterOpen: boolean;
   setIsFilterOpen: (isFilterOpen: boolean) => void;
 }) {
-  const canCreate = usePermission("expiry-items", "create");
+  const { canCreate } = useExpiryItemsPermissions();
   const isMobile = useIsMobile();
 
   const componentColumns = [

@@ -253,3 +253,59 @@ export interface LeadSourcesPermissions {
   canCreateUpdatedDate: boolean;
   canCreateDraftedDate: boolean;
 }
+
+// Specific types for expiry-items module
+export interface ExpiryItemsPermissions {
+  // Form permissions
+  canCreate: boolean;
+  canView: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
+  canExport: boolean;
+  canImport: boolean;
+
+  // Field permissions - View
+  canViewItemName: boolean;
+  canViewBatchNumber: boolean;
+  canViewExpiryDate: boolean;
+  canViewQuantity: boolean;
+  canViewUnit: boolean;
+  canViewLocation: boolean;
+  canViewCategory: boolean;
+  canViewSupplier: boolean;
+  canViewStatus: boolean;
+  canViewIsDefault: boolean;
+  canViewCreatedDate: boolean;
+  canViewUpdatedDate: boolean;
+  canViewDraftedDate: boolean;
+
+  // Field permissions - Edit
+  canEditItemName: boolean;
+  canEditBatchNumber: boolean;
+  canEditExpiryDate: boolean;
+  canEditQuantity: boolean;
+  canEditUnit: boolean;
+  canEditLocation: boolean;
+  canEditCategory: boolean;
+  canEditSupplier: boolean;
+  canEditStatus: boolean;
+  canEditIsDefault: boolean;
+  canEditCreatedDate: boolean;
+  canEditUpdatedDate: boolean;
+  canEditDraftedDate: boolean;
+
+  // Field permissions - Create
+  canCreateItemName: boolean;
+  canCreateBatchNumber: boolean;
+  canCreateExpiryDate: boolean;
+  canCreateQuantity: boolean;
+  canCreateUnit: boolean;
+  canCreateLocation: boolean;
+  canCreateCategory: boolean;
+  canCreateSupplier: boolean;
+  canCreateStatus: boolean;
+  canCreateIsDefault: boolean;
+  canCreateCreatedDate: boolean;
+  canCreateUpdatedDate: boolean;
+  canCreateDraftedDate: boolean;
+}

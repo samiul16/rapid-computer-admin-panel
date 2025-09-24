@@ -359,9 +359,6 @@ export default function AddItemModal({
       onClose={handleClose}
       title={
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-            <span className="text-blue-600 font-bold text-sm">+</span>
-          </div>
           <span className="text-lg font-semibold text-gray-800">
             Add New Item
           </span>
@@ -754,7 +751,7 @@ export default function AddItemModal({
             </Button>
             <Button
               type="submit"
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+              className="flex items-center gap-2 bg-sky-500 hover:bg-sky-400"
             >
               <Save size={16} />
               Save Item
