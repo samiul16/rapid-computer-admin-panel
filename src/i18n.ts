@@ -2,7 +2,6 @@ import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 
-
 const resources = {
   en: {
     translation: {
@@ -738,6 +737,7 @@ const resources = {
         viewingSalesReturn: "Viewing Sales Return",
         salesReturnHistory: "Sales Return History",
         userType: "User Type",
+        viewingQuotation: "Viewing Quotation",
       },
       common: {
         actions: "Actions",
