@@ -1,14 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import FixedColumnDataTable from "@/components/common/country-page-table/FixedColumnDataTable";
 
-// Sales Return mock data aligned with SalesReturnGrid
-const mockSalesReturns = [
+// Sales Quotation mock data aligned with SalesQuotationGrid
+const mockSalesQuotations = [
   {
     id: "1",
-    documentNumber: "SR001",
-    salesInvoiceNumber: "INV-2024-001",
-    poNumber: "PO-2024-001",
-    poDate: "2024-01-10",
+    documentNumber: "SQ001",
+    quotationNumber: "QUO-2024-001",
+    quotationDate: "2024-01-10",
     customer: "ABC Trading LLC",
     vatNumber: "VAT-1234567890",
     paymentMode: "Bank Transfer",
@@ -17,96 +16,112 @@ const mockSalesReturns = [
     country: "UAE",
     state: "Dubai",
     city: "Deira",
-    remarks: "Product return - defective items",
+    remarks: "Product quotation for electronics",
     salesman: "John Smith",
-    createdAt: "2024-01-15",
-    updatedAt: "2024-01-20",
-    isDeleted: false,
     status: "Active",
+    isActive: true,
+    isDraft: false,
+    createdAt: "2024-01-15",
+    draftedAt: null,
+    updatedAt: "2024-01-20",
+    deletedAt: null,
+    isDeleted: false,
   },
   {
     id: "2",
-    documentNumber: "SR002",
-    salesInvoiceNumber: "INV-2024-002",
-    poNumber: "PO-2024-002",
-    poDate: "2024-01-12",
+    documentNumber: "SQ002",
+    quotationNumber: "QUO-2024-002",
+    quotationDate: "2024-01-12",
     customer: "Global Exports",
     vatNumber: "VAT-2345678901",
     paymentMode: "Credit Card",
     dueDays: 15,
-    paymentDate: "2024-01-31",
+    paymentDate: "2024-02-10",
     country: "UAE",
     state: "Dubai",
     city: "Business Bay",
-    remarks: "Customer requested return",
+    remarks: "Bulk order quotation",
     salesman: "Sarah Johnson",
-    createdAt: "2024-01-16",
-    updatedAt: "2024-01-21",
-    isDeleted: false,
     status: "Active",
+    isActive: true,
+    isDraft: false,
+    createdAt: "2024-01-16",
+    draftedAt: null,
+    updatedAt: "2024-01-21",
+    deletedAt: null,
+    isDeleted: false,
   },
   {
     id: "3",
-    documentNumber: "SR003",
-    salesInvoiceNumber: "INV-2024-003",
-    poNumber: "PO-2024-003",
-    poDate: "2024-01-14",
+    documentNumber: "SQ003",
+    quotationNumber: "QUO-2024-003",
+    quotationDate: "2024-01-14",
     customer: "Sunrise Mart",
     vatNumber: "VAT-3456789012",
     paymentMode: "Cash",
     dueDays: 7,
-    paymentDate: "2024-01-24",
+    paymentDate: "2024-02-05",
     country: "UAE",
     state: "Abu Dhabi",
     city: "Mussafah",
-    remarks: "Quality issue return",
+    remarks: "Retail quotation for food items",
     salesman: "Michael Brown",
-    createdAt: "2024-01-17",
-    updatedAt: "2024-01-22",
-    isDeleted: false,
     status: "Active",
+    isActive: true,
+    isDraft: false,
+    createdAt: "2024-01-17",
+    draftedAt: null,
+    updatedAt: "2024-01-22",
+    deletedAt: null,
+    isDeleted: false,
   },
   {
     id: "4",
-    documentNumber: "SR004",
-    salesInvoiceNumber: "INV-2024-004",
-    poNumber: "PO-2024-004",
-    poDate: "2024-01-16",
+    documentNumber: "SQ004",
+    quotationNumber: "QUO-2024-004",
+    quotationDate: "2024-01-16",
     customer: "Blue Ocean Foods",
     vatNumber: "VAT-4567890123",
     paymentMode: "Check",
     dueDays: 45,
-    paymentDate: "2024-03-04",
+    paymentDate: "2024-02-20",
     country: "UAE",
     state: "Sharjah",
     city: "Sharjah City",
-    remarks: "Batch return - expired products",
+    remarks: "Food service quotation",
     salesman: "Emily Davis",
-    createdAt: "2024-01-18",
-    updatedAt: "2024-01-23",
-    isDeleted: false,
     status: "Active",
+    isActive: true,
+    isDraft: false,
+    createdAt: "2024-01-18",
+    draftedAt: null,
+    updatedAt: "2024-01-23",
+    deletedAt: null,
+    isDeleted: false,
   },
   {
     id: "5",
-    documentNumber: "SR005",
-    salesInvoiceNumber: "INV-2024-005",
-    poNumber: "PO-2024-005",
-    poDate: "2024-01-18",
+    documentNumber: "SQ005",
+    quotationNumber: "QUO-2024-005",
+    quotationDate: "2024-01-18",
     customer: "Prime Retailers",
     vatNumber: "VAT-5678901234",
     paymentMode: "Wire Transfer",
-    dueDays: 21,
-    paymentDate: "2024-02-09",
+    dueDays: 60,
+    paymentDate: "2024-03-20",
     country: "UAE",
     state: "Dubai",
     city: "DIFC",
-    remarks: "Customer dissatisfaction return",
-    salesman: "John Smith",
-    createdAt: "2024-01-19",
-    updatedAt: "2024-01-24",
-    isDeleted: false,
+    remarks: "Corporate quotation for office supplies",
+    salesman: "Daniel Wilson",
     status: "Pending",
+    isActive: true,
+    isDraft: false,
+    createdAt: "2024-01-19",
+    draftedAt: null,
+    updatedAt: "2024-01-24",
+    deletedAt: null,
+    isDeleted: false,
   },
 ];
 
@@ -139,7 +154,7 @@ export default function SalesReturnDataTable({
     {
       accessorKey: "documentNumber",
       title: "Document",
-      options: ["SR001", "SR002", "SR003", "SR004", "SR005"],
+      options: ["SQ001", "SQ002", "SQ003", "SQ004", "SQ005"],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
         const cellValue = row.getValue(columnId) as string;
@@ -156,14 +171,14 @@ export default function SalesReturnDataTable({
       minSize: 100,
     },
     {
-      accessorKey: "salesInvoiceNumber",
-      title: "Sales Invoice Number",
+      accessorKey: "quotationNumber",
+      title: "Quotation Number",
       options: [
-        "INV-2024-001",
-        "INV-2024-002",
-        "INV-2024-003",
-        "INV-2024-004",
-        "INV-2024-005",
+        "QUO-2024-001",
+        "QUO-2024-002",
+        "QUO-2024-003",
+        "QUO-2024-004",
+        "QUO-2024-005",
       ],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
@@ -174,36 +189,14 @@ export default function SalesReturnDataTable({
       },
       sortingFn: (row1: any, row2: any) =>
         row1
-          .getValue("salesInvoiceNumber")
-          .localeCompare(row2.getValue("salesInvoiceNumber")),
+          .getValue("quotationNumber")
+          .localeCompare(row2.getValue("quotationNumber")),
       size: 170,
       minSize: 130,
     },
     {
-      accessorKey: "poNumber",
-      title: "P.O Number",
-      options: [
-        "PO-2024-001",
-        "PO-2024-002",
-        "PO-2024-003",
-        "PO-2024-004",
-        "PO-2024-005",
-      ],
-      filterFn: (row: any, columnId: any, filterValue: any) => {
-        if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as string;
-        return (Array.isArray(filterValue) ? filterValue : [filterValue]).some(
-          (val: string) => cellValue.toLowerCase().includes(val.toLowerCase())
-        );
-      },
-      sortingFn: (row1: any, row2: any) =>
-        row1.getValue("poNumber").localeCompare(row2.getValue("poNumber")),
-      size: 130,
-      minSize: 110,
-    },
-    {
-      accessorKey: "poDate",
-      title: "P.O Date",
+      accessorKey: "quotationDate",
+      title: "Quotation Date",
       options: [],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
@@ -216,8 +209,8 @@ export default function SalesReturnDataTable({
         return cellValue.toLowerCase().includes(filterValue.toLowerCase());
       },
       sortingFn: (row1: any, row2: any) =>
-        new Date(row1.getValue("poDate")).getTime() -
-        new Date(row2.getValue("poDate")).getTime(),
+        new Date(row1.getValue("quotationDate")).getTime() -
+        new Date(row2.getValue("quotationDate")).getTime(),
       size: 120,
       minSize: 100,
     },
@@ -467,7 +460,7 @@ export default function SalesReturnDataTable({
     },
   ];
 
-  const filteredData = mockSalesReturns.filter((invoice) => {
+  const filteredData = mockSalesQuotations.filter((invoice) => {
     if (!dataTableFilter || !dataTableFilter.status) {
       return true;
     }
