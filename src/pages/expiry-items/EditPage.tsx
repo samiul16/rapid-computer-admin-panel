@@ -20,13 +20,15 @@ import { SwitchSelect } from "@/components/common/SwitchAutoComplete";
 import { ActionsAutocomplete } from "@/components/common/ActionsAutocomplete";
 import DynamicInputTableList from "./dynamic-input-table/DynamicInputTableList";
 
-type DamageItemData = {
-  itemId: string;
-  quantityDamaged: number;
-  documentDate: Date | null;
-  reportedBy: string;
+type ExpiryItemData = {
+  itemName: string;
+  batchNumber: string;
+  expiryDate: Date | null;
+  quantity: number;
+  unit: string;
   location: string;
-  damageType: string;
+  category: string;
+  supplier: string;
   status: "Active" | "Inactive" | "Draft" | "Deleted";
   isDefault: boolean;
   isActive: boolean;
@@ -38,8 +40,8 @@ type DamageItemData = {
   deletedAt: Date | null;
 };
 
-type DamageItemModuleData = {
-  formData: DamageItemData;
+type ExpiryItemModuleData = {
+  formData: ExpiryItemData;
   hasChanges: boolean;
   scrollPosition: number;
 };
@@ -48,13 +50,15 @@ type Props = {
   isEdit?: boolean;
 };
 
-const initialData: DamageItemData = {
-  itemId: "ITM-0001",
-  quantityDamaged: 2,
-  documentDate: new Date(),
-  reportedBy: "John Doe",
+const initialData: ExpiryItemData = {
+  itemName: "Aspirin Tablets",
+  batchNumber: "BATCH-001",
+  expiryDate: new Date("2025-12-31"),
+  quantity: 100,
+  unit: "Tablets",
   location: "Warehouse A",
-  damageType: "Broken",
+  category: "Pharmaceuticals",
+  supplier: "MedSupply Co",
   status: "Active",
   isDefault: false,
   isActive: true,
@@ -66,14 +70,14 @@ const initialData: DamageItemData = {
   deletedAt: null,
 };
 
-export default function DamageItemEditPage({ isEdit = true }: Props) {
+export default function ExpiryItemEditPage({ isEdit = true }: Props) {
   const navigate = useNavigate();
   const { id } = useParams();
   // const labels = useLanguageLabels();
   const { isRTL } = useAppSelector((state) => state.language);
 
   // Get module ID for this edit page
-  const moduleId = `damage-item-edit-module-${id || "new"}`;
+  const moduleId = `expiry-item-edit-module-${id || "new"}`;
 
   // Use the custom hook for minimized module data
   const {
@@ -81,7 +85,7 @@ export default function DamageItemEditPage({ isEdit = true }: Props) {
     hasMinimizedData,
     resetModuleData,
     getModuleScrollPosition,
-  } = useMinimizedModuleData<DamageItemModuleData>(moduleId);
+  } = useMinimizedModuleData<ExpiryItemModuleData>(moduleId);
 
   const [keepCreating, setKeepCreating] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
@@ -102,49 +106,61 @@ export default function DamageItemEditPage({ isEdit = true }: Props) {
   const { canCreate, canView } = useColorsPermissions();
 
   // Field-level permissions
-  const itemIdPerm: boolean = usePermission("damage-items", "edit", "itemId");
-  const quantityDamagedPerm: boolean = usePermission(
-    "damage-items",
+  const itemNamePerm: boolean = usePermission(
+    "expiry-items",
     "edit",
-    "quantityDamaged"
+    "itemName"
   );
-  const documentDatePerm: boolean = usePermission(
-    "damage-items",
+  const batchNumberPerm: boolean = usePermission(
+    "expiry-items",
     "edit",
-    "documentDate"
+    "batchNumber"
   );
-  const reportedByPerm: boolean = usePermission(
-    "damage-items",
+  const expiryDatePerm: boolean = usePermission(
+    "expiry-items",
     "edit",
-    "reportedBy"
+    "expiryDate"
   );
+  const quantityPerm: boolean = usePermission(
+    "expiry-items",
+    "edit",
+    "quantity"
+  );
+  const unitPerm: boolean = usePermission("expiry-items", "edit", "unit");
   const locationPerm: boolean = usePermission(
-    "damage-items",
+    "expiry-items",
     "edit",
     "location"
   );
-  const damageTypePerm: boolean = usePermission(
-    "damage-items",
+  const categoryPerm: boolean = usePermission(
+    "expiry-items",
     "edit",
-    "damageType"
+    "category"
   );
-  const statusPerm: boolean = usePermission("damage-items", "edit", "status");
+  const supplierPerm: boolean = usePermission(
+    "expiry-items",
+    "edit",
+    "supplier"
+  );
+  const statusPerm: boolean = usePermission("expiry-items", "edit", "status");
   const isDefaultPerm: boolean = usePermission(
-    "damage-items",
+    "expiry-items",
     "edit",
     "isDefault"
   );
-  const canPdf: boolean = usePermission("damage-items", "pdf");
-  const canPrint: boolean = usePermission("damage-items", "print");
+  const canPdf: boolean = usePermission("expiry-items", "pdf");
+  const canPrint: boolean = usePermission("expiry-items", "print");
 
   // Form state
-  const [formData, setFormData] = useState<DamageItemData>({
-    itemId: "",
-    quantityDamaged: 0,
-    documentDate: new Date(),
-    reportedBy: "",
+  const [formData, setFormData] = useState<ExpiryItemData>({
+    itemName: "",
+    batchNumber: "",
+    expiryDate: new Date(),
+    quantity: 0,
+    unit: "",
     location: "",
-    damageType: "",
+    category: "",
+    supplier: "",
     status: "Active",
     isDefault: false,
     isActive: true,
@@ -181,7 +197,7 @@ export default function DamageItemEditPage({ isEdit = true }: Props) {
       (hasMinimizedData &&
         moduleData?.formData &&
         !isRestoredFromMinimized &&
-        !formData.itemId);
+        !formData.itemName);
 
     if (hasMinimizedData && moduleData?.formData && shouldAutoRestore) {
       setFormData(moduleData.formData);
@@ -205,7 +221,7 @@ export default function DamageItemEditPage({ isEdit = true }: Props) {
     moduleData,
     isRestoredFromMinimized,
     shouldRestoreFromMinimized,
-    formData.itemId,
+    formData.itemName,
     moduleId,
     getModuleScrollPosition,
   ]);
@@ -246,28 +262,30 @@ export default function DamageItemEditPage({ isEdit = true }: Props) {
       await handleExportPDF();
     }
     if (printEnabled) {
-      handlePrintDamageItem(formData);
+      handlePrintExpiryItem(formData);
     }
 
     // keep switch functionality
     if (keepCreating) {
-      toastSuccess("Damage item updated successfully!");
+      toastSuccess("Expiry item updated successfully!");
       handleReset();
     } else {
-      toastSuccess("Damage item updated successfully!");
-      navigate("/damage-items");
+      toastSuccess("Expiry item updated successfully!");
+      navigate("/expiry-items");
     }
   };
 
   // Update handleReset function to use the custom hook
   const handleReset = async () => {
     setFormData({
-      itemId: "",
-      quantityDamaged: 0,
-      documentDate: new Date(),
-      reportedBy: "",
+      itemName: "",
+      batchNumber: "",
+      expiryDate: new Date(),
+      quantity: 0,
+      unit: "",
       location: "",
-      damageType: "",
+      category: "",
+      supplier: "",
       status: "Active",
       isDefault: false,
       isActive: true,
@@ -300,7 +318,7 @@ export default function DamageItemEditPage({ isEdit = true }: Props) {
 
     // Focus the first input field after reset
     setTimeout(() => {
-      inputRefs.current["itemId"]?.focus();
+      inputRefs.current["itemName"]?.focus();
     }, 100);
   };
 
@@ -308,19 +326,21 @@ export default function DamageItemEditPage({ isEdit = true }: Props) {
     setIsResetModalOpen(true);
   };
 
-  const handlePrintDamageItem = (damageData: any) => {
+  const handlePrintExpiryItem = (expiryData: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "Damage Item Details",
-        data: [damageData],
+        title: "Expiry Item Details",
+        data: [expiryData],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
-          itemId: "Item ID",
-          quantityDamaged: "Quantity Damaged",
-          documentDate: "Document Date",
-          reportedBy: "Reported By",
+          itemName: "Item Name",
+          batchNumber: "Batch Number",
+          expiryDate: "Expiry Date",
+          quantity: "Quantity",
+          unit: "Unit",
           location: "Location",
-          damageType: "Damage Type",
+          category: "Category",
+          supplier: "Supplier",
           status: "Status",
           isDefault: "Default",
           isActive: "Active Status",
@@ -352,15 +372,15 @@ export default function DamageItemEditPage({ isEdit = true }: Props) {
       const blob = await pdf(
         <GenericPDF
           data={[formData]}
-          title="Damage Item Details"
-          subtitle="Damage Item Information"
+          title="Expiry Item Details"
+          subtitle="Expiry Item Information"
         />
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "damage-item-details.pdf";
+      a.download = "expiry-item-details.pdf";
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
@@ -374,7 +394,7 @@ export default function DamageItemEditPage({ isEdit = true }: Props) {
       label: "Create",
       icon: <Plus className="w-5 h-5 text-green-500" />,
       onClick: () => {
-        navigate("/brands/create");
+        navigate("/expiry-items/create");
       },
       show: canCreate,
     },
@@ -382,7 +402,7 @@ export default function DamageItemEditPage({ isEdit = true }: Props) {
       label: "View",
       icon: <Eye className="w-5 h-5 text-green-600" />,
       onClick: () => {
-        navigate("/brands/view");
+        navigate("/expiry-items/view");
       },
       show: canView,
     },
@@ -405,7 +425,7 @@ export default function DamageItemEditPage({ isEdit = true }: Props) {
                 ...prev,
                 isDraft: true,
               }));
-              toastRestore("Color saved as draft successfully");
+              toastRestore("Expiry item saved as draft successfully");
             },
             show: canCreate,
           },
@@ -416,7 +436,7 @@ export default function DamageItemEditPage({ isEdit = true }: Props) {
   }, [formData.isDraft, canCreate]);
 
   // Create minimize handler using the custom hook
-  const handleMinimize = useCallback((): DamageItemModuleData => {
+  const handleMinimize = useCallback((): ExpiryItemModuleData => {
     return {
       formData,
       hasChanges: true,
@@ -428,11 +448,11 @@ export default function DamageItemEditPage({ isEdit = true }: Props) {
     <>
       <MinimizablePageLayout
         moduleId={moduleId}
-        moduleName={`Edit Damage Item`}
-        moduleRoute={`/damage-items/edit/${id || "new"}`}
+        moduleName={`Edit Expiry Item`}
+        moduleRoute={`/expiry-items/edit/${id || "new"}`}
         onMinimize={handleMinimize}
-        title="Edit Damage Item"
-        listPath="damage-items"
+        title="Edit Expiry Item"
+        listPath="expiry-items"
         popoverOptions={popoverOptions}
         videoSrc={video}
         videoHeader="Tutorial video"
@@ -443,7 +463,7 @@ export default function DamageItemEditPage({ isEdit = true }: Props) {
         printEnabled={printEnabled}
         onPrintToggle={canPrint ? handleSwitchChange : undefined}
         activePage="edit"
-        module="damage-items"
+        module="expiry-items"
         additionalFooterButtons={
           canCreate ? (
             <div className="flex gap-4 max-[435px]:gap-2">
@@ -473,72 +493,71 @@ export default function DamageItemEditPage({ isEdit = true }: Props) {
             onSubmit={handleSubmit}
             className="space-y-6"
           >
-            {/* First Row: Item ID, Quantity Damaged, Document Date, Reported By */}
+            {/* First Row: Item Name, Batch Number, Expiry Date, Quantity */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
-              {/* Item ID */}
-              {itemIdPerm && (
+              {/* Item Name */}
+              {itemNamePerm && (
                 <div className="space-y-2">
                   <EditableInput
-                    setRef={setRef("itemId")}
-                    id="itemId"
-                    name="itemId"
-                    value={formData.itemId}
+                    setRef={setRef("itemName")}
+                    id="itemName"
+                    name="itemName"
+                    value={formData.itemName}
                     onChange={handleChange}
-                    onNext={() => focusNextInput("quantityDamaged")}
-                    onCancel={() => setFormData({ ...formData, itemId: "" })}
-                    labelText="Item ID"
-                    tooltipText="Enter the Item ID"
+                    onNext={() => focusNextInput("batchNumber")}
+                    onCancel={() => setFormData({ ...formData, itemName: "" })}
+                    labelText="Item Name"
+                    tooltipText="Enter the item name"
                     required
                   />
                 </div>
               )}
 
-              {/* Quantity Damaged */}
-              {quantityDamagedPerm && (
+              {/* Batch Number */}
+              {batchNumberPerm && (
                 <div className="space-y-2">
                   <EditableInput
-                    setRef={setRef("quantityDamaged")}
-                    id="quantityDamaged"
-                    name="quantityDamaged"
-                    type="number"
-                    value={String(formData.quantityDamaged)}
+                    setRef={setRef("batchNumber")}
+                    id="batchNumber"
+                    name="batchNumber"
+                    value={formData.batchNumber}
                     onChange={handleChange}
-                    onNext={() => focusNextInput("documentDate")}
+                    onNext={() => focusNextInput("expiryDate")}
                     onCancel={() =>
-                      setFormData({ ...formData, quantityDamaged: 0 })
+                      setFormData({ ...formData, batchNumber: "" })
                     }
-                    labelText="Quantity Damaged"
-                    tooltipText="Enter the damaged quantity"
+                    labelText="Batch Number"
+                    tooltipText="Enter the batch number"
                     required
                   />
                 </div>
               )}
 
-              {/* Document Date (native) */}
-              {documentDatePerm && (
+              {/* Expiry Date (native) */}
+              {expiryDatePerm && (
                 <div className="space-y-2">
                   <div className="relative">
                     <input
-                      ref={(el) => setRef("documentDate")(el as any)}
+                      ref={(el) => setRef("expiryDate")(el as any)}
                       type="date"
-                      id="documentDate"
-                      name="documentDate"
+                      id="expiryDate"
+                      name="expiryDate"
                       value={
-                        formData.documentDate
-                          ? formData.documentDate.toISOString().split("T")[0]
+                        formData.expiryDate
+                          ? formData.expiryDate.toISOString().split("T")[0]
                           : ""
                       }
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                         const val = e.target.value;
                         setFormData((prev) => ({
                           ...prev,
-                          documentDate: val ? new Date(val) : null,
+                          expiryDate: val ? new Date(val) : null,
                         }));
                       }}
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
                           e.preventDefault();
-                          focusNextInput("reportedBy");
+                          focusNextInput("quantity");
                         }
                       }}
                       required
@@ -546,38 +565,55 @@ export default function DamageItemEditPage({ isEdit = true }: Props) {
                       placeholder=" "
                     />
                     <label
-                      htmlFor="documentDate"
+                      htmlFor="expiryDate"
                       className="absolute text-base text-gray-800 dark:text-gray-400 duration-300 transform -translate-y-4 scale-75 top-1 z-10 origin-[0] bg-white dark:bg-gray-900 px-2 peer-focus:px-2 peer-focus:text-primary peer-focus:dark:text-primary peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-1 peer-focus:scale-75 peer-focus:-translate-y-4 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto start-1 transition-all rounded-lg"
                     >
-                      Document Date
+                      Expiry Date
                     </label>
                   </div>
                 </div>
               )}
 
-              {/* Reported By */}
-              {reportedByPerm && (
+              {/* Quantity */}
+              {quantityPerm && (
                 <div className="space-y-2">
                   <EditableInput
-                    setRef={setRef("reportedBy")}
-                    id="reportedBy"
-                    name="reportedBy"
-                    value={formData.reportedBy}
+                    setRef={setRef("quantity")}
+                    id="quantity"
+                    name="quantity"
+                    type="number"
+                    value={String(formData.quantity)}
                     onChange={handleChange}
-                    onNext={() => focusNextInput("location")}
-                    onCancel={() =>
-                      setFormData({ ...formData, reportedBy: "" })
-                    }
-                    labelText="Reported By"
-                    tooltipText="Enter reporter name"
+                    onNext={() => focusNextInput("unit")}
+                    onCancel={() => setFormData({ ...formData, quantity: 0 })}
+                    labelText="Quantity"
+                    tooltipText="Enter the quantity"
                     required
                   />
                 </div>
               )}
             </div>
 
-            {/* Second Row: Location, Damage Type, Default, Actions */}
+            {/* Second Row: Unit, Location, Category, Supplier */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
+              {/* Unit */}
+              {unitPerm && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("unit")}
+                    id="unit"
+                    name="unit"
+                    value={formData.unit}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("location")}
+                    onCancel={() => setFormData({ ...formData, unit: "" })}
+                    labelText="Unit"
+                    tooltipText="Enter the unit of measurement"
+                    required
+                  />
+                </div>
+              )}
+
               {/* Location */}
               {locationPerm && (
                 <div className="space-y-2">
@@ -587,7 +623,7 @@ export default function DamageItemEditPage({ isEdit = true }: Props) {
                     name="location"
                     value={formData.location}
                     onChange={handleChange}
-                    onNext={() => focusNextInput("damageType")}
+                    onNext={() => focusNextInput("category")}
                     onCancel={() => setFormData({ ...formData, location: "" })}
                     labelText="Location"
                     tooltipText="Enter the location"
@@ -596,26 +632,45 @@ export default function DamageItemEditPage({ isEdit = true }: Props) {
                 </div>
               )}
 
-              {/* Damage Type */}
-              {damageTypePerm && (
+              {/* Category */}
+              {categoryPerm && (
                 <div className="space-y-2">
                   <EditableInput
-                    setRef={setRef("damageType")}
-                    id="damageType"
-                    name="damageType"
-                    value={formData.damageType}
+                    setRef={setRef("category")}
+                    id="category"
+                    name="category"
+                    value={formData.category}
                     onChange={handleChange}
-                    onNext={() => focusNextInput("isDefault")}
-                    onCancel={() =>
-                      setFormData({ ...formData, damageType: "" })
-                    }
-                    labelText="Damage Type"
-                    tooltipText="Enter the type of damage"
+                    onNext={() => focusNextInput("supplier")}
+                    onCancel={() => setFormData({ ...formData, category: "" })}
+                    labelText="Category"
+                    tooltipText="Enter the category"
                     required
                   />
                 </div>
               )}
 
+              {/* Supplier */}
+              {supplierPerm && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("supplier")}
+                    id="supplier"
+                    name="supplier"
+                    value={formData.supplier}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("isDefault")}
+                    onCancel={() => setFormData({ ...formData, supplier: "" })}
+                    labelText="Supplier"
+                    tooltipText="Enter the supplier name"
+                    required
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Third Row: Default, Status, Actions */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
               {/* Default field - only show if user can edit */}
               {isDefaultPerm && (
                 <div className="space-y-2 relative">
@@ -776,7 +831,7 @@ export default function DamageItemEditPage({ isEdit = true }: Props) {
                       },
                     },
                   }}
-                  tooltipText="Damage Item Action History"
+                  tooltipText="Expiry Item Action History"
                 />
               </div>
             </div>
