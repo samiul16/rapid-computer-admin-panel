@@ -25,13 +25,12 @@ import LanguageTranslatorModal from "@/components/common/LanguageTranslatorModel
 import DynamicInputTableList from "@/components/common/dynamic-input-table/DynamicInputTableList";
 import EnglishDate from "@/components/EnglishDateInput";
 
-// Define Sales Return interface
-interface Invoice {
+// Define Sales Quotation interface
+interface SalesQuotation {
   id: string;
   documentNumber: string;
-  salesInvoiceNumber: string;
-  poNumber: string;
-  poDate: string;
+  quotationNumber: string;
+  quotationDate: string;
   customer: string;
   vatNumber: string;
   paymentMode: string;
@@ -113,27 +112,26 @@ type Props = {
 
 // Generate incremental document number
 const generateDocumentNumber = () => {
-  const lastNumber = localStorage.getItem("lastSalesDocNumber") || "0";
+  const lastNumber = localStorage.getItem("lastSalesQuotationDocNumber") || "0";
   const nextNumber = (parseInt(lastNumber) + 1).toString().padStart(3, "0");
-  localStorage.setItem("lastSalesDocNumber", nextNumber);
-  return `SR${nextNumber}`;
+  localStorage.setItem("lastSalesQuotationDocNumber", nextNumber);
+  return `SQ${nextNumber}`;
 };
 
-// Generate incremental sales invoice number reference
-const generateSalesInvoiceNumber = () => {
-  const lastNumber = localStorage.getItem("lastSalesInvoiceNumber") || "0";
+// Generate incremental quotation number
+const generateQuotationNumber = () => {
+  const lastNumber = localStorage.getItem("lastQuotationNumber") || "0";
   const nextNumber = (parseInt(lastNumber) + 1).toString().padStart(3, "0");
-  localStorage.setItem("lastSalesInvoiceNumber", nextNumber);
-  return `INV-${new Date().getFullYear()}-${nextNumber}`;
+  localStorage.setItem("lastQuotationNumber", nextNumber);
+  return `QUO-${new Date().getFullYear()}-${nextNumber}`;
 };
 
 // Initial data factory function
-const createInitialData = (): Invoice => ({
+const createInitialData = (): SalesQuotation => ({
   id: "1",
   documentNumber: generateDocumentNumber(),
-  salesInvoiceNumber: generateSalesInvoiceNumber(),
-  poNumber: "",
-  poDate: "",
+  quotationNumber: generateQuotationNumber(),
+  quotationDate: "",
   customer: "",
   vatNumber: "",
   paymentMode: "",
@@ -144,7 +142,7 @@ const createInitialData = (): Invoice => ({
   city: "",
   remarks: "",
   salesman: "",
-  isDefault: false,
+  isDefault: true,
   isActive: true,
   isDraft: false,
   createdAt: new Date(),
@@ -159,7 +157,7 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
   const labels = useLanguageLabels();
   const { isRTL } = useAppSelector((state) => state.language);
 
-  const detectedModule = "sales-return";
+  const detectedModule = "sales-quotation";
 
   // Use the custom hook for minimized module data
   const {
@@ -203,7 +201,9 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
   );
 
   // Form state
-  const [formData, setFormData] = useState<Invoice>(() => createInitialData());
+  const [formData, setFormData] = useState<SalesQuotation>(() =>
+    createInitialData()
+  );
 
   // Memoize customer data to prevent unnecessary re-renders
   const memoizedCustomers = useMemo(() => [...MOCK_CUSTOMERS], []);
@@ -618,7 +618,7 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
             onSubmit={handleSubmit}
             className="space-y-6 relative"
           >
-            {/* First Row: Document Number, Sales Invoice Number, P.O Number, P.O Date */}
+            {/* First Row: Document Number, Quotation Number, Quotation Date, Customer */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
               {/* Document Number */}
               <div className="space-y-2">
@@ -628,7 +628,7 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
                   name="documentNumber"
                   value={formData.documentNumber}
                   onChange={handleChange}
-                  onNext={() => focusNextInput("invoiceNumber")}
+                  onNext={() => focusNextInput("quotationNumber")}
                   onCancel={() => {}}
                   labelText="Document Number"
                   tooltipText="Auto-generated document number"
@@ -638,42 +638,57 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
                 />
               </div>
 
-              {/* Sales Invoice Number */}
+              {/* Quotation Number */}
               <div className="space-y-2">
                 <EditableInput
-                  setRef={setRef("salesInvoiceNumber")}
-                  id="salesInvoiceNumber"
-                  name="salesInvoiceNumber"
-                  value={formData.salesInvoiceNumber}
+                  setRef={setRef("quotationNumber")}
+                  id="quotationNumber"
+                  name="quotationNumber"
+                  value={formData.quotationNumber}
                   onChange={handleChange}
-                  onNext={() => focusNextInput("poNumber")}
+                  onNext={() => focusNextInput("quotationDate")}
                   onCancel={() =>
                     setFormData({
                       ...formData,
-                      salesInvoiceNumber: generateSalesInvoiceNumber(),
+                      quotationNumber: generateQuotationNumber(),
                     })
                   }
-                  labelText="Sales Invoice Number"
-                  tooltipText="Reference to original sales invoice"
+                  labelText="Quotation Number"
+                  tooltipText="Unique quotation reference number"
                 />
               </div>
 
-              {/* P.O Number */}
+              {/* Customer */}
               <div className="space-y-2">
-                <EditableInput
-                  setRef={setRef("poNumber")}
-                  id="poNumber"
-                  name="poNumber"
-                  value={formData.poNumber}
-                  onChange={handleChange}
-                  onNext={() => focusNextInput("poDate")}
-                  onCancel={() => setFormData({ ...formData, poNumber: "" })}
-                  labelText="P.O Number"
-                  tooltipText="Purchase order number"
+                <Autocomplete
+                  ref={(el: any) => setRef("customer")(el)}
+                  id="customer"
+                  name="customer"
+                  labelText="Customer"
+                  allowCustomInput={true}
+                  options={memoizedCustomers.map((s) => s.name)}
+                  value={formData.customer}
+                  onValueChange={handleCustomerChange}
+                  onEnterPress={() => focusNextInput("vatNumber")}
+                  placeholder=""
+                  className="relative"
+                  tooltipText="Select or type customer"
+                  userLang={isRTL ? "ar" : "en"}
+                  styles={{
+                    input: {
+                      borderColor: "var(--primary)",
+                      "&:focus": {
+                        borderColor: "var(--primary)",
+                      },
+                    },
+                  }}
+                  setShowTemplates={setShowTemplates}
+                  showTemplates={showTemplates}
+                  isShowTemplateIcon={true}
                 />
               </div>
 
-              {/* P.O Date */}
+              {/* Quotation Date */}
               <div className="space-y-2">
                 <EnglishDate
                   isDate={true}
@@ -682,11 +697,11 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
                   userLang="en"
                   rtl={false}
                   onChange={(date: string) =>
-                    setFormData({ ...formData, poDate: date })
+                    setFormData({ ...formData, quotationDate: date })
                   }
-                  value={formData.poDate}
+                  value={formData.quotationDate}
                   disabled={false}
-                  labelText="P.O Date"
+                  labelText="Quotation Date"
                   className={cn(
                     "transition-all",
                     "ring-1 ring-primary w-full!"
@@ -983,7 +998,7 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
                     placeholder=" "
                     labelText="Default"
                     className="relative"
-                    tooltipText="Mark as default sales invoice"
+                    tooltipText="Mark as default sales quotation"
                   />
                 </div>
               )}

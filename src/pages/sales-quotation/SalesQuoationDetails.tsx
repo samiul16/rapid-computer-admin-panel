@@ -17,13 +17,12 @@ import { ResetFormModal } from "@/components/common/ResetFormModal";
 import { usePermission } from "@/hooks/usePermissions";
 import MinimizablePageLayout from "@/components/MinimizablePageLayout";
 
-// Define Sales Return interface (aligned with Create/Edit pages)
-interface Invoice {
+// Define Sales Quotation interface (aligned with Create/Edit pages)
+interface SalesQuotation {
   id: string;
   documentNumber: string;
-  salesInvoiceNumber: string;
-  poNumber: string;
-  poDate: string;
+  quotationNumber: string;
+  quotationDate: string;
   customer: string;
   vatNumber: string;
   paymentMode: string;
@@ -34,6 +33,7 @@ interface Invoice {
   city: string;
   remarks: string;
   salesman: string;
+  status: string;
   isActive: boolean;
   isDraft: boolean;
   isDeleted: boolean;
@@ -43,13 +43,13 @@ interface Invoice {
   deletedAt: string;
 }
 
-const MOCK_INVOICES = [
-  { documentNumber: "SR001", customer: "ABC Trading LLC" },
-  { documentNumber: "SR002", customer: "Global Exports" },
-  { documentNumber: "SR003", customer: "Sunrise Mart" },
-  { documentNumber: "SR004", customer: "Blue Ocean Foods" },
-  { documentNumber: "SR005", customer: "Prime Retailers" },
-  { documentNumber: "SR006", customer: "Velocity Supplies" },
+const MOCK_QUOTATIONS = [
+  { documentNumber: "SQ001", customer: "ABC Trading LLC" },
+  { documentNumber: "SQ002", customer: "Global Exports" },
+  { documentNumber: "SQ003", customer: "Sunrise Mart" },
+  { documentNumber: "SQ004", customer: "Blue Ocean Foods" },
+  { documentNumber: "SQ005", customer: "Prime Retailers" },
+  { documentNumber: "SQ006", customer: "Velocity Supplies" },
 ];
 
 // Type definition for TypeScript
@@ -66,13 +66,13 @@ export type HistoryEntry = {
   print: boolean;
 };
 
-export default function SalesReturnDetails() {
+export default function SalesQuotationDetails() {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
   const [keepChanges, setKeepChanges] = useState(false);
   const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
-  const [selectedInvoice, setSelectedInvoice] = useState("SR001");
+  const [selectedQuotation, setSelectedQuotation] = useState("SQ001");
   const location = useLocation();
   const isViewPage = location.pathname.includes("/view");
   const [pdfChecked, setPdfChecked] = useState(false);
@@ -84,28 +84,28 @@ export default function SalesReturnDetails() {
   // const canEdit: boolean = usePermission("sales-return", "edit");
   // const canDelete: boolean = usePermission("sales-return", "delete");
   // const canExport: boolean = usePermission("sales-return", "export");
-  const canPdf: boolean = usePermission("sales-return", "pdf");
-  const canPrint: boolean = usePermission("sales-return", "print");
-  const canSeeHistory: boolean = usePermission("sales-return", "history");
+  const canPdf: boolean = usePermission("sales-quotation", "pdf");
+  const canPrint: boolean = usePermission("sales-quotation", "print");
+  const canSeeHistory: boolean = usePermission("sales-quotation", "history");
 
-  let invoiceData: Invoice = {
+  let quotationData: SalesQuotation = {
     id: "1",
-    documentNumber: selectedInvoice,
-    salesInvoiceNumber: `INV-2024-${selectedInvoice.replace("SR", "")}`,
-    poNumber: `PO-2024-${selectedInvoice.replace("SR", "")}`,
-    poDate: "2024-07-20",
+    documentNumber: selectedQuotation,
+    quotationNumber: `QUO-2024-${selectedQuotation.replace("SQ", "")}`,
+    quotationDate: "2024-07-20",
     customer:
-      MOCK_INVOICES.find((i) => i.documentNumber === selectedInvoice)
+      MOCK_QUOTATIONS.find((i) => i.documentNumber === selectedQuotation)
         ?.customer || "ABC Trading LLC",
     vatNumber: "VAT-1234567890",
     paymentMode: "Bank Transfer",
     dueDays: 30,
     paymentDate: "2024-08-23",
-    remarks: "Urgent delivery required",
+    remarks: "Product quotation for electronics",
     country: "UAE",
     state: "Dubai",
     city: "Deira",
     salesman: "John Smith",
+    status: "Active",
     isActive: true,
     isDraft: false,
     isDeleted: false,
@@ -123,11 +123,10 @@ export default function SalesReturnDetails() {
     }
     console.log("isViewPage", isViewPage);
     if (isViewPage) {
-      invoiceData = {
-        ...invoiceData,
-        salesInvoiceNumber: "",
-        poNumber: "",
-        poDate: "",
+      quotationData = {
+        ...quotationData,
+        quotationNumber: "",
+        quotationDate: "",
         customer: "",
         vatNumber: "",
         paymentMode: "",
@@ -138,6 +137,7 @@ export default function SalesReturnDetails() {
         state: "",
         city: "",
         salesman: "",
+        status: "",
         createdAt: "",
         updatedAt: "",
         draftedAt: "",
@@ -146,17 +146,16 @@ export default function SalesReturnDetails() {
     }
   }, []);
 
-  const handlePrintInvoice = (invoiceData: any) => {
+  const handlePrintQuotation = (quotationData: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "Sales Return Details",
-        data: [invoiceData],
+        title: "Sales Quotation Details",
+        data: [quotationData],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
           documentNumber: "Document Number",
-          salesInvoiceNumber: "Sales Invoice Number",
-          poNumber: "P.O Number",
-          poDate: "P.O Date",
+          quotationNumber: "Quotation Number",
+          quotationDate: "Quotation Date",
           customer: "Customer",
           vatNumber: "VAT Number",
           paymentMode: "Payment Mode",
@@ -167,6 +166,7 @@ export default function SalesReturnDetails() {
           state: "State",
           city: "City",
           salesman: "Salesman",
+          status: "Status",
           isActive: "Active Status",
           isDraft: "Draft Status",
           isDeleted: "Deleted Status",
@@ -194,19 +194,19 @@ export default function SalesReturnDetails() {
   const handleExportPDF = async () => {
     console.log("Export PDF clicked");
     try {
-      console.log("invoiceData on pdf click", invoiceData);
+      console.log("quotationData on pdf click", quotationData);
       const blob = await pdf(
         <GenericPDF
-          data={[invoiceData]}
-          title="Sales Return Details"
-          subtitle="Sales Return Information"
+          data={[quotationData]}
+          title="Sales Quotation Details"
+          subtitle="Sales Quotation Information"
         />
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `sales-return-${selectedInvoice}-details.pdf`;
+      a.download = `sales-quotation-${selectedQuotation}-details.pdf`;
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
@@ -250,24 +250,25 @@ export default function SalesReturnDetails() {
   return (
     <>
       <MinimizablePageLayout
-        moduleId="sales-return-details-module"
-        moduleName="Sales Return Details"
-        moduleRoute="/sales-return/view"
-        title={t("form.viewingInvoice")}
+        moduleId="sales-quotation-details-module"
+        moduleName="Sales Quotation Details"
+        moduleRoute="/sales-quotation/view"
+        title={t("form.viewingQuotation")}
         videoSrc={video}
         videoHeader="Tutorial video"
-        listPath="sales-return"
+        listPath="sales-quotation"
         activePage="view"
         popoverOptions={[
           {
             label: "Create",
             icon: <Plus className="w-5 h-5 text-green-600" />,
-            onClick: () => navigate("/sales-return/create"),
+            onClick: () => navigate("/sales-quotation/create"),
           },
           {
             label: "Edit",
             icon: <Edit className="w-5 h-5 text-blue-600" />,
-            onClick: () => navigate(`/sales-return/edit/${invoiceData.id}`),
+            onClick: () =>
+              navigate(`/sales-quotation/edit/${quotationData.id}`),
           },
         ]}
         keepChanges={keepChanges}
@@ -291,20 +292,20 @@ export default function SalesReturnDetails() {
                   handleExportPDF();
                 }
                 if (printEnabled) {
-                  handlePrintInvoice(invoiceData);
+                  handlePrintQuotation(quotationData);
                 }
               }
             : undefined
         }
-        module="sales-return"
+        module="sales-quotation"
       >
-        {/* Row 1: Document Number, Sales Invoice Number, P.O Date, Customer */}
+        {/* Row 1: Document Number, Quotation Number, Quotation Date, Customer */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
           <div className="mt-1">
             <Autocomplete
-              options={MOCK_INVOICES}
-              value={selectedInvoice}
-              onValueChange={setSelectedInvoice}
+              options={MOCK_QUOTATIONS}
+              value={selectedQuotation}
+              onValueChange={setSelectedQuotation}
               placeholder=""
               displayKey="documentNumber"
               valueKey="documentNumber"
@@ -318,18 +319,16 @@ export default function SalesReturnDetails() {
           </div>
 
           <div className="">
-            <h3 className="font-normal mb-1 text-gray-600">
-              Sales Invoice Number
-            </h3>
+            <h3 className="font-normal mb-1 text-gray-600">Quotation Number</h3>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(invoiceData.salesInvoiceNumber)}
+              {displayValue(quotationData.quotationNumber)}
             </div>
           </div>
 
           <div className="">
-            <h3 className="font-normal mb-1 text-gray-600">P.O Date</h3>
+            <h3 className="font-normal mb-1 text-gray-600">Quotation Date</h3>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(invoiceData.poDate)}
+              {displayValue(quotationData.quotationDate)}
             </div>
           </div>
 
@@ -338,7 +337,7 @@ export default function SalesReturnDetails() {
               <h3 className="font-normal text-gray-600">Customer</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(invoiceData.customer)}
+              {displayValue(quotationData.customer)}
             </div>
           </div>
         </div>
@@ -348,28 +347,28 @@ export default function SalesReturnDetails() {
           <div className="">
             <h3 className="font-normal mb-1 text-gray-600">Payment Mode</h3>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(invoiceData.paymentMode)}
+              {displayValue(quotationData.paymentMode)}
             </div>
           </div>
 
           <div className="">
             <h3 className="font-normal mb-1 text-gray-600">Due Days</h3>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {invoiceData.dueDays ? `${invoiceData.dueDays} days` : "–"}
+              {quotationData.dueDays ? `${quotationData.dueDays} days` : "–"}
             </div>
           </div>
 
           <div className="">
             <h3 className="font-normal mb-1 text-gray-600">Payment Date</h3>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(invoiceData.paymentDate)}
+              {displayValue(quotationData.paymentDate)}
             </div>
           </div>
 
           <div className="">
             <h3 className="font-normal mb-1 text-gray-600">VAT Number</h3>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(invoiceData.vatNumber)}
+              {displayValue(quotationData.vatNumber)}
             </div>
           </div>
         </div>
@@ -379,26 +378,26 @@ export default function SalesReturnDetails() {
           <div className="">
             <h3 className="font-normal mb-1 text-gray-600">Remarks</h3>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(invoiceData.remarks)}
+              {displayValue(quotationData.remarks)}
             </div>
           </div>
           <div className="">
             <h3 className="font-normal mb-1 text-gray-600">Country</h3>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(invoiceData.country)}
+              {displayValue(quotationData.country)}
             </div>
           </div>
 
           <div className="">
             <h3 className="font-normal mb-1 text-gray-600">State</h3>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(invoiceData.state)}
+              {displayValue(quotationData.state)}
             </div>
           </div>
           <div className="">
             <h3 className="font-normal mb-1 text-gray-600">City</h3>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(invoiceData.city)}
+              {displayValue(quotationData.city)}
             </div>
           </div>
         </div>
@@ -408,18 +407,18 @@ export default function SalesReturnDetails() {
           <div className="">
             <h3 className="font-normal mb-1 text-gray-600">Status</h3>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {invoiceData.isDeleted
+              {quotationData.isDeleted
                 ? "Deleted"
-                : invoiceData.isDraft
+                : quotationData.isDraft
                 ? "Draft"
-                : "Active"}
+                : quotationData.status || "Active"}
             </div>
           </div>
 
           <div className="">
             <h3 className="font-normal mb-1 text-gray-600">Salesman</h3>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(invoiceData.salesman)}
+              {displayValue(quotationData.salesman)}
             </div>
           </div>
         </div>
@@ -430,12 +429,12 @@ export default function SalesReturnDetails() {
         isOptionModalOpen={isOptionModalOpen}
         setIsOptionModalOpen={setIsOptionModalOpen}
         columnData={mockHistoryData}
-        title="Sales Invoice History"
+        title="Sales Quotation History"
         statusInfo={{
-          created: getRelativeTime(invoiceData.createdAt),
-          updated: getRelativeTime(invoiceData.updatedAt),
-          drafted: getRelativeTime(invoiceData.draftedAt),
-          deleted: getRelativeTime(invoiceData.deletedAt),
+          created: getRelativeTime(quotationData.createdAt),
+          updated: getRelativeTime(quotationData.updatedAt),
+          drafted: getRelativeTime(quotationData.draftedAt),
+          deleted: getRelativeTime(quotationData.deletedAt),
         }}
       />
 

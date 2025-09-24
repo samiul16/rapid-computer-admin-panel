@@ -26,13 +26,12 @@ import DynamicInputTableList from "@/components/common/dynamic-input-table/Dynam
 import EnglishDate from "@/components/EnglishDateInput";
 import { ActionsAutocomplete } from "@/components/common/ActionsAutocomplete";
 
-// Define Sales Return interface
-interface Invoice {
+// Define Sales Quotation interface
+interface SalesQuotation {
   id: string;
   documentNumber: string;
-  salesInvoiceNumber: string;
-  poNumber: string;
-  poDate: string;
+  quotationNumber: string;
+  quotationDate: string;
   customer: string;
   vatNumber: string;
   paymentMode: string;
@@ -109,14 +108,13 @@ const SALESMAN_OPTIONS = [
   "Emily Davis",
 ];
 
-// Mock invoice data for editing
-const MOCK_INVOICES: Invoice[] = [
+// Mock sales quotation data for editing
+const MOCK_QUOTATIONS: SalesQuotation[] = [
   {
     id: "1",
-    documentNumber: "DOC001",
-    salesInvoiceNumber: "INV-2024-001",
-    poNumber: "PO-2024-001",
-    poDate: "2024-07-20",
+    documentNumber: "SQ001",
+    quotationNumber: "QUO-2024-001",
+    quotationDate: "2024-07-20",
     customer: "ABC Trading LLC",
     vatNumber: "VAT-1234567890",
     paymentMode: "Bank Transfer",
@@ -125,10 +123,9 @@ const MOCK_INVOICES: Invoice[] = [
     country: "UAE",
     state: "Dubai",
     city: "Deira",
-    remarks: "Urgent delivery required",
+    remarks: "Product quotation for electronics",
     salesman: "John Smith",
     status: "Active",
-    isDefault: false,
     isActive: true,
     isDraft: false,
     createdAt: new Date("2024-07-24"),
@@ -136,13 +133,13 @@ const MOCK_INVOICES: Invoice[] = [
     updatedAt: new Date("2024-07-30"),
     deletedAt: null,
     isDeleted: false,
+    isDefault: false,
   },
   {
     id: "2",
-    documentNumber: "DOC002",
-    salesInvoiceNumber: "INV-2024-002",
-    poNumber: "PO-2024-002",
-    poDate: "2024-07-22",
+    documentNumber: "SQ002",
+    quotationNumber: "QUO-2024-002",
+    quotationDate: "2024-07-22",
     customer: "Global Exports",
     vatNumber: "VAT-2345678901",
     paymentMode: "Credit Card",
@@ -151,10 +148,9 @@ const MOCK_INVOICES: Invoice[] = [
     country: "UAE",
     state: "Dubai",
     city: "Business Bay",
-    remarks: "Standard delivery",
+    remarks: "Bulk order quotation",
     salesman: "Sarah Johnson",
     status: "Active",
-    isDefault: false,
     isActive: true,
     isDraft: false,
     createdAt: new Date("2024-07-25"),
@@ -162,6 +158,7 @@ const MOCK_INVOICES: Invoice[] = [
     updatedAt: new Date("2024-07-31"),
     deletedAt: null,
     isDeleted: false,
+    isDefault: false,
   },
 ];
 
@@ -175,7 +172,7 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
   const labels = useLanguageLabels();
   const { isRTL } = useAppSelector((state) => state.language);
 
-  const detectedModule = "sales-return";
+  const detectedModule = "sales-quotation";
 
   // Use the custom hook for minimized module data
   const {
@@ -218,12 +215,11 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
   );
 
   // Form state
-  const [formData, setFormData] = useState<Invoice>({
+  const [formData, setFormData] = useState<SalesQuotation>({
     id: "",
     documentNumber: "",
-    salesInvoiceNumber: "",
-    poNumber: "",
-    poDate: "",
+    quotationNumber: "",
+    quotationDate: "",
     customer: "",
     vatNumber: "",
     paymentMode: "",
@@ -235,7 +231,6 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
     remarks: "",
     salesman: "",
     status: "Active",
-    isDefault: false,
     isActive: true,
     isDraft: false,
     createdAt: new Date(),
@@ -243,6 +238,7 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
     updatedAt: new Date(),
     deletedAt: null,
     isDeleted: false,
+    isDefault: false,
   });
 
   // Memoize customer data to prevent unnecessary re-renders
@@ -251,11 +247,11 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
   const memoizedSalesmanOptions = useMemo(() => [...SALESMAN_OPTIONS], []);
 
   // Invoice options for autocomplete
-  const invoiceOptions = useMemo(
+  const quotationOptions = useMemo(
     () =>
-      MOCK_INVOICES.map((invoice) => ({
-        value: invoice.documentNumber,
-        label: `${invoice.documentNumber} - ${invoice.customer}`,
+      MOCK_QUOTATIONS.map((quotation) => ({
+        value: quotation.documentNumber,
+        label: `${quotation.documentNumber} - ${quotation.customer}`,
       })),
     []
   );
@@ -289,20 +285,21 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
     [memoizedCustomers]
   );
 
-  // Function to find and load invoice data
-  const loadInvoiceData = useCallback((documentNumber: string) => {
-    const invoiceData = MOCK_INVOICES.find(
-      (invoice) => invoice.documentNumber === documentNumber
+  // Function to find and load quotation data
+  const loadQuotationData = useCallback((documentNumber: string) => {
+    const quotationData = MOCK_QUOTATIONS.find(
+      (quotation) => quotation.documentNumber === documentNumber
     );
 
-    if (invoiceData) {
+    if (quotationData) {
       setFormData({
-        ...invoiceData,
+        ...quotationData,
         updatedAt: new Date(), // Update the timestamp
+        isDefault: (quotationData as any)?.isDefault || false,
       });
       toastSuccess(`Loaded data for ${documentNumber}`);
     } else {
-      toastError(`Invoice ${documentNumber} not found`);
+      toastError(`Quotation ${documentNumber} not found`);
     }
   }, []);
 
@@ -312,10 +309,10 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
       if (value) {
         const documentNumber = value.split(" - ")[0]; // Extract document number from "DOC001 - Customer Name"
         setFormData((prev) => ({ ...prev, documentNumber }));
-        loadInvoiceData(documentNumber);
+        loadQuotationData(documentNumber);
       }
     },
-    [loadInvoiceData]
+    [loadQuotationData]
   );
 
   // Update translation data when customer changes
@@ -357,7 +354,7 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
       setIsRestoredFromMinimized(true);
 
       const scrollPosition = getModuleScrollPosition(
-        "sales-return-edit-module"
+        "sales-quotation-edit-module"
       );
       if (scrollPosition) {
         setTimeout(() => {
@@ -378,19 +375,18 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
   useEffect(() => {
     if (isEdit && !hasMinimizedData && !isRestoredFromMinimized) {
       if (id && id !== "undefined") {
-        const invoiceData = MOCK_INVOICES.find((invoice) => invoice.id === id);
-        if (invoiceData) {
-          setFormData(invoiceData);
-          setIsDefaultState(invoiceData.isDefault ? "Yes" : "No");
+        const quotationData = MOCK_QUOTATIONS.find(
+          (quotation) => quotation.id === id
+        );
+        if (quotationData) {
+          setFormData(quotationData);
         } else {
-          const defaultInvoice = MOCK_INVOICES[0];
-          setFormData(defaultInvoice);
-          setIsDefaultState(defaultInvoice.isDefault ? "Yes" : "No");
+          const defaultQuotation = MOCK_QUOTATIONS[0];
+          setFormData(defaultQuotation);
         }
       } else {
-        const defaultInvoice = MOCK_INVOICES[0];
-        setFormData(defaultInvoice);
-        setIsDefaultState(defaultInvoice.isDefault ? "Yes" : "No");
+        const defaultQuotation = MOCK_QUOTATIONS[0];
+        setFormData(defaultQuotation);
       }
     }
   }, [isEdit, hasMinimizedData, isRestoredFromMinimized, id]);
@@ -482,12 +478,11 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
 
   // Update handleReset function
   const handleReset = async () => {
-    const originalData = MOCK_INVOICES.find(
-      (invoice) => invoice.documentNumber === formData.documentNumber
+    const originalData = MOCK_QUOTATIONS.find(
+      (quotation) => quotation.documentNumber === formData.documentNumber
     );
     if (originalData) {
       setFormData(originalData);
-      setIsDefaultState(originalData.isDefault ? "Yes" : "No");
       setIsRestoredFromMinimized(false);
       setIsCustomerAutoFilled(false);
 
@@ -499,7 +494,7 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
 
       if (hasMinimizedData) {
         try {
-          await resetModuleData("sales-return-edit-module");
+          await resetModuleData("sales-quotation-edit-module");
           console.log("Form data reset in Redux");
         } catch (error) {
           console.error("Error resetting form data:", error);
@@ -523,9 +518,8 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
           excludeFields: ["id", "__v", "_id"],
           fieldLabels: {
             documentNumber: "Document Number",
-            salesInvoiceNumber: "Sales Invoice Number",
-            poNumber: "P.O Number",
-            poDate: "P.O Date",
+            quotationNumber: "Quotation Number",
+            quotationDate: "Quotation Date",
             customer: "Customer",
             vatNumber: "VAT Number",
             paymentMode: "Payment Mode",
@@ -656,7 +650,7 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
   return (
     <>
       <MinimizablePageLayout
-        moduleId="sales-return-edit-module"
+        moduleId="sales-quotation-edit-module"
         moduleName={`Edit ${detectedModule}`}
         moduleRoute={`/${detectedModule}/edit/${
           formData.documentNumber || "new"
@@ -711,7 +705,7 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
                   id="documentNumber"
                   name="documentNumber"
                   allowCustomInput={false}
-                  options={invoiceOptions.map((opt) => opt.label)}
+                  options={quotationOptions.map((opt) => opt.label)}
                   value={
                     formData.documentNumber
                       ? `${formData.documentNumber} - ${formData.customer}`
@@ -735,42 +729,54 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
                 />
               </div>
 
-              {/* Sales Invoice Number */}
+              {/* Quotation Number */}
               <div className="space-y-2">
                 <EditableInput
-                  setRef={setRef("salesInvoiceNumber")}
-                  id="salesInvoiceNumber"
-                  name="salesInvoiceNumber"
-                  value={formData.salesInvoiceNumber}
+                  setRef={setRef("quotationNumber")}
+                  id="quotationNumber"
+                  name="quotationNumber"
+                  value={formData.quotationNumber}
                   onChange={handleChange}
-                  onNext={() => focusNextInput("poNumber")}
+                  onNext={() => focusNextInput("quotationDate")}
                   onCancel={() =>
                     setFormData({
                       ...formData,
-                      salesInvoiceNumber: "",
+                      quotationNumber: "",
                     })
                   }
-                  labelText="Sales Invoice Number"
-                  tooltipText="Reference sales invoice number"
+                  labelText="Quotation Number"
+                  tooltipText="Unique quotation reference number"
                 />
               </div>
-
-              {/* P.O Number */}
+              {/* Customer */}
               <div className="space-y-2">
-                <EditableInput
-                  setRef={setRef("poNumber")}
-                  id="poNumber"
-                  name="poNumber"
-                  value={formData.poNumber}
-                  onChange={handleChange}
-                  onNext={() => focusNextInput("poDate")}
-                  onCancel={() => setFormData({ ...formData, poNumber: "" })}
-                  labelText="P.O Number"
-                  tooltipText="Purchase order number"
+                <Autocomplete
+                  ref={(el: any) => setRef("customer")(el)}
+                  id="customer"
+                  name="customer"
+                  labelText="Customer"
+                  allowCustomInput={true}
+                  options={memoizedCustomers.map((s) => s.name)}
+                  value={formData.customer}
+                  onValueChange={handleCustomerChange}
+                  onEnterPress={() => focusNextInput("vatNumber")}
+                  placeholder=""
+                  className="relative"
+                  tooltipText="Select or type customer"
+                  userLang={isRTL ? "ar" : "en"}
+                  styles={{
+                    input: {
+                      borderColor: "var(--primary)",
+                      "&:focus": {
+                        borderColor: "var(--primary)",
+                      },
+                    },
+                  }}
+                  setShowTemplates={setShowTemplates}
+                  showTemplates={showTemplates}
                 />
               </div>
-
-              {/* P.O Date */}
+              {/* Quotation Date */}
               <div className="space-y-2">
                 <EnglishDate
                   isDate={true}
@@ -779,11 +785,11 @@ export default function InvoiceEditPage({ isEdit = true }: Props) {
                   userLang="en"
                   rtl={false}
                   onChange={(date: string) =>
-                    setFormData({ ...formData, poDate: date })
+                    setFormData({ ...formData, quotationDate: date })
                   }
-                  value={formData.poDate}
+                  value={formData.quotationDate}
                   disabled={false}
-                  labelText="P.O Date"
+                  labelText="Quotation Date"
                   className={cn("transition-all", "ring-1 ring-primary")}
                   setStartNextFocus={() => focusNextInput("customer")}
                 />
