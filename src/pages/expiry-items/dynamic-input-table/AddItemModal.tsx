@@ -493,6 +493,7 @@ export default function AddItemModal({
                 input: {
                   height: "40px",
                   "&:focus": { borderColor: "var(--primary)" },
+                  borderRadius: "12px",
                 },
               }}
               onKeyDown={(e) => {
@@ -515,6 +516,7 @@ export default function AddItemModal({
                 input: {
                   height: "40px",
                   "&:focus": { borderColor: "var(--primary)" },
+                  borderRadius: "12px",
                 },
               }}
               onKeyDown={(e) => {
@@ -537,6 +539,7 @@ export default function AddItemModal({
                 input: {
                   height: "40px",
                   "&:focus": { borderColor: "var(--primary)" },
+                  borderRadius: "12px",
                 },
               }}
               onKeyDown={(e) => {
@@ -562,6 +565,7 @@ export default function AddItemModal({
                 input: {
                   height: "40px",
                   "&:focus": { borderColor: "var(--primary)" },
+                  borderRadius: "12px",
                 },
               }}
               onKeyDown={(e) => {
@@ -584,6 +588,7 @@ export default function AddItemModal({
                 input: {
                   height: "40px",
                   "&:focus": { borderColor: "var(--primary)" },
+                  borderRadius: "12px",
                 },
               }}
               onKeyDown={(e) => {
@@ -606,6 +611,7 @@ export default function AddItemModal({
                 input: {
                   height: "40px",
                   "&:focus": { borderColor: "var(--primary)" },
+                  borderRadius: "12px",
                 },
               }}
               onKeyDown={(e) => {
@@ -628,6 +634,7 @@ export default function AddItemModal({
                 input: {
                   height: "40px",
                   "&:focus": { borderColor: "var(--primary)" },
+                  borderRadius: "12px",
                 },
               }}
               onKeyDown={(e) => {

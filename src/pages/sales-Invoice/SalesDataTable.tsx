@@ -1,22 +1,23 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import FixedColumnDataTable from "@/components/common/FixedColumnDataTable";
+import FixedColumnDataTable from "@/components/common/country-page-table/FixedColumnDataTable";
 
 const mockInvoices = [
   {
     id: "1",
     documentNumber: "DOC001",
-    invoiceNumber: "INV-2024-001",
-    invoiceDate: "2024-01-15",
-    customer: "John Doe",
-    trnNumber: "TRN123456789",
+    poNumber: "PO-2024-001",
+    poDate: "2024-01-15",
+    supplierName: "ABC Food Supplies",
     paymentMode: "Bank Transfer",
     dueDays: 30,
     paymentDate: "2024-02-14",
+    supplierNumber: "SUP001",
+    supplierStatus: "Active",
+    supplierGroup: "Food & Beverages",
+    remarks: "Urgent delivery required",
     country: "United States",
     state: "California",
     city: "Los Angeles",
-    remarks: "Urgent delivery required",
-    salesman: "Alice Smith",
     isActive: true,
     isDraft: false,
     createdAt: "2024-01-15",
@@ -27,18 +28,19 @@ const mockInvoices = [
   {
     id: "2",
     documentNumber: "DOC002",
-    invoiceNumber: "INV-2024-002",
-    invoiceDate: "2024-01-16",
-    customer: "Jane Smith",
-    trnNumber: "TRN987654321",
+    poNumber: "PO-2024-002",
+    poDate: "2024-01-16",
+    supplierName: "XYZ Restaurant Equipment",
     paymentMode: "Credit Card",
     dueDays: 15,
     paymentDate: "2024-01-31",
+    supplierNumber: "SUP002",
+    supplierStatus: "Active",
+    supplierGroup: "Equipment",
+    remarks: "Standard delivery",
     country: "United States",
     state: "New York",
     city: "New York",
-    remarks: "Standard delivery",
-    salesman: "Bob Johnson",
     isActive: true,
     isDraft: false,
     createdAt: "2024-01-16",
@@ -49,18 +51,19 @@ const mockInvoices = [
   {
     id: "3",
     documentNumber: "DOC003",
-    invoiceNumber: "INV-2024-003",
-    invoiceDate: "2024-01-17",
-    customer: "Acme Corp.",
-    trnNumber: "TRN1122334455",
+    poNumber: "PO-2024-003",
+    poDate: "2024-01-17",
+    supplierName: "Fresh Produce Co.",
     paymentMode: "Cash",
     dueDays: 7,
     paymentDate: "2024-01-24",
+    supplierNumber: "SUP003",
+    supplierStatus: "Active",
+    supplierGroup: "Fresh Produce",
+    remarks: "Daily fresh delivery",
     country: "United States",
     state: "Florida",
     city: "Miami",
-    remarks: "Daily fresh delivery",
-    salesman: "Charlie Lee",
     isActive: true,
     isDraft: false,
     createdAt: "2024-01-17",
@@ -71,18 +74,19 @@ const mockInvoices = [
   {
     id: "4",
     documentNumber: "DOC004",
-    invoiceNumber: "INV-2024-004",
-    invoiceDate: "2024-01-18",
-    customer: "Beta LLC",
-    trnNumber: "TRN9988776655",
+    poNumber: "PO-2024-004",
+    poDate: "2024-01-18",
+    supplierName: "Premium Meat Suppliers",
     paymentMode: "Check",
     dueDays: 45,
     paymentDate: "2024-03-04",
+    supplierNumber: "SUP004",
+    supplierStatus: "Active",
+    supplierGroup: "Meat & Poultry",
+    remarks: "Temperature controlled delivery",
     country: "United States",
     state: "Texas",
     city: "Houston",
-    remarks: "Temperature controlled delivery",
-    salesman: "Diana Prince",
     isActive: true,
     isDraft: false,
     createdAt: "2024-01-18",
@@ -93,18 +97,19 @@ const mockInvoices = [
   {
     id: "5",
     documentNumber: "DOC005",
-    invoiceNumber: "INV-2024-005",
-    invoiceDate: "2024-01-19",
-    customer: "Gamma Foods",
-    trnNumber: "TRN123123123",
+    poNumber: "PO-2024-005",
+    poDate: "2024-01-19",
+    supplierName: "Ocean Fresh Seafood",
     paymentMode: "ACH Transfer",
     dueDays: 21,
     paymentDate: "2024-02-09",
+    supplierNumber: "SUP005",
+    supplierStatus: "Active",
+    supplierGroup: "Seafood",
+    remarks: "Live delivery required",
     country: "United States",
     state: "Washington",
     city: "Seattle",
-    remarks: "Live delivery required",
-    salesman: "Eve Adams",
     isActive: true,
     isDraft: false,
     createdAt: "2024-01-19",
@@ -115,18 +120,19 @@ const mockInvoices = [
   {
     id: "6",
     documentNumber: "DOC006",
-    invoiceNumber: "INV-2024-006",
-    invoiceDate: "2024-01-20",
-    customer: "Delta Inc.",
-    trnNumber: "TRN456456456",
+    poNumber: "PO-2024-006",
+    poDate: "2024-01-20",
+    supplierName: "Dairy Farm Products",
     paymentMode: "Net Banking",
     dueDays: 14,
     paymentDate: "2024-02-03",
+    supplierNumber: "SUP006",
+    supplierStatus: "Active",
+    supplierGroup: "Dairy",
+    remarks: "Refrigerated transport",
     country: "United States",
     state: "Wisconsin",
     city: "Milwaukee",
-    remarks: "Refrigerated transport",
-    salesman: "Alice Smith",
     isActive: true,
     isDraft: false,
     createdAt: "2024-01-20",
@@ -137,18 +143,19 @@ const mockInvoices = [
   {
     id: "7",
     documentNumber: "DOC007",
-    invoiceNumber: "INV-2024-007",
-    invoiceDate: "2024-01-21",
-    customer: "Epsilon Ltd.",
-    trnNumber: "TRN789789789",
+    poNumber: "PO-2024-007",
+    poDate: "2024-01-21",
+    supplierName: "Organic Vegetables Ltd",
     paymentMode: "PayPal",
     dueDays: 10,
     paymentDate: "2024-01-31",
+    supplierNumber: "SUP007",
+    supplierStatus: "Pending",
+    supplierGroup: "Organic Produce",
+    remarks: "Organic certification required",
     country: "United States",
     state: "Oregon",
     city: "Portland",
-    remarks: "Organic certification required",
-    salesman: "Bob Johnson",
     isActive: true,
     isDraft: true,
     createdAt: "2024-01-21",
@@ -159,18 +166,19 @@ const mockInvoices = [
   {
     id: "8",
     documentNumber: "DOC008",
-    invoiceNumber: "INV-2024-008",
-    invoiceDate: "2024-01-22",
-    customer: "Zeta Group",
-    trnNumber: "TRN111222333",
+    poNumber: "PO-2024-008",
+    poDate: "2024-01-22",
+    supplierName: "Spice World International",
     paymentMode: "Wire Transfer",
     dueDays: 60,
     paymentDate: "2024-03-23",
+    supplierNumber: "SUP008",
+    supplierStatus: "Active",
+    supplierGroup: "Spices & Herbs",
+    remarks: "Bulk order - quarterly supply",
     country: "United States",
     state: "Louisiana",
     city: "New Orleans",
-    remarks: "Bulk order - quarterly supply",
-    salesman: "Diana Prince",
     isActive: true,
     isDraft: false,
     createdAt: "2024-01-22",
@@ -181,18 +189,19 @@ const mockInvoices = [
   {
     id: "9",
     documentNumber: "DOC009",
-    invoiceNumber: "INV-2024-009",
-    invoiceDate: "2024-01-23",
-    customer: "Eta Enterprises",
-    trnNumber: "TRN222333444",
+    poNumber: "PO-2024-009",
+    poDate: "2024-01-23",
+    supplierName: "Beverage Distributors Inc",
     paymentMode: "Credit Line",
     dueDays: 30,
     paymentDate: "2024-02-22",
+    supplierNumber: "SUP009",
+    supplierStatus: "Active",
+    supplierGroup: "Beverages",
+    remarks: "Weekly delivery schedule",
     country: "United States",
     state: "Georgia",
     city: "Atlanta",
-    remarks: "Weekly delivery schedule",
-    salesman: "Eve Adams",
     isActive: true,
     isDraft: false,
     createdAt: "2024-01-23",
@@ -203,18 +212,19 @@ const mockInvoices = [
   {
     id: "10",
     documentNumber: "DOC010",
-    invoiceNumber: "INV-2024-010",
-    invoiceDate: "2024-01-24",
-    customer: "Theta Foods",
-    trnNumber: "TRN555666777",
+    poNumber: "PO-2024-010",
+    poDate: "2024-01-24",
+    supplierName: "Kitchen Supplies Pro",
     paymentMode: "Cash on Delivery",
     dueDays: 0,
     paymentDate: "2024-01-24",
+    supplierNumber: "SUP010",
+    supplierStatus: "Active",
+    supplierGroup: "Kitchen Supplies",
+    remarks: "Installation included",
     country: "United States",
     state: "Illinois",
     city: "Chicago",
-    remarks: "Installation included",
-    salesman: "Alice Smith",
     isActive: true,
     isDraft: false,
     createdAt: "2024-01-24",
@@ -225,18 +235,19 @@ const mockInvoices = [
   {
     id: "11",
     documentNumber: "DOC011",
-    invoiceNumber: "INV-2024-011",
-    invoiceDate: "2024-01-25",
-    customer: "Acme Corp.",
-    trnNumber: "TRN888999000",
+    poNumber: "PO-2024-011",
+    poDate: "2024-01-25",
+    supplierName: "Bakery Ingredients Corp",
     paymentMode: "Debit Card",
     dueDays: 20,
     paymentDate: "2024-02-14",
+    supplierNumber: "SUP011",
+    supplierStatus: "Active",
+    supplierGroup: "Bakery",
+    remarks: "Temperature sensitive items",
     country: "United States",
     state: "Colorado",
     city: "Denver",
-    remarks: "Temperature sensitive items",
-    salesman: "Bob Johnson",
     isActive: true,
     isDraft: false,
     createdAt: "2024-01-25",
@@ -247,18 +258,19 @@ const mockInvoices = [
   {
     id: "12",
     documentNumber: "DOC012",
-    invoiceNumber: "INV-2024-012",
-    invoiceDate: "2024-01-26",
-    customer: "Beta LLC",
-    trnNumber: "TRN123456789",
+    poNumber: "PO-2024-012",
+    poDate: "2024-01-26",
+    supplierName: "Frozen Foods Express",
     paymentMode: "Electronic Payment",
     dueDays: 25,
     paymentDate: "2024-02-20",
+    supplierNumber: "SUP012",
+    supplierStatus: "Active",
+    supplierGroup: "Frozen Foods",
+    remarks: "Frozen storage required",
     country: "United States",
     state: "Minnesota",
     city: "Minneapolis",
-    remarks: "Frozen storage required",
-    salesman: "Charlie Lee",
     isActive: true,
     isDraft: false,
     createdAt: "2024-01-26",
@@ -269,18 +281,19 @@ const mockInvoices = [
   {
     id: "13",
     documentNumber: "DOC013",
-    invoiceNumber: "INV-2024-013",
-    invoiceDate: "2024-01-27",
-    customer: "Gamma Foods",
-    trnNumber: "TRN987654321",
+    poNumber: "PO-2024-013",
+    poDate: "2024-01-27",
+    supplierName: "Gourmet Food Imports",
     paymentMode: "Letter of Credit",
     dueDays: 90,
     paymentDate: "2024-04-26",
+    supplierNumber: "SUP013",
+    supplierStatus: "Pending",
+    supplierGroup: "Gourmet Foods",
+    remarks: "Import documentation pending",
     country: "United States",
     state: "Nevada",
     city: "Las Vegas",
-    remarks: "Import documentation pending",
-    salesman: "Diana Prince",
     isActive: true,
     isDraft: true,
     createdAt: "2024-01-27",
@@ -291,18 +304,19 @@ const mockInvoices = [
   {
     id: "14",
     documentNumber: "DOC014",
-    invoiceNumber: "INV-2024-014",
-    invoiceDate: "2024-01-28",
-    customer: "Eta Enterprises",
-    trnNumber: "TRN111222333",
+    poNumber: "PO-2024-014",
+    poDate: "2024-01-28",
+    supplierName: "Cleaning Supplies Direct",
     paymentMode: "Mobile Payment",
     dueDays: 15,
     paymentDate: "2024-02-12",
+    supplierNumber: "SUP014",
+    supplierStatus: "Active",
+    supplierGroup: "Cleaning Supplies",
+    remarks: "Eco-friendly products only",
     country: "United States",
     state: "Arizona",
     city: "Phoenix",
-    remarks: "Eco-friendly products only",
-    salesman: "Eve Adams",
     isActive: true,
     isDraft: false,
     createdAt: "2024-01-28",
@@ -313,18 +327,19 @@ const mockInvoices = [
   {
     id: "15",
     documentNumber: "DOC015",
-    invoiceNumber: "INV-2024-015",
-    invoiceDate: "2024-01-29",
-    customer: "Acme Corp.",
-    trnNumber: "TRN456456456",
+    poNumber: "PO-2024-015",
+    poDate: "2024-01-29",
+    supplierName: "Restaurant Furniture Co",
     paymentMode: "Installment Plan",
     dueDays: 120,
     paymentDate: "2024-05-28",
+    supplierNumber: "SUP015",
+    supplierStatus: "Active",
+    supplierGroup: "Furniture",
+    remarks: "Custom design requirements",
     country: "United States",
     state: "North Carolina",
     city: "Charlotte",
-    remarks: "Custom design requirements",
-    salesman: "Alice Smith",
     isActive: true,
     isDraft: false,
     createdAt: "2024-01-29",
@@ -335,18 +350,19 @@ const mockInvoices = [
   {
     id: "16",
     documentNumber: "DOC016",
-    invoiceNumber: "INV-2024-016",
-    invoiceDate: "2024-01-30",
-    customer: "Beta LLC",
-    trnNumber: "TRN789789789",
+    poNumber: "PO-2024-016",
+    poDate: "2024-01-30",
+    supplierName: "Tech Solutions Restaurant",
     paymentMode: "Crypto Payment",
     dueDays: 30,
     paymentDate: "2024-03-01",
+    supplierNumber: "SUP016",
+    supplierStatus: "Active",
+    supplierGroup: "Technology",
+    remarks: "Software licensing included",
     country: "United States",
     state: "Massachusetts",
     city: "Boston",
-    remarks: "Software licensing included",
-    salesman: "Bob Johnson",
     isActive: true,
     isDraft: false,
     createdAt: "2024-01-30",
@@ -357,18 +373,19 @@ const mockInvoices = [
   {
     id: "17",
     documentNumber: "DOC017",
-    invoiceNumber: "INV-2024-017",
-    invoiceDate: "2024-01-31",
-    customer: "Eta Enterprises",
-    trnNumber: "TRN123123123",
+    poNumber: "PO-2024-017",
+    poDate: "2024-01-31",
+    supplierName: "Uniform & Apparel Supply",
     paymentMode: "Gift Card Credit",
     dueDays: 45,
     paymentDate: "2024-03-17",
+    supplierNumber: "SUP017",
+    supplierStatus: "Active",
+    supplierGroup: "Uniforms",
+    remarks: "Custom embroidery required",
     country: "United States",
     state: "Tennessee",
     city: "Nashville",
-    remarks: "Custom embroidery required",
-    salesman: "Diana Prince",
     isActive: true,
     isDraft: false,
     createdAt: "2024-01-31",
@@ -382,10 +399,26 @@ export default function InvoicesDataTable({
   viewMode,
   setViewMode,
   dataTableFilter,
+  setShowExport,
+  showExport,
+  setShowFilter,
+  showFilter,
+  setShowVisibility,
+  showVisibility,
+  isFilterOpen,
+  setIsFilterOpen,
 }: {
   viewMode: string;
   setViewMode: (viewMode: string) => void;
   dataTableFilter: any;
+  setShowExport: (showExport: boolean) => void;
+  showExport: boolean;
+  setShowFilter: (showFilter: boolean) => void;
+  showFilter: boolean;
+  setShowVisibility: (showVisibility: boolean) => void;
+  showVisibility: boolean;
+  isFilterOpen: boolean;
+  setIsFilterOpen: (isFilterOpen: boolean) => void;
 }) {
   const componentColumns = [
     {
@@ -419,19 +452,19 @@ export default function InvoicesDataTable({
       minSize: 100,
     },
     {
-      accessorKey: "invoiceNumber",
-      title: "Invoice Number",
+      accessorKey: "poNumber",
+      title: "P.O Number",
       options: [
-        "INV-2024-001",
-        "INV-2024-002",
-        "INV-2024-003",
-        "INV-2024-004",
-        "INV-2024-005",
-        "INV-2024-006",
-        "INV-2024-007",
-        "INV-2024-008",
-        "INV-2024-009",
-        "INV-2024-010",
+        "PO-2024-001",
+        "PO-2024-002",
+        "PO-2024-003",
+        "PO-2024-004",
+        "PO-2024-005",
+        "PO-2024-006",
+        "PO-2024-007",
+        "PO-2024-008",
+        "PO-2024-009",
+        "PO-2024-010",
       ],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
@@ -442,15 +475,15 @@ export default function InvoicesDataTable({
       },
       sortingFn: (row1: any, row2: any) => {
         return row1
-          .getValue("invoiceNumber")
-          .localeCompare(row2.getValue("invoiceNumber"));
+          .getValue("poNumber")
+          .localeCompare(row2.getValue("poNumber"));
       },
       size: 130,
       minSize: 110,
     },
     {
-      accessorKey: "invoiceDate",
-      title: "Invoice Date",
+      accessorKey: "poDate",
+      title: "P.O Date",
       options: [],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
@@ -464,27 +497,27 @@ export default function InvoicesDataTable({
       },
       sortingFn: (row1: any, row2: any) => {
         return (
-          new Date(row1.getValue("invoiceDate")).getTime() -
-          new Date(row2.getValue("invoiceDate")).getTime()
+          new Date(row1.getValue("poDate")).getTime() -
+          new Date(row2.getValue("poDate")).getTime()
         );
       },
       size: 100,
       minSize: 80,
     },
     {
-      accessorKey: "customer",
-      title: "Customer",
+      accessorKey: "supplierName",
+      title: "Supplier Name",
       options: [
-        "John Doe",
-        "Jane Smith",
-        "Acme Corp.",
-        "Beta LLC",
-        "Gamma Foods",
-        "Delta Inc.",
-        "Epsilon Ltd.",
-        "Zeta Group",
-        "Eta Enterprises",
-        "Theta Foods",
+        "ABC Food Supplies",
+        "XYZ Restaurant Equipment",
+        "Fresh Produce Co.",
+        "Premium Meat Suppliers",
+        "Ocean Fresh Seafood",
+        "Dairy Farm Products",
+        "Organic Vegetables Ltd",
+        "Spice World International",
+        "Beverage Distributors Inc",
+        "Kitchen Supplies Pro",
       ],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
@@ -495,53 +528,11 @@ export default function InvoicesDataTable({
       },
       sortingFn: (row1: any, row2: any) => {
         return row1
-          .getValue("customer")
-          .localeCompare(row2.getValue("customer"));
+          .getValue("supplierName")
+          .localeCompare(row2.getValue("supplierName"));
       },
       size: 180,
       minSize: 150,
-    },
-    {
-      accessorKey: "trnNumber",
-      title: "TRN Number",
-      options: [],
-      filterFn: (row: any, columnId: any, filterValue: any) => {
-        if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as string;
-        if (Array.isArray(filterValue)) {
-          return filterValue.some((val: string) =>
-            cellValue.toLowerCase().includes(val.toLowerCase())
-          );
-        }
-        return cellValue.toLowerCase().includes(filterValue.toLowerCase());
-      },
-      size: 130,
-      minSize: 110,
-    },
-    {
-      accessorKey: "salesman",
-      title: "Salesman",
-      options: [
-        "Alice Smith",
-        "Bob Johnson",
-        "Charlie Lee",
-        "Diana Prince",
-        "Eve Adams",
-      ],
-      filterFn: (row: any, columnId: any, filterValue: any) => {
-        if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as string;
-        return filterValue.some((val: string) =>
-          cellValue.toLowerCase().includes(val.toLowerCase())
-        );
-      },
-      sortingFn: (row1: any, row2: any) => {
-        return row1
-          .getValue("salesman")
-          .localeCompare(row2.getValue("salesman"));
-      },
-      size: 150,
-      minSize: 120,
     },
     {
       accessorKey: "paymentMode",
@@ -622,6 +613,77 @@ export default function InvoicesDataTable({
       },
       size: 120,
       minSize: 100,
+    },
+    {
+      accessorKey: "supplierNumber",
+      title: "Supplier Number",
+      options: [],
+      filterFn: (row: any, columnId: any, filterValue: any) => {
+        if (!filterValue || filterValue.length === 0) return true;
+        const cellValue = row.getValue(columnId) as string;
+        if (Array.isArray(filterValue)) {
+          return filterValue.some((val: string) =>
+            cellValue.toLowerCase().includes(val.toLowerCase())
+          );
+        }
+        return cellValue.toLowerCase().includes(filterValue.toLowerCase());
+      },
+      size: 130,
+      minSize: 110,
+    },
+    {
+      accessorKey: "supplierStatus",
+      title: "Supplier Status",
+      options: ["Active", "Pending", "Inactive"],
+      filterFn: (row: any, columnId: any, filterValue: any) => {
+        if (!filterValue || filterValue.length === 0) return true;
+        const cellValue = row.getValue(columnId) as string;
+        return filterValue.includes(cellValue);
+      },
+      sortingFn: (row1: any, row2: any) => {
+        return row1
+          .getValue("supplierStatus")
+          .localeCompare(row2.getValue("supplierStatus"));
+      },
+      size: 120,
+      minSize: 100,
+    },
+    {
+      accessorKey: "supplierGroup",
+      title: "Supplier Group",
+      options: [
+        "Food & Beverages",
+        "Equipment",
+        "Fresh Produce",
+        "Meat & Poultry",
+        "Seafood",
+        "Dairy",
+        "Organic Produce",
+        "Spices & Herbs",
+        "Beverages",
+        "Kitchen Supplies",
+        "Bakery",
+        "Frozen Foods",
+        "Gourmet Foods",
+        "Cleaning Supplies",
+        "Furniture",
+        "Technology",
+        "Uniforms",
+      ],
+      filterFn: (row: any, columnId: any, filterValue: any) => {
+        if (!filterValue || filterValue.length === 0) return true;
+        const cellValue = row.getValue(columnId) as string;
+        return filterValue.some((val: string) =>
+          cellValue.toLowerCase().includes(val.toLowerCase())
+        );
+      },
+      sortingFn: (row1: any, row2: any) => {
+        return row1
+          .getValue("supplierGroup")
+          .localeCompare(row2.getValue("supplierGroup"));
+      },
+      size: 150,
+      minSize: 120,
     },
     {
       accessorKey: "remarks",
@@ -727,24 +789,7 @@ export default function InvoicesDataTable({
       size: 120,
       minSize: 100,
     },
-    {
-      accessorKey: "status",
-      title: "Status",
-      options: ["active", "inactive", "draft"],
-      filterFn: (row: any, columnId: any, filterValue: any) => {
-        if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as string;
-        return filterValue.includes(cellValue);
-      },
-      sortingFn: (row1: any, row2: any) => {
-        return row1.getValue("status").localeCompare(row2.getValue("status"));
-      },
-      size: 100,
-      minSize: 80,
-      meta: {
-        exportLabel: "status",
-      },
-    },
+
     {
       accessorKey: "createdAt",
       title: "Created",
@@ -817,7 +862,17 @@ export default function InvoicesDataTable({
       componentColumns={componentColumns}
       viewMode={viewMode}
       setViewMode={setViewMode}
-      fixedColumns={[]}
+      fixedColumns={["documentNumber"]}
+      searchQuery={""}
+      pathName={""}
+      setShowExport={setShowExport}
+      showExport={showExport}
+      setShowFilter={setShowFilter}
+      showFilter={showFilter}
+      setShowVisibility={setShowVisibility}
+      showVisibility={showVisibility}
+      isFilterOpen={isFilterOpen}
+      setIsFilterOpen={setIsFilterOpen}
     />
   );
 }
