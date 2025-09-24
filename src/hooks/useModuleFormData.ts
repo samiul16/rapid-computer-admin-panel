@@ -6,6 +6,7 @@ import type {
   StockTransferModuleData,
   SubCategoryFormData,
   PurchaseReturnModuleData,
+  TicketModuleData,
 } from "@/types/modules";
 
 export function useSubCategoryFormData() {
@@ -34,4 +35,8 @@ export function usePurchaseReturnFormData() {
   return useMinimizedModuleData<PurchaseReturnModuleData>(
     "purchase-return-form-module"
   );
+}
+
+export function useTicketFormData() {
+  return useMinimizedModuleData<TicketModuleData>("ticket-form-module");
 }

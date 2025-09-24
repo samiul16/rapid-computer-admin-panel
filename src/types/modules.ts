@@ -155,6 +155,14 @@ export interface StockTransferModuleData {
   isDefault: boolean;
 }
 
+// Ticket Module Data Interface
+export interface TicketModuleData {
+  formData: any;
+  hasChanges: boolean;
+  scrollPosition: number;
+  ticketLanguageValues: Record<string, string>;
+}
+
 // Purchase Return Module Data Interface
 export interface PurchaseReturnModuleData {
   id: string;

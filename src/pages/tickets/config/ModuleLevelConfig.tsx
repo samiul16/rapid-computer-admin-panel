@@ -41,6 +41,21 @@ export const initialProperties: ModuleFieldsType = {
   attachment: "",
 };
 
+export const initialPropertiesForEdit: ModuleFieldsType = {
+  subject: "Test Subject",
+  contact: "Test Contact",
+  email: "News letter find more.",
+  department: "",
+  cc: "",
+  member: "",
+  priority: "",
+  service: "",
+  tags: "",
+  predefinedReply: "",
+  description: "",
+  attachment: "",
+};
+
 /*
 ======================================
 Grid View Config
@@ -540,7 +555,10 @@ export const formFields: FieldConfig[] = [
     name: "predefinedReply",
     label: "Predefined Reply",
     component: "mutiselect",
-    options: ["Your issue has been logged. Our team will investigate.", "We are currently working on your issue. It will be resolved soon."],
+    options: [
+      "Your issue has been logged. Our team will investigate.",
+      "We are currently working on your issue. It will be resolved soon.",
+    ],
     tooltip: "Enter predefined reply",
   },
   {
