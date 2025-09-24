@@ -334,8 +334,8 @@ import DeliveryNoteEditPage2 from "./pages/delivery-note/EditPage2";
 // Sales Quotation
 import SalesQuotationCreatePage from "./pages/sales-quotation/CreatePage";
 import SalesQuotationEditPage from "./pages/sales-quotation/EditPage";
-import SalesQuotationDetails from "./pages/sales-quotation/SalesQuotationDetails";
-import SalesQuotationPage from "./pages/sales-quotation/SalesQuotationPage";
+import SalesQuotationDetails from "./pages/sales-quotation/SalesQuoationDetails";
+import SalesQuotationPage from "./pages/sales-quotation/SalesQuoationPage";
 
 // Sales Invoice
 import SalesCreatePage from "./pages/sales-Invoice/CreatePage";
