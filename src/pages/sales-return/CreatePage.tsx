@@ -25,14 +25,15 @@ import LanguageTranslatorModal from "@/components/common/LanguageTranslatorModel
 import DynamicInputTableList from "@/components/common/dynamic-input-table/DynamicInputTableList";
 import EnglishDate from "@/components/EnglishDateInput";
 
-// Define Sales Invoice interface
+// Define Sales Return interface
 interface Invoice {
   id: string;
   documentNumber: string;
-  invoiceNumber: string;
-  invoiceDate: string;
+  salesInvoiceNumber: string;
+  poNumber: string;
+  poDate: string;
   customer: string;
-  trnNumber: string;
+  vatNumber: string;
   paymentMode: string;
   dueDays: number;
   paymentDate: string;
@@ -54,7 +55,7 @@ interface Invoice {
 // Mock customer data for auto-fill functionality
 interface CustomerData {
   name: string;
-  trnNumber: string;
+  vatNumber: string;
   country: string;
   state: string;
   city: string;
@@ -63,21 +64,21 @@ interface CustomerData {
 const MOCK_CUSTOMERS: CustomerData[] = [
   {
     name: "ABC Trading LLC",
-    trnNumber: "TRN-1234567890",
+    vatNumber: "VAT-1234567890",
     country: "UAE",
     state: "Dubai",
     city: "Deira",
   },
   {
     name: "Global Exports",
-    trnNumber: "TRN-2345678901",
+    vatNumber: "VAT-2345678901",
     country: "UAE",
     state: "Dubai",
     city: "Business Bay",
   },
   {
     name: "Sunrise Mart",
-    trnNumber: "TRN-3456789012",
+    vatNumber: "VAT-3456789012",
     country: "UAE",
     state: "Abu Dhabi",
     city: "Mussafah",
@@ -115,11 +116,11 @@ const generateDocumentNumber = () => {
   const lastNumber = localStorage.getItem("lastSalesDocNumber") || "0";
   const nextNumber = (parseInt(lastNumber) + 1).toString().padStart(3, "0");
   localStorage.setItem("lastSalesDocNumber", nextNumber);
-  return `DOC${nextNumber}`;
+  return `SR${nextNumber}`;
 };
 
-// Generate incremental invoice number
-const generateInvoiceNumber = () => {
+// Generate incremental sales invoice number reference
+const generateSalesInvoiceNumber = () => {
   const lastNumber = localStorage.getItem("lastSalesInvoiceNumber") || "0";
   const nextNumber = (parseInt(lastNumber) + 1).toString().padStart(3, "0");
   localStorage.setItem("lastSalesInvoiceNumber", nextNumber);
@@ -130,10 +131,11 @@ const generateInvoiceNumber = () => {
 const createInitialData = (): Invoice => ({
   id: "1",
   documentNumber: generateDocumentNumber(),
-  invoiceNumber: generateInvoiceNumber(),
-  invoiceDate: "",
+  salesInvoiceNumber: generateSalesInvoiceNumber(),
+  poNumber: "",
+  poDate: "",
   customer: "",
-  trnNumber: "",
+  vatNumber: "",
   paymentMode: "",
   dueDays: 0,
   paymentDate: "",
@@ -157,7 +159,7 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
   const labels = useLanguageLabels();
   const { isRTL } = useAppSelector((state) => state.language);
 
-  const detectedModule = "sales-invoice";
+  const detectedModule = "sales-return";
 
   // Use the custom hook for minimized module data
   const {
@@ -349,7 +351,7 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
         setFormData((prev) => ({
           ...prev,
           customer: newCustomer,
-          trnNumber: matchedCustomer.trnNumber,
+          vatNumber: matchedCustomer.vatNumber,
           country: matchedCustomer.country,
           state: matchedCustomer.state,
           city: matchedCustomer.city,
@@ -361,7 +363,7 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
         setFormData((prev) => ({
           ...prev,
           customer: newCustomer,
-          trnNumber: "",
+          vatNumber: "",
           country: "",
           state: "",
           city: "",
@@ -616,7 +618,7 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
             onSubmit={handleSubmit}
             className="space-y-6 relative"
           >
-            {/* First Row: Document Number, Invoice Number, Invoice Date, Customer */}
+            {/* First Row: Document Number, Sales Invoice Number, P.O Number, P.O Date */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
               {/* Document Number */}
               <div className="space-y-2">
@@ -636,26 +638,66 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
                 />
               </div>
 
-              {/* Invoice Number */}
+              {/* Sales Invoice Number */}
               <div className="space-y-2">
                 <EditableInput
-                  setRef={setRef("invoiceNumber")}
-                  id="invoiceNumber"
-                  name="invoiceNumber"
-                  value={formData.invoiceNumber}
+                  setRef={setRef("salesInvoiceNumber")}
+                  id="salesInvoiceNumber"
+                  name="salesInvoiceNumber"
+                  value={formData.salesInvoiceNumber}
                   onChange={handleChange}
-                  onNext={() => focusNextInput("invoiceDate")}
+                  onNext={() => focusNextInput("poNumber")}
                   onCancel={() =>
                     setFormData({
                       ...formData,
-                      invoiceNumber: generateInvoiceNumber(),
+                      salesInvoiceNumber: generateSalesInvoiceNumber(),
                     })
                   }
-                  labelText="Invoice Number"
-                  tooltipText="Auto-generated invoice number"
+                  labelText="Sales Invoice Number"
+                  tooltipText="Reference to original sales invoice"
                 />
               </div>
 
+              {/* P.O Number */}
+              <div className="space-y-2">
+                <EditableInput
+                  setRef={setRef("poNumber")}
+                  id="poNumber"
+                  name="poNumber"
+                  value={formData.poNumber}
+                  onChange={handleChange}
+                  onNext={() => focusNextInput("poDate")}
+                  onCancel={() => setFormData({ ...formData, poNumber: "" })}
+                  labelText="P.O Number"
+                  tooltipText="Purchase order number"
+                />
+              </div>
+
+              {/* P.O Date */}
+              <div className="space-y-2">
+                <EnglishDate
+                  isDate={true}
+                  isShowCalender={true}
+                  calendarType="gregorian"
+                  userLang="en"
+                  rtl={false}
+                  onChange={(date: string) =>
+                    setFormData({ ...formData, poDate: date })
+                  }
+                  value={formData.poDate}
+                  disabled={false}
+                  labelText="P.O Date"
+                  className={cn(
+                    "transition-all",
+                    "ring-1 ring-primary w-full!"
+                  )}
+                  setStartNextFocus={() => focusNextInput("customer")}
+                />
+              </div>
+            </div>
+
+            {/* Second Row: Customer, VAT Number, Payment Mode, Due Days */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
               {/* Customer */}
               <div className="space-y-2">
                 <Autocomplete
@@ -667,7 +709,7 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
                   options={memoizedCustomers.map((s) => s.name)}
                   value={formData.customer}
                   onValueChange={handleCustomerChange}
-                  onEnterPress={() => focusNextInput("trnNumber")}
+                  onEnterPress={() => focusNextInput("vatNumber")}
                   placeholder=""
                   className="relative"
                   tooltipText="Select or type customer"
@@ -686,46 +728,21 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
                 />
               </div>
 
-              {/* Invoice Date */}
-              <div className="space-y-2">
-                <EnglishDate
-                  isDate={true}
-                  isShowCalender={true}
-                  calendarType="gregorian"
-                  userLang="en"
-                  rtl={false}
-                  onChange={(date: string) =>
-                    setFormData({ ...formData, invoiceDate: date })
-                  }
-                  value={formData.paymentDate}
-                  disabled={false}
-                  labelText="Invoice Date"
-                  className={cn(
-                    "transition-all",
-                    "ring-1 ring-primary w-full!"
-                  )}
-                  setStartNextFocus={() => focusNextInput("customer")}
-                />
-              </div>
-            </div>
-
-            {/* Second Row: TRN Number, Payment Mode, Due Days, Payment Date */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
-              {/* TRN Number */}
+              {/* VAT Number */}
               <div className="space-y-2">
                 <EditableInput
-                  setRef={setRef("trnNumber")}
-                  id="trnNumber"
-                  name="trnNumber"
-                  value={formData.trnNumber}
+                  setRef={setRef("vatNumber")}
+                  id="vatNumber"
+                  name="vatNumber"
+                  value={formData.vatNumber}
                   onChange={handleChange}
                   onNext={() => focusNextInput("paymentMode")}
-                  onCancel={() => setFormData({ ...formData, trnNumber: "" })}
-                  labelText="TRN Number"
+                  onCancel={() => setFormData({ ...formData, vatNumber: "" })}
+                  labelText="VAT Number"
                   tooltipText={
                     isCustomerFieldsDisabled()
                       ? "Select customer first"
-                      : "Tax Registration Number"
+                      : "VAT Registration Number"
                   }
                   readOnly={isCustomerFieldsDisabled() || isCustomerAutoFilled}
                   disabled={isCustomerFieldsDisabled()}
@@ -768,22 +785,6 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
                 />
               </div>
 
-              {/* Due Days */}
-              <div className="space-y-2">
-                <EditableInput
-                  setRef={setRef("dueDays")}
-                  id="dueDays"
-                  name="dueDays"
-                  type="number"
-                  value={formData.dueDays.toString()}
-                  onChange={handleChange}
-                  onNext={() => focusNextInput("paymentDate")}
-                  onCancel={() => setFormData({ ...formData, dueDays: 0 })}
-                  labelText="Due Days"
-                  tooltipText="Number of days until payment is due"
-                />
-              </div>
-
               {/* Payment Date */}
               <div className="space-y-2">
                 <EnglishDate
@@ -806,6 +807,22 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
 
             {/* Third Row: Country, State, City, Remarks */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
+              {/* Due Days */}
+              <div className="space-y-2">
+                <EditableInput
+                  setRef={setRef("dueDays")}
+                  id="dueDays"
+                  name="dueDays"
+                  type="number"
+                  value={formData.dueDays.toString()}
+                  onChange={handleChange}
+                  onNext={() => focusNextInput("paymentDate")}
+                  onCancel={() => setFormData({ ...formData, dueDays: 0 })}
+                  labelText="Due Days"
+                  tooltipText="Number of days until payment is due"
+                />
+              </div>
+
               {/* Country */}
               <div className="space-y-2">
                 <EditableInput
@@ -892,10 +909,7 @@ export default function InvoiceCreatePage({ isEdit = false }: Props) {
                   tooltipText="Additional remarks or notes"
                 />
               </div>
-            </div>
 
-            {/* Fourth Row: Salesman, Default, Status */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
               {/* Salesman */}
               <div className="space-y-2">
                 <Autocomplete

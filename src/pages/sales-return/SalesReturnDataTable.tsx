@@ -1,110 +1,116 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import FixedColumnDataTable from "@/components/common/country-page-table/FixedColumnDataTable";
 
-const mockInvoices = [
+// Sales Return mock data aligned with SalesReturnGrid
+const mockSalesReturns = [
   {
     id: "1",
-    documentNumber: "DOC001",
-    invoiceNumber: "INV-2024-001",
-    invoiceDate: "2024-01-15",
+    documentNumber: "SR001",
+    salesInvoiceNumber: "INV-2024-001",
+    poNumber: "PO-2024-001",
+    poDate: "2024-01-10",
     customer: "ABC Trading LLC",
-    trnNumber: "TRN-1234567890",
+    vatNumber: "VAT-1234567890",
     paymentMode: "Bank Transfer",
     dueDays: 30,
     paymentDate: "2024-02-14",
-    country: "United States",
-    state: "California",
-    city: "Los Angeles",
-    remarks: "Urgent delivery required",
+    country: "UAE",
+    state: "Dubai",
+    city: "Deira",
+    remarks: "Product return - defective items",
     salesman: "John Smith",
     createdAt: "2024-01-15",
     updatedAt: "2024-01-20",
     isDeleted: false,
-    status: "active",
+    status: "Active",
   },
   {
     id: "2",
-    documentNumber: "DOC002",
-    invoiceNumber: "INV-2024-002",
-    invoiceDate: "2024-01-16",
+    documentNumber: "SR002",
+    salesInvoiceNumber: "INV-2024-002",
+    poNumber: "PO-2024-002",
+    poDate: "2024-01-12",
     customer: "Global Exports",
-    trnNumber: "TRN-2345678901",
+    vatNumber: "VAT-2345678901",
     paymentMode: "Credit Card",
     dueDays: 15,
     paymentDate: "2024-01-31",
-    country: "United States",
-    state: "New York",
-    city: "New York",
-    remarks: "Standard delivery",
+    country: "UAE",
+    state: "Dubai",
+    city: "Business Bay",
+    remarks: "Customer requested return",
     salesman: "Sarah Johnson",
     createdAt: "2024-01-16",
     updatedAt: "2024-01-21",
     isDeleted: false,
-    status: "active",
+    status: "Active",
   },
   {
     id: "3",
-    documentNumber: "DOC003",
-    invoiceNumber: "INV-2024-003",
-    invoiceDate: "2024-01-17",
+    documentNumber: "SR003",
+    salesInvoiceNumber: "INV-2024-003",
+    poNumber: "PO-2024-003",
+    poDate: "2024-01-14",
     customer: "Sunrise Mart",
-    trnNumber: "TRN-3456789012",
+    vatNumber: "VAT-3456789012",
     paymentMode: "Cash",
     dueDays: 7,
     paymentDate: "2024-01-24",
-    country: "United States",
-    state: "Florida",
-    city: "Miami",
-    remarks: "Daily fresh delivery",
+    country: "UAE",
+    state: "Abu Dhabi",
+    city: "Mussafah",
+    remarks: "Quality issue return",
     salesman: "Michael Brown",
     createdAt: "2024-01-17",
     updatedAt: "2024-01-22",
     isDeleted: false,
-    status: "active",
+    status: "Active",
   },
   {
     id: "4",
-    documentNumber: "DOC004",
-    invoiceNumber: "INV-2024-004",
-    invoiceDate: "2024-01-18",
+    documentNumber: "SR004",
+    salesInvoiceNumber: "INV-2024-004",
+    poNumber: "PO-2024-004",
+    poDate: "2024-01-16",
     customer: "Blue Ocean Foods",
-    trnNumber: "TRN-4567890123",
+    vatNumber: "VAT-4567890123",
     paymentMode: "Check",
     dueDays: 45,
     paymentDate: "2024-03-04",
-    country: "United States",
-    state: "Texas",
-    city: "Houston",
-    remarks: "Temperature controlled delivery",
+    country: "UAE",
+    state: "Sharjah",
+    city: "Sharjah City",
+    remarks: "Batch return - expired products",
     salesman: "Emily Davis",
     createdAt: "2024-01-18",
     updatedAt: "2024-01-23",
     isDeleted: false,
-    status: "active",
+    status: "Active",
   },
   {
     id: "5",
-    documentNumber: "DOC005",
-    invoiceNumber: "INV-2024-005",
-    invoiceDate: "2024-01-19",
+    documentNumber: "SR005",
+    salesInvoiceNumber: "INV-2024-005",
+    poNumber: "PO-2024-005",
+    poDate: "2024-01-18",
     customer: "Prime Retailers",
-    trnNumber: "TRN-5678901234",
-    paymentMode: "ACH Transfer",
+    vatNumber: "VAT-5678901234",
+    paymentMode: "Wire Transfer",
     dueDays: 21,
     paymentDate: "2024-02-09",
-    country: "United States",
-    state: "Washington",
-    city: "Seattle",
-    remarks: "Live delivery required",
+    country: "UAE",
+    state: "Dubai",
+    city: "DIFC",
+    remarks: "Customer dissatisfaction return",
     salesman: "John Smith",
     createdAt: "2024-01-19",
     updatedAt: "2024-01-24",
     isDeleted: false,
-    status: "active",
+    status: "Pending",
   },
 ];
 
-export default function InvoicesDataTable({
+export default function SalesReturnDataTable({
   viewMode,
   setViewMode,
   dataTableFilter,
@@ -133,18 +139,7 @@ export default function InvoicesDataTable({
     {
       accessorKey: "documentNumber",
       title: "Document",
-      options: [
-        "DOC001",
-        "DOC002",
-        "DOC003",
-        "DOC004",
-        "DOC005",
-        "DOC006",
-        "DOC007",
-        "DOC008",
-        "DOC009",
-        "DOC010",
-      ],
+      options: ["SR001", "SR002", "SR003", "SR004", "SR005"],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
         const cellValue = row.getValue(columnId) as string;
@@ -161,8 +156,8 @@ export default function InvoicesDataTable({
       minSize: 100,
     },
     {
-      accessorKey: "invoiceNumber",
-      title: "Invoice Number",
+      accessorKey: "salesInvoiceNumber",
+      title: "Sales Invoice Number",
       options: [
         "INV-2024-001",
         "INV-2024-002",
@@ -173,21 +168,42 @@ export default function InvoicesDataTable({
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
         const cellValue = row.getValue(columnId) as string;
-        return filterValue.some((val: string) =>
-          cellValue.toLowerCase().includes(val.toLowerCase())
+        return (Array.isArray(filterValue) ? filterValue : [filterValue]).some(
+          (val: string) => cellValue.toLowerCase().includes(val.toLowerCase())
         );
       },
-      sortingFn: (row1: any, row2: any) => {
-        return row1
-          .getValue("invoiceNumber")
-          .localeCompare(row2.getValue("invoiceNumber"));
+      sortingFn: (row1: any, row2: any) =>
+        row1
+          .getValue("salesInvoiceNumber")
+          .localeCompare(row2.getValue("salesInvoiceNumber")),
+      size: 170,
+      minSize: 130,
+    },
+    {
+      accessorKey: "poNumber",
+      title: "P.O Number",
+      options: [
+        "PO-2024-001",
+        "PO-2024-002",
+        "PO-2024-003",
+        "PO-2024-004",
+        "PO-2024-005",
+      ],
+      filterFn: (row: any, columnId: any, filterValue: any) => {
+        if (!filterValue || filterValue.length === 0) return true;
+        const cellValue = row.getValue(columnId) as string;
+        return (Array.isArray(filterValue) ? filterValue : [filterValue]).some(
+          (val: string) => cellValue.toLowerCase().includes(val.toLowerCase())
+        );
       },
+      sortingFn: (row1: any, row2: any) =>
+        row1.getValue("poNumber").localeCompare(row2.getValue("poNumber")),
       size: 130,
       minSize: 110,
     },
     {
-      accessorKey: "invoiceDate",
-      title: "Invoice Date",
+      accessorKey: "poDate",
+      title: "P.O Date",
       options: [],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
@@ -199,14 +215,11 @@ export default function InvoicesDataTable({
         }
         return cellValue.toLowerCase().includes(filterValue.toLowerCase());
       },
-      sortingFn: (row1: any, row2: any) => {
-        return (
-          new Date(row1.getValue("invoiceDate")).getTime() -
-          new Date(row2.getValue("invoiceDate")).getTime()
-        );
-      },
-      size: 100,
-      minSize: 80,
+      sortingFn: (row1: any, row2: any) =>
+        new Date(row1.getValue("poDate")).getTime() -
+        new Date(row2.getValue("poDate")).getTime(),
+      size: 120,
+      minSize: 100,
     },
     {
       accessorKey: "customer",
@@ -234,8 +247,8 @@ export default function InvoicesDataTable({
       minSize: 150,
     },
     {
-      accessorKey: "trnNumber",
-      title: "TRN Number",
+      accessorKey: "vatNumber",
+      title: "VAT Number",
       options: [],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
@@ -244,11 +257,8 @@ export default function InvoicesDataTable({
           (val: string) => cellValue.toLowerCase().includes(val.toLowerCase())
         );
       },
-      sortingFn: (row1: any, row2: any) => {
-        return row1
-          .getValue("trnNumber")
-          .localeCompare(row2.getValue("trnNumber"));
-      },
+      sortingFn: (row1: any, row2: any) =>
+        row1.getValue("vatNumber").localeCompare(row2.getValue("vatNumber")),
       size: 160,
       minSize: 140,
     },
@@ -261,18 +271,7 @@ export default function InvoicesDataTable({
         "Cash",
         "Check",
         "ACH Transfer",
-        "Net Banking",
-        "PayPal",
         "Wire Transfer",
-        "Credit Line",
-        "Cash on Delivery",
-        "Debit Card",
-        "Electronic Payment",
-        "Letter of Credit",
-        "Mobile Payment",
-        "Installment Plan",
-        "Crypto Payment",
-        "Gift Card Credit",
       ],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
@@ -371,7 +370,7 @@ export default function InvoicesDataTable({
     {
       accessorKey: "country",
       title: "Country",
-      options: ["United States"],
+      options: ["UAE"],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
         const cellValue = row.getValue(columnId) as string;
@@ -388,25 +387,7 @@ export default function InvoicesDataTable({
     {
       accessorKey: "state",
       title: "State",
-      options: [
-        "California",
-        "New York",
-        "Florida",
-        "Texas",
-        "Washington",
-        "Wisconsin",
-        "Oregon",
-        "Louisiana",
-        "Georgia",
-        "Illinois",
-        "Colorado",
-        "Minnesota",
-        "Nevada",
-        "Arizona",
-        "North Carolina",
-        "Massachusetts",
-        "Tennessee",
-      ],
+      options: ["Dubai", "Abu Dhabi", "Sharjah"],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
         const cellValue = row.getValue(columnId) as string;
@@ -423,25 +404,7 @@ export default function InvoicesDataTable({
     {
       accessorKey: "city",
       title: "City",
-      options: [
-        "Los Angeles",
-        "New York",
-        "Miami",
-        "Houston",
-        "Seattle",
-        "Milwaukee",
-        "Portland",
-        "New Orleans",
-        "Atlanta",
-        "Chicago",
-        "Denver",
-        "Minneapolis",
-        "Las Vegas",
-        "Phoenix",
-        "Charlotte",
-        "Boston",
-        "Nashville",
-      ],
+      options: ["Deira", "Business Bay", "Mussafah", "Sharjah City", "DIFC"],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
         const cellValue = row.getValue(columnId) as string;
@@ -504,16 +467,16 @@ export default function InvoicesDataTable({
     },
   ];
 
-  const filteredData = mockInvoices.filter((invoice) => {
+  const filteredData = mockSalesReturns.filter((invoice) => {
     if (!dataTableFilter || !dataTableFilter.status) {
       return true;
     }
     if (dataTableFilter.status === "Active") {
-      return invoice.status === "active";
+      return invoice.status === "Active";
     } else if (dataTableFilter.status === "Inactive") {
-      return invoice.status === "inactive";
+      return invoice.status === "Inactive";
     } else if (dataTableFilter.status === "Draft") {
-      return invoice.status === "draft";
+      return invoice.status === "Draft";
     } else if (dataTableFilter.status === "Deleted") {
       return invoice.isDeleted;
     } else if (dataTableFilter.status === "Updated") {
