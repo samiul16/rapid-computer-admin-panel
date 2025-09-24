@@ -1,17 +1,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import FixedColumnDataTable from "@/components/common/country-page-table/FixedColumnDataTable";
 import useIsMobile from "@/hooks/useIsMobile";
-import { useColorsPermissions } from "@/hooks/usePermissions";
+import { usePermission } from "@/hooks/usePermissions";
 
-// Damage Items data table types and mock data
-interface DamageItem {
+// Expiry Items data table types and mock data
+interface ExpiryItem {
   id: string;
-  itemId: string;
-  quantityDamaged: number;
-  documentDate: string; // ISO date
-  reportedBy: string;
+  itemName: string;
+  batchNumber: string;
+  expiryDate: string; // ISO date
+  quantity: number;
+  unit: string;
   location: string;
-  damageType: string;
+  category: string;
+  supplier: string;
   status: "Active" | "Inactive" | "Draft" | "Deleted" | "Updated";
   createdAt: string;
   updatedAt: string;
@@ -23,19 +25,21 @@ interface DamageItem {
   actionMessage: string;
 }
 
-const mockDamageItems: DamageItem[] = [
+const mockExpiryItems: ExpiryItem[] = [
   {
     id: "1",
-    itemId: "ITM-0001",
-    quantityDamaged: 3,
-    documentDate: "2025-09-10",
-    reportedBy: "John Doe",
+    itemName: "Paracetamol 500mg",
+    batchNumber: "BCH-2024-001",
+    expiryDate: "2025-03-15",
+    quantity: 100,
+    unit: "Tablets",
     location: "Warehouse A",
-    damageType: "Broken",
+    category: "Medicine",
+    supplier: "ABC Pharmaceuticals",
     status: "Active",
-    createdAt: "2025-09-10",
-    updatedAt: "2025-09-12",
-    draftedAt: "2025-09-09",
+    createdAt: "2025-01-15",
+    updatedAt: "2025-01-20",
+    draftedAt: "2025-01-14",
     isActive: true,
     isDraft: false,
     isDeleted: false,
@@ -44,16 +48,18 @@ const mockDamageItems: DamageItem[] = [
   },
   {
     id: "2",
-    itemId: "ITM-0002",
-    quantityDamaged: 1,
-    documentDate: "2025-09-11",
-    reportedBy: "Jane Smith",
+    itemName: "Ibuprofen 400mg",
+    batchNumber: "BCH-2024-002",
+    expiryDate: "2025-06-20",
+    quantity: 50,
+    unit: "Tablets",
     location: "Warehouse B",
-    damageType: "Water Damage",
+    category: "Medicine",
+    supplier: "XYZ Medical",
     status: "Active",
-    createdAt: "2025-09-11",
-    updatedAt: "2025-09-12",
-    draftedAt: "2025-09-10",
+    createdAt: "2025-01-16",
+    updatedAt: "2025-01-21",
+    draftedAt: "2025-01-15",
     isActive: true,
     isDraft: false,
     isDeleted: false,
@@ -62,16 +68,18 @@ const mockDamageItems: DamageItem[] = [
   },
   {
     id: "3",
-    itemId: "ITM-0003",
-    quantityDamaged: 6,
-    documentDate: "2025-09-08",
-    reportedBy: "Ahmed Ali",
+    itemName: "Vitamin C 1000mg",
+    batchNumber: "BCH-2024-003",
+    expiryDate: "2025-12-10",
+    quantity: 200,
+    unit: "Capsules",
     location: "Store 1",
-    damageType: "Cracked",
+    category: "Supplements",
+    supplier: "Health Plus",
     status: "Draft",
-    createdAt: "2025-09-08",
-    updatedAt: "2025-09-09",
-    draftedAt: "2025-09-07",
+    createdAt: "2025-01-17",
+    updatedAt: "2025-01-22",
+    draftedAt: "2025-01-16",
     isActive: false,
     isDraft: true,
     isDeleted: false,
@@ -80,16 +88,18 @@ const mockDamageItems: DamageItem[] = [
   },
   {
     id: "4",
-    itemId: "ITM-0004",
-    quantityDamaged: 2,
-    documentDate: "2025-09-09",
-    reportedBy: "Maria Garcia",
+    itemName: "Bandages 5cm",
+    batchNumber: "BCH-2024-004",
+    expiryDate: "2026-01-30",
+    quantity: 25,
+    unit: "Pieces",
     location: "Warehouse A",
-    damageType: "Expired",
+    category: "Medical Supplies",
+    supplier: "MedSupply Co",
     status: "Inactive",
-    createdAt: "2025-09-09",
-    updatedAt: "2025-09-10",
-    draftedAt: "2025-09-08",
+    createdAt: "2025-01-18",
+    updatedAt: "2025-01-23",
+    draftedAt: "2025-01-17",
     isActive: false,
     isDraft: false,
     isDeleted: false,
@@ -98,16 +108,18 @@ const mockDamageItems: DamageItem[] = [
   },
   {
     id: "5",
-    itemId: "ITM-0005",
-    quantityDamaged: 4,
-    documentDate: "2025-09-07",
-    reportedBy: "Ali Ahmed",
+    itemName: "Antiseptic Solution",
+    batchNumber: "BCH-2024-005",
+    expiryDate: "2025-08-15",
+    quantity: 10,
+    unit: "Bottles",
     location: "Store 2",
-    damageType: "Expired",
+    category: "Medical Supplies",
+    supplier: "CleanCare Ltd",
     status: "Deleted",
-    createdAt: "2025-09-07",
-    updatedAt: "2025-09-08",
-    draftedAt: "2025-09-06",
+    createdAt: "2025-01-19",
+    updatedAt: "2025-01-24",
+    draftedAt: "2025-01-18",
     isActive: false,
     isDraft: false,
     isDeleted: true,
@@ -116,16 +128,18 @@ const mockDamageItems: DamageItem[] = [
   },
   {
     id: "6",
-    itemId: "ITM-0006",
-    quantityDamaged: 5,
-    documentDate: "2025-09-06",
-    reportedBy: "Sara Khan",
-    location: "Warehouse C",
-    damageType: "Expired",
+    itemName: "Surgical Gloves",
+    batchNumber: "BCH-2024-006",
+    expiryDate: "2025-11-25",
+    quantity: 500,
+    unit: "Pairs",
+    location: "Warehouse B",
+    category: "Medical Supplies",
+    supplier: "SafeHands Inc",
     status: "Updated",
-    createdAt: "2025-09-06",
-    updatedAt: "2025-09-07",
-    draftedAt: "2025-09-05",
+    createdAt: "2025-01-20",
+    updatedAt: "2025-01-25",
+    draftedAt: "2025-01-19",
     isActive: true,
     isDraft: false,
     isDeleted: false,
@@ -134,16 +148,18 @@ const mockDamageItems: DamageItem[] = [
   },
   {
     id: "7",
-    itemId: "ITM-0006",
-    quantityDamaged: 5,
-    documentDate: "2025-09-06",
-    reportedBy: "Sara Khan",
-    location: "Warehouse C",
-    damageType: "Expired",
+    itemName: "Thermometer Digital",
+    batchNumber: "BCH-2024-007",
+    expiryDate: "2026-02-14",
+    quantity: 15,
+    unit: "Units",
+    location: "Store 1",
+    category: "Medical Equipment",
+    supplier: "TechMed Solutions",
     status: "Updated",
-    createdAt: "2025-09-06",
-    updatedAt: "2025-09-07",
-    draftedAt: "2025-09-05",
+    createdAt: "2025-01-21",
+    updatedAt: "2025-01-26",
+    draftedAt: "2025-01-20",
     isActive: true,
     isDraft: false,
     isDeleted: false,
@@ -152,16 +168,18 @@ const mockDamageItems: DamageItem[] = [
   },
   {
     id: "8",
-    itemId: "ITM-0006",
-    quantityDamaged: 5,
-    documentDate: "2025-09-06",
-    reportedBy: "Sara Khan",
-    location: "Warehouse C",
-    damageType: "Expired",
+    itemName: "Blood Pressure Monitor",
+    batchNumber: "BCH-2024-008",
+    expiryDate: "2025-09-30",
+    quantity: 5,
+    unit: "Units",
+    location: "Warehouse A",
+    category: "Medical Equipment",
+    supplier: "Precision Health",
     status: "Updated",
-    createdAt: "2025-09-06",
-    updatedAt: "2025-09-07",
-    draftedAt: "2025-09-05",
+    createdAt: "2025-01-22",
+    updatedAt: "2025-01-27",
+    draftedAt: "2025-01-21",
     isActive: true,
     isDraft: false,
     isDeleted: false,
@@ -170,16 +188,18 @@ const mockDamageItems: DamageItem[] = [
   },
   {
     id: "9",
-    itemId: "ITM-0006",
-    quantityDamaged: 5,
-    documentDate: "2025-09-06",
-    reportedBy: "Sara Khan",
-    location: "Warehouse C",
-    damageType: "Expired",
+    itemName: "Multivitamin Complex",
+    batchNumber: "BCH-2024-009",
+    expiryDate: "2025-07-18",
+    quantity: 75,
+    unit: "Bottles",
+    location: "Store 2",
+    category: "Supplements",
+    supplier: "VitaLife Corp",
     status: "Updated",
-    createdAt: "2025-09-06",
-    updatedAt: "2025-09-07",
-    draftedAt: "2025-09-05",
+    createdAt: "2025-01-23",
+    updatedAt: "2025-01-28",
+    draftedAt: "2025-01-22",
     isActive: true,
     isDraft: false,
     isDeleted: false,
@@ -188,16 +208,18 @@ const mockDamageItems: DamageItem[] = [
   },
   {
     id: "10",
-    itemId: "ITM-0006",
-    quantityDamaged: 5,
-    documentDate: "2025-09-06",
-    reportedBy: "Sara Khan",
-    location: "Warehouse C",
-    damageType: "Expired",
+    itemName: "Pain Relief Gel",
+    batchNumber: "BCH-2024-010",
+    expiryDate: "2025-10-05",
+    quantity: 30,
+    unit: "Tubes",
+    location: "Warehouse B",
+    category: "Medicine",
+    supplier: "Relief Pharma",
     status: "Updated",
-    createdAt: "2025-09-06",
-    updatedAt: "2025-09-07",
-    draftedAt: "2025-09-05",
+    createdAt: "2025-01-24",
+    updatedAt: "2025-01-29",
+    draftedAt: "2025-01-23",
     isActive: true,
     isDraft: false,
     isDeleted: false,
@@ -206,7 +228,7 @@ const mockDamageItems: DamageItem[] = [
   },
 ];
 
-export default function DamageItemsDataTable({
+export default function ExpiryItemsDataTable({
   viewMode,
   setViewMode,
   dataTableFilter,
@@ -233,14 +255,14 @@ export default function DamageItemsDataTable({
   isFilterOpen: boolean;
   setIsFilterOpen: (isFilterOpen: boolean) => void;
 }) {
-  const { canCreate } = useColorsPermissions();
+  const canCreate = usePermission("expiry-items", "create");
   const isMobile = useIsMobile();
 
   const componentColumns = [
     {
-      accessorKey: "itemId",
-      title: "Item ID",
-      options: [...new Set(mockDamageItems.map((item) => item.itemId))],
+      accessorKey: "itemName",
+      title: "Item Name",
+      options: [...new Set(mockExpiryItems.map((item) => item.itemName))],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
         const cellValue = row.getValue(columnId) as string;
@@ -249,46 +271,43 @@ export default function DamageItemsDataTable({
         );
       },
       sortingFn: (row1: any, row2: any) => {
-        return row1.getValue("itemId").localeCompare(row2.getValue("itemId"));
+        return row1
+          .getValue("itemName")
+          .localeCompare(row2.getValue("itemName"));
       },
-      size: isMobile ? 120 : 180,
-      minSize: 120,
+      size: isMobile ? 150 : 200,
+      minSize: 150,
       meta: {
-        exportLabel: "Item ID",
+        exportLabel: "Item Name",
         readOnly: !canCreate,
       },
     },
     {
-      accessorKey: "quantityDamaged",
-      title: "Damaged",
-      options: [
-        ...new Set(
-          mockDamageItems.map((item) => item.quantityDamaged.toString())
-        ),
-      ],
+      accessorKey: "batchNumber",
+      title: "Batch Number",
+      options: [...new Set(mockExpiryItems.map((item) => item.batchNumber))],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = String(row.getValue(columnId));
+        const cellValue = row.getValue(columnId) as string;
         return filterValue.some((filterVal: string) =>
           cellValue.toLowerCase().includes(filterVal.toLowerCase())
         );
       },
       sortingFn: (row1: any, row2: any) => {
-        return (
-          Number(row1.getValue("quantityDamaged")) -
-          Number(row2.getValue("quantityDamaged"))
-        );
+        return row1
+          .getValue("batchNumber")
+          .localeCompare(row2.getValue("batchNumber"));
       },
-      size: isMobile ? 100 : 120,
-      minSize: 100,
+      size: isMobile ? 120 : 150,
+      minSize: 120,
       meta: {
-        exportLabel: "Quantity Damaged",
+        exportLabel: "Batch Number",
         readOnly: !canCreate,
       },
     },
     {
-      accessorKey: "documentDate",
-      title: "Document Date",
+      accessorKey: "expiryDate",
+      title: "Expiry Date",
       options: [],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
@@ -299,22 +318,46 @@ export default function DamageItemsDataTable({
         return filterValue.includes(cellValue);
       },
       sortingFn: (row1: any, row2: any) => {
-        const d1 = new Date(row1.getValue("documentDate")).getTime();
-        const d2 = new Date(row2.getValue("documentDate")).getTime();
+        const d1 = new Date(row1.getValue("expiryDate")).getTime();
+        const d2 = new Date(row2.getValue("expiryDate")).getTime();
         return d1 - d2;
       },
       size: isMobile ? 150 : 200,
       minSize: 150,
       meta: {
-        exportLabel: "Document Date",
+        exportLabel: "Expiry Date",
         readOnly: !canCreate,
       },
     },
-
     {
-      accessorKey: "reportedBy",
-      title: "Reported By",
-      options: [...new Set(mockDamageItems.map((item) => item.reportedBy))],
+      accessorKey: "quantity",
+      title: "Quantity",
+      options: [
+        ...new Set(mockExpiryItems.map((item) => item.quantity.toString())),
+      ],
+      filterFn: (row: any, columnId: any, filterValue: any) => {
+        if (!filterValue || filterValue.length === 0) return true;
+        const cellValue = String(row.getValue(columnId));
+        return filterValue.some((filterVal: string) =>
+          cellValue.toLowerCase().includes(filterVal.toLowerCase())
+        );
+      },
+      sortingFn: (row1: any, row2: any) => {
+        return (
+          Number(row1.getValue("quantity")) - Number(row2.getValue("quantity"))
+        );
+      },
+      size: isMobile ? 100 : 120,
+      minSize: 100,
+      meta: {
+        exportLabel: "Quantity",
+        readOnly: !canCreate,
+      },
+    },
+    {
+      accessorKey: "unit",
+      title: "Unit",
+      options: [...new Set(mockExpiryItems.map((item) => item.unit))],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
         const cellValue = row.getValue(columnId) as string;
@@ -323,21 +366,19 @@ export default function DamageItemsDataTable({
         );
       },
       sortingFn: (row1: any, row2: any) => {
-        return row1
-          .getValue("reportedBy")
-          .localeCompare(row2.getValue("reportedBy"));
+        return row1.getValue("unit").localeCompare(row2.getValue("unit"));
       },
-      size: isMobile ? 150 : 180,
-      minSize: 150,
+      size: isMobile ? 100 : 120,
+      minSize: 100,
       meta: {
-        exportLabel: "Reported By",
+        exportLabel: "Unit",
         readOnly: !canCreate,
       },
     },
     {
       accessorKey: "location",
       title: "Location",
-      options: [...new Set(mockDamageItems.map((item) => item.location))],
+      options: [...new Set(mockExpiryItems.map((item) => item.location))],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
         const cellValue = row.getValue(columnId) as string;
@@ -358,9 +399,9 @@ export default function DamageItemsDataTable({
       },
     },
     {
-      accessorKey: "damageType",
-      title: "Damage Type",
-      options: [...new Set(mockDamageItems.map((item) => item.damageType))],
+      accessorKey: "category",
+      title: "Category",
+      options: [...new Set(mockExpiryItems.map((item) => item.category))],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
         const cellValue = row.getValue(columnId) as string;
@@ -370,13 +411,36 @@ export default function DamageItemsDataTable({
       },
       sortingFn: (row1: any, row2: any) => {
         return row1
-          .getValue("damageType")
-          .localeCompare(row2.getValue("damageType"));
+          .getValue("category")
+          .localeCompare(row2.getValue("category"));
       },
       size: isMobile ? 150 : 180,
       minSize: 150,
       meta: {
-        exportLabel: "Damage Type",
+        exportLabel: "Category",
+        readOnly: !canCreate,
+      },
+    },
+    {
+      accessorKey: "supplier",
+      title: "Supplier",
+      options: [...new Set(mockExpiryItems.map((item) => item.supplier))],
+      filterFn: (row: any, columnId: any, filterValue: any) => {
+        if (!filterValue || filterValue.length === 0) return true;
+        const cellValue = row.getValue(columnId) as string;
+        return filterValue.some((filterVal: string) =>
+          cellValue.toLowerCase().includes(filterVal.toLowerCase())
+        );
+      },
+      sortingFn: (row1: any, row2: any) => {
+        return row1
+          .getValue("supplier")
+          .localeCompare(row2.getValue("supplier"));
+      },
+      size: isMobile ? 150 : 180,
+      minSize: 150,
+      meta: {
+        exportLabel: "Supplier",
         readOnly: !canCreate,
       },
     },
@@ -486,7 +550,7 @@ export default function DamageItemsDataTable({
     },
   ];
 
-  const filteredData = mockDamageItems.filter((item: DamageItem) => {
+  const filteredData = mockExpiryItems.filter((item: ExpiryItem) => {
     if (dataTableFilter.status === "Active") {
       return item.isActive;
     } else if (dataTableFilter.status === "Inactive") {
@@ -508,8 +572,8 @@ export default function DamageItemsDataTable({
       viewMode={viewMode}
       setViewMode={setViewMode}
       componentColumns={componentColumns}
-      fixedColumns={["itemId", "quantityDamaged"]}
-      pathName="damage-items"
+      fixedColumns={["itemName", "expiryDate"]}
+      pathName="expiry-items"
       setShowExport={setShowExport}
       showExport={showExport}
       setShowFilter={setShowFilter}
