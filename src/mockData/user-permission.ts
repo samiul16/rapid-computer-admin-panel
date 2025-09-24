@@ -10178,5 +10178,71 @@ export const userPermission = {
         },
       },
     },
+    "expiry-items": {
+      formPermissions: {
+        create: true,
+        view: true,
+        edit: true,
+        delete: true,
+        restore: true,
+        export: true,
+        import: true,
+        pdf: true,
+        print: true,
+        history: true,
+      },
+      fieldPermissions: {
+        itemName: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        batchNumber: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        expiryDate: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        quantity: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        unit: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        location: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        category: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        supplier: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        status: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        isDefault: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+      },
+    },
   },
 };
