@@ -95,6 +95,7 @@ export default function DPageLayout({
   // Automatically detect module from route if not provided
   const detectedModule = module || getModuleFromPath(location.pathname);
 
+  console.log("detectedModule -->:", detectedModule);
   const canCreate = usePermission(detectedModule, "create");
   const canEdit = usePermission(detectedModule, "edit");
   const [searchParams] = useSearchParams();
@@ -301,6 +302,11 @@ export default function DPageLayout({
             {/* Tab Navigation */}
             <div className="flex items-center gap-16 sm:gap-8">
               {tabsData.map((tab) => {
+                console.log(
+                  "tabs permission can create,can edit",
+                  canCreate,
+                  canEdit
+                );
                 if (tab.value === "create" && !canCreate) {
                   return null;
                 }

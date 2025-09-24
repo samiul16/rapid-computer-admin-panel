@@ -3,7 +3,6 @@ import { twMerge } from "tailwind-merge";
 
 import HijriDate from "hijri-date/lib/safe";
 
-
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -190,7 +189,7 @@ export function getModuleFromPath(pathname: string): string {
     permissions: "permissions",
     purchase: "purchase",
     promotion: "promotion",
-    
+
     blog: "blog",
     sliders: "sliders",
 
@@ -253,6 +252,8 @@ export function getModuleFromPath(pathname: string): string {
     "expense-categories": "expenseCategories",
     "expense-sub-categories": "expenseSubCategories",
     notice: "notice",
+    openingStock: "opening-stock",
+    stockTransfer: "stock-transfer",
   };
 
   // Define submodule mappings (for routes like /users/users-location)

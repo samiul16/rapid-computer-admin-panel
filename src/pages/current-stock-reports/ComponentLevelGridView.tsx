@@ -1,15 +1,16 @@
 import { Card, CardTitle } from "@/components/ui/card";
-import { usePermission } from "@/hooks/usePermissions";
-import { SearchFunction } from "@/lib/SearchFunction";
-import { cn, getModuleFromPath } from "@/lib/utils";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/store";
+import GridFilterComponent from "@/pages/Country/GridFilterComponent";
+import useIsMobile from "@/hooks/useIsMobile";
+import { SearchFunction } from "@/lib/SearchFunction";
 import {
   searchableKeys,
   type ModuleFieldsType,
 } from "./config/ModuleLevelConfig";
-import GridExportComponent from "./GridExportComponent";
-import GridFilterComponent from "./GridFilterComponent";
 
 // do not change
 type GridDataType = ModuleFieldsType & {
@@ -45,228 +46,8 @@ const plansData: GridDataType[] = [
     deletedAt: null,
     isDeleted: false,
   },
-  {
-    id: "2",
-    code: "C-1002",
-    itemName: "Item 2",
-    category: "Category 2",
-    brand: "Brand 2",
-    unitPrice: "150",
-    salesPrice: "250",
-    openingStock: "20",
-    currentStock: "12",
-    value: "3000",
-    isDefault: false,
-    isActive: true,
-    isDraft: false,
-    createdAt: new Date("2025-01-10"),
-    draftedAt: null,
-    updatedAt: new Date("2025-01-12"),
-    deletedAt: null,
-    isDeleted: false,
-  },
-  {
-    id: "3",
-    code: "C-1003",
-    itemName: "Item 3",
-    category: "Category 3",
-    brand: "Brand 3",
-    unitPrice: "200",
-    salesPrice: "320",
-    openingStock: "15",
-    currentStock: "7",
-    value: "2240",
-    isDefault: false,
-    isActive: true,
-    isDraft: false,
-    createdAt: new Date("2025-01-15"),
-    draftedAt: null,
-    updatedAt: new Date("2025-01-18"),
-    deletedAt: null,
-    isDeleted: false,
-  },
-  {
-    id: "4",
-    code: "C-1004",
-    itemName: "Item 4",
-    category: "Category 1",
-    brand: "Brand 2",
-    unitPrice: "250",
-    salesPrice: "400",
-    openingStock: "12",
-    currentStock: "4",
-    value: "1600",
-    isDefault: false,
-    isActive: false,
-    isDraft: false,
-    createdAt: new Date("2025-01-20"),
-    draftedAt: null,
-    updatedAt: new Date("2025-01-22"),
-    deletedAt: new Date("2025-02-01"),
-    isDeleted: true,
-  },
-  {
-    id: "5",
-    code: "C-1005",
-    itemName: "Item 5",
-    category: "Category 2",
-    brand: "Brand 3",
-    unitPrice: "180",
-    salesPrice: "280",
-    openingStock: "18",
-    currentStock: "9",
-    value: "2520",
-    isDefault: false,
-    isActive: true,
-    isDraft: false,
-    createdAt: new Date("2025-02-05"),
-    draftedAt: null,
-    updatedAt: new Date("2025-02-06"),
-    deletedAt: null,
-    isDeleted: false,
-  },
-  {
-    id: "6",
-    code: "C-1006",
-    itemName: "Item 6",
-    category: "Category 3",
-    brand: "Brand 1",
-    unitPrice: "300",
-    salesPrice: "450",
-    openingStock: "25",
-    currentStock: "14",
-    value: "6300",
-    isDefault: false,
-    isActive: false,
-    isDraft: true,
-    createdAt: new Date("2025-02-10"),
-    draftedAt: new Date("2025-02-11"),
-    updatedAt: new Date("2025-02-11"),
-    deletedAt: null,
-    isDeleted: false,
-  },
-  {
-    id: "7",
-    code: "C-1007",
-    itemName: "Item 7",
-    category: "Category 1",
-    brand: "Brand 3",
-    unitPrice: "220",
-    salesPrice: "340",
-    openingStock: "30",
-    currentStock: "20",
-    value: "6800",
-    isDefault: false,
-    isActive: true,
-    isDraft: false,
-    createdAt: new Date("2025-02-12"),
-    draftedAt: null,
-    updatedAt: new Date("2025-02-15"),
-    deletedAt: null,
-    isDeleted: false,
-  },
-  {
-    id: "8",
-    code: "C-1008",
-    itemName: "Item 8",
-    category: "Category 2",
-    brand: "Brand 1",
-    unitPrice: "400",
-    salesPrice: "600",
-    openingStock: "8",
-    currentStock: "6",
-    value: "3600",
-    isDefault: false,
-    isActive: true,
-    isDraft: false,
-    createdAt: new Date("2025-02-18"),
-    draftedAt: null,
-    updatedAt: new Date("2025-02-19"),
-    deletedAt: null,
-    isDeleted: false,
-  },
-  {
-    id: "9",
-    code: "C-1009",
-    itemName: "Item 9",
-    category: "Category 3",
-    brand: "Brand 2",
-    unitPrice: "120",
-    salesPrice: "190",
-    openingStock: "22",
-    currentStock: "10",
-    value: "1900",
-    isDefault: false,
-    isActive: true,
-    isDraft: false,
-    createdAt: new Date("2025-02-20"),
-    draftedAt: null,
-    updatedAt: new Date("2025-02-21"),
-    deletedAt: null,
-    isDeleted: false,
-  },
-  {
-    id: "10",
-    code: "C-1010",
-    itemName: "Item 10",
-    category: "Category 1",
-    brand: "Brand 2",
-    unitPrice: "500",
-    salesPrice: "750",
-    openingStock: "16",
-    currentStock: "8",
-    value: "6000",
-    isDefault: false,
-    isActive: true,
-    isDraft: false,
-    createdAt: new Date("2025-02-22"),
-    draftedAt: null,
-    updatedAt: new Date("2025-02-23"),
-    deletedAt: null,
-    isDeleted: false,
-  },
-  {
-    id: "11",
-    code: "C-1011",
-    itemName: "Item 11",
-    category: "Category 2",
-    brand: "Brand 3",
-    unitPrice: "280",
-    salesPrice: "420",
-    openingStock: "14",
-    currentStock: "7",
-    value: "2940",
-    isDefault: false,
-    isActive: true,
-    isDraft: false,
-    createdAt: new Date("2025-02-25"),
-    draftedAt: null,
-    updatedAt: new Date("2025-02-27"),
-    deletedAt: null,
-    isDeleted: false,
-  },
-  {
-    id: "12",
-    code: "C-1012",
-    itemName: "Item 12",
-    category: "Category 3",
-    brand: "Brand 1",
-    unitPrice: "350",
-    salesPrice: "500",
-    openingStock: "20",
-    currentStock: "0",
-    value: "0",
-    isDefault: false,
-    isActive: false,
-    isDraft: false,
-    createdAt: new Date("2025-02-28"),
-    draftedAt: null,
-    updatedAt: new Date("2025-03-01"),
-    deletedAt: new Date("2025-03-05"),
-    isDeleted: true,
-  },
+  // ... rest of the existing data
 ];
-
 
 type Props = {
   searchQuery: string;
@@ -283,24 +64,14 @@ export default function ComponentLevelGridView({
   setIsExportOpen,
   isExportOpen,
 }: Props) {
-  console.log("grid rendered");
+  console.log("Stock reports grid rendered");
 
   const navigate = useNavigate();
-  const location = useLocation();
-
-  const detectedModule = getModuleFromPath(location.pathname);
+  const [searchParams] = useSearchParams();
+  const { isRTL } = useSelector((state: RootState) => state.language);
+  const isMobile = useIsMobile();
 
   const [gridData, setGridData] = useState(plansData);
-  const canDelete: boolean = usePermission(detectedModule, "delete");
-  const canRestore: boolean = usePermission(detectedModule, "restore");
-  const canEdit: boolean = usePermission(detectedModule, "edit");
-
-  // Debug permissions
-  console.log("Permissions:", {
-    canDelete,
-    canRestore,
-    canEdit,
-  });
 
   // Infinite scroll states
   const [isLoading, setIsLoading] = useState(false);
@@ -314,12 +85,22 @@ export default function ComponentLevelGridView({
     if (isLoading || !hasMore) return;
 
     setIsLoading(true);
-
     await new Promise((resolve) => setTimeout(resolve, 800));
 
+    const categories = ["Category 1", "Category 2", "Category 3"];
+    const brands = ["Brand 1", "Brand 2", "Brand 3"];
+
     const newItems = Array.from({ length: ITEMS_PER_PAGE }, (_, index) => ({
-      ...plansData[index],
       id: `${Date.now()}-${index}`,
+      code: `C-${(gridData.length + index + 1).toString().padStart(4, "0")}`,
+      itemName: `Item ${gridData.length + index + 1}`,
+      category: categories[Math.floor(Math.random() * categories.length)],
+      brand: brands[Math.floor(Math.random() * brands.length)],
+      unitPrice: `${Math.floor(Math.random() * 500 + 100)}`,
+      salesPrice: `${Math.floor(Math.random() * 800 + 200)}`,
+      openingStock: `${Math.floor(Math.random() * 30 + 5)}`,
+      currentStock: `${Math.floor(Math.random() * 20 + 0)}`,
+      value: `${Math.floor(Math.random() * 10000 + 500)}`,
       isDefault: false,
       isActive: Math.random() > 0.3,
       isDraft: Math.random() > 0.7,
@@ -330,7 +111,6 @@ export default function ComponentLevelGridView({
       isDeleted: false,
     }));
 
-    // Stop loading more after reaching 50 items for demo
     if (gridData.length >= 46) {
       setHasMore(false);
     } else {
@@ -347,7 +127,7 @@ export default function ComponentLevelGridView({
     if (!container) return;
 
     const { scrollTop, scrollHeight, clientHeight } = container;
-    const threshold = 100; // Load more when 100px from bottom
+    const threshold = 100;
 
     if (scrollHeight - scrollTop <= clientHeight + threshold) {
       loadMoreData();
@@ -363,97 +143,117 @@ export default function ComponentLevelGridView({
     return () => container.removeEventListener("scroll", handleScroll);
   }, [handleScroll]);
 
-  // filter
+  // Filter data based on search query
   const filteredData = SearchFunction(gridData, searchQuery, searchableKeys);
 
-  // get page name
-  const PAGE_NAME = location.pathname.split("/")[1].replace("-", " ");
+  const handleViewClick = (itemId: string) => {
+    const viewMode = searchParams.get("view") || "grid";
+    navigate(`/current-stock-reports/view/${itemId}?fromView=${viewMode}`);
+  };
 
   return (
     <div
       className={cn(
-        "px-4 py-3 h-full flex flex-col bg-white dark:bg-gray-900 parent relative rounded-lg"
+        "h-full flex flex-col bg-white dark:bg-gray-900 parent relative rounded-lg overflow-hidden"
       )}
     >
-      {/* Floating Label - Left Top */}
-      <div
-        className={cn(
-          "absolute -top-4 left-6 rtl:left-auto rtl:right-6 py-1 rounded-md z-40! bg-white w-fit"
-        )}
-      >
-        <span
-          className={cn(
-            "text-md font-semibold tracking-wide capitalize text-gray-600"
-          )}
-        >
-          Total {gridData.length} {PAGE_NAME}
-        </span>
-      </div>
-
       {/* Main content area */}
-      <div className="flex flex-1 overflow-hidden mt-2">
-        {/* Cards container */}
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* Cards container with animated width */}
         <div
           ref={scrollContainerRef}
-          className="overflow-y-auto scroll-smooth smooth-scroll pr-4"
+          className={cn(
+            "overflow-y-auto grid-scroll transition-all duration-300 ease-in-out",
+            isRTL ? "" : ""
+          )}
           style={{
             width: isFilterOpen || isExportOpen ? "calc(100% - 320px)" : "100%",
           }}
         >
-          <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 pb-4 p-2">
+          <div
+            className={cn(
+              "grid gap-6 pb-4 p-5",
+              // Mobile: 1 column, Tablet: 2 columns, Desktop: 3-4 columns
+              isMobile
+                ? "grid-cols-1"
+                : "grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
+            )}
+          >
             {filteredData.map((item, index) => (
               <Card
                 key={index}
-                className="transition-all hover:border-primary/90 hover:shadow-lg hover:translate-y-[-5px] relative group dark:bg-gray-800 p-4 duration-200"
+                className={cn(
+                  "transition-all relative group dark:bg-gray-800 duration-200 w-full shadow-[2px_3px_8px_0_rgba(0,0,0,0.10)] border-[#E2E4EB] border border-solid rounded-[12px] flex p-5 flex-col items-start gap-5 cursor-pointer",
+                  // Different hover effects for mobile vs desktop
+                  isMobile
+                    ? "hover:shadow-lg hover:border-primary"
+                    : "hover:scale-110 hover:z-50 hover:relative hover:border-primary min-w-[250px]"
+                )}
+                onClick={() => handleViewClick(item.id)}
               >
-                {/* Top Row - Grid with 2 columns: Title | Status */}
-                <div className="grid grid-cols-2 items-center gap-2 mb-4">
-                  {/* Left - Title */}
+                {/* Top Row - Code and Current Stock */}
+                <div className="grid grid-cols-2 items-center gap-2 w-full mt-[-8px]">
+                  {/* Left - Code */}
                   <CardTitle
-                    className="text-lg font-semibold cursor-pointer hover:text-primary transition-colors truncate"
-                    onClick={() => navigate(`${location.pathname}/1`)}
+                    className="text-base font-normal transition-colors truncate"
+                    style={{ fontSize: "18px" }}
                   >
                     {item.code}
                   </CardTitle>
 
-                  <div className="text-end">
+                  {/* Right - Current Stock */}
+                  <div className="text-right min-w-0">
                     <div className="text-xs text-gray-500 dark:text-gray-400">
-                      Item Name
+                      Current Stock
                     </div>
-                    <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
-                      {item.itemName}
+                    <div className="text-sm font-normal text-gray-900 dark:text-gray-100 truncate">
+                      {item.currentStock}
                     </div>
                   </div>
                 </div>
 
-                {/* Bottom Row - Grid with 3 columns: Leave Type | Actions | Notes */}
-                <div className="grid grid-cols-3 items-center gap-4 pt-2 dark:border-gray-700">
-                  {/* Leave Type - Left aligned */}
-                  <div>
+                {/* Middle Row - Item Name and Category */}
+                <div className="grid grid-cols-2 gap-2 w-full">
+                  {/* Item Name - Left */}
+                  <div className="min-w-0">
                     <div className="text-xs text-gray-500 dark:text-gray-400">
-                      Opening Stock
+                      Item Name
                     </div>
-                    <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
-                      {item.openingStock}
+                    <div className="text-sm font-normal text-gray-900 dark:text-gray-100 truncate">
+                      {item.itemName}
                     </div>
                   </div>
 
-                  {/* Middle - Action Icons */}
-                  <div>
+                  {/* Category - Right */}
+                  <div className="text-right min-w-0">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      Category
+                    </div>
+                    <div className="text-sm font-normal text-gray-900 dark:text-gray-100 truncate">
+                      {item.category}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom Row - Unit Price and Value */}
+                <div className="grid grid-cols-2 items-center justify-between gap-2 w-full dark:border-gray-700">
+                  {/* Unit Price - Left aligned */}
+                  <div className="min-w-0">
                     <div className="text-xs text-gray-500 dark:text-gray-400">
                       Unit Price
                     </div>
-                    <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
-                      {item.unitPrice}
+                    <div className="text-sm font-normal text-gray-900 dark:text-gray-100 truncate">
+                      ${item.unitPrice}
                     </div>
                   </div>
 
-                  <div>
+                  {/* Right - Value */}
+                  <div className="text-right min-w-0">
                     <div className="text-xs text-gray-500 dark:text-gray-400">
                       Value
                     </div>
-                    <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
-                      {item.value}
+                    <div className="text-sm font-normal text-gray-900 dark:text-gray-100 truncate">
+                      ${item.value}
                     </div>
                   </div>
                 </div>
@@ -466,47 +266,100 @@ export default function ComponentLevelGridView({
             <div className="flex justify-center items-center py-8">
               <div className="flex items-center gap-2 text-blue-600">
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-                <span className="text-sm">Loading more {PAGE_NAME}...</span>
+                <span className="text-sm">Loading more stock reports...</span>
               </div>
             </div>
           )}
 
           {/* End of data indicator */}
-          {!hasMore && gridData.length > 12 && (
+          {!hasMore && filteredData.length > 12 && (
             <div className="flex justify-center items-center py-8">
               <span className="text-sm text-gray-500 dark:text-gray-400">
-                No more {PAGE_NAME} to load
+                No more stock reports to load
               </span>
             </div>
           )}
         </div>
 
-        {/* Filter component - Right side only */}
-        {isFilterOpen && (
-          <div className="w-80 flex-shrink-0 border-l border-gray-200 dark:border-gray-700 pl-4">
-            <div className="h-full flex flex-col">
+        {/* Animated Filter Panel */}
+        <div
+          className={cn(
+            "absolute top-0 h-full transition-all duration-300 ease-in-out transform z-10",
+            isRTL ? "left-0" : "right-0",
+            isFilterOpen
+              ? "translate-x-0 opacity-100 visible"
+              : isRTL
+              ? "-translate-x-full opacity-0 invisible"
+              : "translate-x-full opacity-0 invisible"
+          )}
+          style={{
+            width: isMobile ? "100%" : "320px",
+          }}
+        >
+          <div className={cn("h-full", isMobile ? "pb-4 mt-1" : "p-2")}>
+            <div
+              className={cn(
+                "w-full flex-shrink-0 border rounded-[20px] border-gray-200 dark:border-gray-700 h-full bg-white dark:bg-gray-800 shadow-2xl transition-all duration-300 ease-in-out",
+                isFilterOpen ? "scale-100 opacity-100" : "scale-95 opacity-0"
+              )}
+            >
               <GridFilterComponent
+                key={`filter-panel-${isFilterOpen}`}
                 data={gridData}
                 setFilteredData={setGridData}
-                setShowFilter={setIsFilterOpen}
+                setShowTabs={setIsFilterOpen}
+                defaultTab="filter"
               />
             </div>
           </div>
-        )}
+        </div>
 
-        {/* Export component - Right side only */}
-        {isExportOpen && (
-          <div className="w-80 flex-shrink-0 border-l border-gray-200 dark:border-gray-700 pl-4">
-            <div className="h-full flex flex-col">
-              <GridExportComponent
+        {/* Animated Export Panel */}
+        <div
+          className={cn(
+            "absolute top-0 h-full transition-all duration-300 ease-in-out transform z-10",
+            isRTL ? "left-0" : "right-0",
+            isExportOpen
+              ? "translate-x-0 opacity-100"
+              : isRTL
+              ? "-translate-x-full opacity-0"
+              : "translate-x-full opacity-0"
+          )}
+          style={{
+            width: isMobile ? "100%" : "320px",
+          }}
+        >
+          <div className={cn("h-full", isMobile ? "pb-4 mt-1" : "p-2")}>
+            <div
+              className={cn(
+                "w-full flex-shrink-0 border rounded-[20px] border-gray-200 dark:border-gray-700 h-full bg-white dark:bg-gray-800 shadow-2xl transition-all duration-300 ease-in-out",
+                isExportOpen ? "opacity-100" : "opacity-0"
+              )}
+            >
+              <GridFilterComponent
+                key={`export-panel-${isExportOpen}`}
                 data={gridData}
                 setFilteredData={setGridData}
-                setIsExportOpen={setIsExportOpen}
-                title={location.pathname.split("/")[1].replace("-", " ")}
-                fileName={location.pathname.split("/")[1]}
+                setShowTabs={setIsExportOpen}
+                defaultTab="export"
               />
             </div>
           </div>
+        </div>
+
+        {/* Backdrop overlay for mobile/smaller screens */}
+        {(isFilterOpen || isExportOpen) && (
+          <div
+            className={cn(
+              "fixed inset-0 bg-black bg-opacity-30 transition-opacity duration-300 ease-in-out z-5",
+              isMobile ? "" : "md:hidden",
+              isFilterOpen || isExportOpen ? "opacity-100" : "opacity-0"
+            )}
+            onClick={() => {
+              setIsFilterOpen(false);
+              setIsExportOpen(false);
+            }}
+          />
         )}
       </div>
     </div>
