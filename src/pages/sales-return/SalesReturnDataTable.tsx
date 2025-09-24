@@ -1,15 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import FixedColumnDataTable from "@/components/common/FixedColumnDataTable";
+import FixedColumnDataTable from "@/components/common/country-page-table/FixedColumnDataTable";
 
 const mockInvoices = [
   {
     id: "1",
     documentNumber: "DOC001",
-    salesInvoiceNumber: "SI-2024-001",
-    poNumber: "PO-1001",
-    poDate: "2024-01-10",
-    customer: "John Doe",
-    vatNumber: "VAT123456789",
+    invoiceNumber: "INV-2024-001",
+    invoiceDate: "2024-01-15",
+    customer: "ABC Trading LLC",
+    trnNumber: "TRN-1234567890",
     paymentMode: "Bank Transfer",
     dueDays: 30,
     paymentDate: "2024-02-14",
@@ -17,9 +16,7 @@ const mockInvoices = [
     state: "California",
     city: "Los Angeles",
     remarks: "Urgent delivery required",
-    salesman: "Alice Smith",
-    isActive: true,
-    isDraft: false,
+    salesman: "John Smith",
     createdAt: "2024-01-15",
     updatedAt: "2024-01-20",
     isDeleted: false,
@@ -28,11 +25,10 @@ const mockInvoices = [
   {
     id: "2",
     documentNumber: "DOC002",
-    salesInvoiceNumber: "SI-2024-002",
-    poNumber: "PO-1002",
-    poDate: "2024-01-11",
-    customer: "Jane Smith",
-    vatNumber: "VAT987654321",
+    invoiceNumber: "INV-2024-002",
+    invoiceDate: "2024-01-16",
+    customer: "Global Exports",
+    trnNumber: "TRN-2345678901",
     paymentMode: "Credit Card",
     dueDays: 15,
     paymentDate: "2024-01-31",
@@ -40,9 +36,7 @@ const mockInvoices = [
     state: "New York",
     city: "New York",
     remarks: "Standard delivery",
-    salesman: "Bob Johnson",
-    isActive: true,
-    isDraft: false,
+    salesman: "Sarah Johnson",
     createdAt: "2024-01-16",
     updatedAt: "2024-01-21",
     isDeleted: false,
@@ -51,11 +45,10 @@ const mockInvoices = [
   {
     id: "3",
     documentNumber: "DOC003",
-    salesInvoiceNumber: "SI-2024-003",
-    poNumber: "PO-1003",
-    poDate: "2024-01-12",
-    customer: "Acme Corp.",
-    vatNumber: "VAT1122334455",
+    invoiceNumber: "INV-2024-003",
+    invoiceDate: "2024-01-17",
+    customer: "Sunrise Mart",
+    trnNumber: "TRN-3456789012",
     paymentMode: "Cash",
     dueDays: 7,
     paymentDate: "2024-01-24",
@@ -63,9 +56,7 @@ const mockInvoices = [
     state: "Florida",
     city: "Miami",
     remarks: "Daily fresh delivery",
-    salesman: "Charlie Lee",
-    isActive: true,
-    isDraft: false,
+    salesman: "Michael Brown",
     createdAt: "2024-01-17",
     updatedAt: "2024-01-22",
     isDeleted: false,
@@ -74,11 +65,10 @@ const mockInvoices = [
   {
     id: "4",
     documentNumber: "DOC004",
-    salesInvoiceNumber: "SI-2024-004",
-    poNumber: "PO-1004",
-    poDate: "2024-01-13",
-    customer: "Beta LLC",
-    vatNumber: "VAT9988776655",
+    invoiceNumber: "INV-2024-004",
+    invoiceDate: "2024-01-18",
+    customer: "Blue Ocean Foods",
+    trnNumber: "TRN-4567890123",
     paymentMode: "Check",
     dueDays: 45,
     paymentDate: "2024-03-04",
@@ -86,9 +76,7 @@ const mockInvoices = [
     state: "Texas",
     city: "Houston",
     remarks: "Temperature controlled delivery",
-    salesman: "Diana Prince",
-    isActive: true,
-    isDraft: false,
+    salesman: "Emily Davis",
     createdAt: "2024-01-18",
     updatedAt: "2024-01-23",
     isDeleted: false,
@@ -97,11 +85,10 @@ const mockInvoices = [
   {
     id: "5",
     documentNumber: "DOC005",
-    salesInvoiceNumber: "SI-2024-005",
-    poNumber: "PO-1005",
-    poDate: "2024-01-14",
-    customer: "Gamma Foods",
-    vatNumber: "VAT123123123",
+    invoiceNumber: "INV-2024-005",
+    invoiceDate: "2024-01-19",
+    customer: "Prime Retailers",
+    trnNumber: "TRN-5678901234",
     paymentMode: "ACH Transfer",
     dueDays: 21,
     paymentDate: "2024-02-09",
@@ -109,287 +96,9 @@ const mockInvoices = [
     state: "Washington",
     city: "Seattle",
     remarks: "Live delivery required",
-    salesman: "Eve Adams",
-    isActive: true,
-    isDraft: false,
+    salesman: "John Smith",
     createdAt: "2024-01-19",
     updatedAt: "2024-01-24",
-    isDeleted: false,
-    status: "active",
-  },
-  {
-    id: "6",
-    documentNumber: "DOC006",
-    salesInvoiceNumber: "SI-2024-006",
-    poNumber: "PO-1006",
-    poDate: "2024-01-15",
-    customer: "Delta Inc.",
-    vatNumber: "VAT456456456",
-    paymentMode: "Net Banking",
-    dueDays: 14,
-    paymentDate: "2024-02-03",
-    country: "United States",
-    state: "Wisconsin",
-    city: "Milwaukee",
-    remarks: "Refrigerated transport",
-    salesman: "Alice Smith",
-    isActive: true,
-    isDraft: false,
-    createdAt: "2024-01-20",
-    updatedAt: "2024-01-25",
-    isDeleted: false,
-    status: "active",
-  },
-  {
-    id: "7",
-    documentNumber: "DOC007",
-    salesInvoiceNumber: "SI-2024-007",
-    poNumber: "PO-1007",
-    poDate: "2024-01-16",
-    customer: "Epsilon Ltd.",
-    vatNumber: "VAT789789789",
-    paymentMode: "PayPal",
-    dueDays: 10,
-    paymentDate: "2024-01-31",
-    country: "United States",
-    state: "Oregon",
-    city: "Portland",
-    remarks: "Organic certification required",
-    salesman: "Bob Johnson",
-    isActive: true,
-    isDraft: true,
-    createdAt: "2024-01-21",
-    updatedAt: "2024-01-26",
-    isDeleted: false,
-    status: "draft",
-  },
-  {
-    id: "8",
-    documentNumber: "DOC008",
-    salesInvoiceNumber: "SI-2024-008",
-    poNumber: "PO-1008",
-    poDate: "2024-01-17",
-    customer: "Zeta Group",
-    vatNumber: "VAT111222333",
-    paymentMode: "Wire Transfer",
-    dueDays: 60,
-    paymentDate: "2024-03-23",
-    country: "United States",
-    state: "Louisiana",
-    city: "New Orleans",
-    remarks: "Bulk order - quarterly supply",
-    salesman: "Diana Prince",
-    isActive: true,
-    isDraft: false,
-    createdAt: "2024-01-22",
-    updatedAt: "2024-01-27",
-    isDeleted: false,
-    status: "active",
-  },
-  {
-    id: "9",
-    documentNumber: "DOC009",
-    salesInvoiceNumber: "SI-2024-009",
-    poNumber: "PO-1009",
-    poDate: "2024-01-18",
-    customer: "Eta Enterprises",
-    vatNumber: "VAT222333444",
-    paymentMode: "Credit Line",
-    dueDays: 30,
-    paymentDate: "2024-02-22",
-    country: "United States",
-    state: "Georgia",
-    city: "Atlanta",
-    remarks: "Weekly delivery schedule",
-    salesman: "Eve Adams",
-    isActive: true,
-    isDraft: false,
-    createdAt: "2024-01-23",
-    updatedAt: "2024-01-28",
-    isDeleted: false,
-    status: "active",
-  },
-  {
-    id: "10",
-    documentNumber: "DOC010",
-    salesInvoiceNumber: "SI-2024-010",
-    poNumber: "PO-1010",
-    poDate: "2024-01-19",
-    customer: "Theta Foods",
-    vatNumber: "VAT555666777",
-    paymentMode: "Cash on Delivery",
-    dueDays: 0,
-    paymentDate: "2024-01-24",
-    country: "United States",
-    state: "Illinois",
-    city: "Chicago",
-    remarks: "Installation included",
-    salesman: "Alice Smith",
-    isActive: true,
-    isDraft: false,
-    createdAt: "2024-01-24",
-    updatedAt: "2024-01-29",
-    isDeleted: false,
-    status: "active",
-  },
-  {
-    id: "11",
-    documentNumber: "DOC011",
-    salesInvoiceNumber: "SI-2024-011",
-    poNumber: "PO-1011",
-    poDate: "2024-01-20",
-    customer: "Acme Corp.",
-    vatNumber: "VAT888999000",
-    paymentMode: "Debit Card",
-    dueDays: 20,
-    paymentDate: "2024-02-14",
-    country: "United States",
-    state: "Colorado",
-    city: "Denver",
-    remarks: "Temperature sensitive items",
-    salesman: "Bob Johnson",
-    isActive: true,
-    isDraft: false,
-    createdAt: "2024-01-25",
-    updatedAt: "2024-01-30",
-    isDeleted: false,
-    status: "active",
-  },
-  {
-    id: "12",
-    documentNumber: "DOC012",
-    salesInvoiceNumber: "SI-2024-012",
-    poNumber: "PO-1012",
-    poDate: "2024-01-21",
-    customer: "Beta LLC",
-    vatNumber: "VAT123456789",
-    paymentMode: "Electronic Payment",
-    dueDays: 25,
-    paymentDate: "2024-02-20",
-    country: "United States",
-    state: "Minnesota",
-    city: "Minneapolis",
-    remarks: "Frozen storage required",
-    salesman: "Charlie Lee",
-    isActive: true,
-    isDraft: false,
-    createdAt: "2024-01-26",
-    updatedAt: "2024-01-31",
-    isDeleted: false,
-    status: "active",
-  },
-  {
-    id: "13",
-    documentNumber: "DOC013",
-    salesInvoiceNumber: "SI-2024-013",
-    poNumber: "PO-1013",
-    poDate: "2024-01-22",
-    customer: "Gamma Foods",
-    vatNumber: "VAT987654321",
-    paymentMode: "Letter of Credit",
-    dueDays: 90,
-    paymentDate: "2024-04-26",
-    country: "United States",
-    state: "Nevada",
-    city: "Las Vegas",
-    remarks: "Import documentation pending",
-    salesman: "Diana Prince",
-    isActive: true,
-    isDraft: true,
-    createdAt: "2024-01-27",
-    updatedAt: "2024-02-01",
-    isDeleted: false,
-    status: "draft",
-  },
-  {
-    id: "14",
-    documentNumber: "DOC014",
-    salesInvoiceNumber: "SI-2024-014",
-    poNumber: "PO-1014",
-    poDate: "2024-01-23",
-    customer: "Eta Enterprises",
-    vatNumber: "VAT111222333",
-    paymentMode: "Mobile Payment",
-    dueDays: 15,
-    paymentDate: "2024-02-12",
-    country: "United States",
-    state: "Arizona",
-    city: "Phoenix",
-    remarks: "Eco-friendly products only",
-    salesman: "Eve Adams",
-    isActive: true,
-    isDraft: false,
-    createdAt: "2024-01-28",
-    updatedAt: "2024-02-02",
-    isDeleted: false,
-    status: "active",
-  },
-  {
-    id: "15",
-    documentNumber: "DOC015",
-    salesInvoiceNumber: "SI-2024-015",
-    poNumber: "PO-1015",
-    poDate: "2024-01-24",
-    customer: "Acme Corp.",
-    vatNumber: "VAT456456456",
-    paymentMode: "Installment Plan",
-    dueDays: 120,
-    paymentDate: "2024-05-28",
-    country: "United States",
-    state: "North Carolina",
-    city: "Charlotte",
-    remarks: "Custom design requirements",
-    salesman: "Alice Smith",
-    isActive: true,
-    isDraft: false,
-    createdAt: "2024-01-29",
-    updatedAt: "2024-02-03",
-    isDeleted: false,
-    status: "active",
-  },
-  {
-    id: "16",
-    documentNumber: "DOC016",
-    salesInvoiceNumber: "SI-2024-016",
-    poNumber: "PO-1016",
-    poDate: "2024-01-25",
-    customer: "Beta LLC",
-    vatNumber: "VAT789789789",
-    paymentMode: "Crypto Payment",
-    dueDays: 30,
-    paymentDate: "2024-03-01",
-    country: "United States",
-    state: "Massachusetts",
-    city: "Boston",
-    remarks: "Software licensing included",
-    salesman: "Bob Johnson",
-    isActive: true,
-    isDraft: false,
-    createdAt: "2024-01-30",
-    updatedAt: "2024-02-04",
-    isDeleted: false,
-    status: "active",
-  },
-  {
-    id: "17",
-    documentNumber: "DOC017",
-    salesInvoiceNumber: "SI-2024-017",
-    poNumber: "PO-1017",
-    poDate: "2024-01-26",
-    customer: "Eta Enterprises",
-    vatNumber: "VAT123123123",
-    paymentMode: "Gift Card Credit",
-    dueDays: 45,
-    paymentDate: "2024-03-17",
-    country: "United States",
-    state: "Tennessee",
-    city: "Nashville",
-    remarks: "Custom embroidery required",
-    salesman: "Diana Prince",
-    isActive: true,
-    isDraft: false,
-    createdAt: "2024-01-31",
-    updatedAt: "2024-02-05",
     isDeleted: false,
     status: "active",
   },
@@ -399,15 +108,31 @@ export default function InvoicesDataTable({
   viewMode,
   setViewMode,
   dataTableFilter,
+  setShowExport,
+  showExport,
+  setShowFilter,
+  showFilter,
+  setShowVisibility,
+  showVisibility,
+  isFilterOpen,
+  setIsFilterOpen,
 }: {
   viewMode: string;
   setViewMode: (viewMode: string) => void;
   dataTableFilter: any;
+  setShowExport: (showExport: boolean) => void;
+  showExport: boolean;
+  setShowFilter: (showFilter: boolean) => void;
+  showFilter: boolean;
+  setShowVisibility: (showVisibility: boolean) => void;
+  showVisibility: boolean;
+  isFilterOpen: boolean;
+  setIsFilterOpen: (isFilterOpen: boolean) => void;
 }) {
   const componentColumns = [
     {
       accessorKey: "documentNumber",
-      title: "Document Number",
+      title: "Document",
       options: [
         "DOC001",
         "DOC002",
@@ -436,19 +161,14 @@ export default function InvoicesDataTable({
       minSize: 100,
     },
     {
-      accessorKey: "salesInvoiceNumber",
-      title: "Sales Invoice Number",
+      accessorKey: "invoiceNumber",
+      title: "Invoice Number",
       options: [
-        "SI-2024-001",
-        "SI-2024-002",
-        "SI-2024-003",
-        "SI-2024-004",
-        "SI-2024-005",
-        "SI-2024-006",
-        "SI-2024-007",
-        "SI-2024-008",
-        "SI-2024-009",
-        "SI-2024-010",
+        "INV-2024-001",
+        "INV-2024-002",
+        "INV-2024-003",
+        "INV-2024-004",
+        "INV-2024-005",
       ],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
@@ -459,45 +179,15 @@ export default function InvoicesDataTable({
       },
       sortingFn: (row1: any, row2: any) => {
         return row1
-          .getValue("salesInvoiceNumber")
-          .localeCompare(row2.getValue("salesInvoiceNumber"));
+          .getValue("invoiceNumber")
+          .localeCompare(row2.getValue("invoiceNumber"));
       },
       size: 130,
       minSize: 110,
     },
     {
-      accessorKey: "poNumber",
-      title: "P.O Number",
-      options: [
-        "PO-1001",
-        "PO-1002",
-        "PO-1003",
-        "PO-1004",
-        "PO-1005",
-        "PO-1006",
-        "PO-1007",
-        "PO-1008",
-        "PO-1009",
-        "PO-1010",
-      ],
-      filterFn: (row: any, columnId: any, filterValue: any) => {
-        if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as string;
-        return filterValue.some((val: string) =>
-          cellValue.toLowerCase().includes(val.toLowerCase())
-        );
-      },
-      sortingFn: (row1: any, row2: any) => {
-        return row1
-          .getValue("poNumber")
-          .localeCompare(row2.getValue("poNumber"));
-      },
-      size: 120,
-      minSize: 100,
-    },
-    {
-      accessorKey: "poDate",
-      title: "P.O Date",
+      accessorKey: "invoiceDate",
+      title: "Invoice Date",
       options: [],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
@@ -511,8 +201,8 @@ export default function InvoicesDataTable({
       },
       sortingFn: (row1: any, row2: any) => {
         return (
-          new Date(row1.getValue("poDate")).getTime() -
-          new Date(row2.getValue("poDate")).getTime()
+          new Date(row1.getValue("invoiceDate")).getTime() -
+          new Date(row2.getValue("invoiceDate")).getTime()
         );
       },
       size: 100,
@@ -522,16 +212,11 @@ export default function InvoicesDataTable({
       accessorKey: "customer",
       title: "Customer",
       options: [
-        "John Doe",
-        "Jane Smith",
-        "Acme Corp.",
-        "Beta LLC",
-        "Gamma Foods",
-        "Delta Inc.",
-        "Epsilon Ltd.",
-        "Zeta Group",
-        "Eta Enterprises",
-        "Theta Foods",
+        "ABC Trading LLC",
+        "Global Exports",
+        "Sunrise Mart",
+        "Blue Ocean Foods",
+        "Prime Retailers",
       ],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
@@ -549,21 +234,23 @@ export default function InvoicesDataTable({
       minSize: 150,
     },
     {
-      accessorKey: "vatNumber",
-      title: "VAT Number",
+      accessorKey: "trnNumber",
+      title: "TRN Number",
       options: [],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
         const cellValue = row.getValue(columnId) as string;
-        if (Array.isArray(filterValue)) {
-          return filterValue.some((val: string) =>
-            cellValue.toLowerCase().includes(val.toLowerCase())
-          );
-        }
-        return cellValue.toLowerCase().includes(filterValue.toLowerCase());
+        return (Array.isArray(filterValue) ? filterValue : [filterValue]).some(
+          (val: string) => cellValue.toLowerCase().includes(val.toLowerCase())
+        );
       },
-      size: 130,
-      minSize: 110,
+      sortingFn: (row1: any, row2: any) => {
+        return row1
+          .getValue("trnNumber")
+          .localeCompare(row2.getValue("trnNumber"));
+      },
+      size: 160,
+      minSize: 140,
     },
     {
       accessorKey: "paymentMode",
@@ -644,6 +331,25 @@ export default function InvoicesDataTable({
       },
       size: 120,
       minSize: 100,
+    },
+    {
+      accessorKey: "salesman",
+      title: "Salesman",
+      options: ["John Smith", "Sarah Johnson", "Michael Brown", "Emily Davis"],
+      filterFn: (row: any, columnId: any, filterValue: any) => {
+        if (!filterValue || filterValue.length === 0) return true;
+        const cellValue = row.getValue(columnId) as string;
+        return (Array.isArray(filterValue) ? filterValue : [filterValue]).some(
+          (val: string) => cellValue.toLowerCase().includes(val.toLowerCase())
+        );
+      },
+      sortingFn: (row1: any, row2: any) => {
+        return row1
+          .getValue("salesman")
+          .localeCompare(row2.getValue("salesman"));
+      },
+      size: 140,
+      minSize: 120,
     },
     {
       accessorKey: "remarks",
@@ -749,24 +455,7 @@ export default function InvoicesDataTable({
       size: 120,
       minSize: 100,
     },
-    {
-      accessorKey: "status",
-      title: "Status",
-      options: ["active", "inactive", "draft"],
-      filterFn: (row: any, columnId: any, filterValue: any) => {
-        if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as string;
-        return filterValue.includes(cellValue);
-      },
-      sortingFn: (row1: any, row2: any) => {
-        return row1.getValue("status").localeCompare(row2.getValue("status"));
-      },
-      size: 100,
-      minSize: 80,
-      meta: {
-        exportLabel: "status",
-      },
-    },
+
     {
       accessorKey: "createdAt",
       title: "Created",
@@ -839,7 +528,17 @@ export default function InvoicesDataTable({
       componentColumns={componentColumns}
       viewMode={viewMode}
       setViewMode={setViewMode}
-      fixedColumns={[]}
+      fixedColumns={["documentNumber"]}
+      searchQuery={""}
+      pathName={""}
+      setShowExport={setShowExport}
+      showExport={showExport}
+      setShowFilter={setShowFilter}
+      showFilter={showFilter}
+      setShowVisibility={setShowVisibility}
+      showVisibility={showVisibility}
+      isFilterOpen={isFilterOpen}
+      setIsFilterOpen={setIsFilterOpen}
     />
   );
 }

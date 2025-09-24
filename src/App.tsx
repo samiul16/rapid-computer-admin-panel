@@ -346,8 +346,8 @@ import SalesPage from "./pages/sales-Invoice/SalesPage";
 // Sales Return
 import SalesReturnCreatePage from "./pages/sales-return/CreatePage";
 import SalesReturnEditPage from "./pages/sales-return/EditPage";
-import SalesReturnDetails from "./pages/sales-return/SalesDetails";
-import SalesReturnPage from "./pages/sales-return/SalesPage";
+import SalesReturnDetails from "./pages/sales-return/SalesReturnDetails";
+import SalesReturnPage from "./pages/sales-return/SalesReturnPage";
 
 import TranslationPage from "./pages/Translation/TranslationPage";
 // Permissions
