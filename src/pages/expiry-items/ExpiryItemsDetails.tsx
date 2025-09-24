@@ -17,45 +17,53 @@ import { ResetFormModal } from "@/components/common/ResetFormModal";
 import { usePermission } from "@/hooks/usePermissions";
 import MinimizablePageLayout from "@/components/MinimizablePageLayout";
 
-const MOCK_DAMAGE_ITEMS = [
+const MOCK_EXPIRY_ITEMS = [
   {
     id: "1",
-    itemId: "ITM-0001",
-    quantityDamaged: 3,
-    documentDate: "2025-09-10T10:00:00Z",
-    reportedBy: "John Doe",
+    itemName: "Aspirin Tablets",
+    batchNumber: "BATCH-001",
+    expiryDate: "2025-12-31T00:00:00Z",
+    quantity: 100,
+    unit: "Tablets",
     location: "Warehouse A",
-    damageType: "Broken",
+    category: "Pharmaceuticals",
+    supplier: "MedSupply Co",
     status: "Active",
   },
   {
     id: "2",
-    itemId: "ITM-0002",
-    quantityDamaged: 1,
-    documentDate: "2025-09-11T12:30:00Z",
-    reportedBy: "Jane Smith",
+    itemName: "Vitamin C Capsules",
+    batchNumber: "BATCH-002",
+    expiryDate: "2025-11-15T00:00:00Z",
+    quantity: 50,
+    unit: "Capsules",
     location: "Warehouse B",
-    damageType: "Water Damage",
+    category: "Supplements",
+    supplier: "HealthPlus Ltd",
     status: "Inactive",
   },
   {
     id: "3",
-    itemId: "ITM-0003",
-    quantityDamaged: 6,
-    documentDate: "2025-09-08T08:20:00Z",
-    reportedBy: "Ahmed Ali",
+    itemName: "Pain Relief Gel",
+    batchNumber: "BATCH-003",
+    expiryDate: "2025-10-20T00:00:00Z",
+    quantity: 25,
+    unit: "Tubes",
     location: "Store 1",
-    damageType: "Cracked",
+    category: "Topical",
+    supplier: "PharmaCorp",
     status: "Draft",
   },
   {
     id: "4",
-    itemId: "ITM-0004",
-    quantityDamaged: 2,
-    documentDate: "2025-09-09T09:45:00Z",
-    reportedBy: "Maria Garcia",
+    itemName: "Antibiotic Syrup",
+    batchNumber: "BATCH-004",
+    expiryDate: "2025-09-30T00:00:00Z",
+    quantity: 75,
+    unit: "Bottles",
     location: "Warehouse A",
-    damageType: "Expired",
+    category: "Antibiotics",
+    supplier: "MedTech Inc",
     status: "Inactive",
   },
 ];
@@ -74,13 +82,13 @@ export type HistoryEntry = {
   print: boolean;
 };
 
-export default function DamageItemsDetailsPage() {
+export default function ExpiryItemsDetailsPage() {
   // const { t } = useTranslation();
   const navigate = useNavigate();
 
   const [keepChanges, setKeepChanges] = useState(false);
   const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
-  const [selectedBrand, setSelectedBrand] = useState("1");
+  const [selectedItem, setSelectedItem] = useState("1");
   const location = useLocation();
   const isViewPage = location.pathname.includes("/view");
   const [pdfChecked, setPdfChecked] = useState(false);
@@ -91,36 +99,40 @@ export default function DamageItemsDetailsPage() {
   // const { canCreate, canView, canEdit, canDelete } = useUserMasterPermissions();
 
   // Field-level permissions
-  const canPdf: boolean = usePermission("damage-items", "pdf");
-  const canPrint: boolean = usePermission("damage-items", "print");
-  const canSeeHistory: boolean = usePermission("damage-items", "history");
+  const canPdf: boolean = usePermission("expiry-items", "pdf");
+  const canPrint: boolean = usePermission("expiry-items", "print");
+  const canSeeHistory: boolean = usePermission("expiry-items", "history");
 
-  let damageData = {
-    id: selectedBrand,
-    itemId:
-      MOCK_DAMAGE_ITEMS.find((d) => d.id === selectedBrand)?.itemId ||
-      "ITM-0001",
-    quantityDamaged:
-      MOCK_DAMAGE_ITEMS.find((d) => d.id === selectedBrand)?.quantityDamaged ||
-      0,
-    documentDate:
-      MOCK_DAMAGE_ITEMS.find((d) => d.id === selectedBrand)?.documentDate ||
-      "2025-09-10T10:00:00Z",
-    reportedBy:
-      MOCK_DAMAGE_ITEMS.find((d) => d.id === selectedBrand)?.reportedBy ||
-      "John Doe",
+  let expiryData = {
+    id: selectedItem,
+    itemName:
+      MOCK_EXPIRY_ITEMS.find((d) => d.id === selectedItem)?.itemName ||
+      "Aspirin Tablets",
+    batchNumber:
+      MOCK_EXPIRY_ITEMS.find((d) => d.id === selectedItem)?.batchNumber ||
+      "BATCH-001",
+    expiryDate:
+      MOCK_EXPIRY_ITEMS.find((d) => d.id === selectedItem)?.expiryDate ||
+      "2025-12-31T00:00:00Z",
+    quantity:
+      MOCK_EXPIRY_ITEMS.find((d) => d.id === selectedItem)?.quantity || 100,
+    unit:
+      MOCK_EXPIRY_ITEMS.find((d) => d.id === selectedItem)?.unit || "Tablets",
     location:
-      MOCK_DAMAGE_ITEMS.find((d) => d.id === selectedBrand)?.location ||
+      MOCK_EXPIRY_ITEMS.find((d) => d.id === selectedItem)?.location ||
       "Warehouse A",
-    damageType:
-      MOCK_DAMAGE_ITEMS.find((d) => d.id === selectedBrand)?.damageType ||
-      "Broken",
+    category:
+      MOCK_EXPIRY_ITEMS.find((d) => d.id === selectedItem)?.category ||
+      "Pharmaceuticals",
+    supplier:
+      MOCK_EXPIRY_ITEMS.find((d) => d.id === selectedItem)?.supplier ||
+      "MedSupply Co",
     isDefault: true,
     isActive: true,
     isDraft: false,
     isDeleted: false,
     status:
-      MOCK_DAMAGE_ITEMS.find((d) => d.id === selectedBrand)?.status || "Active",
+      MOCK_EXPIRY_ITEMS.find((d) => d.id === selectedItem)?.status || "Active",
     createdAt: "2025-05-15T10:30:00Z",
     updatedAt: "2025-09-15T14:30:00Z",
     draftedAt: "2025-05-20T14:45:00Z",
@@ -136,14 +148,16 @@ export default function DamageItemsDetailsPage() {
     }
     console.log("isViewPage", isViewPage);
     if (isViewPage) {
-      damageData = {
-        id: selectedBrand,
-        itemId: "",
-        quantityDamaged: "",
-        documentDate: "",
-        reportedBy: "",
+      expiryData = {
+        id: selectedItem,
+        itemName: "",
+        batchNumber: "",
+        expiryDate: "",
+        quantity: 0,
+        unit: "",
         location: "",
-        damageType: "",
+        category: "",
+        supplier: "",
         isDefault: true,
         isActive: true,
         isDraft: false,
@@ -157,19 +171,21 @@ export default function DamageItemsDetailsPage() {
     }
   }, []);
 
-  const handlePrintDamageItem = (damage: any) => {
+  const handlePrintExpiryItem = (expiry: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "Damage Item Details",
-        data: [damage],
+        title: "Expiry Item Details",
+        data: [expiry],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
-          itemId: "Item ID",
-          quantityDamaged: "Quantity Damaged",
-          documentDate: "Document Date",
-          reportedBy: "Reported By",
+          itemName: "Item Name",
+          batchNumber: "Batch Number",
+          expiryDate: "Expiry Date",
+          quantity: "Quantity",
+          unit: "Unit",
           location: "Location",
-          damageType: "Damage Type",
+          category: "Category",
+          supplier: "Supplier",
           isDefault: "Default",
           isActive: "Active Status",
           isDraft: "Draft Status",
@@ -199,19 +215,19 @@ export default function DamageItemsDetailsPage() {
   const handleExportPDF = async () => {
     console.log("Export PDF clicked");
     try {
-      console.log("damageData on pdf click", damageData);
+      console.log("expiryData on pdf click", expiryData);
       const blob = await pdf(
         <GenericPDF
-          data={[damageData]}
-          title="Damage Item Details"
-          subtitle="Damage Item Information"
+          data={[expiryData]}
+          title="Expiry Item Details"
+          subtitle="Expiry Item Information"
         />
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "damage-item-details.pdf";
+      a.download = "expiry-item-details.pdf";
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
@@ -255,25 +271,25 @@ export default function DamageItemsDetailsPage() {
   return (
     <>
       <MinimizablePageLayout
-        moduleId="damage-item-details-module"
-        moduleName="Damage Item Details"
-        moduleRoute="/damage-items/view"
-        title="Viewing Damage Item"
+        moduleId="expiry-item-details-module"
+        moduleName="Expiry Item Details"
+        moduleRoute="/expiry-items/view"
+        title="Viewing Expiry Item"
         videoSrc={video}
         videoHeader="Tutorial video"
-        listPath="damage-items"
+        listPath="expiry-items"
         activePage="view"
-        module="damage-items"
+        module="expiry-items"
         popoverOptions={[
           {
             label: "Create",
             icon: <Plus className="w-5 h-5 text-green-600" />,
-            onClick: () => navigate("/damage-items/create"),
+            onClick: () => navigate("/expiry-items/create"),
           },
           {
             label: "Edit",
             icon: <Edit className="w-5 h-5 text-blue-600" />,
-            onClick: () => navigate("/damage-items/edit/1"),
+            onClick: () => navigate("/expiry-items/edit/1"),
           },
         ]}
         keepChanges={keepChanges}
@@ -297,48 +313,48 @@ export default function DamageItemsDetailsPage() {
                   handleExportPDF();
                 }
                 if (printEnabled) {
-                  handlePrintDamageItem(damageData);
+                  handlePrintExpiryItem(expiryData);
                 }
               }
             : undefined
         }
       >
-        {/* Row 1: Damage Item Selection, Item ID, Quantity, Document Date */}
+        {/* Row 1: Expiry Item Selection, Item Name, Batch Number, Expiry Date */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
           <div className="mt-1">
             <Autocomplete
-              options={MOCK_DAMAGE_ITEMS}
-              value={selectedBrand}
-              onValueChange={setSelectedBrand}
+              options={MOCK_EXPIRY_ITEMS}
+              value={selectedItem}
+              onValueChange={setSelectedItem}
               placeholder=" "
-              displayKey="itemId"
+              displayKey="itemName"
               valueKey="id"
-              searchKey="itemId"
+              searchKey="itemName"
               disabled={false}
               className="w-[96%] bg-gray-100 rounded-xl"
               labelClassName="bg-gray-50 rounded-2xl"
-              labelText="Item ID"
+              labelText="Item Name"
               isShowTemplateIcon={false}
             />
           </div>
 
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Quantity Damaged</h3>
+              <h3 className="font-normal text-gray-600">Batch Number</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(damageData.quantityDamaged)}
+              {displayValue(expiryData.batchNumber)}
             </div>
           </div>
 
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Document Date</h3>
+              <h3 className="font-normal text-gray-600">Expiry Date</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
               {displayValue(
-                damageData.documentDate
-                  ? new Date(damageData.documentDate).toLocaleDateString()
+                expiryData.expiryDate
+                  ? new Date(expiryData.expiryDate).toLocaleDateString()
                   : ""
               )}
             </div>
@@ -346,42 +362,63 @@ export default function DamageItemsDetailsPage() {
 
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Reported By</h3>
+              <h3 className="font-normal text-gray-600">Quantity</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(damageData.reportedBy)}
+              {displayValue(expiryData.quantity)} {expiryData.unit}
             </div>
           </div>
         </div>
 
-        {/* Row 2: Reported By, Location, Damage Type, Status, Default, Action */}
+        {/* Row 2: Unit, Location, Category, Supplier */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">Unit</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(expiryData.unit)}
+            </div>
+          </div>
+
           <div className="">
             <div className="flex flex-col">
               <div className="flex justify-between items-center mb-1">
                 <h3 className="font-normal text-gray-600">Location</h3>
               </div>
               <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-                {displayValue(damageData.location)}
+                {displayValue(expiryData.location)}
               </div>
             </div>
           </div>
 
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Damage Type</h3>
+              <h3 className="font-normal text-gray-600">Category</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(damageData.damageType)}
+              {displayValue(expiryData.category)}
             </div>
           </div>
 
           <div className="">
             <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">Supplier</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(expiryData.supplier)}
+            </div>
+          </div>
+        </div>
+
+        {/* Row 3: Status, Default, Action */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
               <h3 className="font-normal text-gray-600">Status</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(damageData.status)}
+              {displayValue(expiryData.status)}
             </div>
           </div>
 
@@ -391,7 +428,7 @@ export default function DamageItemsDetailsPage() {
                 <span className="text-[15px] text-gray-600">Default</span>
               </div>
               <div className="">
-                {damageData.isDefault ? (
+                {expiryData.isDefault ? (
                   <span className="text-black text-[15px]">Yes</span>
                 ) : (
                   <span className="text-black text-[15px]">No</span>
@@ -416,10 +453,10 @@ export default function DamageItemsDetailsPage() {
         columnData={mockHistoryData}
         title="History"
         statusInfo={{
-          created: getRelativeTime(damageData.createdAt),
-          updated: getRelativeTime(damageData.updatedAt),
-          drafted: getRelativeTime(damageData.draftedAt),
-          deleted: getRelativeTime(damageData.deletedAt),
+          created: getRelativeTime(expiryData.createdAt),
+          updated: getRelativeTime(expiryData.updatedAt),
+          drafted: getRelativeTime(expiryData.draftedAt),
+          deleted: getRelativeTime(expiryData.deletedAt),
         }}
       />
 
