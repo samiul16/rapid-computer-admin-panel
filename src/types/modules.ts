@@ -155,6 +155,40 @@ export interface StockTransferModuleData {
   isDefault: boolean;
 }
 
+// Purchase Return Module Data Interface
+export interface PurchaseReturnModuleData {
+  id: string;
+  documentNumber: string;
+  purchaseInvoiceNumber: string;
+  poNumber: string;
+  poDate: string;
+  supplierName: string;
+  paymentMode: string;
+  dueDays: number;
+  paymentDate: string;
+  supplierNumber: string;
+  supplierStatus: string;
+  supplierGroup: string;
+  remarks: string;
+  country: string;
+  state: string;
+  city: string;
+  documents: string;
+  expiryDate: string;
+  image: string | null;
+  isDefault: boolean;
+  isActive: boolean;
+  isDraft: boolean;
+  createdAt: Date | null;
+  draftedAt: Date | null;
+  updatedAt: Date | null;
+  deletedAt: Date | null;
+  isDeleted: boolean;
+  // Module-specific metadata
+  hasChanges: boolean;
+  scrollPosition: number;
+}
+
 // export interface InvoiceModuleData {
 //   formData: Invoice;
 //   hasChanges: boolean;

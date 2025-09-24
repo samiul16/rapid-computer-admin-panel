@@ -5,6 +5,7 @@ import type {
   OpeningStockModuleData,
   StockTransferModuleData,
   SubCategoryFormData,
+  PurchaseReturnModuleData,
 } from "@/types/modules";
 
 export function useSubCategoryFormData() {
@@ -27,4 +28,10 @@ export function useOpeningStockFormData() {
 
 export function useInvoiceFormData() {
   return useMinimizedModuleData<InvoiceModuleData>("invoice-form-module");
+}
+
+export function usePurchaseReturnFormData() {
+  return useMinimizedModuleData<PurchaseReturnModuleData>(
+    "purchase-return-form-module"
+  );
 }
