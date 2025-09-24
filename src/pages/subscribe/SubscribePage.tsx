@@ -202,6 +202,7 @@ export default function SubscribePage() {
       setTimeLabel={setTimeLabel}
       tabsSection={tabsSection}
       pathName={basePathName.split("/")[1]}
+      showCreateButton={false}
     >
       {mainContent}
     </PageLayout>
