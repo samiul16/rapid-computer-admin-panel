@@ -3,12 +3,18 @@ import FixedColumnDataTable from "@/components/common/country-page-table/FixedCo
 import useIsMobile from "@/hooks/useIsMobile";
 import { useColorsPermissions } from "@/hooks/usePermissions";
 
-// Brand interface to match the grid component
-interface BrandItem {
+// Slider interface to match the grid component
+interface SliderItem {
   id: string;
-  code: string;
-  name: string;
-  description: string;
+  titleEn: string;
+  titleAr: string;
+  topTitleEn: string;
+  topTitleAr: string;
+  keyTagsEn: string;
+  keyTagsAr: string;
+  bannerType: string;
+  bannerEn: string;
+  bannerAr: string;
   status: "active" | "inactive" | "draft";
   createdAt: string;
   updatedAt: string;
@@ -20,12 +26,18 @@ interface BrandItem {
   actionMessage: string;
 }
 
-const mockBrands: BrandItem[] = [
+const mockSliders: SliderItem[] = [
   {
     id: "1",
-    code: "BRD001",
-    name: "Apex",
-    description: "Premium performance brand",
+    titleEn: "Welcome to Our Platform",
+    titleAr: "مرحباً بكم في منصتنا",
+    topTitleEn: "Get Started",
+    topTitleAr: "ابدأ الآن",
+    keyTagsEn: "Welcome, Platform, Introduction",
+    keyTagsAr: "ترحيب، منصة، مقدمة",
+    bannerType: "Hero",
+    bannerEn: "hero-banner-en.jpg",
+    bannerAr: "hero-banner-ar.jpg",
     status: "active",
     createdAt: "2023-01-15",
     updatedAt: "2023-11-20",
@@ -38,9 +50,15 @@ const mockBrands: BrandItem[] = [
   },
   {
     id: "2",
-    code: "BRD002",
-    name: "Velocity",
-    description: "High-speed and sports-focused",
+    titleEn: "Premium Services",
+    titleAr: "خدمات متميزة",
+    topTitleEn: "Quality First",
+    topTitleAr: "الجودة أولاً",
+    keyTagsEn: "Premium, Quality, Services",
+    keyTagsAr: "متميز، جودة، خدمات",
+    bannerType: "Service",
+    bannerEn: "service-banner-en.jpg",
+    bannerAr: "service-banner-ar.jpg",
     status: "active",
     createdAt: "2023-01-18",
     updatedAt: "2023-10-15",
@@ -53,9 +71,15 @@ const mockBrands: BrandItem[] = [
   },
   {
     id: "3",
-    code: "BRD003",
-    name: "Nimbus",
-    description: "Cloud-like comfort and reliability",
+    titleEn: "Latest Technology",
+    titleAr: "أحدث التقنيات",
+    topTitleEn: "Innovation",
+    topTitleAr: "الابتكار",
+    keyTagsEn: "Technology, Innovation, Modern",
+    keyTagsAr: "تقنية، ابتكار، حديث",
+    bannerType: "Tech",
+    bannerEn: "tech-banner-en.jpg",
+    bannerAr: "tech-banner-ar.jpg",
     status: "active",
     createdAt: "2023-02-01",
     updatedAt: "2023-11-10",
@@ -68,9 +92,15 @@ const mockBrands: BrandItem[] = [
   },
   {
     id: "4",
-    code: "BRD004",
-    name: "Quantum",
-    description: "Cutting-edge innovation",
+    titleEn: "Customer Support",
+    titleAr: "دعم العملاء",
+    topTitleEn: "24/7 Help",
+    topTitleAr: "مساعدة 24/7",
+    keyTagsEn: "Support, Help, Customer",
+    keyTagsAr: "دعم، مساعدة، عميل",
+    bannerType: "Support",
+    bannerEn: "support-banner-en.jpg",
+    bannerAr: "support-banner-ar.jpg",
     status: "active",
     createdAt: "2023-02-10",
     updatedAt: "2023-11-05",
@@ -83,9 +113,15 @@ const mockBrands: BrandItem[] = [
   },
   {
     id: "5",
-    code: "BRD005",
-    name: "Heritage",
-    description: "Classic and timeless design",
+    titleEn: "Special Offers",
+    titleAr: "عروض خاصة",
+    topTitleEn: "Limited Time",
+    topTitleAr: "وقت محدود",
+    keyTagsEn: "Offers, Discount, Special",
+    keyTagsAr: "عروض، خصم، خاص",
+    bannerType: "Promo",
+    bannerEn: "promo-banner-en.jpg",
+    bannerAr: "promo-banner-ar.jpg",
     status: "active",
     createdAt: "2023-02-15",
     updatedAt: "2023-10-28",
@@ -98,9 +134,15 @@ const mockBrands: BrandItem[] = [
   },
   {
     id: "6",
-    code: "BRD006",
-    name: "EcoLine",
-    description: "Sustainable, eco-friendly products",
+    titleEn: "About Us",
+    titleAr: "من نحن",
+    topTitleEn: "Our Story",
+    topTitleAr: "قصتنا",
+    keyTagsEn: "About, Company, Story",
+    keyTagsAr: "حول، شركة، قصة",
+    bannerType: "About",
+    bannerEn: "about-banner-en.jpg",
+    bannerAr: "about-banner-ar.jpg",
     status: "draft",
     createdAt: "2023-03-01",
     updatedAt: "2023-11-15",
@@ -113,9 +155,15 @@ const mockBrands: BrandItem[] = [
   },
   {
     id: "7",
-    code: "BRD007",
-    name: "Metro",
-    description: "Urban style for everyday use",
+    titleEn: "Contact Information",
+    titleAr: "معلومات الاتصال",
+    topTitleEn: "Get in Touch",
+    topTitleAr: "تواصل معنا",
+    keyTagsEn: "Contact, Information, Reach",
+    keyTagsAr: "اتصال، معلومات، تواصل",
+    bannerType: "Contact",
+    bannerEn: "contact-banner-en.jpg",
+    bannerAr: "contact-banner-ar.jpg",
     status: "active",
     createdAt: "2023-03-10",
     updatedAt: "2023-11-08",
@@ -128,9 +176,15 @@ const mockBrands: BrandItem[] = [
   },
   {
     id: "8",
-    code: "BRD008",
-    name: "TrailFox",
-    description: "Outdoor and rugged performance",
+    titleEn: "Product Showcase",
+    titleAr: "عرض المنتجات",
+    topTitleEn: "Featured",
+    topTitleAr: "مميز",
+    keyTagsEn: "Products, Showcase, Featured",
+    keyTagsAr: "منتجات، عرض، مميز",
+    bannerType: "Product",
+    bannerEn: "product-banner-en.jpg",
+    bannerAr: "product-banner-ar.jpg",
     status: "inactive",
     createdAt: "2023-03-20",
     updatedAt: "2023-10-22",
@@ -143,9 +197,15 @@ const mockBrands: BrandItem[] = [
   },
   {
     id: "9",
-    code: "BRD009",
-    name: "Luxe",
-    description: "Luxury premium collection",
+    titleEn: "News & Updates",
+    titleAr: "الأخبار والتحديثات",
+    topTitleEn: "Latest News",
+    topTitleAr: "آخر الأخبار",
+    keyTagsEn: "News, Updates, Latest",
+    keyTagsAr: "أخبار، تحديثات، آخر",
+    bannerType: "News",
+    bannerEn: "news-banner-en.jpg",
+    bannerAr: "news-banner-ar.jpg",
     status: "active",
     createdAt: "2023-04-01",
     updatedAt: "2023-11-25",
@@ -158,9 +218,15 @@ const mockBrands: BrandItem[] = [
   },
   {
     id: "10",
-    code: "BRD010",
-    name: "Craft",
-    description: "Handcrafted artisan series",
+    titleEn: "Partnership Program",
+    titleAr: "برنامج الشراكة",
+    topTitleEn: "Join Us",
+    topTitleAr: "انضم إلينا",
+    keyTagsEn: "Partnership, Join, Program",
+    keyTagsAr: "شراكة، انضم، برنامج",
+    bannerType: "Partnership",
+    bannerEn: "partnership-banner-en.jpg",
+    bannerAr: "partnership-banner-ar.jpg",
     status: "draft",
     createdAt: "2023-04-10",
     updatedAt: "2023-11-18",
@@ -171,159 +237,9 @@ const mockBrands: BrandItem[] = [
     isUpdated: false,
     actionMessage: "1 day ago",
   },
-  {
-    id: "11",
-    code: "BRD011",
-    name: "Fusion",
-    description: "Blend of style and function",
-    status: "active",
-    createdAt: "2023-04-15",
-    updatedAt: "2023-09-10",
-    draftedAt: "2023-04-10",
-    isActive: true,
-    isDraft: false,
-    isDeleted: false,
-    isUpdated: false,
-    actionMessage: "1 day ago",
-  },
-  {
-    id: "12",
-    code: "BRD012",
-    name: "Vivid",
-    description: "Bold colors and expressive designs",
-    status: "inactive",
-    createdAt: "2023-05-01",
-    updatedAt: "2023-11-12",
-    draftedAt: "2023-04-25",
-    isActive: false,
-    isDraft: false,
-    isDeleted: false,
-    isUpdated: false,
-    actionMessage: "1 day ago",
-  },
-  {
-    id: "13",
-    code: "BRD013",
-    name: "Aurora",
-    description: "Elegant and minimalist",
-    status: "active",
-    createdAt: "2023-05-10",
-    updatedAt: "2023-10-30",
-    draftedAt: "2023-05-05",
-    isActive: true,
-    isDraft: false,
-    isDeleted: false,
-    isUpdated: false,
-    actionMessage: "1 day ago",
-  },
-  {
-    id: "14",
-    code: "BRD014",
-    name: "Sonic",
-    description: "Audio and sound-oriented line",
-    status: "draft",
-    createdAt: "2023-05-20",
-    updatedAt: "2023-11-02",
-    draftedAt: "2023-05-15",
-    isActive: false,
-    isDraft: true,
-    isDeleted: false,
-    isUpdated: false,
-    actionMessage: "1 day ago",
-  },
-  {
-    id: "15",
-    code: "BRD015",
-    name: "Titan",
-    description: "Heavy-duty durability",
-    status: "active",
-    createdAt: "2023-06-01",
-    updatedAt: "2023-11-08",
-    draftedAt: "2023-05-25",
-    isActive: true,
-    isDraft: false,
-    isDeleted: false,
-    isUpdated: false,
-    actionMessage: "1 day ago",
-  },
-  {
-    id: "16",
-    code: "BRD016",
-    name: "Zen",
-    description: "Calm aesthetics and simplicity",
-    status: "active",
-    createdAt: "2023-06-10",
-    updatedAt: "2023-10-25",
-    draftedAt: "2023-06-05",
-    isActive: true,
-    isDraft: false,
-    isDeleted: false,
-    isUpdated: false,
-    actionMessage: "1 day ago",
-  },
-  {
-    id: "17",
-    code: "BRD017",
-    name: "Nova",
-    description: "Next-gen styling",
-    status: "inactive",
-    createdAt: "2023-06-15",
-    updatedAt: "2023-06-20",
-    draftedAt: "2023-06-12",
-    isActive: false,
-    isDraft: false,
-    isDeleted: false,
-    isUpdated: false,
-    actionMessage: "1 day ago",
-  },
-  {
-    id: "18",
-    code: "BRD018",
-    name: "Atlas",
-    description: "Travel and adventure line",
-    status: "draft",
-    createdAt: "2023-07-01",
-    updatedAt: "2023-11-15",
-    draftedAt: "2023-06-25",
-    isActive: false,
-    isDraft: true,
-    isDeleted: false,
-    isUpdated: false,
-    actionMessage: "1 day ago",
-  },
-  {
-    id: "19",
-    code: "BRD019",
-    name: "Pulse",
-    description: "Fitness and wellness",
-    status: "active",
-    createdAt: "2023-07-10",
-    updatedAt: "2023-10-18",
-    draftedAt: "2023-07-05",
-    isActive: true,
-    isDraft: false,
-    isDeleted: false,
-    isUpdated: false,
-    actionMessage: "1 day ago",
-  },
-  {
-    id: "20",
-    code: "BRD020",
-    name: "Spark",
-    description: "Starter range and essentials",
-    status: "inactive",
-    createdAt: "2023-07-20",
-    updatedAt: "2023-09-15",
-    draftedAt: "2023-07-15",
-    isActive: false,
-    isDraft: false,
-    isDeleted: false,
-    isUpdated: false,
-    actionMessage: "1 day ago",
-  },
 ];
 
-export default function BrandsDataTable({
+export default function SlidersDataTable({
   viewMode,
   setViewMode,
   dataTableFilter,
@@ -355,9 +271,9 @@ export default function BrandsDataTable({
 
   const componentColumns = [
     {
-      accessorKey: "name",
-      title: "Name",
-      options: [...new Set(mockBrands.map((item) => item.name))],
+      accessorKey: "titleEn",
+      title: "Title (EN)",
+      options: [...new Set(mockSliders.map((item) => item.titleEn))],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
         const cellValue = row.getValue(columnId) as string;
@@ -366,19 +282,19 @@ export default function BrandsDataTable({
         );
       },
       sortingFn: (row1: any, row2: any) => {
-        return row1.getValue("name").localeCompare(row2.getValue("name"));
+        return row1.getValue("titleEn").localeCompare(row2.getValue("titleEn"));
       },
       size: isMobile ? 120 : 180,
       minSize: 120,
       meta: {
-        exportLabel: "Name",
+        exportLabel: "Title (EN)",
         readOnly: !canCreate,
       },
     },
     {
-      accessorKey: "code",
-      title: "Code",
-      options: [...new Set(mockBrands.map((item) => item.code))],
+      accessorKey: "titleAr",
+      title: "Title (AR)",
+      options: [...new Set(mockSliders.map((item) => item.titleAr))],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
         const cellValue = row.getValue(columnId) as string;
@@ -387,19 +303,19 @@ export default function BrandsDataTable({
         );
       },
       sortingFn: (row1: any, row2: any) => {
-        return row1.getValue("code").localeCompare(row2.getValue("code"));
+        return row1.getValue("titleAr").localeCompare(row2.getValue("titleAr"));
       },
-      size: isMobile ? 100 : 120,
-      minSize: 100,
+      size: isMobile ? 120 : 180,
+      minSize: 120,
       meta: {
-        exportLabel: "Code",
+        exportLabel: "Title (AR)",
         readOnly: !canCreate,
       },
     },
     {
-      accessorKey: "description",
-      title: "Description",
-      options: [...new Set(mockBrands.map((item) => item.description))],
+      accessorKey: "topTitleEn",
+      title: "Top Title (EN)",
+      options: [...new Set(mockSliders.map((item) => item.topTitleEn))],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
         const cellValue = row.getValue(columnId) as string;
@@ -409,13 +325,82 @@ export default function BrandsDataTable({
       },
       sortingFn: (row1: any, row2: any) => {
         return row1
-          .getValue("description")
-          .localeCompare(row2.getValue("description"));
+          .getValue("topTitleEn")
+          .localeCompare(row2.getValue("topTitleEn"));
+      },
+      size: isMobile ? 120 : 150,
+      minSize: 120,
+      meta: {
+        exportLabel: "Top Title (EN)",
+        readOnly: !canCreate,
+      },
+    },
+    {
+      accessorKey: "topTitleAr",
+      title: "Top Title (AR)",
+      options: [...new Set(mockSliders.map((item) => item.topTitleAr))],
+      filterFn: (row: any, columnId: any, filterValue: any) => {
+        if (!filterValue || filterValue.length === 0) return true;
+        const cellValue = row.getValue(columnId) as string;
+        return filterValue.some((filterVal: string) =>
+          cellValue.toLowerCase().includes(filterVal.toLowerCase())
+        );
+      },
+      sortingFn: (row1: any, row2: any) => {
+        return row1
+          .getValue("topTitleAr")
+          .localeCompare(row2.getValue("topTitleAr"));
+      },
+      size: isMobile ? 120 : 150,
+      minSize: 120,
+      meta: {
+        exportLabel: "Top Title (AR)",
+        readOnly: !canCreate,
+      },
+    },
+    {
+      accessorKey: "bannerType",
+      title: "Banner Type",
+      options: [...new Set(mockSliders.map((item) => item.bannerType))],
+      filterFn: (row: any, columnId: any, filterValue: any) => {
+        if (!filterValue || filterValue.length === 0) return true;
+        const cellValue = row.getValue(columnId) as string;
+        return filterValue.some((filterVal: string) =>
+          cellValue.toLowerCase().includes(filterVal.toLowerCase())
+        );
+      },
+      sortingFn: (row1: any, row2: any) => {
+        return row1
+          .getValue("bannerType")
+          .localeCompare(row2.getValue("bannerType"));
+      },
+      size: isMobile ? 100 : 120,
+      minSize: 100,
+      meta: {
+        exportLabel: "Banner Type",
+        readOnly: !canCreate,
+      },
+    },
+    {
+      accessorKey: "keyTagsEn",
+      title: "Key Tags (EN)",
+      options: [...new Set(mockSliders.map((item) => item.keyTagsEn))],
+      filterFn: (row: any, columnId: any, filterValue: any) => {
+        if (!filterValue || filterValue.length === 0) return true;
+        const cellValue = row.getValue(columnId) as string;
+        return filterValue.some((filterVal: string) =>
+          cellValue.toLowerCase().includes(filterVal.toLowerCase())
+        );
+      },
+      sortingFn: (row1: any, row2: any) => {
+        return row1
+          .getValue("keyTagsEn")
+          .localeCompare(row2.getValue("keyTagsEn"));
       },
       size: isMobile ? 150 : 200,
       minSize: 150,
       meta: {
-        exportLabel: "Description",
+        exportLabel: "Key Tags (EN)",
         readOnly: !canCreate,
       },
     },
@@ -525,8 +510,8 @@ export default function BrandsDataTable({
     },
   ];
 
-  const filteredData = mockBrands.filter((item: BrandItem) => {
-    // Brands use the same flags for demo
+  const filteredData = mockSliders.filter((item: SliderItem) => {
+    // Sliders use the same flags for demo
     if (dataTableFilter.status === "Active") {
       return item.isActive;
     } else if (dataTableFilter.status === "Inactive") {
@@ -548,8 +533,8 @@ export default function BrandsDataTable({
       viewMode={viewMode}
       setViewMode={setViewMode}
       componentColumns={componentColumns}
-      fixedColumns={["name", "code"]}
-      pathName="brands"
+      fixedColumns={["titleEn", "titleAr"]}
+      pathName="sliders"
       setShowExport={setShowExport}
       showExport={showExport}
       setShowFilter={setShowFilter}

@@ -19,10 +19,16 @@ import { useMinimizedModuleData } from "@/hooks/useMinimizedModuleData";
 import { SwitchSelect } from "@/components/common/SwitchAutoComplete";
 import { ActionsAutocomplete } from "@/components/common/ActionsAutocomplete";
 
-type BrandData = {
-  name: string;
-  code: string;
-  description: string;
+type SliderData = {
+  titleEn: string;
+  titleAr: string;
+  topTitleEn: string;
+  topTitleAr: string;
+  keyTagsEn: string;
+  keyTagsAr: string;
+  bannerType: string;
+  bannerEn: string;
+  bannerAr: string;
   status: "active" | "inactive" | "draft" | "deleted";
   isDefault: boolean;
   isActive: boolean;
@@ -34,8 +40,8 @@ type BrandData = {
   deletedAt: Date | null;
 };
 
-type BrandModuleData = {
-  formData: BrandData;
+type SliderModuleData = {
+  formData: SliderData;
   hasChanges: boolean;
   scrollPosition: number;
 };
@@ -44,10 +50,16 @@ type Props = {
   isEdit?: boolean;
 };
 
-const initialData: BrandData = {
-  name: "Apex",
-  code: "BRD001",
-  description: "Premium performance brand",
+const initialData: SliderData = {
+  titleEn: "Welcome to Our Platform",
+  titleAr: "مرحباً بكم في منصتنا",
+  topTitleEn: "Get Started",
+  topTitleAr: "ابدأ الآن",
+  keyTagsEn: "Welcome, Platform, Introduction",
+  keyTagsAr: "ترحيب، منصة، مقدمة",
+  bannerType: "Hero",
+  bannerEn: "hero-banner-en.jpg",
+  bannerAr: "hero-banner-ar.jpg",
   status: "active",
   isDefault: false,
   isActive: true,
@@ -59,14 +71,14 @@ const initialData: BrandData = {
   deletedAt: null,
 };
 
-export default function BrandEditPage({ isEdit = true }: Props) {
+export default function SliderEditPage({ isEdit = true }: Props) {
   const navigate = useNavigate();
   const { id } = useParams();
   // const labels = useLanguageLabels();
   const { isRTL } = useAppSelector((state) => state.language);
 
   // Get module ID for this edit page
-  const moduleId = `brand-edit-module-${id || "new"}`;
+  const moduleId = `slider-edit-module-${id || "new"}`;
 
   // Use the custom hook for minimized module data
   const {
@@ -74,7 +86,7 @@ export default function BrandEditPage({ isEdit = true }: Props) {
     hasMinimizedData,
     resetModuleData,
     getModuleScrollPosition,
-  } = useMinimizedModuleData<BrandModuleData>(moduleId);
+  } = useMinimizedModuleData<SliderModuleData>(moduleId);
 
   const [keepCreating, setKeepCreating] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
@@ -95,19 +107,31 @@ export default function BrandEditPage({ isEdit = true }: Props) {
   const { canCreate, canView } = useColorsPermissions();
 
   // Field-level permissions
-  const name: boolean = usePermission("brands", "edit", "name");
-  const code: boolean = usePermission("brands", "edit", "code");
-  const description: boolean = usePermission("brands", "edit", "description");
-  const status: boolean = usePermission("brands", "edit", "status");
-  const isDefault: boolean = usePermission("brands", "edit", "isDefault");
-  const canPdf: boolean = usePermission("brands", "pdf");
-  const canPrint: boolean = usePermission("brands", "print");
+  const titleEn: boolean = usePermission("sliders", "edit", "titleEn");
+  const titleAr: boolean = usePermission("sliders", "edit", "titleAr");
+  const topTitleEn: boolean = usePermission("sliders", "edit", "topTitleEn");
+  const topTitleAr: boolean = usePermission("sliders", "edit", "topTitleAr");
+  const keyTagsEn: boolean = usePermission("sliders", "edit", "keyTagsEn");
+  const keyTagsAr: boolean = usePermission("sliders", "edit", "keyTagsAr");
+  const bannerType: boolean = usePermission("sliders", "edit", "bannerType");
+  const bannerEn: boolean = usePermission("sliders", "edit", "bannerEn");
+  const bannerAr: boolean = usePermission("sliders", "edit", "bannerAr");
+  const status: boolean = usePermission("sliders", "edit", "status");
+  const isDefault: boolean = usePermission("sliders", "edit", "isDefault");
+  const canPdf: boolean = usePermission("sliders", "pdf");
+  const canPrint: boolean = usePermission("sliders", "print");
 
   // Form state
-  const [formData, setFormData] = useState<BrandData>({
-    name: "",
-    code: "",
-    description: "",
+  const [formData, setFormData] = useState<SliderData>({
+    titleEn: "",
+    titleAr: "",
+    topTitleEn: "",
+    topTitleAr: "",
+    keyTagsEn: "",
+    keyTagsAr: "",
+    bannerType: "",
+    bannerEn: "",
+    bannerAr: "",
     status: "active",
     isDefault: false,
     isActive: true,
@@ -144,7 +168,7 @@ export default function BrandEditPage({ isEdit = true }: Props) {
       (hasMinimizedData &&
         moduleData?.formData &&
         !isRestoredFromMinimized &&
-        !formData.name);
+        !formData.titleEn);
 
     if (hasMinimizedData && moduleData?.formData && shouldAutoRestore) {
       setFormData(moduleData.formData);
@@ -168,7 +192,7 @@ export default function BrandEditPage({ isEdit = true }: Props) {
     moduleData,
     isRestoredFromMinimized,
     shouldRestoreFromMinimized,
-    formData.name,
+    formData.titleEn,
     moduleId,
     getModuleScrollPosition,
   ]);
@@ -185,7 +209,13 @@ export default function BrandEditPage({ isEdit = true }: Props) {
       setIsDefaultState(initialData.isDefault ? "Yes" : "No");
       setIsDefaultState(initialData.isDefault ? "Yes" : "No");
     }
-  }, [isEdit, hasMinimizedData, isRestoredFromMinimized, moduleId]);
+  }, [
+    isEdit,
+    hasMinimizedData,
+    isRestoredFromMinimized,
+    moduleId,
+    formData.titleEn,
+  ]);
 
   // Handle form field changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -205,25 +235,31 @@ export default function BrandEditPage({ isEdit = true }: Props) {
       await handleExportPDF();
     }
     if (printEnabled) {
-      handlePrintBrand(formData);
+      handlePrintSlider(formData);
     }
 
     // keep switch functionality
     if (keepCreating) {
-      toastSuccess("Brand updated successfully!");
+      toastSuccess("Slider updated successfully!");
       handleReset();
     } else {
-      toastSuccess("Brand updated successfully!");
-      navigate("/brands");
+      toastSuccess("Slider updated successfully!");
+      navigate("/sliders");
     }
   };
 
   // Update handleReset function to use the custom hook
   const handleReset = async () => {
     setFormData({
-      name: "",
-      code: "",
-      description: "",
+      titleEn: "",
+      titleAr: "",
+      topTitleEn: "",
+      topTitleAr: "",
+      keyTagsEn: "",
+      keyTagsAr: "",
+      bannerType: "",
+      bannerEn: "",
+      bannerAr: "",
       status: "active",
       isDefault: false,
       isActive: true,
@@ -256,7 +292,7 @@ export default function BrandEditPage({ isEdit = true }: Props) {
 
     // Focus the first input field after reset
     setTimeout(() => {
-      inputRefs.current["name"]?.focus();
+      inputRefs.current["titleEn"]?.focus();
     }, 100);
   };
 
@@ -264,18 +300,24 @@ export default function BrandEditPage({ isEdit = true }: Props) {
     setIsResetModalOpen(true);
   };
 
-  const handlePrintBrand = (brandData: any) => {
+  const handlePrintSlider = (sliderData: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "Brand Details",
-        data: [brandData],
+        title: "Slider Details",
+        data: [sliderData],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
-          name: "Brand Name",
-          code: "Brand Code",
-          description: "Description",
+          titleEn: "Title (EN)",
+          titleAr: "Title (AR)",
+          topTitleEn: "Top Title (EN)",
+          topTitleAr: "Top Title (AR)",
+          keyTagsEn: "Key Tags (EN)",
+          keyTagsAr: "Key Tags (AR)",
+          bannerType: "Banner Type",
+          bannerEn: "Banner (EN)",
+          bannerAr: "Banner (AR)",
           status: "Status",
-          isDefault: "Default Brand",
+          isDefault: "Default Slider",
           isActive: "Active Status",
           isDraft: "Draft Status",
           isDeleted: "Deleted Status",
@@ -305,15 +347,15 @@ export default function BrandEditPage({ isEdit = true }: Props) {
       const blob = await pdf(
         <GenericPDF
           data={[formData]}
-          title="Brand Details"
-          subtitle="Brand Information"
+          title="Slider Details"
+          subtitle="Slider Information"
         />
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "brand-details.pdf";
+      a.download = "slider-details.pdf";
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
@@ -327,7 +369,7 @@ export default function BrandEditPage({ isEdit = true }: Props) {
       label: "Create",
       icon: <Plus className="w-5 h-5 text-green-500" />,
       onClick: () => {
-        navigate("/brands/create");
+        navigate("/sliders/create");
       },
       show: canCreate,
     },
@@ -335,7 +377,7 @@ export default function BrandEditPage({ isEdit = true }: Props) {
       label: "View",
       icon: <Eye className="w-5 h-5 text-green-600" />,
       onClick: () => {
-        navigate("/brands/view");
+        navigate("/sliders/view");
       },
       show: canView,
     },
@@ -358,7 +400,7 @@ export default function BrandEditPage({ isEdit = true }: Props) {
                 ...prev,
                 isDraft: true,
               }));
-              toastRestore("Color saved as draft successfully");
+              toastRestore("Slider saved as draft successfully");
             },
             show: canCreate,
           },
@@ -369,7 +411,7 @@ export default function BrandEditPage({ isEdit = true }: Props) {
   }, [formData.isDraft, canCreate]);
 
   // Create minimize handler using the custom hook
-  const handleMinimize = useCallback((): BrandModuleData => {
+  const handleMinimize = useCallback((): SliderModuleData => {
     return {
       formData,
       hasChanges: true,
@@ -381,11 +423,11 @@ export default function BrandEditPage({ isEdit = true }: Props) {
     <>
       <MinimizablePageLayout
         moduleId={moduleId}
-        moduleName={`Edit Brand`}
-        moduleRoute={`/brands/edit/${id || "new"}`}
+        moduleName={`Edit Slider`}
+        moduleRoute={`/sliders/edit/${id || "new"}`}
         onMinimize={handleMinimize}
-        title="Edit Brand"
-        listPath="brands"
+        title="Edit Slider"
+        listPath="sliders"
         popoverOptions={popoverOptions}
         videoSrc={video}
         videoHeader="Tutorial video"
@@ -396,7 +438,7 @@ export default function BrandEditPage({ isEdit = true }: Props) {
         printEnabled={printEnabled}
         onPrintToggle={canPrint ? handleSwitchChange : undefined}
         activePage="edit"
-        module="brands"
+        module="sliders"
         additionalFooterButtons={
           canCreate ? (
             <div className="flex gap-4 max-[435px]:gap-2">
@@ -426,59 +468,177 @@ export default function BrandEditPage({ isEdit = true }: Props) {
             onSubmit={handleSubmit}
             className="space-y-6"
           >
-            {/* First Row: Brand Name, Code, Description */}
+            {/* First Row: Title En, Title Ar, Top Title En, Top Title Ar */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
-              {/* Brand Name field - only show if user can edit */}
-              {name && (
+              {/* Title En field - only show if user can edit */}
+              {titleEn && (
                 <div className="space-y-2">
                   <EditableInput
-                    setRef={setRef("name")}
-                    id="name"
-                    name="name"
-                    value={formData.name}
+                    setRef={setRef("titleEn")}
+                    id="titleEn"
+                    name="titleEn"
+                    value={formData.titleEn}
                     onChange={handleChange}
-                    onNext={() => focusNextInput("code")}
-                    onCancel={() => setFormData({ ...formData, name: "" })}
-                    labelText="Brand Name"
-                    tooltipText="Enter the brand name"
+                    onNext={() => focusNextInput("titleAr")}
+                    onCancel={() => setFormData({ ...formData, titleEn: "" })}
+                    labelText="Title (EN)"
+                    tooltipText="Enter the English title"
                     required
                   />
                 </div>
               )}
 
-              {/* Brand Code field - only show if user can edit */}
-              {code && (
+              {/* Title Ar field - only show if user can edit */}
+              {titleAr && (
                 <div className="space-y-2">
                   <EditableInput
-                    setRef={setRef("code")}
-                    id="code"
-                    name="code"
-                    value={formData.code}
+                    setRef={setRef("titleAr")}
+                    id="titleAr"
+                    name="titleAr"
+                    value={formData.titleAr}
                     onChange={handleChange}
-                    onNext={() => focusNextInput("description")}
-                    onCancel={() => setFormData({ ...formData, code: "" })}
-                    labelText="Brand Code"
-                    tooltipText="Enter the brand code (e.g., BRD001)"
+                    onNext={() => focusNextInput("topTitleEn")}
+                    onCancel={() => setFormData({ ...formData, titleAr: "" })}
+                    labelText="Title (AR)"
+                    tooltipText="Enter the Arabic title"
                     required
                   />
                 </div>
               )}
 
-              {/* Description field - only show if user can edit */}
-              {description && (
+              {/* Top Title En field - only show if user can edit */}
+              {topTitleEn && (
                 <div className="space-y-2">
                   <EditableInput
-                    setRef={setRef("description")}
-                    id="description"
-                    name="description"
-                    value={formData.description}
+                    setRef={setRef("topTitleEn")}
+                    id="topTitleEn"
+                    name="topTitleEn"
+                    value={formData.topTitleEn}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("topTitleAr")}
+                    onCancel={() =>
+                      setFormData({ ...formData, topTitleEn: "" })
+                    }
+                    labelText="Top Title (EN)"
+                    tooltipText="Enter the English top title"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Top Title Ar field - only show if user can edit */}
+              {topTitleAr && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("topTitleAr")}
+                    id="topTitleAr"
+                    name="topTitleAr"
+                    value={formData.topTitleAr}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("keyTagsEn")}
+                    onCancel={() =>
+                      setFormData({ ...formData, topTitleAr: "" })
+                    }
+                    labelText="Top Title (AR)"
+                    tooltipText="Enter the Arabic top title"
+                    required
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Second Row: Key Tags En, Key Tags Ar, Banner Type, Banner En */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
+              {/* Key Tags En field - only show if user can edit */}
+              {keyTagsEn && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("keyTagsEn")}
+                    id="keyTagsEn"
+                    name="keyTagsEn"
+                    value={formData.keyTagsEn}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("keyTagsAr")}
+                    onCancel={() => setFormData({ ...formData, keyTagsEn: "" })}
+                    labelText="Key Tags (EN)"
+                    tooltipText="Enter English key tags (comma separated)"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Key Tags Ar field - only show if user can edit */}
+              {keyTagsAr && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("keyTagsAr")}
+                    id="keyTagsAr"
+                    name="keyTagsAr"
+                    value={formData.keyTagsAr}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("bannerType")}
+                    onCancel={() => setFormData({ ...formData, keyTagsAr: "" })}
+                    labelText="Key Tags (AR)"
+                    tooltipText="Enter Arabic key tags (comma separated)"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Banner Type field - only show if user can edit */}
+              {bannerType && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("bannerType")}
+                    id="bannerType"
+                    name="bannerType"
+                    value={formData.bannerType}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("bannerEn")}
+                    onCancel={() =>
+                      setFormData({ ...formData, bannerType: "" })
+                    }
+                    labelText="Banner Type"
+                    tooltipText="Enter banner type (e.g., Hero, Service, Tech)"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Banner En field - only show if user can edit */}
+              {bannerEn && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("bannerEn")}
+                    id="bannerEn"
+                    name="bannerEn"
+                    value={formData.bannerEn}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("bannerAr")}
+                    onCancel={() => setFormData({ ...formData, bannerEn: "" })}
+                    labelText="Banner (EN)"
+                    tooltipText="Enter English banner filename"
+                    required
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Third Row: Banner Ar, Status, Default */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
+              {/* Banner Ar field - only show if user can edit */}
+              {bannerAr && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("bannerAr")}
+                    id="bannerAr"
+                    name="bannerAr"
+                    value={formData.bannerAr}
                     onChange={handleChange}
                     onNext={() => focusNextInput("status")}
-                    onCancel={() =>
-                      setFormData({ ...formData, description: "" })
-                    }
-                    labelText="Description"
-                    tooltipText="Enter brand description"
+                    onCancel={() => setFormData({ ...formData, bannerAr: "" })}
+                    labelText="Banner (AR)"
+                    tooltipText="Enter Arabic banner filename"
                     required
                   />
                 </div>
@@ -492,27 +652,27 @@ export default function BrandEditPage({ isEdit = true }: Props) {
                     id="status"
                     name="status"
                     labelText="Status"
-                    multiSelect={false} // Single select mode
+                    multiSelect={false}
                     options={[
                       {
                         label: "Active",
                         value: "active",
-                        date: "Set active country",
+                        date: "Set active slider",
                       },
                       {
                         label: "Inactive",
-                        value: "InActive",
-                        date: "Set inactive country",
+                        value: "inactive",
+                        date: "Set inactive slider",
                       },
                       {
                         label: "Draft",
-                        value: "Draft",
-                        date: "Set draft country",
+                        value: "draft",
+                        date: "Set draft slider",
                       },
                       {
                         label: "Delete",
-                        value: "Delete",
-                        date: "Set delete country",
+                        value: "deleted",
+                        date: "Set delete slider",
                       },
                     ]}
                     value={formData.status}
@@ -520,7 +680,6 @@ export default function BrandEditPage({ isEdit = true }: Props) {
                       const stringValue = Array.isArray(value)
                         ? value[0] || ""
                         : value;
-                      console.log("switch value", stringValue);
                       setFormData((prev) => ({
                         ...prev,
                         status: stringValue as
@@ -529,16 +688,8 @@ export default function BrandEditPage({ isEdit = true }: Props) {
                           | "draft"
                           | "deleted",
                         isDeleted: stringValue === "deleted",
-                        isDraft: stringValue === "Draft",
-                        isActive: stringValue === "Active",
-                      }));
-
-                      // Update your form data
-                      setFormData((prev) => ({
-                        ...prev,
-                        isDeleted: stringValue === "Delete",
-                        isDraft: stringValue === "Draft",
-                        isActive: stringValue === "Active",
+                        isDraft: stringValue === "draft",
+                        isActive: stringValue === "active",
                       }));
                     }}
                     placeholder=""
@@ -550,14 +701,11 @@ export default function BrandEditPage({ isEdit = true }: Props) {
                         },
                       },
                     }}
-                    tooltipText="Set the brand status"
+                    tooltipText="Set the slider status"
                   />
                 </div>
               )}
-            </div>
 
-            {/* Second Row: Status, Default */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
               {/* Default field - only show if user can edit */}
               {isDefault && (
                 <div className="space-y-2 relative">
@@ -570,12 +718,12 @@ export default function BrandEditPage({ isEdit = true }: Props) {
                       {
                         label: "Yes",
                         value: "Yes",
-                        date: "Set default brand",
+                        date: "Set default slider",
                       },
                       {
                         label: "No",
                         value: "No",
-                        date: "Remove default brand",
+                        date: "Remove default slider",
                       },
                     ]}
                     value={isDefaultState === "Yes" ? "Yes" : "No"}
@@ -602,7 +750,7 @@ export default function BrandEditPage({ isEdit = true }: Props) {
                     placeholder=" "
                     labelText="Default"
                     className="relative"
-                    tooltipText="Set as default brand"
+                    tooltipText="Set as default slider"
                   />
                 </div>
               )}
@@ -657,7 +805,7 @@ export default function BrandEditPage({ isEdit = true }: Props) {
                       },
                     },
                   }}
-                  tooltipText="Brand Action History"
+                  tooltipText="Slider Action History"
                 />
               </div>
             </div>
