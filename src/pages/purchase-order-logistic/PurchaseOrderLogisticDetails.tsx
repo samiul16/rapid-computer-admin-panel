@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Autocomplete } from "@/components/common/Autocomplete";
 import HistoryDataTable from "@/components/common/HistoryDataTableNew";
@@ -11,13 +11,12 @@ import { PrintCommonLayout } from "@/lib/printContents/PrintCommonLayout";
 import { toastError } from "@/lib/toast";
 import GenericPDF from "@/components/common/pdf";
 import { pdf } from "@react-pdf/renderer";
-import PageLayout from "@/components/common/PageLayout";
+import MinimizablePageLayout from "@/components/MinimizablePageLayout";
 import { Edit, Plus } from "lucide-react";
 import { ResetFormModal } from "@/components/common/ResetFormModal";
 import ReusableFormGenerator from "@/components/Logistic/ReusableModuleGenerator";
 import { usePermission } from "@/hooks/usePermissions";
-import { useSelector } from "react-redux";
-import type { RootState } from "@/store";
+import { useAppSelector } from "@/store/hooks";
 
 type PurchaseOrderLogisticData = {
   country: string;
@@ -65,7 +64,7 @@ export type HistoryEntry = {
 
 export default function PurchaseOrderLogisticDetailsPage() {
   const navigate = useNavigate();
-  const { isRTL } = useSelector((state: RootState) => state.language);
+  const { isRTL } = useAppSelector((state) => state.language);
 
   const [keepChanges, setKeepChanges] = useState(false);
   const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
@@ -275,6 +274,15 @@ export default function PurchaseOrderLogisticDetailsPage() {
     }
   };
 
+  // Create minimize handler
+  const handleMinimize = useCallback(() => {
+    return {
+      purchaseOrderLogisticData,
+      hasChanges: true,
+      scrollPosition: window.scrollY,
+    };
+  }, [purchaseOrderLogisticData]);
+
   const getRelativeTime = (date: Date | null) => {
     if (!date) return "–";
 
@@ -308,25 +316,36 @@ export default function PurchaseOrderLogisticDetailsPage() {
 
   return (
     <>
-      <PageLayout
-        title="Viewing Purchase Order Logistic"
+      <MinimizablePageLayout
+        moduleId="purchase-order-logistic-details-module"
+        moduleName="View Purchase Order Logistic"
+        moduleRoute={`/purchase-order-logistic/view/${selectedPurchaseOrderLogistic}`}
+        onMinimize={handleMinimize}
+        title="View Purchase Order Logistic"
+        listPath="purchase-order-logistic"
         videoSrc={video}
         videoHeader="Tutorial video"
-        onListClick={() => navigate("/purchase-order-logistic")}
-        listText="List"
-        listPath="purchase-order-logistic"
         activePage="view"
+        module="purchaseOrderLogistic"
         popoverOptions={[
-          {
-            label: "Create",
-            icon: <Plus className="w-5 h-5 text-green-600" />,
-            onClick: () => navigate("/purchase-order-logistic/create"),
-          },
-          {
-            label: "Edit",
-            icon: <Edit className="w-5 h-5 text-blue-600" />,
-            onClick: () => navigate("/purchase-order-logistic/edit/1"),
-          },
+          ...(canCreate
+            ? [
+                {
+                  label: "Create",
+                  icon: <Plus className="w-5 h-5 text-green-600" />,
+                  onClick: () => navigate("/purchase-order-logistic/create"),
+                },
+              ]
+            : []),
+          ...(canEdit
+            ? [
+                {
+                  label: "Edit",
+                  icon: <Edit className="w-5 h-5 text-blue-600" />,
+                  onClick: () => navigate("/purchase-order-logistic/edit/1"),
+                },
+              ]
+            : []),
         ]}
         keepChanges={keepChanges}
         onKeepChangesChange={setKeepChanges}
@@ -536,7 +555,7 @@ export default function PurchaseOrderLogisticDetailsPage() {
             />
           </div>
         </div>
-      </PageLayout>
+      </MinimizablePageLayout>
 
       {/* History Modal */}
       <HistoryDataTable

@@ -3,7 +3,7 @@ import video from "@/assets/videos/test.mp4";
 import { Autocomplete } from "@/components/common/Autocomplete";
 import EditableInput from "@/components/common/EditableInput";
 
-import PageLayout from "@/components/common/PageLayout";
+import MinimizablePageLayout from "@/components/MinimizablePageLayout";
 import GenericPDF from "@/components/common/pdf";
 import { ResetFormModal } from "@/components/common/ResetFormModal";
 import ReusableFormGenerator from "@/components/Logistic/ReusableModuleGenerator";
@@ -14,11 +14,11 @@ import { toastError, toastSuccess } from "@/lib/toast";
 import { Modal } from "@mantine/core";
 import { pdf } from "@react-pdf/renderer";
 import { Edit, Eye, Plus } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePermission } from "@/hooks/usePermissions";
-import { useSelector } from "react-redux";
-import type { RootState } from "@/store";
+import { useLanguageLabels } from "@/hooks/useLanguageLabels";
+import { useAppSelector } from "@/store/hooks";
 
 type PurchaseOrderLogisticData = {
   country: string;
@@ -46,7 +46,8 @@ const initialData: PurchaseOrderLogisticData = {
 
 export default function TransitOrderEditPage({ isEdit = true }: Props) {
   const navigate = useNavigate();
-  const { isRTL } = useSelector((state: RootState) => state.language);
+  const labels = useLanguageLabels();
+  const { isRTL } = useAppSelector((state) => state.language);
 
   const [keepCreating, setKeepCreating] = useState(false);
   const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
@@ -336,18 +337,39 @@ export default function TransitOrderEditPage({ isEdit = true }: Props) {
     }
   };
 
+  // Create minimize handler
+  const handleMinimize = useCallback(() => {
+    return {
+      formData,
+      hasChanges: true,
+      scrollPosition: window.scrollY,
+    };
+  }, [formData]);
+
   return (
     <>
-      <PageLayout
+      <MinimizablePageLayout
+        moduleId="purchase-order-logistic-edit-module"
+        moduleName={
+          isEdit
+            ? "Edit Purchase Order Logistic"
+            : "Adding Purchase Order Logistic"
+        }
+        moduleRoute={
+          isEdit
+            ? `/purchase-order-logistic/edit/${formData.country || "new"}`
+            : "/purchase-order-logistic/create"
+        }
+        onMinimize={handleMinimize}
         title={
           isEdit
-            ? "Editing Purchase Order Logistic"
-            : "Creating Purchase Order Logistic"
+            ? "Edit Purchase Order Logistic"
+            : "Add Purchase Order Logistic"
         }
-        videoSrc={video}
-        videoHeader="Tutorial video"
         listPath="purchase-order-logistic"
         popoverOptions={popoverOptions}
+        videoSrc={video}
+        videoHeader="Tutorial video"
         keepChanges={keepCreating}
         onKeepChangesChange={setKeepCreating}
         pdfChecked={pdfChecked}
@@ -355,27 +377,23 @@ export default function TransitOrderEditPage({ isEdit = true }: Props) {
         printEnabled={printEnabled}
         onPrintToggle={canPrint ? handleSwitchChange : undefined}
         activePage="edit"
-        // Removed onExport prop
+        module="purchaseOrderLogistic"
         additionalFooterButtons={
-          // Only show buttons if user can edit
           canEdit ? (
-            <div className="flex gap-4 items-center">
+            <div className="flex gap-4 max-[435px]:gap-2">
               <Button
                 variant="outline"
-                className="gap-2 text-primary bg-sky-200 hover:bg-primary rounded-full border-primary w-32 font-semibold!"
+                className="gap-2 hover:bg-primary/90! bg-white dark:bg-gray-900 rounded-full border-primary w-28 max-[435px]:w-20 font-semibold! text-primary!"
                 onClick={handleResetClick}
               >
-                Reset
+                {labels.reset}
               </Button>
               <Button
-                ref={(el) => setRef("submitButton")(el as HTMLButtonElement)}
-                id="submitButton"
-                name="submitButton"
                 variant="outline"
-                className={`gap-2 text-primary rounded-full border-primary w-32 bg-sky-200 hover:bg-primary font-semibold!`}
+                className="gap-2 hover:bg-primary/90 bg-white dark:bg-gray-900 rounded-full border-primary w-28 max-[435px]:w-20 font-semibold! text-primary!"
                 onClick={() => formRef.current?.requestSubmit()}
               >
-                Submit
+                {labels.submit}
               </Button>
             </div>
           ) : null
@@ -585,7 +603,7 @@ export default function TransitOrderEditPage({ isEdit = true }: Props) {
             </div>
           )}
         </div>
-      </PageLayout>
+      </MinimizablePageLayout>
 
       <ResetFormModal
         opened={isResetModalOpen}
