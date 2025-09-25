@@ -1,263 +1,246 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import FixedColumnDataTable from "@/components/common/FixedColumnDataTable";
+import FixedColumnDataTable from "@/components/common/country-page-table/FixedColumnDataTable";
+import useIsMobile from "@/hooks/useIsMobile";
+import { useColorsPermissions } from "@/hooks/usePermissions";
 
-type ListTableDataType = {
+// Damage Items data table types and mock data
+interface DamageItem {
+  id: string;
   itemId: string;
   quantityDamaged: number;
-  damageDate: string;
-
+  documentDate: string; // ISO date
   reportedBy: string;
   location: string;
-
-  damageType: "Transit" | "Handling" | "Expired" | "Other";
-
-  // same for all component
-  id: string;
-  status: "active" | "inactive" | "draft";
-  isActive: boolean;
-  isDeleted: boolean;
-  isDraft: boolean;
-  isUpdated: boolean;
-  actionMessage: string;
+  damageType: string;
+  status: "Active" | "Inactive" | "Draft" | "Deleted" | "Updated";
   createdAt: string;
   updatedAt: string;
   draftedAt: string;
-};
+  isActive: boolean;
+  isDraft: boolean;
+  isDeleted: boolean;
+  isUpdated: boolean;
+  actionMessage: string;
+}
 
-export const listTableData: ListTableDataType[] = [
+const mockDamageItems: DamageItem[] = [
   {
-    itemId: "ITEM001",
+    id: "1",
+    itemId: "ITM-0001",
     quantityDamaged: 3,
-    damageDate: "2025-07-18",
+    documentDate: "2025-09-10",
     reportedBy: "John Doe",
     location: "Warehouse A",
-    damageType: "Handling",
-
-    id: "DAMAGE001",
-    status: "active",
+    damageType: "Broken",
+    status: "Active",
+    createdAt: "2025-09-10",
+    updatedAt: "2025-09-12",
+    draftedAt: "2025-09-09",
     isActive: true,
-    isDeleted: false,
     isDraft: false,
+    isDeleted: false,
     isUpdated: false,
-    actionMessage: "Verified and discarded",
-    createdAt: "2025-07-18T10:00:00Z",
-    updatedAt: "2025-07-19T08:00:00Z",
-    draftedAt: "",
+    actionMessage: "Yesterday",
   },
   {
-    itemId: "ITEM002",
+    id: "2",
+    itemId: "ITM-0002",
     quantityDamaged: 1,
-    damageDate: "2025-07-17",
+    documentDate: "2025-09-11",
     reportedBy: "Jane Smith",
     location: "Warehouse B",
-    damageType: "Transit",
-    id: "DAMAGE002",
-    status: "draft",
-    isActive: false,
-    isDeleted: false,
-    isDraft: true,
-    isUpdated: false,
-    actionMessage: "Awaiting review",
-    createdAt: "2025-07-17T12:00:00Z",
-    updatedAt: "",
-    draftedAt: "2025-07-17T12:00:00Z",
-  },
-  {
-    itemId: "ITEM003",
-    quantityDamaged: 2,
-    damageDate: "2025-07-15",
-    reportedBy: "Ali Khan",
-    location: "Warehouse A",
-    damageType: "Expired",
-    id: "DAMAGE003",
-    status: "inactive",
-    isActive: false,
-    isDeleted: true,
-    isDraft: false,
-    isUpdated: false,
-    actionMessage: "Removed from stock",
-    createdAt: "2025-07-15T09:30:00Z",
-    updatedAt: "2025-07-16T10:00:00Z",
-    draftedAt: "",
-  },
-  {
-    itemId: "ITEM004",
-    quantityDamaged: 5,
-    damageDate: "2025-07-14",
-    reportedBy: "Fatema Begum",
-    location: "Warehouse C",
-    damageType: "Other",
-    id: "DAMAGE004",
-    status: "active",
+    damageType: "Water Damage",
+    status: "Active",
+    createdAt: "2025-09-11",
+    updatedAt: "2025-09-12",
+    draftedAt: "2025-09-10",
     isActive: true,
-    isDeleted: false,
     isDraft: false,
+    isDeleted: false,
     isUpdated: true,
-    actionMessage: "Partially repaired",
-    createdAt: "2025-07-14T11:15:00Z",
-    updatedAt: "2025-07-18T10:45:00Z",
-    draftedAt: "",
+    actionMessage: "Today",
   },
   {
-    itemId: "ITEM005",
-    quantityDamaged: 4,
-    damageDate: "2025-07-13",
-    reportedBy: "Sadia Islam",
-    location: "Warehouse B",
-    damageType: "Handling",
-    id: "DAMAGE005",
-    status: "inactive",
-    isActive: false,
-    isDeleted: true,
-    isDraft: false,
-    isUpdated: false,
-    actionMessage: "Marked for audit",
-    createdAt: "2025-07-13T13:45:00Z",
-    updatedAt: "2025-07-14T09:00:00Z",
-    draftedAt: "",
-  },
-  {
-    itemId: "ITEM006",
-    quantityDamaged: 2,
-    damageDate: "2025-07-12",
-    reportedBy: "Tariq Rahman",
-    location: "Warehouse A",
-    damageType: "Transit",
-    id: "DAMAGE006",
-    status: "active",
-    isActive: true,
-    isDeleted: false,
-    isDraft: false,
-    isUpdated: false,
-    actionMessage: "Replacement requested",
-    createdAt: "2025-07-12T14:20:00Z",
-    updatedAt: "2025-07-13T10:30:00Z",
-    draftedAt: "",
-  },
-  {
-    itemId: "ITEM007",
-    quantityDamaged: 1,
-    damageDate: "2025-07-11",
-    reportedBy: "Nusrat Jahan",
-    location: "Warehouse D",
-    damageType: "Expired",
-    id: "DAMAGE007",
-    status: "draft",
-    isActive: false,
-    isDeleted: false,
-    isDraft: true,
-    isUpdated: false,
-    actionMessage: "Pending supervisor review",
-    createdAt: "2025-07-11T08:00:00Z",
-    updatedAt: "",
-    draftedAt: "2025-07-11T08:00:00Z",
-  },
-  {
-    itemId: "ITEM008",
-    quantityDamaged: 7,
-    damageDate: "2025-07-10",
-    reportedBy: "Habib Hasan",
-    location: "Warehouse C",
-    damageType: "Other",
-    id: "DAMAGE008",
-    status: "active",
-    isActive: true,
-    isDeleted: false,
-    isDraft: false,
-    isUpdated: true,
-    actionMessage: "Sent for inspection",
-    createdAt: "2025-07-10T10:10:00Z",
-    updatedAt: "2025-07-12T11:45:00Z",
-    draftedAt: "",
-  },
-  {
-    itemId: "ITEM009",
-    quantityDamaged: 3,
-    damageDate: "2025-07-09",
-    reportedBy: "Mahmud Hossain",
-    location: "Warehouse A",
-    damageType: "Handling",
-    id: "DAMAGE009",
-    status: "inactive",
-    isActive: false,
-    isDeleted: true,
-    isDraft: false,
-    isUpdated: false,
-    actionMessage: "Logged and closed",
-    createdAt: "2025-07-09T09:30:00Z",
-    updatedAt: "2025-07-10T09:00:00Z",
-    draftedAt: "",
-  },
-  {
-    itemId: "ITEM010",
-    quantityDamaged: 2,
-    damageDate: "2025-07-08",
-    reportedBy: "Farhana Akter",
-    location: "Warehouse B",
-    damageType: "Transit",
-    id: "DAMAGE010",
-    status: "active",
-    isActive: true,
-    isDeleted: false,
-    isDraft: false,
-    isUpdated: false,
-    actionMessage: "Investigation ongoing",
-    createdAt: "2025-07-08T15:00:00Z",
-    updatedAt: "2025-07-09T10:00:00Z",
-    draftedAt: "",
-  },
-  {
-    itemId: "ITEM011",
+    id: "3",
+    itemId: "ITM-0003",
     quantityDamaged: 6,
-    damageDate: "2025-07-07",
-    reportedBy: "Riyad Mahmud",
-    location: "Warehouse D",
-    damageType: "Handling",
-    id: "DAMAGE011",
-    status: "draft",
+    documentDate: "2025-09-08",
+    reportedBy: "Ahmed Ali",
+    location: "Store 1",
+    damageType: "Cracked",
+    status: "Draft",
+    createdAt: "2025-09-08",
+    updatedAt: "2025-09-09",
+    draftedAt: "2025-09-07",
     isActive: false,
-    isDeleted: false,
     isDraft: true,
+    isDeleted: false,
     isUpdated: false,
-    actionMessage: "Needs verification",
-    createdAt: "2025-07-07T08:30:00Z",
-    updatedAt: "",
-    draftedAt: "2025-07-07T08:30:00Z",
+    actionMessage: "2 days ago",
   },
   {
-    itemId: "ITEM012",
-    quantityDamaged: 9,
-    damageDate: "2025-07-06",
-    reportedBy: "Tanvir Ahmed",
+    id: "4",
+    itemId: "ITM-0004",
+    quantityDamaged: 2,
+    documentDate: "2025-09-09",
+    reportedBy: "Maria Garcia",
     location: "Warehouse A",
     damageType: "Expired",
-    id: "DAMAGE012",
-    status: "inactive",
+    status: "Inactive",
+    createdAt: "2025-09-09",
+    updatedAt: "2025-09-10",
+    draftedAt: "2025-09-08",
     isActive: false,
-    isDeleted: true,
     isDraft: false,
+    isDeleted: false,
+    isUpdated: true,
+    actionMessage: "1 day ago",
+  },
+  {
+    id: "5",
+    itemId: "ITM-0005",
+    quantityDamaged: 4,
+    documentDate: "2025-09-07",
+    reportedBy: "Ali Ahmed",
+    location: "Store 2",
+    damageType: "Expired",
+    status: "Deleted",
+    createdAt: "2025-09-07",
+    updatedAt: "2025-09-08",
+    draftedAt: "2025-09-06",
+    isActive: false,
+    isDraft: false,
+    isDeleted: true,
     isUpdated: false,
-    actionMessage: "Written off",
-    createdAt: "2025-07-06T07:45:00Z",
-    updatedAt: "2025-07-07T09:15:00Z",
-    draftedAt: "",
+    actionMessage: "3 days ago",
+  },
+  {
+    id: "6",
+    itemId: "ITM-0006",
+    quantityDamaged: 5,
+    documentDate: "2025-09-06",
+    reportedBy: "Sara Khan",
+    location: "Warehouse C",
+    damageType: "Expired",
+    status: "Updated",
+    createdAt: "2025-09-06",
+    updatedAt: "2025-09-07",
+    draftedAt: "2025-09-05",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: true,
+    actionMessage: "4 days ago",
+  },
+  {
+    id: "7",
+    itemId: "ITM-0006",
+    quantityDamaged: 5,
+    documentDate: "2025-09-06",
+    reportedBy: "Sara Khan",
+    location: "Warehouse C",
+    damageType: "Expired",
+    status: "Updated",
+    createdAt: "2025-09-06",
+    updatedAt: "2025-09-07",
+    draftedAt: "2025-09-05",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: true,
+    actionMessage: "4 days ago",
+  },
+  {
+    id: "8",
+    itemId: "ITM-0006",
+    quantityDamaged: 5,
+    documentDate: "2025-09-06",
+    reportedBy: "Sara Khan",
+    location: "Warehouse C",
+    damageType: "Expired",
+    status: "Updated",
+    createdAt: "2025-09-06",
+    updatedAt: "2025-09-07",
+    draftedAt: "2025-09-05",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: true,
+    actionMessage: "4 days ago",
+  },
+  {
+    id: "9",
+    itemId: "ITM-0006",
+    quantityDamaged: 5,
+    documentDate: "2025-09-06",
+    reportedBy: "Sara Khan",
+    location: "Warehouse C",
+    damageType: "Expired",
+    status: "Updated",
+    createdAt: "2025-09-06",
+    updatedAt: "2025-09-07",
+    draftedAt: "2025-09-05",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: true,
+    actionMessage: "4 days ago",
+  },
+  {
+    id: "10",
+    itemId: "ITM-0006",
+    quantityDamaged: 5,
+    documentDate: "2025-09-06",
+    reportedBy: "Sara Khan",
+    location: "Warehouse C",
+    damageType: "Expired",
+    status: "Updated",
+    createdAt: "2025-09-06",
+    updatedAt: "2025-09-07",
+    draftedAt: "2025-09-05",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: true,
+    actionMessage: "4 days ago",
   },
 ];
 
-export default function ComponentLevelDataTable({
+export default function DamageItemsDataTable({
   viewMode,
   setViewMode,
   dataTableFilter,
+  searchQuery,
+  setShowExport,
+  showExport,
+  setShowFilter,
+  showFilter,
+  setShowVisibility,
+  showVisibility,
+  isFilterOpen,
+  setIsFilterOpen,
 }: {
   viewMode: string;
   setViewMode: (viewMode: string) => void;
   dataTableFilter: any;
+  searchQuery: string;
+  setShowExport: (showExport: boolean) => void;
+  showExport: boolean;
+  setShowFilter: (showFilter: boolean) => void;
+  showFilter: boolean;
+  setShowVisibility: (showVisibility: boolean) => void;
+  showVisibility: boolean;
+  isFilterOpen: boolean;
+  setIsFilterOpen: (isFilterOpen: boolean) => void;
 }) {
+  const { canCreate } = useColorsPermissions();
+  const isMobile = useIsMobile();
+
   const componentColumns = [
     {
       accessorKey: "itemId",
       title: "Item ID",
-      options: [...new Set(listTableData.map((item) => item.itemId))],
+      options: [...new Set(mockDamageItems.map((item) => item.itemId))],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
         const cellValue = row.getValue(columnId) as string;
@@ -268,61 +251,70 @@ export default function ComponentLevelDataTable({
       sortingFn: (row1: any, row2: any) => {
         return row1.getValue("itemId").localeCompare(row2.getValue("itemId"));
       },
-      size: 180,
+      size: isMobile ? 120 : 180,
       minSize: 120,
       meta: {
-        exportLabel: "itemId",
+        exportLabel: "Item ID",
+        readOnly: !canCreate,
       },
     },
     {
       accessorKey: "quantityDamaged",
-      title: "Quantity Damaged",
-      options: [...new Set(listTableData.map((item) => item.quantityDamaged))],
+      title: "Damaged",
+      options: [
+        ...new Set(
+          mockDamageItems.map((item) => item.quantityDamaged.toString())
+        ),
+      ],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId);
-        return filterValue.some(
-          (filterVal: string | number) =>
-            String(cellValue) === String(filterVal)
-        );
-      },
-      sortingFn: (row1: any, row2: any) => {
-        return row1
-          .getValue("quantityDamaged")
-          .localeCompare(row2.getValue("quantityDamaged"));
-      },
-      size: 120,
-      minSize: 80,
-      meta: {
-        exportLabel: "quantityDamaged",
-      },
-    },
-    {
-      accessorKey: "damageDate",
-      title: "Damage Date",
-      options: [...new Set(listTableData.map((item) => item.damageDate))],
-      filterFn: (row: any, columnId: any, filterValue: any) => {
-        if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as string;
+        const cellValue = String(row.getValue(columnId));
         return filterValue.some((filterVal: string) =>
           cellValue.toLowerCase().includes(filterVal.toLowerCase())
         );
       },
       sortingFn: (row1: any, row2: any) => {
-        return row1
-          .getValue("damageDate")
-          .localeCompare(row2.getValue("damageDate"));
+        return (
+          Number(row1.getValue("quantityDamaged")) -
+          Number(row2.getValue("quantityDamaged"))
+        );
       },
-      size: 180,
-      minSize: 120,
+      size: isMobile ? 100 : 120,
+      minSize: 100,
       meta: {
-        exportLabel: "damageDate",
+        exportLabel: "Quantity Damaged",
+        readOnly: !canCreate,
       },
     },
     {
+      accessorKey: "documentDate",
+      title: "Document Date",
+      options: [],
+      filterFn: (row: any, columnId: any, filterValue: any) => {
+        if (!filterValue || filterValue.length === 0) return true;
+        const dateValue = row.getValue(columnId) as string;
+        const date = new Date(dateValue);
+        if (isNaN(date.getTime())) return false;
+        const cellValue = date.toISOString().split("T")[0];
+        return filterValue.includes(cellValue);
+      },
+      sortingFn: (row1: any, row2: any) => {
+        const d1 = new Date(row1.getValue("documentDate")).getTime();
+        const d2 = new Date(row2.getValue("documentDate")).getTime();
+        return d1 - d2;
+      },
+      size: isMobile ? 150 : 200,
+      minSize: 150,
+      meta: {
+        exportLabel: "Document Date",
+        readOnly: !canCreate,
+      },
+    },
+
+    {
       accessorKey: "reportedBy",
       title: "Reported By",
-      options: [...new Set(listTableData.map((item) => item.reportedBy))],
+      options: [...new Set(mockDamageItems.map((item) => item.reportedBy))],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
         const cellValue = row.getValue(columnId) as string;
@@ -335,16 +327,17 @@ export default function ComponentLevelDataTable({
           .getValue("reportedBy")
           .localeCompare(row2.getValue("reportedBy"));
       },
-      size: 180,
-      minSize: 120,
+      size: isMobile ? 150 : 180,
+      minSize: 150,
       meta: {
-        exportLabel: "reportedBy",
+        exportLabel: "Reported By",
+        readOnly: !canCreate,
       },
     },
     {
       accessorKey: "location",
       title: "Location",
-      options: [...new Set(listTableData.map((item) => item.location))],
+      options: [...new Set(mockDamageItems.map((item) => item.location))],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
         const cellValue = row.getValue(columnId) as string;
@@ -357,16 +350,17 @@ export default function ComponentLevelDataTable({
           .getValue("location")
           .localeCompare(row2.getValue("location"));
       },
-      size: 180,
-      minSize: 120,
+      size: isMobile ? 150 : 180,
+      minSize: 150,
       meta: {
-        exportLabel: "location",
+        exportLabel: "Location",
+        readOnly: !canCreate,
       },
     },
     {
       accessorKey: "damageType",
       title: "Damage Type",
-      options: [...new Set(listTableData.map((item) => item.damageType))],
+      options: [...new Set(mockDamageItems.map((item) => item.damageType))],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
         const cellValue = row.getValue(columnId) as string;
@@ -379,45 +373,46 @@ export default function ComponentLevelDataTable({
           .getValue("damageType")
           .localeCompare(row2.getValue("damageType"));
       },
-      size: 180,
-      minSize: 120,
+      size: isMobile ? 150 : 180,
+      minSize: 150,
       meta: {
-        exportLabel: "damageType",
+        exportLabel: "Damage Type",
+        readOnly: !canCreate,
       },
     },
-
-    {
-      accessorKey: "status",
-      title: "Status",
-      options: ["active", "inactive", "draft"],
-      filterFn: (row: any, columnId: any, filterValue: any) => {
-        if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as string;
-        return filterValue.includes(cellValue);
-      },
-      sortingFn: (row1: any, row2: any) => {
-        return row1.getValue("status").localeCompare(row2.getValue("status"));
-      },
-      size: 120,
-      minSize: 80,
-      meta: {
-        exportLabel: "status",
-      },
-    },
-
     {
       accessorKey: "createdAt",
       title: "Created",
       options: [], // Dates are typically not filtered with predefined options
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as string;
-        return filterValue.some((val: string) => cellValue.includes(val));
+        const dateValue = row.getValue(columnId) as string;
+        const date = new Date(dateValue);
+
+        // Check if the date is valid before calling toISOString
+        if (isNaN(date.getTime())) {
+          return false; // Invalid date, exclude from results
+        }
+
+        const cellValue = date.toISOString().split("T")[0];
+        return filterValue.includes(cellValue);
       },
       sortingFn: (row1: any, row2: any) => {
-        return row1
-          .getValue("createdAt")
-          .localeCompare(row2.getValue("createdAt"));
+        const date1 = new Date(row1.getValue("createdAt"));
+        const date2 = new Date(row2.getValue("createdAt"));
+
+        // Handle invalid dates by placing them at the end
+        if (isNaN(date1.getTime()) && isNaN(date2.getTime())) return 0;
+        if (isNaN(date1.getTime())) return 1;
+        if (isNaN(date2.getTime())) return -1;
+
+        return date1.getTime() - date2.getTime();
+      },
+      size: isMobile ? 150 : 180,
+      minSize: 150,
+      meta: {
+        exportLabel: "createdAt",
+        readOnly: true,
       },
     },
     {
@@ -426,13 +421,33 @@ export default function ComponentLevelDataTable({
       options: [], // Dates are typically not filtered with predefined options
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as string;
-        return filterValue.some((val: string) => cellValue.includes(val));
+        const dateValue = row.getValue(columnId) as string;
+        const date = new Date(dateValue);
+
+        // Check if the date is valid before calling toISOString
+        if (isNaN(date.getTime())) {
+          return false; // Invalid date, exclude from results
+        }
+
+        const cellValue = date.toISOString().split("T")[0];
+        return filterValue.includes(cellValue);
       },
       sortingFn: (row1: any, row2: any) => {
-        return row1
-          .getValue("updatedAt")
-          .localeCompare(row2.getValue("updatedAt"));
+        const date1 = new Date(row1.getValue("updatedAt"));
+        const date2 = new Date(row2.getValue("updatedAt"));
+
+        // Handle invalid dates by placing them at the end
+        if (isNaN(date1.getTime()) && isNaN(date2.getTime())) return 0;
+        if (isNaN(date1.getTime())) return 1;
+        if (isNaN(date2.getTime())) return -1;
+
+        return date1.getTime() - date2.getTime();
+      },
+      size: isMobile ? 150 : 180,
+      minSize: 150,
+      meta: {
+        exportLabel: "updatedAt",
+        readOnly: true,
       },
     },
     {
@@ -441,18 +456,37 @@ export default function ComponentLevelDataTable({
       options: [], // Dates are typically not filtered with predefined options
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as string;
-        return filterValue.some((val: string) => cellValue.includes(val));
+        const dateValue = row.getValue(columnId) as string;
+        const date = new Date(dateValue);
+
+        // Check if the date is valid before calling toISOString
+        if (isNaN(date.getTime())) {
+          return false; // Invalid date, exclude from results
+        }
+
+        const cellValue = date.toISOString().split("T")[0];
+        return filterValue.includes(cellValue);
       },
       sortingFn: (row1: any, row2: any) => {
-        return row1
-          .getValue("draftedAt")
-          .localeCompare(row2.getValue("draftedAt"));
+        const date1 = new Date(row1.getValue("draftedAt"));
+        const date2 = new Date(row2.getValue("draftedAt"));
+
+        // Handle invalid dates by placing them at the end
+        if (isNaN(date1.getTime())) return 1;
+        if (isNaN(date2.getTime())) return -1;
+
+        return date1.getTime() - date2.getTime();
+      },
+      size: isMobile ? 150 : 180,
+      minSize: 150,
+      meta: {
+        exportLabel: "draftedAt",
+        readOnly: true,
       },
     },
   ];
 
-  const filteredData = listTableData.filter((item) => {
+  const filteredData = mockDamageItems.filter((item: DamageItem) => {
     if (dataTableFilter.status === "Active") {
       return item.isActive;
     } else if (dataTableFilter.status === "Inactive") {
@@ -469,11 +503,22 @@ export default function ComponentLevelDataTable({
 
   return (
     <FixedColumnDataTable
+      searchQuery={searchQuery}
       columnData={filteredData}
       viewMode={viewMode}
       setViewMode={setViewMode}
       componentColumns={componentColumns}
-      fixedColumns={[]} // Pin country name column
+      fixedColumns={["itemId", "quantityDamaged"]}
+      pathName="damage-items"
+      setShowExport={setShowExport}
+      showExport={showExport}
+      setShowFilter={setShowFilter}
+      showFilter={showFilter}
+      setShowVisibility={setShowVisibility}
+      showVisibility={showVisibility}
+      isFilterOpen={isFilterOpen}
+      setIsFilterOpen={setIsFilterOpen}
+      showImages={false}
     />
   );
 }

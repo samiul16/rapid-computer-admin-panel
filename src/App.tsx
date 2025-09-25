@@ -143,8 +143,8 @@ import ReservationPage from "./pages/reservation/ReservationPage";
 // Item Components
 import ItemCreatePage from "./pages/item/CreatePage";
 import ItemEditPage from "./pages/item/EditPage";
-import ItemDetails from "./pages/item/ItemDeatils";
-import ItemPage from "./pages/item/ItemPage";
+import ItemDetails from "./pages/item/ItemsDetails";
+import ItemPage from "./pages/item/ItemsPage";
 
 // Bank Components
 import BankDetails from "./pages/bank/BankDetails";
@@ -334,8 +334,8 @@ import DeliveryNoteEditPage2 from "./pages/delivery-note/EditPage2";
 // Sales Quotation
 import SalesQuotationCreatePage from "./pages/sales-quotation/CreatePage";
 import SalesQuotationEditPage from "./pages/sales-quotation/EditPage";
-import SalesQuotationDetails from "./pages/sales-quotation/SalesQuotationDetails";
-import SalesQuotationPage from "./pages/sales-quotation/SalesQuotationPage";
+import SalesQuotationDetails from "./pages/sales-quotation/SalesQuoationDetails";
+import SalesQuotationPage from "./pages/sales-quotation/SalesQuoationPage";
 
 // Sales Invoice
 import SalesCreatePage from "./pages/sales-Invoice/CreatePage";
@@ -346,8 +346,8 @@ import SalesPage from "./pages/sales-Invoice/SalesPage";
 // Sales Return
 import SalesReturnCreatePage from "./pages/sales-return/CreatePage";
 import SalesReturnEditPage from "./pages/sales-return/EditPage";
-import SalesReturnDetails from "./pages/sales-return/SalesDetails";
-import SalesReturnPage from "./pages/sales-return/SalesPage";
+import SalesReturnDetails from "./pages/sales-return/SalesReturnDetails";
+import SalesReturnPage from "./pages/sales-return/SalesReturnPage";
 
 import TranslationPage from "./pages/Translation/TranslationPage";
 // Permissions

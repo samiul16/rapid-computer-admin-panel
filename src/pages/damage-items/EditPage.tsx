@@ -1,118 +1,160 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import video from "@/assets/videos/test.mp4";
-import ToggleStatusControls from "@/components/common/create-page-components/ToggleStatusControls";
 import EditableInput from "@/components/common/EditableInput";
-import LanguageTranslatorModal from "@/components/common/LanguageTranslatorModel";
-import PageLayout from "@/components/common/PageLayout";
 import GenericPDF from "@/components/common/pdf";
+import { ResetFormModal } from "@/components/common/ResetFormModal";
 import { Button } from "@/components/ui/button";
 import { PrintCommonLayout } from "@/lib/printContents/PrintCommonLayout";
 import { printHtmlContent } from "@/lib/printHtmlContent";
-import { toastError } from "@/lib/toast";
-import { Select } from "@mantine/core";
+import { toastError, toastRestore, toastSuccess } from "@/lib/toast";
 import { pdf } from "@react-pdf/renderer";
-import { useEffect, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { Check, Eye, Plus } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useColorsPermissions, usePermission } from "@/hooks/usePermissions";
+// import { useLanguageLabels } from "@/hooks/useLanguageLabels";
+import { useAppSelector } from "@/store/hooks";
+import MinimizablePageLayout from "@/components/MinimizablePageLayout";
+import { useMinimizedModuleData } from "@/hooks/useMinimizedModuleData";
+import { SwitchSelect } from "@/components/common/SwitchAutoComplete";
+import { ActionsAutocomplete } from "@/components/common/ActionsAutocomplete";
 import DynamicInputTableList from "./dynamic-input-table/DynamicInputTableList";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
-// Define OpeningStock interface
-interface OpeningStock {
-  id: string;
+
+type DamageItemData = {
   itemId: string;
   quantityDamaged: number;
-  damageDate: Date | null | string;
-
+  documentDate: Date | null;
   reportedBy: string;
   location: string;
-
-  damageType: "Transit" | "Handling" | "Expired" | "Other";
-
-  isActive: boolean;
+  damageType: string;
+  status: "Active" | "Inactive" | "Draft" | "Deleted";
   isDefault: boolean;
+  isActive: boolean;
   isDraft: boolean;
+  isDeleted: boolean;
   createdAt: Date | null;
   draftedAt: Date | null;
   updatedAt: Date | null;
   deletedAt: Date | null;
-  isDeleted: boolean;
-}
+};
+
+type DamageItemModuleData = {
+  formData: DamageItemData;
+  hasChanges: boolean;
+  scrollPosition: number;
+};
 
 type Props = {
   isEdit?: boolean;
 };
 
-const initialData: OpeningStock = {
-  itemId: "ITEM001",
-  quantityDamaged: 3,
-  damageDate: "2025-07-18",
+const initialData: DamageItemData = {
+  itemId: "ITM-0001",
+  quantityDamaged: 2,
+  documentDate: new Date(),
   reportedBy: "John Doe",
   location: "Warehouse A",
-  damageType: "Handling",
-  id: "1",
-
-  isActive: true,
+  damageType: "Broken",
+  status: "Active",
   isDefault: false,
+  isActive: true,
   isDraft: false,
+  isDeleted: false,
   createdAt: new Date(),
   draftedAt: null,
   updatedAt: new Date(),
   deletedAt: null,
-  isDeleted: false,
 };
 
-export default function DamageItemsEditPage({ isEdit = false }: Props) {
-  const { t } = useTranslation();
+export default function DamageItemEditPage({ isEdit = true }: Props) {
   const navigate = useNavigate();
+  const { id } = useParams();
+  // const labels = useLanguageLabels();
+  const { isRTL } = useAppSelector((state) => state.language);
+
+  // Get module ID for this edit page
+  const moduleId = `damage-item-edit-module-${id || "new"}`;
+
+  // Use the custom hook for minimized module data
+  const {
+    moduleData,
+    hasMinimizedData,
+    resetModuleData,
+    getModuleScrollPosition,
+  } = useMinimizedModuleData<DamageItemModuleData>(moduleId);
+
   const [keepCreating, setKeepCreating] = useState(false);
-
   const formRef = useRef<HTMLFormElement>(null);
-  const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
+  const [isDefaultState, setIsDefaultState] = useState<"Yes" | "No" | string>(
+    "No"
+  );
 
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [printEnabled, setPrintEnabled] = useState(false);
   const [pdfChecked, setPdfChecked] = useState(false);
+  const [formKey, setFormKey] = useState(0);
+  const [isRestoredFromMinimized, setIsRestoredFromMinimized] = useState(false);
+  const [shouldRestoreFromMinimized, setShouldRestoreFromMinimized] =
+    useState(false);
+  const [selectedAction, setSelectedAction] = useState<string>("");
 
-  // Date picker state
-  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  // Permission checks
+  const { canCreate, canView } = useColorsPermissions();
 
-  // Translation state
-  const [translations, setTranslations] = useState([
-    { id: 1, english: "", arabic: "", bangla: "" },
-  ]);
+  // Field-level permissions
+  const itemIdPerm: boolean = usePermission("damage-items", "edit", "itemId");
+  const quantityDamagedPerm: boolean = usePermission(
+    "damage-items",
+    "edit",
+    "quantityDamaged"
+  );
+  const documentDatePerm: boolean = usePermission(
+    "damage-items",
+    "edit",
+    "documentDate"
+  );
+  const reportedByPerm: boolean = usePermission(
+    "damage-items",
+    "edit",
+    "reportedBy"
+  );
+  const locationPerm: boolean = usePermission(
+    "damage-items",
+    "edit",
+    "location"
+  );
+  const damageTypePerm: boolean = usePermission(
+    "damage-items",
+    "edit",
+    "damageType"
+  );
+  const statusPerm: boolean = usePermission("damage-items", "edit", "status");
+  const isDefaultPerm: boolean = usePermission(
+    "damage-items",
+    "edit",
+    "isDefault"
+  );
+  const canPdf: boolean = usePermission("damage-items", "pdf");
+  const canPrint: boolean = usePermission("damage-items", "print");
 
   // Form state
-  const [formData, setFormData] = useState<OpeningStock>({
-    id: "",
+  const [formData, setFormData] = useState<DamageItemData>({
     itemId: "",
     quantityDamaged: 0,
-    damageDate: "",
+    documentDate: new Date(),
     reportedBy: "",
     location: "",
-    damageType: "Transit",
-    isActive: true,
+    damageType: "",
+    status: "Active",
     isDefault: false,
+    isActive: true,
     isDraft: false,
-    createdAt: new Date(),
-    draftedAt: null,
-    updatedAt: new Date(),
-    deletedAt: null,
     isDeleted: false,
+    createdAt: null,
+    draftedAt: null,
+    updatedAt: null,
+    deletedAt: null,
   });
-
-  // Update translation data when remarks change
-  useEffect(() => {
-    setTranslations([
-      { id: 1, english: formData.damageType || "", arabic: "", bangla: "" },
-    ]);
-  }, [formData.damageType]);
 
   // focus next input field
   const inputRefs = useRef<Record<string, HTMLElement | null>>({});
@@ -123,106 +165,165 @@ export default function DamageItemsEditPage({ isEdit = false }: Props) {
     inputRefs.current[nextField]?.focus();
   };
 
-  const itemIdData = [
-    { id: 1, value: "Item 1", label: "Item 1" },
-    { id: 2, value: "Item 2", label: "Item 2" },
-    { id: 3, value: "Item 3", label: "Item 3" },
-  ];
-
-  const getRelativeTime = (dateString: string | null | Date) => {
-    if (!dateString) return "--/--/----";
-
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInMs = now.getTime() - date.getTime();
-
-    const minutes = Math.floor(diffInMs / (1000 * 60));
-    const hours = Math.floor(diffInMs / (1000 * 60 * 60));
-    const days = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
-    const months = Math.floor(diffInMs / (1000 * 60 * 60 * 24 * 30));
-    const years = Math.floor(diffInMs / (1000 * 60 * 60 * 24 * 365));
-
-    if (years > 0) {
-      return `${years}y ago`;
-    } else if (months > 0) {
-      return `${months}mo ago`;
-    } else if (days > 0) {
-      return `${days}d ago`;
-    } else if (hours > 0) {
-      return `${hours}h ago`;
-    } else if (minutes > 0) {
-      return `${minutes}m ago`;
-    } else {
-      return "Just now";
+  // Check for restore flag from taskbar
+  useEffect(() => {
+    const shouldRestore = localStorage.getItem(`restore-${moduleId}`);
+    if (shouldRestore === "true") {
+      setShouldRestoreFromMinimized(true);
+      localStorage.removeItem(`restore-${moduleId}`);
     }
-  };
+  }, [moduleId]);
+
+  // Restore logic using the custom hook
+  useEffect(() => {
+    const shouldAutoRestore =
+      shouldRestoreFromMinimized ||
+      (hasMinimizedData &&
+        moduleData?.formData &&
+        !isRestoredFromMinimized &&
+        !formData.itemId);
+
+    if (hasMinimizedData && moduleData?.formData && shouldAutoRestore) {
+      setFormData(moduleData.formData);
+
+      // Restore UI states based on form data
+      setIsDefaultState(moduleData.formData.isDefault ? "Yes" : "No");
+
+      setIsRestoredFromMinimized(true);
+      setShouldRestoreFromMinimized(false);
+
+      // Restore scroll position
+      const scrollPosition = getModuleScrollPosition(moduleId);
+      if (scrollPosition) {
+        setTimeout(() => {
+          window.scrollTo(0, scrollPosition);
+        }, 200);
+      }
+    }
+  }, [
+    hasMinimizedData,
+    moduleData,
+    isRestoredFromMinimized,
+    shouldRestoreFromMinimized,
+    formData.itemId,
+    moduleId,
+    getModuleScrollPosition,
+  ]);
 
   // Initialize with edit data if available
   useEffect(() => {
-    if (isEdit && initialData) {
-      setFormData({
-        ...initialData,
-        itemId: "Item 1",
-      });
+    if (
+      isEdit &&
+      initialData &&
+      !hasMinimizedData &&
+      !isRestoredFromMinimized
+    ) {
+      setFormData(initialData);
+      setIsDefaultState(initialData.isDefault ? "Yes" : "No");
     }
-  }, [isEdit, initialData]);
+  }, [isEdit, hasMinimizedData, isRestoredFromMinimized, moduleId]);
 
   // Handle form field changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
-    setFormData({
+    const newFormData = {
       ...formData,
-      [name]: type === "checkbox" ? checked : value,
-    });
+      [name]:
+        type === "checkbox"
+          ? checked
+          : type === "number"
+          ? Number(value)
+          : value,
+    };
+    setFormData(newFormData);
   };
 
   // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Opening Stock Form submitted:", formData);
-  };
 
-  // Handle form reset
-  const handleReset = () => {
-    if (window.confirm(t("form.resetConfirm"))) {
-      setFormData({
-        id: "",
-        itemId: "",
-        quantityDamaged: 0,
-        damageDate: "",
-        reportedBy: "",
-        location: "",
-        damageType: "Transit",
-        isActive: true,
-        isDefault: false,
-        isDraft: false,
-        createdAt: new Date(),
-        draftedAt: null,
-        updatedAt: new Date(),
-        deletedAt: null,
-        isDeleted: false,
-      });
-      if (formRef.current) {
-        formRef.current.reset();
-      }
+    if (pdfChecked) {
+      await handleExportPDF();
+    }
+    if (printEnabled) {
+      handlePrintDamageItem(formData);
+    }
+
+    // keep switch functionality
+    if (keepCreating) {
+      toastSuccess("Damage item updated successfully!");
+      handleReset();
+    } else {
+      toastSuccess("Damage item updated successfully!");
+      navigate("/damage-items");
     }
   };
 
-  const handlePrintOpeningStock = (stockData: any) => {
+  // Update handleReset function to use the custom hook
+  const handleReset = async () => {
+    setFormData({
+      itemId: "",
+      quantityDamaged: 0,
+      documentDate: new Date(),
+      reportedBy: "",
+      location: "",
+      damageType: "",
+      status: "Active",
+      isDefault: false,
+      isActive: true,
+      isDraft: false,
+      isDeleted: false,
+      createdAt: new Date(),
+      draftedAt: null,
+      updatedAt: new Date(),
+      deletedAt: null,
+    });
+    setIsDefaultState("No");
+
+    setIsRestoredFromMinimized(false);
+
+    if (formRef.current) {
+      formRef.current.reset();
+    }
+
+    // Force re-render of all inputs by changing key
+    setFormKey((prev) => prev + 1);
+
+    // Reset form data using the custom hook
+    if (hasMinimizedData) {
+      try {
+        await resetModuleData(moduleId);
+      } catch (error) {
+        console.error("Error resetting form data:", error);
+      }
+    }
+
+    // Focus the first input field after reset
+    setTimeout(() => {
+      inputRefs.current["itemId"]?.focus();
+    }, 100);
+  };
+
+  const handleResetClick = () => {
+    setIsResetModalOpen(true);
+  };
+
+  const handlePrintDamageItem = (damageData: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "Damage Items Details",
-        data: [stockData],
+        title: "Damage Item Details",
+        data: [damageData],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
           itemId: "Item ID",
           quantityDamaged: "Quantity Damaged",
-          damageDate: "Damage Date",
+          documentDate: "Document Date",
           reportedBy: "Reported By",
           location: "Location",
           damageType: "Damage Type",
+          status: "Status",
+          isDefault: "Default",
           isActive: "Active Status",
-          isDefault: "Default Status",
           isDraft: "Draft Status",
           isDeleted: "Deleted Status",
           createdAt: "Created At",
@@ -240,42 +341,27 @@ export default function DamageItemsEditPage({ isEdit = false }: Props) {
 
   const handleSwitchChange = (checked: boolean) => {
     setPrintEnabled(checked);
-    if (checked && formData) {
-      // Small delay to allow switch animation to complete
-      setTimeout(() => handlePrintOpeningStock(formData), 100);
-    }
   };
 
   const handlePDFSwitchChange = (pdfChecked: boolean) => {
     setPdfChecked(pdfChecked);
-    if (pdfChecked) {
-      // Small delay to allow switch animation to complete
-      setTimeout(() => handleExportPDF(), 100);
-    }
   };
 
   const handleExportPDF = async () => {
-    console.log("Export PDF clicked");
     try {
-      console.log("damageItemsData on pdf click", formData);
       const blob = await pdf(
         <GenericPDF
           data={[formData]}
-          title="Damage Items Details"
-          subtitle="Damage Items Information"
+          title="Damage Item Details"
+          subtitle="Damage Item Information"
         />
       ).toBlob();
 
-      console.log("blob", blob);
-
       const url = URL.createObjectURL(blob);
-      console.log("url", url);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "damage-items-details.pdf";
+      a.download = "damage-item-details.pdf";
       a.click();
-      console.log("a", a);
-      console.log("url", url);
       URL.revokeObjectURL(url);
     } catch (error) {
       console.log(error);
@@ -283,299 +369,434 @@ export default function DamageItemsEditPage({ isEdit = false }: Props) {
     }
   };
 
+  const [popoverOptions, setPopoverOptions] = useState([
+    {
+      label: "Create",
+      icon: <Plus className="w-5 h-5 text-green-500" />,
+      onClick: () => {
+        navigate("/brands/create");
+      },
+      show: canCreate,
+    },
+    {
+      label: "View",
+      icon: <Eye className="w-5 h-5 text-green-600" />,
+      onClick: () => {
+        navigate("/brands/view");
+      },
+      show: canView,
+    },
+  ]);
+
+  useEffect(() => {
+    setPopoverOptions((prevOptions) => {
+      const filteredOptions = prevOptions.filter(
+        (opt) => opt.label !== "Draft"
+      );
+
+      if (!formData.isDraft) {
+        return [
+          ...filteredOptions,
+          {
+            label: "Draft",
+            icon: <Check className="text-green-500" />,
+            onClick: () => {
+              setFormData((prev) => ({
+                ...prev,
+                isDraft: true,
+              }));
+              toastRestore("Color saved as draft successfully");
+            },
+            show: canCreate,
+          },
+        ];
+      }
+      return filteredOptions;
+    });
+  }, [formData.isDraft, canCreate]);
+
+  // Create minimize handler using the custom hook
+  const handleMinimize = useCallback((): DamageItemModuleData => {
+    return {
+      formData,
+      hasChanges: true,
+      scrollPosition: window.scrollY,
+    };
+  }, [formData]);
+
   return (
     <>
-      <PageLayout
-        title={
-          isEdit ? t("form.editingDamageItems") : t("form.creatingDamageItems")
-        }
+      <MinimizablePageLayout
+        moduleId={moduleId}
+        moduleName={`Edit Damage Item`}
+        moduleRoute={`/damage-items/edit/${id || "new"}`}
+        onMinimize={handleMinimize}
+        title="Edit Damage Item"
+        listPath="damage-items"
+        popoverOptions={popoverOptions}
         videoSrc={video}
-        videoHeader="Rapid ERP Video"
-        listPath="/damage-items"
-        popoverOptions={[
-          {
-            label: isEdit ? "Create" : "Edit",
-            onClick: () => {
-              // Handle navigation based on current state
-              if (isEdit) {
-                // Navigate to create page
-                navigate("/damage-items/create");
-              } else {
-                // Navigate to edit page
-                navigate("/damage-items/edit/undefined");
-              }
-            },
-          },
-          {
-            label: "View",
-            onClick: () => {
-              navigate("/damage-items/view");
-            },
-          },
-        ]}
+        videoHeader="Tutorial video"
         keepChanges={keepCreating}
         onKeepChangesChange={setKeepCreating}
         pdfChecked={pdfChecked}
-        onPdfToggle={handlePDFSwitchChange}
+        onPdfToggle={canPdf ? handlePDFSwitchChange : undefined}
         printEnabled={printEnabled}
-        onPrintToggle={handleSwitchChange}
+        onPrintToggle={canPrint ? handleSwitchChange : undefined}
+        activePage="edit"
+        module="damage-items"
         additionalFooterButtons={
-          <div className="flex gap-4">
-            <Button
-              variant="outline"
-              className="gap-2 text-primary rounded-full border-primary"
-              onClick={handleReset}
-            >
-              {t("button.reset")}
-            </Button>
-            <Button
-              variant="outline"
-              className="gap-2 text-primary rounded-full border-primary"
-              onClick={() => formRef.current?.requestSubmit()}
-            >
-              {t("button.submit")}
-            </Button>
-          </div>
+          canCreate ? (
+            <div className="flex gap-4 max-[435px]:gap-2">
+              <Button
+                variant="outline"
+                className="gap-2 hover:bg-primary/90 bg-white rounded-full border-primary w-28 max-[435px]:w-20 font-semibold! text-primary!"
+                onClick={handleResetClick}
+              >
+                Reset
+              </Button>
+              <Button
+                variant="outline"
+                className="gap-2 hover:bg-primary/90 bg-white rounded-full border-primary w-28 max-[435px]:w-20 font-semibold! text-primary!"
+                onClick={handleSubmit}
+              >
+                Submit
+              </Button>
+            </div>
+          ) : null
         }
         className="w-full"
       >
-        <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
-          {/* First Row: Document Number, Branch, P.O Number, Document Date, Remarks */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">
-                Item ID <span className="text-red-500">*</span>
-              </h3>
-              <Select
-                ref={(el) => setRef("itemId")(el as HTMLElement)}
-                id="itemId"
-                name="itemId"
-                className="w-full h-10"
-                value={formData.itemId}
-                onChange={(value) => {
-                  if (value) {
-                    setFormData({
-                      ...formData,
-                      itemId: value,
-                    });
-                  }
-                  // Call focusNextInput if needed
-                  focusNextInput("quantityDamaged");
-                }}
-                data={itemIdData.map((item) => item.value)}
-                placeholder="Select a customer id..."
-                searchable
-                clearable
-                required
-                styles={{
-                  input: {
-                    height: "40px",
-                    "&:focus": {
-                      borderColor: "var(--primary)",
-                    },
-                  },
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    focusNextInput("quantityDamaged");
-                  }
-                }}
-              />
+        <div dir={isRTL ? "rtl" : "ltr"}>
+          <form
+            ref={formRef}
+            key={formKey}
+            onSubmit={handleSubmit}
+            className="space-y-6"
+          >
+            {/* First Row: Item ID, Quantity Damaged, Document Date, Reported By */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
+              {/* Item ID */}
+              {itemIdPerm && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("itemId")}
+                    id="itemId"
+                    name="itemId"
+                    value={formData.itemId}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("quantityDamaged")}
+                    onCancel={() => setFormData({ ...formData, itemId: "" })}
+                    labelText="Item ID"
+                    tooltipText="Enter the Item ID"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Quantity Damaged */}
+              {quantityDamagedPerm && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("quantityDamaged")}
+                    id="quantityDamaged"
+                    name="quantityDamaged"
+                    type="number"
+                    value={String(formData.quantityDamaged)}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("documentDate")}
+                    onCancel={() =>
+                      setFormData({ ...formData, quantityDamaged: 0 })
+                    }
+                    labelText="Quantity Damaged"
+                    tooltipText="Enter the damaged quantity"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Document Date (native) */}
+              {documentDatePerm && (
+                <div className="space-y-2">
+                  <div className="relative">
+                    <input
+                      ref={(el) => setRef("documentDate")(el as any)}
+                      type="date"
+                      id="documentDate"
+                      name="documentDate"
+                      value={
+                        formData.documentDate
+                          ? formData.documentDate.toISOString().split("T")[0]
+                          : ""
+                      }
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        const val = e.target.value;
+                        setFormData((prev) => ({
+                          ...prev,
+                          documentDate: val ? new Date(val) : null,
+                        }));
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          focusNextInput("reportedBy");
+                        }
+                      }}
+                      required
+                      className="block px-2.5 pb-2.5 pt-4 w-full text-sm text-gray-900 rounded-[12px] border border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-[#70D3FC80] focus:outline-none focus:ring-0 focus:border-[#70D3FC80] peer h-[50px] focus:border"
+                      placeholder=" "
+                    />
+                    <label
+                      htmlFor="documentDate"
+                      className="absolute text-base text-gray-800 dark:text-gray-400 duration-300 transform -translate-y-4 scale-75 top-1 z-10 origin-[0] bg-white dark:bg-gray-900 px-2 peer-focus:px-2 peer-focus:text-primary peer-focus:dark:text-primary peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-1 peer-focus:scale-75 peer-focus:-translate-y-4 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto start-1 transition-all rounded-lg"
+                    >
+                      Document Date
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {/* Reported By */}
+              {reportedByPerm && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("reportedBy")}
+                    id="reportedBy"
+                    name="reportedBy"
+                    value={formData.reportedBy}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("location")}
+                    onCancel={() =>
+                      setFormData({ ...formData, reportedBy: "" })
+                    }
+                    labelText="Reported By"
+                    tooltipText="Enter reporter name"
+                    required
+                  />
+                </div>
+              )}
             </div>
 
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">Quantity Damaged</h3>
-              <EditableInput
-                setRef={setRef("quantityDamaged")}
-                id="quantityDamaged"
-                name="quantityDamaged"
-                className="w-full h-10"
-                value={formData.quantityDamaged.toString() || ""}
-                onChange={handleChange}
-                onNext={() => focusNextInput("damageDate")}
-                onCancel={() => {}}
-                tooltipText="Please enter quantity damaged"
-              />
-            </div>
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">
-                Document Date <span className="text-red-500">*</span>
-              </h3>
-              <Popover
-                open={isDatePickerOpen}
-                onOpenChange={setIsDatePickerOpen}
-              >
-                <PopoverTrigger asChild>
-                  <Button
-                    name="damageDate"
-                    ref={(el) => setRef("damageDate")(el as HTMLButtonElement)}
-                    data-testid="date-picker-trigger"
-                    variant="outline"
-                    className={cn(
-                      "w-full h-10 justify-start text-left font-normal",
-                      !formData.damageDate && "text-muted-foreground"
-                    )}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        focusNextInput("reportedBy");
+            {/* Second Row: Location, Damage Type, Default, Actions */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
+              {/* Location */}
+              {locationPerm && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("location")}
+                    id="location"
+                    name="location"
+                    value={formData.location}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("damageType")}
+                    onCancel={() => setFormData({ ...formData, location: "" })}
+                    labelText="Location"
+                    tooltipText="Enter the location"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Damage Type */}
+              {damageTypePerm && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("damageType")}
+                    id="damageType"
+                    name="damageType"
+                    value={formData.damageType}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("isDefault")}
+                    onCancel={() =>
+                      setFormData({ ...formData, damageType: "" })
+                    }
+                    labelText="Damage Type"
+                    tooltipText="Enter the type of damage"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Default field - only show if user can edit */}
+              {isDefaultPerm && (
+                <div className="space-y-2 relative">
+                  <SwitchSelect
+                    ref={(el: any) => setRef("isDefault")(el)}
+                    id="isDefault"
+                    name="isDefault"
+                    multiSelect={false}
+                    options={[
+                      {
+                        label: "Yes",
+                        value: "Yes",
+                        date: "Set default",
+                      },
+                      {
+                        label: "No",
+                        value: "No",
+                        date: "Unset default",
+                      },
+                    ]}
+                    value={isDefaultState === "Yes" ? "Yes" : "No"}
+                    labelClassName="rounded-lg"
+                    onValueChange={(value: string | string[]) => {
+                      const isYes = Array.isArray(value)
+                        ? value[0] === "Yes"
+                        : value === "Yes";
+                      setIsDefaultState(isYes ? "Yes" : "No");
+                      const newValue = isYes;
+                      setFormData((prev) => ({
+                        ...prev,
+                        isDefault: newValue,
+                      }));
+                    }}
+                    onEnterPress={() => {
+                      if (
+                        formData.isDefault === true ||
+                        formData.isDefault === false
+                      ) {
+                        focusNextInput("actions");
                       }
                     }}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.damageDate ? (
-                      format(new Date(formData.damageDate), "PPP")
-                    ) : (
-                      <span>Pick a date</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={
-                      formData.damageDate
-                        ? new Date(formData.damageDate)
-                        : undefined
-                    }
-                    onSelect={(date) => {
-                      setFormData({
-                        ...formData,
-                        damageDate: date || new Date(),
-                      });
-                      setIsDatePickerOpen(false);
-                      focusNextInput("reportedBy");
-                    }}
-                    initialFocus
+                    placeholder=" "
+                    labelText="Default"
+                    className="relative"
+                    tooltipText="Mark as default damage item"
                   />
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">Reported By</h3>
-              <EditableInput
-                setRef={setRef("reportedBy")}
-                id="reportedBy"
-                name="reportedBy"
-                className="w-full h-10"
-                value={formData.reportedBy.toString() || ""}
-                onChange={handleChange}
-                onNext={() => focusNextInput("location")}
-                onCancel={() => {}}
-                tooltipText="Please enter reported by"
-              />
-            </div>
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">Location</h3>
-              <EditableInput
-                setRef={setRef("location")}
-                id="location"
-                name="location"
-                className="w-full h-10"
-                value={formData.location.toString() || ""}
-                onChange={handleChange}
-                onNext={() => focusNextInput("damageType")}
-                onCancel={() => {}}
-                tooltipText="Please enter location"
-              />
-            </div>
+                </div>
+              )}
+              {/* Status field - only show if user can edit */}
+              {statusPerm && (
+                <div className="space-y-2">
+                  <SwitchSelect
+                    ref={(el: any) => setRef("status")(el)}
+                    id="status"
+                    name="status"
+                    labelText="Status"
+                    multiSelect={false} // Single select mode
+                    options={[
+                      {
+                        label: "Active",
+                        value: "Active",
+                        date: "Set active",
+                      },
+                      {
+                        label: "Inactive",
+                        value: "InActive",
+                        date: "Set inactive",
+                      },
+                      {
+                        label: "Draft",
+                        value: "Draft",
+                        date: "Set draft",
+                      },
+                      {
+                        label: "Delete",
+                        value: "Delete",
+                        date: "Set deleted",
+                      },
+                    ]}
+                    value={formData.status}
+                    onValueChange={(value: string | string[]) => {
+                      const stringValue = Array.isArray(value)
+                        ? value[0] || ""
+                        : value;
+                      setFormData((prev) => ({
+                        ...prev,
+                        status: stringValue as
+                          | "Active"
+                          | "Inactive"
+                          | "Draft"
+                          | "Deleted",
+                        isDeleted: stringValue === "Delete",
+                        isDraft: stringValue === "Draft",
+                        isActive: stringValue === "Active",
+                      }));
+                    }}
+                    placeholder=""
+                    styles={{
+                      input: {
+                        borderColor: "var(--primary)",
+                        "&:focus": {
+                          borderColor: "var(--primary)",
+                        },
+                      },
+                    }}
+                    tooltipText="Set the damage item status"
+                  />
+                </div>
+              )}
 
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">Damage Type</h3>
-              <Select
-                ref={(el) => setRef("damageType")(el as HTMLElement)}
-                id="damageType"
-                name="damageType"
-                className="w-full h-10"
-                value={formData.damageType}
-                onChange={(value) => {
-                  if (
-                    value === "Transit" ||
-                    value === "Handling" ||
-                    value === "Expired" ||
-                    value === "Other"
-                  ) {
-                    setFormData({
-                      ...formData,
-                      damageType: value,
-                    });
-                  }
-                  // Call focusNextInput if needed
-                  focusNextInput("isDefault");
-                }}
-                data={["Transit", "Handling", "Expired", "Other"]}
-                placeholder="Select a customer id..."
-                searchable
-                clearable
-                required
-                styles={{
-                  input: {
-                    height: "40px",
-                    "&:focus": {
-                      borderColor: "var(--primary)",
+              {/* Actions */}
+              <div className="space-y-2">
+                <ActionsAutocomplete
+                  ref={(el: any) => setRef("actions")(el)}
+                  id="actions"
+                  name="actions"
+                  labelText="Action"
+                  value={selectedAction}
+                  actions={[
+                    {
+                      action: "Created",
+                      user: "John",
+                      role: "Super User",
+                      date: "06 Aug 2025",
+                      value: "created",
                     },
-                  },
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    focusNextInput("isDefault");
-                  }
-                }}
-              />
+                    {
+                      action: "Updated",
+                      user: "Sarah",
+                      role: "Admin",
+                      date: "08 Aug 2025",
+                      value: "updated",
+                    },
+                    {
+                      action: "Inactive",
+                      user: "Mike",
+                      role: "Admin",
+                      date: "08 Aug 2025",
+                      value: "inactive",
+                    },
+                    {
+                      action: "Drafted",
+                      user: "John",
+                      role: "Super User",
+                      date: "07 Aug 2025",
+                      value: "drafted",
+                    },
+                  ]}
+                  placeholder=""
+                  onValueChange={(value: string) => {
+                    setSelectedAction(value);
+                  }}
+                  styles={{
+                    input: {
+                      borderColor: "var(--primary)",
+                      "&:focus": {
+                        borderColor: "var(--primary)",
+                      },
+                    },
+                  }}
+                  tooltipText="Damage Item Action History"
+                />
+              </div>
             </div>
-          </div>
 
-          {/* Second Row: Status Switches */}
-          {/* Toggle Status Control */}
-          <ToggleStatusControls
-            formData={formData as any}
-            setFormData={setFormData as any}
-            focusNextInput={focusNextInput}
-            setRef={setRef}
-          />
+            {/* Dynamic Input Table List */}
+            <div className="mt-8">
+              <DynamicInputTableList isEdit={isEdit} />
+            </div>
+          </form>
+        </div>
+      </MinimizablePageLayout>
 
-          {/* Third Row: Timestamps */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <h3 className="font-medium mb-1">{t("common.created")}</h3>
-              <p className="text-gray-500 text-sm">
-                {getRelativeTime(formData.createdAt)}
-              </p>
-            </div>
-            <div>
-              <h3 className="font-medium mb-1">{t("common.updated")}</h3>
-              <p className="text-gray-500 text-sm">
-                {getRelativeTime(formData.updatedAt)}
-              </p>
-            </div>
-            <div>
-              <h3 className="font-medium mb-1">{t("common.drafted")}</h3>
-              <p className="text-gray-500 text-sm">
-                {getRelativeTime(formData.draftedAt)}
-              </p>
-            </div>
-            <div>
-              <h3 className="font-medium mb-1">{t("common.deleted")}</h3>
-              <p className="text-gray-500 text-sm">
-                {getRelativeTime(formData.deletedAt)}
-              </p>
-            </div>
-          </div>
-
-          {/* Dynamic Input Table */}
-          <DynamicInputTableList isEdit={isEdit} />
-        </form>
-      </PageLayout>
-
-      {/* Language Translator Modal */}
-      <LanguageTranslatorModal
-        isOpen={isOptionModalOpen}
-        onClose={() => setIsOptionModalOpen(false)}
-        title="Opening Stock Language Translator"
-        initialData={translations}
-        onSave={(data) => {
-          setTranslations(data);
-          console.log("Opening Stock translations saved:", data);
-        }}
+      <ResetFormModal
+        opened={isResetModalOpen}
+        onClose={() => setIsResetModalOpen(false)}
+        onConfirm={handleReset}
+        title="Reset Form"
+        message="Are you sure you want to reset the form?"
+        confirmText="Reset"
+        cancelText="Cancel"
       />
     </>
   );

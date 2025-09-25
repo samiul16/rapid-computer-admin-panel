@@ -1,182 +1,129 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import FixedColumnDataTable from "@/components/common/country-page-table/FixedColumnDataTable";
-import { usePermission } from "@/hooks/usePermissions";
+import useIsMobile from "@/hooks/useIsMobile";
 
-const mockLeadStatuses = [
-  {
-    id: "1",
-    name: "New Lead",
-    order: 1,
-    color: "#3B82F6",
-    createdAt: "2024-01-15",
-    updatedAt: "2024-01-20",
-    draftedAt: null,
-    actionMessage: "2h",
-    isActive: true,
-    isDraft: false,
-    isDeleted: false,
-    isUpdated: false,
-  },
-  {
-    id: "2",
-    name: "Contacted",
-    order: 2,
-    color: "#10B981",
-    createdAt: "2024-01-16",
-    updatedAt: "2024-01-21",
-    draftedAt: null,
-    actionMessage: "2h",
-    isActive: true,
-    isDraft: false,
-    isDeleted: false,
-    isUpdated: false,
-  },
-  {
-    id: "3",
-    name: "Qualified",
-    order: 3,
-    color: "#F59E0B",
-    createdAt: "2023-05-15",
-    updatedAt: "2024-01-22",
-    draftedAt: null,
-    actionMessage: "20m",
-    isActive: true,
-    isDraft: false,
-    isDeleted: false,
-    isUpdated: false,
-  },
+// Lead Status interface (Name, Order, Color)
+interface LeadStatus {
+  id: string;
+  name: string;
+  order: number;
+  color: string; // hex color
+  status: "active" | "inactive" | "draft";
+}
+
+const mockLeadStatuses: LeadStatus[] = [
+  { id: "1", name: "New", order: 1, color: "#3B82F6", status: "active" },
+  { id: "2", name: "Contacted", order: 2, color: "#06B6D4", status: "active" },
+  { id: "3", name: "Qualified", order: 3, color: "#10B981", status: "active" },
   {
     id: "4",
     name: "Proposal Sent",
     order: 4,
     color: "#8B5CF6",
-    createdAt: "2024-01-18",
-    updatedAt: "2024-01-23",
-    draftedAt: "2024-01-25",
-    actionMessage: "15 Apr",
-    isActive: true,
-    isDraft: true,
-    isDeleted: false,
-    isUpdated: false,
+    status: "active",
   },
   {
     id: "5",
     name: "Negotiation",
     order: 5,
-    color: "#EF4444",
-    createdAt: "2023-12-15",
-    updatedAt: "2024-01-24",
-    draftedAt: null,
-    actionMessage: "15 Apr 2023",
-    isActive: true,
-    isDraft: false,
-    isDeleted: false,
-    isUpdated: false,
+    color: "#F59E0B",
+    status: "active",
   },
-  {
-    id: "6",
-    name: "Closed Won",
-    order: 6,
-    color: "#059669",
-    createdAt: "2024-01-20",
-    updatedAt: "2024-01-25",
-    draftedAt: null,
-    actionMessage: "15 Apr 2024",
-    isActive: true,
-    isDraft: false,
-    isDeleted: false,
-    isUpdated: false,
-  },
-  {
-    id: "7",
-    name: "Closed Lost",
-    order: 7,
-    color: "#DC2626",
-    createdAt: "2024-01-21",
-    updatedAt: "2024-01-26",
-    draftedAt: null,
-    actionMessage: "15 Apr 2024",
-    isActive: true,
-    isDraft: false,
-    isDeleted: false,
-    isUpdated: false,
-  },
-  {
-    id: "8",
-    name: "On Hold",
-    order: 8,
-    color: "#6B7280",
-    createdAt: "2024-01-22",
-    updatedAt: "2024-01-27",
-    draftedAt: null,
-    actionMessage: "15 Apr 2024",
-    isActive: true,
-    isDraft: false,
-    isDeleted: false,
-    isUpdated: false,
-  },
-  {
-    id: "9",
-    name: "Rejected",
-    order: 9,
-    color: "#991B1B",
-    createdAt: "2021-12-15",
-    updatedAt: "2024-01-28",
-    draftedAt: null,
-    actionMessage: "15 Apr 2024",
-    isActive: true,
-    isDraft: false,
-    isDeleted: false,
-    isUpdated: false,
-  },
+  { id: "6", name: "Won", order: 6, color: "#22C55E", status: "active" },
+  { id: "7", name: "Lost", order: 7, color: "#EF4444", status: "inactive" },
+  { id: "8", name: "On Hold", order: 8, color: "#64748B", status: "draft" },
+  { id: "9", name: "Re-engage", order: 9, color: "#A78BFA", status: "active" },
   {
     id: "10",
-    name: "Follow Up",
+    name: "No Response",
     order: 10,
-    color: "#F97316",
-    createdAt: "2024-01-24",
-    updatedAt: "2024-01-29",
-    draftedAt: null,
-    actionMessage: "2h",
-    isActive: true,
-    isDraft: false,
-    isDeleted: false,
-    isUpdated: false,
+    color: "#94A3B8",
+    status: "inactive",
   },
   {
     id: "11",
-    name: "Meeting Scheduled",
+    name: "In-progress",
     order: 11,
-    color: "#06B6D4",
-    createdAt: "2024-02-15",
-    updatedAt: "2024-01-30",
-    draftedAt: null,
-    actionMessage: "2h",
-    isActive: true,
-    isDraft: false,
-    isDeleted: false,
-    isUpdated: false,
+    color: "#10B981",
+    status: "active",
   },
   {
     id: "12",
-    name: "Demo Completed",
+    name: "Completed",
     order: 12,
-    color: "#EC4899",
-    createdAt: "2024-01-26",
-    updatedAt: "2024-01-31",
-    draftedAt: null,
-    actionMessage: "2h",
-    isActive: true,
-    isDraft: false,
-    isDeleted: false,
-    isUpdated: false,
+    color: "#94A3B8",
+    status: "active",
+  },
+  {
+    id: "13",
+    name: "Cancelled",
+    order: 13,
+    color: "#EF4444",
+    status: "inactive",
+  },
+  { id: "14", name: "On Hold", order: 14, color: "#94A3B8", status: "draft" },
+  {
+    id: "15",
+    name: "Re-engage",
+    order: 15,
+    color: "#F59E0B",
+    status: "active",
+  },
+  {
+    id: "16",
+    name: "No Response",
+    order: 16,
+    color: "#EF4444",
+    status: "inactive",
+  },
+  {
+    id: "17",
+    name: "In-progress",
+    order: 17,
+    color: "#94A3B8",
+    status: "active",
+  },
+  {
+    id: "18",
+    name: "Completed",
+    order: 18,
+    color: "#F59E0B",
+    status: "active",
+  },
+  {
+    id: "19",
+    name: "Cancelled",
+    order: 19,
+    color: "#10B981",
+    status: "inactive",
+  },
+  { id: "20", name: "On Hold", order: 20, color: "#94A3B8", status: "draft" },
+  {
+    id: "21",
+    name: "Re-engage",
+    order: 21,
+    color: "#F59E0B",
+    status: "active",
+  },
+  {
+    id: "22",
+    name: "No Response",
+    order: 22,
+    color: "#94A3B8",
+    status: "inactive",
+  },
+  {
+    id: "23",
+    name: "In-progress",
+    order: 23,
+    color: "#F59E0B",
+    status: "active",
   },
 ];
 
-export default function LeadStatusesDataTable({
+export default function LeadStatusDataTable({
   viewMode,
   setViewMode,
-  dataTableFilter,
   searchQuery,
   setShowExport,
   showExport,
@@ -184,10 +131,11 @@ export default function LeadStatusesDataTable({
   showFilter,
   setShowVisibility,
   showVisibility,
+  isFilterOpen,
+  setIsFilterOpen,
 }: {
   viewMode: string;
   setViewMode: (viewMode: string) => void;
-  dataTableFilter: any;
   searchQuery: string;
   setShowExport: (showExport: boolean) => void;
   showExport: boolean;
@@ -195,14 +143,16 @@ export default function LeadStatusesDataTable({
   showFilter: boolean;
   setShowVisibility: (showVisibility: boolean) => void;
   showVisibility: boolean;
+  isFilterOpen: boolean;
+  setIsFilterOpen: (isFilterOpen: boolean) => void;
 }) {
-  const canCreate = usePermission("leadStatuses", "create");
+  const isMobile = useIsMobile();
 
   const componentColumns = [
     {
       accessorKey: "name",
       title: "Name",
-      options: [...new Set(mockLeadStatuses.map((item: any) => item.name))],
+      options: [...new Set(mockLeadStatuses.map((item) => item.name))],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
         const cellValue = row.getValue(columnId) as string;
@@ -213,143 +163,56 @@ export default function LeadStatusesDataTable({
       sortingFn: (row1: any, row2: any) => {
         return row1.getValue("name").localeCompare(row2.getValue("name"));
       },
-      size: 180,
-      minSize: 150,
+      size: isMobile ? 120 : 180,
+      minSize: 120,
       meta: {
-        exportLabel: "name",
-        readOnly: !canCreate,
+        exportLabel: "Name",
+        readOnly: true,
       },
     },
     {
       accessorKey: "order",
       title: "Order",
-      options: [...new Set(mockLeadStatuses.map((item: any) => item.order))],
+      options: [...new Set(mockLeadStatuses.map((item) => String(item.order)))],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as number;
-        return filterValue.some((filterVal: number) => cellValue === filterVal);
+        const cellValue = String(row.getValue(columnId));
+        return filterValue.includes(cellValue);
       },
       sortingFn: (row1: any, row2: any) => {
-        return row1.getValue("order") - row2.getValue("order");
+        return Number(row1.getValue("order")) - Number(row2.getValue("order"));
       },
-      size: 120,
+      size: isMobile ? 100 : 120,
       minSize: 100,
       meta: {
-        exportLabel: "order",
-        readOnly: !canCreate,
+        exportLabel: "Order",
+        readOnly: true,
       },
     },
     {
       accessorKey: "color",
       title: "Color",
-      options: [...new Set(mockLeadStatuses.map((item: any) => item.color))],
+      options: [...new Set(mockLeadStatuses.map((item) => item.color))],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as string;
-        return filterValue.some((filterVal: string) => cellValue === filterVal);
+        const cellValue = (row.getValue(columnId) as string).toLowerCase();
+        return filterValue.some((filterVal: string) =>
+          cellValue.includes(String(filterVal).toLowerCase())
+        );
       },
       sortingFn: (row1: any, row2: any) => {
         return row1.getValue("color").localeCompare(row2.getValue("color"));
       },
-      size: 120,
+      size: isMobile ? 120 : 160,
       minSize: 100,
       meta: {
-        exportLabel: "color",
-        readOnly: !canCreate,
-      },
-    },
-    {
-      accessorKey: "createdAt",
-      title: "Created",
-      options: [],
-      filterFn: (row: any, columnId: any, filterValue: any) => {
-        if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = new Date(row.getValue(columnId) as string)
-          .toISOString()
-          .split("T")[0];
-        return filterValue.includes(cellValue);
-      },
-      sortingFn: (row1: any, row2: any) => {
-        return (
-          new Date(row1.getValue("createdAt")).getTime() -
-          new Date(row2.getValue("createdAt")).getTime()
-        );
-      },
-      size: 180,
-      minSize: 150,
-      meta: {
-        exportLabel: "createdAt",
-        readOnly: true,
-      },
-    },
-    {
-      accessorKey: "updatedAt",
-      title: "Updated",
-      options: [],
-      filterFn: (row: any, columnId: any, filterValue: any) => {
-        if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = new Date(row.getValue(columnId) as string)
-          .toISOString()
-          .split("T")[0];
-        return filterValue.includes(cellValue);
-      },
-      sortingFn: (row1: any, row2: any) => {
-        return (
-          new Date(row1.getValue("updatedAt")).getTime() -
-          new Date(row2.getValue("updatedAt")).getTime()
-        );
-      },
-      size: 180,
-      minSize: 150,
-      meta: {
-        exportLabel: "updatedAt",
-        readOnly: true,
-      },
-    },
-    {
-      accessorKey: "draftedAt",
-      title: "Drafted",
-      options: [],
-      filterFn: (row: any, columnId: any, filterValue: any) => {
-        if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId);
-        if (!cellValue) return false;
-        const dateValue = new Date(cellValue as string)
-          .toISOString()
-          .split("T")[0];
-        return filterValue.includes(dateValue);
-      },
-      sortingFn: (row1: any, row2: any) => {
-        const date1 = row1.getValue("draftedAt");
-        const date2 = row2.getValue("draftedAt");
-        if (!date1 && !date2) return 0;
-        if (!date1) return 1;
-        if (!date2) return -1;
-        return new Date(date1).getTime() - new Date(date2).getTime();
-      },
-      size: 180,
-      minSize: 150,
-      meta: {
-        exportLabel: "draftedAt",
+        exportLabel: "Color",
         readOnly: true,
       },
     },
   ];
 
-  const filteredData = mockLeadStatuses.filter((source: any) => {
-    if (dataTableFilter.status === "Active") {
-      return source.isActive;
-    } else if (dataTableFilter.status === "Inactive") {
-      return !source.isActive;
-    } else if (dataTableFilter.status === "Draft") {
-      return source.isDraft;
-    } else if (dataTableFilter.status === "Deleted") {
-      return source.isDeleted;
-    } else if (dataTableFilter.status === "Updated") {
-      return source.isUpdated;
-    }
-    return true;
-  });
+  const filteredData = mockLeadStatuses;
 
   return (
     <FixedColumnDataTable
@@ -358,7 +221,7 @@ export default function LeadStatusesDataTable({
       viewMode={viewMode}
       setViewMode={setViewMode}
       componentColumns={componentColumns}
-      fixedColumns={["name"]}
+      fixedColumns={["name", "status"]}
       pathName="lead-status"
       setShowExport={setShowExport}
       showExport={showExport}
@@ -366,6 +229,9 @@ export default function LeadStatusesDataTable({
       showFilter={showFilter}
       setShowVisibility={setShowVisibility}
       showVisibility={showVisibility}
+      isFilterOpen={isFilterOpen}
+      setIsFilterOpen={setIsFilterOpen}
+      showImages={false}
     />
   );
 }
