@@ -17,9 +17,19 @@ import { useAppSelector } from "@/store/hooks";
 import MinimizablePageLayout from "@/components/MinimizablePageLayout";
 import { SwitchSelect } from "@/components/common/SwitchAutoComplete";
 
-type BrandData = {
-  name: string;
-  code: string;
+type ItemMasterData = {
+  itemCode: string;
+  itemName: string;
+  arabicName: string;
+  costPrice: number;
+  regularPrice: number;
+  offerPrice: number;
+  startDate: string;
+  endDate: string;
+  openingStock: number;
+  category: string;
+  subCategory: string;
+  unit: string;
   description: string;
   status: "active" | "inactive" | "draft";
   isDefault: boolean;
@@ -36,10 +46,20 @@ type Props = {
   isEdit?: boolean;
 };
 
-const initialData: BrandData = {
-  name: "Apex",
-  code: "BRD001",
-  description: "Premium performance brand",
+const initialData: ItemMasterData = {
+  itemCode: "ITM001",
+  itemName: "Laptop Pro 15",
+  arabicName: "لابتوب برو 15",
+  costPrice: 1200,
+  regularPrice: 1500,
+  offerPrice: 1350,
+  startDate: "2024-01-01",
+  endDate: "2024-12-31",
+  openingStock: 50,
+  category: "Electronics",
+  subCategory: "Laptops",
+  unit: "Piece",
+  description: "High-performance laptop for professionals",
   status: "active",
   isDefault: false,
   isActive: true,
@@ -51,7 +71,7 @@ const initialData: BrandData = {
   isDeleted: false,
 };
 
-export default function BrandFormPage({ isEdit = false }: Props) {
+export default function ItemFormPage({ isEdit = false }: Props) {
   const navigate = useNavigate();
   const labels = useLanguageLabels();
   const { isRTL } = useAppSelector((state) => state.language);
@@ -68,18 +88,46 @@ export default function BrandFormPage({ isEdit = false }: Props) {
   const { canCreate, canView } = useColorsPermissions();
 
   // Field-level permissions
-  const name: boolean = usePermission("brands", "create", "name");
-  const code: boolean = usePermission("brands", "create", "code");
-  const description: boolean = usePermission("brands", "create", "description");
-  const status: boolean = usePermission("brands", "create", "status");
-  const isDefault: boolean = usePermission("brands", "create", "isDefault");
-  const canPdf: boolean = usePermission("brands", "pdf");
-  const canPrint: boolean = usePermission("brands", "print");
+  const itemName: boolean = usePermission("items", "create", "itemName");
+  const itemCode: boolean = usePermission("items", "create", "itemCode");
+  const arabicName: boolean = usePermission("items", "create", "arabicName");
+  const costPrice: boolean = usePermission("items", "create", "costPrice");
+  const regularPrice: boolean = usePermission(
+    "items",
+    "create",
+    "regularPrice"
+  );
+  const offerPrice: boolean = usePermission("items", "create", "offerPrice");
+  const startDate: boolean = usePermission("items", "create", "startDate");
+  const endDate: boolean = usePermission("items", "create", "endDate");
+  const openingStock: boolean = usePermission(
+    "items",
+    "create",
+    "openingStock"
+  );
+  const category: boolean = usePermission("items", "create", "category");
+  const subCategory: boolean = usePermission("items", "create", "subCategory");
+  const unit: boolean = usePermission("items", "create", "unit");
+  const description: boolean = usePermission("items", "create", "description");
+  const status: boolean = usePermission("items", "create", "status");
+  const isDefault: boolean = usePermission("items", "create", "isDefault");
+  const canPdf: boolean = usePermission("items", "pdf");
+  const canPrint: boolean = usePermission("items", "print");
 
   // Form state
-  const [formData, setFormData] = useState<BrandData>({
-    name: "",
-    code: "",
+  const [formData, setFormData] = useState<ItemMasterData>({
+    itemCode: "",
+    itemName: "",
+    arabicName: "",
+    costPrice: 0,
+    regularPrice: 0,
+    offerPrice: 0,
+    startDate: "",
+    endDate: "",
+    openingStock: 0,
+    category: "",
+    subCategory: "",
+    unit: "",
     description: "",
     status: "active",
     isDefault: false,
@@ -110,9 +158,9 @@ export default function BrandFormPage({ isEdit = false }: Props) {
       ),
       onClick: () => {
         if (isEdit) {
-          navigate("/brands/create");
+          navigate("/items/create");
         } else {
-          navigate("/brands/edit/undefined");
+          navigate("/items/edit/undefined");
         }
       },
       show: canCreate,
@@ -121,7 +169,7 @@ export default function BrandFormPage({ isEdit = false }: Props) {
       label: "View",
       icon: <Eye className="w-5 h-5 text-green-600" />,
       onClick: () => {
-        navigate("/brands/view");
+        navigate("/items/view");
       },
       show: canView,
     },
@@ -154,16 +202,16 @@ export default function BrandFormPage({ isEdit = false }: Props) {
       await handleExportPDF();
     }
     if (printEnabled) {
-      handlePrintBrand(formData);
+      handlePrintItem(formData);
     }
 
     // keep switch functionality
     if (keepCreating) {
-      toastSuccess("Brand created successfully!");
+      toastSuccess("Item created successfully!");
       handleReset();
     } else {
-      toastSuccess("Brand created successfully!");
-      navigate("/brands");
+      toastSuccess("Item created successfully!");
+      navigate("/items");
     }
   };
 
@@ -173,8 +221,18 @@ export default function BrandFormPage({ isEdit = false }: Props) {
 
   const handleReset = async () => {
     setFormData({
-      name: "",
-      code: "",
+      itemCode: "",
+      itemName: "",
+      arabicName: "",
+      costPrice: 0,
+      regularPrice: 0,
+      offerPrice: 0,
+      startDate: "",
+      endDate: "",
+      openingStock: 0,
+      category: "",
+      subCategory: "",
+      unit: "",
       description: "",
       status: "active",
       isDefault: false,
@@ -197,19 +255,29 @@ export default function BrandFormPage({ isEdit = false }: Props) {
 
     // Focus the first input field after reset
     setTimeout(() => {
-      inputRefs.current["name"]?.focus();
+      inputRefs.current["itemName"]?.focus();
     }, 100);
   };
 
-  const handlePrintBrand = (brandData: any) => {
+  const handlePrintItem = (itemData: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "Brand Details",
-        data: [brandData],
+        title: "Item Details",
+        data: [itemData],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
-          name: "Brand Name",
-          code: "Brand Code",
+          itemCode: "Item Code",
+          itemName: "Item Name",
+          arabicName: "Arabic Name",
+          costPrice: "Cost Price",
+          regularPrice: "Regular Price",
+          offerPrice: "Offer Price",
+          startDate: "Start Date",
+          endDate: "End Date",
+          openingStock: "Opening Stock",
+          category: "Category",
+          subCategory: "Sub Category",
+          unit: "Unit",
           description: "Description",
           status: "Status",
           isActive: "Active Status",
@@ -241,15 +309,15 @@ export default function BrandFormPage({ isEdit = false }: Props) {
       const blob = await pdf(
         <GenericPDF
           data={[formData]}
-          title="Brand Details"
-          subtitle="Brand Information"
+          title="Item Details"
+          subtitle="Item Information"
         />
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "brand-details.pdf";
+      a.download = "item-details.pdf";
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
@@ -277,7 +345,7 @@ export default function BrandFormPage({ isEdit = false }: Props) {
                 ...prev,
                 isDraft: true,
               }));
-              toastRestore("Brand saved as draft successfully");
+              toastRestore("Item saved as draft successfully");
             },
             show: canCreate,
           },
@@ -299,14 +367,14 @@ export default function BrandFormPage({ isEdit = false }: Props) {
   return (
     <>
       <MinimizablePageLayout
-        moduleId="brand-form-module"
-        moduleName={isEdit ? "Edit Brand" : "Adding Brand"}
+        moduleId="item-form-module"
+        moduleName={isEdit ? "Edit Item" : "Adding Item"}
         moduleRoute={
-          isEdit ? `/brands/edit/${formData.name || "new"}` : "/brands/create"
+          isEdit ? `/items/edit/${formData.itemName || "new"}` : "/items/create"
         }
         onMinimize={handleMinimize}
-        title={isEdit ? "Edit Brand" : "Add Brand"}
-        listPath="brands"
+        title={isEdit ? "Edit Item" : "Add Item"}
+        listPath="items"
         popoverOptions={popoverOptions}
         videoSrc={video}
         videoHeader="Tutorial video"
@@ -317,7 +385,7 @@ export default function BrandFormPage({ isEdit = false }: Props) {
         printEnabled={printEnabled}
         onPrintToggle={canPrint ? handleSwitchChange : undefined}
         activePage="create"
-        module="brands"
+        module="items"
         additionalFooterButtons={
           canCreate ? (
             <div className="flex gap-4 max-[435px]:gap-2">
@@ -347,39 +415,59 @@ export default function BrandFormPage({ isEdit = false }: Props) {
             onSubmit={handleSubmit}
             className="space-y-6 relative"
           >
-            {/* First Row: Brand Name, Code, Description */}
+            {/* First Row: Item Name, Item Code, Arabic Name, Description */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
-              {/* Brand Name field - only show if user can create */}
-              {name && (
+              {/* Item Name field - only show if user can create */}
+              {itemName && (
                 <div className="space-y-2">
                   <EditableInput
-                    setRef={setRef("name")}
-                    id="name"
-                    name="name"
-                    value={formData.name}
+                    setRef={setRef("itemName")}
+                    id="itemName"
+                    name="itemName"
+                    value={formData.itemName}
                     onChange={handleChange}
-                    onNext={() => focusNextInput("code")}
-                    onCancel={() => setFormData({ ...formData, name: "" })}
-                    labelText="Brand Name"
-                    tooltipText="Enter the brand name"
+                    onNext={() => focusNextInput("itemCode")}
+                    onCancel={() => setFormData({ ...formData, itemName: "" })}
+                    labelText="Item Name"
+                    tooltipText="Enter the item name"
                     required
                   />
                 </div>
               )}
 
-              {/* Brand Code field - only show if user can create */}
-              {code && (
+              {/* Item Code field - only show if user can create */}
+              {itemCode && (
                 <div className="space-y-2">
                   <EditableInput
-                    setRef={setRef("code")}
-                    id="code"
-                    name="code"
-                    value={formData.code}
+                    setRef={setRef("itemCode")}
+                    id="itemCode"
+                    name="itemCode"
+                    value={formData.itemCode}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("arabicName")}
+                    onCancel={() => setFormData({ ...formData, itemCode: "" })}
+                    labelText="Item Code"
+                    tooltipText="Enter the item code (e.g., ITM001)"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Arabic Name field - only show if user can create */}
+              {arabicName && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("arabicName")}
+                    id="arabicName"
+                    name="arabicName"
+                    value={formData.arabicName}
                     onChange={handleChange}
                     onNext={() => focusNextInput("description")}
-                    onCancel={() => setFormData({ ...formData, code: "" })}
-                    labelText="Brand Code"
-                    tooltipText="Enter the brand code (e.g., BRD001)"
+                    onCancel={() =>
+                      setFormData({ ...formData, arabicName: "" })
+                    }
+                    labelText="Arabic Name"
+                    tooltipText="Enter the Arabic name for the item"
                     required
                   />
                 </div>
@@ -394,13 +482,216 @@ export default function BrandFormPage({ isEdit = false }: Props) {
                     name="description"
                     value={formData.description}
                     onChange={handleChange}
-                    onNext={() => focusNextInput("status")}
+                    onNext={() => focusNextInput("costPrice")}
                     onCancel={() =>
                       setFormData({ ...formData, description: "" })
                     }
                     labelText="Description"
-                    tooltipText="Enter a description for the brand"
+                    tooltipText="Enter a description for the item"
                     type="text"
+                    required
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Second Row: Cost Price, Regular Price, Offer Price, Opening Stock */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
+              {/* Cost Price field - only show if user can create */}
+              {costPrice && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("costPrice")}
+                    id="costPrice"
+                    name="costPrice"
+                    type="number"
+                    value={formData.costPrice.toString()}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        costPrice: parseFloat(e.target.value) || 0,
+                      })
+                    }
+                    onNext={() => focusNextInput("regularPrice")}
+                    onCancel={() => setFormData({ ...formData, costPrice: 0 })}
+                    labelText="Cost Price"
+                    tooltipText="Enter the cost price"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Regular Price field - only show if user can create */}
+              {regularPrice && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("regularPrice")}
+                    id="regularPrice"
+                    name="regularPrice"
+                    type="number"
+                    value={formData.regularPrice.toString()}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        regularPrice: parseFloat(e.target.value) || 0,
+                      })
+                    }
+                    onNext={() => focusNextInput("offerPrice")}
+                    onCancel={() =>
+                      setFormData({ ...formData, regularPrice: 0 })
+                    }
+                    labelText="Regular Price"
+                    tooltipText="Enter the regular selling price"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Offer Price field - only show if user can create */}
+              {offerPrice && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("offerPrice")}
+                    id="offerPrice"
+                    name="offerPrice"
+                    type="number"
+                    value={formData.offerPrice.toString()}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        offerPrice: parseFloat(e.target.value) || 0,
+                      })
+                    }
+                    onNext={() => focusNextInput("openingStock")}
+                    onCancel={() => setFormData({ ...formData, offerPrice: 0 })}
+                    labelText="Offer Price"
+                    tooltipText="Enter the special offer price"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Opening Stock field - only show if user can create */}
+              {openingStock && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("openingStock")}
+                    id="openingStock"
+                    name="openingStock"
+                    type="number"
+                    value={formData.openingStock.toString()}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        openingStock: parseInt(e.target.value) || 0,
+                      })
+                    }
+                    onNext={() => focusNextInput("category")}
+                    onCancel={() =>
+                      setFormData({ ...formData, openingStock: 0 })
+                    }
+                    labelText="Opening Stock"
+                    tooltipText="Enter the initial stock quantity"
+                    required
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Third Row: Category, Sub Category, Unit, Start Date */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
+              {/* Category field - only show if user can create */}
+              {category && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("category")}
+                    id="category"
+                    name="category"
+                    value={formData.category}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("subCategory")}
+                    onCancel={() => setFormData({ ...formData, category: "" })}
+                    labelText="Category"
+                    tooltipText="Enter the item category"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Sub Category field - only show if user can create */}
+              {subCategory && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("subCategory")}
+                    id="subCategory"
+                    name="subCategory"
+                    value={formData.subCategory}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("unit")}
+                    onCancel={() =>
+                      setFormData({ ...formData, subCategory: "" })
+                    }
+                    labelText="Sub Category"
+                    tooltipText="Enter the item sub category"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Unit field - only show if user can create */}
+              {unit && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("unit")}
+                    id="unit"
+                    name="unit"
+                    value={formData.unit}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("startDate")}
+                    onCancel={() => setFormData({ ...formData, unit: "" })}
+                    labelText="Unit"
+                    tooltipText="Enter the unit of measurement"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Start Date field - only show if user can create */}
+              {startDate && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("startDate")}
+                    id="startDate"
+                    name="startDate"
+                    type="date"
+                    value={formData.startDate}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("endDate")}
+                    onCancel={() => setFormData({ ...formData, startDate: "" })}
+                    labelText="Start Date"
+                    tooltipText="Enter the start date"
+                    required
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Fourth Row: End Date, Default, Status */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
+              {/* End Date field - only show if user can create */}
+              {endDate && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("endDate")}
+                    id="endDate"
+                    name="endDate"
+                    type="date"
+                    value={formData.endDate}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("isDefault")}
+                    onCancel={() => setFormData({ ...formData, endDate: "" })}
+                    labelText="End Date"
+                    tooltipText="Enter the end date"
                     required
                   />
                 </div>
@@ -418,12 +709,12 @@ export default function BrandFormPage({ isEdit = false }: Props) {
                       {
                         label: labels.yes,
                         value: labels.yes,
-                        date: "Set default brand",
+                        date: "Set default item",
                       },
                       {
                         label: labels.no,
                         value: labels.no,
-                        date: "Remove default brand",
+                        date: "Remove default item",
                       },
                     ]}
                     value={isDefaultState === "Yes" ? labels.yes : labels.no}
@@ -450,13 +741,13 @@ export default function BrandFormPage({ isEdit = false }: Props) {
                     placeholder=" "
                     labelText="Default"
                     className="relative"
-                    tooltipText="Set as default brand"
+                    tooltipText="Set as default item"
                   />
                 </div>
               )}
             </div>
 
-            {/* Second Row: Default and Status */}
+            {/* Fifth Row: Status */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
               {/* Status field - only show if user can create */}
               {status && (
@@ -506,7 +797,7 @@ export default function BrandFormPage({ isEdit = false }: Props) {
                         },
                       },
                     }}
-                    tooltipText="Set the brand status"
+                    tooltipText="Set the item status"
                   />
                 </div>
               )}

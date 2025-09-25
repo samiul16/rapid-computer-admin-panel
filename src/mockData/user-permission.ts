@@ -10845,5 +10845,131 @@ export const userPermission = {
         },
       },
     },
+    items: {
+      formPermissions: {
+        create: true,
+        view: true,
+        edit: true,
+        delete: true,
+        restore: true,
+        export: true,
+        import: true,
+        pdf: true,
+        print: true,
+        history: true,
+      },
+      fieldPermissions: {
+        itemCode: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        itemName: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        arabicName: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        costPrice: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        regularPrice: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        offerPrice: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        startDate: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        endDate: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        openingStock: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        category: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        subCategory: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        unit: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        description: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        status: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        isDefault: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        isDraft: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        isActive: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        isDeleted: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        createdAt: {
+          view: true,
+          edit: false,
+          create: true,
+        },
+        updatedAt: {
+          view: true,
+          edit: false,
+          create: true,
+        },
+        draftedAt: {
+          view: true,
+          edit: false,
+          create: true,
+        },
+        deletedAt: {
+          view: true,
+          edit: false,
+          create: true,
+        },
+      },
+    },
   },
 };
