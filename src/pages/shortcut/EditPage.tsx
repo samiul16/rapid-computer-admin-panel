@@ -1,119 +1,147 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import video from "@/assets/videos/test.mp4";
-import { Autocomplete } from "@/components/common/Autocomplete";
 import EditableInput from "@/components/common/EditableInput";
-import PageLayout from "@/components/common/PageLayout";
 import GenericPDF from "@/components/common/pdf";
 import { ResetFormModal } from "@/components/common/ResetFormModal";
 import { Button } from "@/components/ui/button";
-import { usePermission } from "@/hooks/usePermissions";
 import { PrintCommonLayout } from "@/lib/printContents/PrintCommonLayout";
 import { printHtmlContent } from "@/lib/printHtmlContent";
 import { toastError, toastRestore, toastSuccess } from "@/lib/toast";
-import type { RootState } from "@/store";
-import { Modal } from "@mantine/core";
 import { pdf } from "@react-pdf/renderer";
-import { Check, Edit, Eye, Plus } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
-import { useSelector } from "react-redux";
-import { useLocation, useNavigate } from "react-router-dom";
-import {
-  formFields,
-  initialDataWithValue,
-  initialProperties,
-  printConfigFieldLabels,
-  type ModuleCreateEditPageTypes,
-  type ModuleFieldsType,
-} from "./config/ModuleLevelConfig";
-import { getModuleFromPath } from "@/lib/utils";
-import { FloatingMultiSelect } from "@/components/common/FloatingMultiSelect";
+import { Check, Eye, Plus } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useColorsPermissions, usePermission } from "@/hooks/usePermissions";
+// import { useLanguageLabels } from "@/hooks/useLanguageLabels";
+import { useAppSelector } from "@/store/hooks";
+import MinimizablePageLayout from "@/components/MinimizablePageLayout";
+import { useMinimizedModuleData } from "@/hooks/useMinimizedModuleData";
+import { SwitchSelect } from "@/components/common/SwitchAutoComplete";
+import { ActionsAutocomplete } from "@/components/common/ActionsAutocomplete";
+
+type SliderData = {
+  titleEn: string;
+  titleAr: string;
+  topTitleEn: string;
+  topTitleAr: string;
+  keyTagsEn: string;
+  keyTagsAr: string;
+  bannerType: string;
+  bannerEn: string;
+  bannerAr: string;
+  status: "active" | "inactive" | "draft" | "deleted";
+  isDefault: boolean;
+  isActive: boolean;
+  isDraft: boolean;
+  isDeleted: boolean;
+  createdAt: Date | null;
+  draftedAt: Date | null;
+  updatedAt: Date | null;
+  deletedAt: Date | null;
+};
+
+type SliderModuleData = {
+  formData: SliderData;
+  hasChanges: boolean;
+  scrollPosition: number;
+};
 
 type Props = {
   isEdit?: boolean;
 };
 
-export default function ShortcutEditPage({ isEdit = true }: Props) {
-  const navigate = useNavigate();
-  const { isRTL } = useSelector((state: RootState) => state.language);
+const initialData: SliderData = {
+  titleEn: "Welcome to Our Platform",
+  titleAr: "مرحباً بكم في منصتنا",
+  topTitleEn: "Get Started",
+  topTitleAr: "ابدأ الآن",
+  keyTagsEn: "Welcome, Platform, Introduction",
+  keyTagsAr: "ترحيب، منصة، مقدمة",
+  bannerType: "Hero",
+  bannerEn: "hero-banner-en.jpg",
+  bannerAr: "hero-banner-ar.jpg",
+  status: "active",
+  isDefault: false,
+  isActive: true,
+  isDraft: false,
+  isDeleted: false,
+  createdAt: new Date(),
+  draftedAt: null,
+  updatedAt: new Date(),
+  deletedAt: null,
+};
 
-  const location = useLocation();
+export default function SliderEditPage({ isEdit = true }: Props) {
+  const navigate = useNavigate();
+  const { id } = useParams();
+  // const labels = useLanguageLabels();
+  const { isRTL } = useAppSelector((state) => state.language);
+
+  // Get module ID for this edit page
+  const moduleId = `slider-edit-module-${id || "new"}`;
+
+  // Use the custom hook for minimized module data
+  const {
+    moduleData,
+    hasMinimizedData,
+    resetModuleData,
+    getModuleScrollPosition,
+  } = useMinimizedModuleData<SliderModuleData>(moduleId);
 
   const [keepCreating, setKeepCreating] = useState(false);
-  const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
-  const [isDefaultState, setIsDefaultState] = useState<"Yes" | "No">("No");
-  const [isDraftState, setIsDraftState] = useState<"Yes" | "No">("No");
-
-  const [printEnabled, setPrintEnabled] = useState(false);
-  const [pdfChecked, setPdfChecked] = useState(false);
-  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
-
-  const detectedModule = getModuleFromPath(location.pathname);
-
-  // Permission checks
-  const canCreate = usePermission(detectedModule, "create");
-  const canView = usePermission(detectedModule, "view");
-  const canEdit = usePermission(detectedModule, "edit");
-  const canDelete = usePermission(detectedModule, "delete");
-  const canPdf: boolean = usePermission(detectedModule, "pdf");
-  const canPrint: boolean = usePermission(detectedModule, "print");
-
-  console.log("canCreate", canCreate);
-  console.log("canView", canView);
-  console.log("canEdit", canEdit);
-  console.log("canDelete", canDelete);
-
-  // Field-level permissions
-  const fieldKeys = Object.keys(
-    initialProperties
-  ) as (keyof ModuleFieldsType)[];
-  const permissionsFieldLevel = usePermission<keyof ModuleCreateEditPageTypes>(
-    detectedModule,
-    "create",
-    [...fieldKeys, "isDefault", "isDraft"]
+  const formRef = useRef<HTMLFormElement>(null);
+  const [isDefaultState, setIsDefaultState] = useState<"Yes" | "No" | string>(
+    "No"
   );
 
-  console.log("permissionsFieldLevel", permissionsFieldLevel);
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  const [printEnabled, setPrintEnabled] = useState(false);
+  const [pdfChecked, setPdfChecked] = useState(false);
+  const [formKey, setFormKey] = useState(0);
+  const [isRestoredFromMinimized, setIsRestoredFromMinimized] = useState(false);
+  const [shouldRestoreFromMinimized, setShouldRestoreFromMinimized] =
+    useState(false);
+  const [selectedAction, setSelectedAction] = useState<string>("");
+
+  // Permission checks
+  const { canCreate, canView } = useColorsPermissions();
+
+  // Field-level permissions
+  const titleEn: boolean = usePermission("sliders", "edit", "titleEn");
+  const titleAr: boolean = usePermission("sliders", "edit", "titleAr");
+  const topTitleEn: boolean = usePermission("sliders", "edit", "topTitleEn");
+  const topTitleAr: boolean = usePermission("sliders", "edit", "topTitleAr");
+  const keyTagsEn: boolean = usePermission("sliders", "edit", "keyTagsEn");
+  const keyTagsAr: boolean = usePermission("sliders", "edit", "keyTagsAr");
+  const bannerType: boolean = usePermission("sliders", "edit", "bannerType");
+  const bannerEn: boolean = usePermission("sliders", "edit", "bannerEn");
+  const bannerAr: boolean = usePermission("sliders", "edit", "bannerAr");
+  const status: boolean = usePermission("sliders", "edit", "status");
+  const isDefault: boolean = usePermission("sliders", "edit", "isDefault");
+  const canPdf: boolean = usePermission("sliders", "pdf");
+  const canPrint: boolean = usePermission("sliders", "print");
 
   // Form state
-  const [formData, setFormData] = useState<ModuleCreateEditPageTypes>({
-    ...initialProperties,
-
-    isDefault: isDefaultState === "Yes",
+  const [formData, setFormData] = useState<SliderData>({
+    titleEn: "",
+    titleAr: "",
+    topTitleEn: "",
+    topTitleAr: "",
+    keyTagsEn: "",
+    keyTagsAr: "",
+    bannerType: "",
+    bannerEn: "",
+    bannerAr: "",
+    status: "active",
+    isDefault: false,
+    isActive: true,
     isDraft: false,
+    isDeleted: false,
     createdAt: null,
     draftedAt: null,
     updatedAt: null,
     deletedAt: null,
   });
-
-  const [popoverOptions, setPopoverOptions] = useState([
-    {
-      label: isEdit ? "Create" : "Edit",
-      icon: isEdit ? (
-        <Plus className="w-5 h-5 text-green-500" /> // Green for Plus
-      ) : (
-        <Edit className="w-5 h-5 text-blue-500" /> // Blue for Edit
-      ),
-      onClick: () => {
-        if (isEdit) {
-          navigate(`${location.pathname}/create`);
-        } else {
-          navigate(`${location.pathname}/edit/undefined`);
-        }
-      },
-      // Only show if user has permission
-      show: canCreate,
-    },
-    {
-      label: "View",
-      icon: <Eye className="w-5 h-5 text-green-600" />, // Added neutral color for Eye
-      onClick: () => {
-        navigate(`${location.pathname}/view`);
-      },
-      // Only show if user has permission
-      show: canView,
-    },
-  ]);
 
   // focus next input field
   const inputRefs = useRef<Record<string, HTMLElement | null>>({});
@@ -124,78 +152,127 @@ export default function ShortcutEditPage({ isEdit = true }: Props) {
     inputRefs.current[nextField]?.focus();
   };
 
+  // Check for restore flag from taskbar
+  useEffect(() => {
+    const shouldRestore = localStorage.getItem(`restore-${moduleId}`);
+    if (shouldRestore === "true") {
+      setShouldRestoreFromMinimized(true);
+      localStorage.removeItem(`restore-${moduleId}`);
+    }
+  }, [moduleId]);
+
+  // Restore logic using the custom hook
+  useEffect(() => {
+    const shouldAutoRestore =
+      shouldRestoreFromMinimized ||
+      (hasMinimizedData &&
+        moduleData?.formData &&
+        !isRestoredFromMinimized &&
+        !formData.titleEn);
+
+    if (hasMinimizedData && moduleData?.formData && shouldAutoRestore) {
+      setFormData(moduleData.formData);
+
+      // Restore UI states based on form data
+      setIsDefaultState(moduleData.formData.isDefault ? "Yes" : "No");
+
+      setIsRestoredFromMinimized(true);
+      setShouldRestoreFromMinimized(false);
+
+      // Restore scroll position
+      const scrollPosition = getModuleScrollPosition(moduleId);
+      if (scrollPosition) {
+        setTimeout(() => {
+          window.scrollTo(0, scrollPosition);
+        }, 200);
+      }
+    }
+  }, [
+    hasMinimizedData,
+    moduleData,
+    isRestoredFromMinimized,
+    shouldRestoreFromMinimized,
+    formData.titleEn,
+    moduleId,
+    getModuleScrollPosition,
+  ]);
+
   // Initialize with edit data if available
   useEffect(() => {
-    if (isEdit && initialDataWithValue) {
-      setFormData({
-        ...initialDataWithValue,
-      });
-      setIsDraftState(initialDataWithValue.isDraft ? "Yes" : "No");
+    if (
+      isEdit &&
+      initialData &&
+      !hasMinimizedData &&
+      !isRestoredFromMinimized
+    ) {
+      setFormData(initialData);
+      setIsDefaultState(initialData.isDefault ? "Yes" : "No");
+      setIsDefaultState(initialData.isDefault ? "Yes" : "No");
     }
-  }, [isEdit]);
+  }, [
+    isEdit,
+    hasMinimizedData,
+    isRestoredFromMinimized,
+    moduleId,
+    formData.titleEn,
+  ]);
 
   // Handle form field changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
-    setFormData({
+    const newFormData = {
       ...formData,
       [name]: type === "checkbox" ? checked : value,
-    });
+    };
+    setFormData(newFormData);
   };
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
-
-    // Normal submit logic here (API call)------------
 
     if (pdfChecked) {
       await handleExportPDF();
     }
     if (printEnabled) {
-      handlePrintLeaves(formData);
+      handlePrintSlider(formData);
     }
 
     // keep switch functionality
     if (keepCreating) {
-      toastSuccess(
-        `${location.pathname.split("/")[1]} ${
-          isEdit ? "updated" : "created"
-        } successfully!`
-      );
+      toastSuccess("Slider updated successfully!");
       handleReset();
     } else {
-      toastSuccess(
-        `${location.pathname.split("/")[1]} ${
-          isEdit ? "updated" : "created"
-        } successfully!`
-      );
-      navigate(`/${location.pathname.split("/")[1]}`);
+      toastSuccess("Slider updated successfully!");
+      navigate("/sliders");
     }
   };
 
-  const handleResetClick = () => {
-    setIsResetModalOpen(true);
-  };
-
-  // Add this state
-  const [formKey, setFormKey] = useState(0);
-
-  // Update handleReset function
-  const handleReset = () => {
+  // Update handleReset function to use the custom hook
+  const handleReset = async () => {
     setFormData({
-      ...initialProperties,
-
+      titleEn: "",
+      titleAr: "",
+      topTitleEn: "",
+      topTitleAr: "",
+      keyTagsEn: "",
+      keyTagsAr: "",
+      bannerType: "",
+      bannerEn: "",
+      bannerAr: "",
+      status: "active",
       isDefault: false,
+      isActive: true,
       isDraft: false,
+      isDeleted: false,
       createdAt: new Date(),
       draftedAt: null,
       updatedAt: new Date(),
       deletedAt: null,
     });
     setIsDefaultState("No");
-    setIsDraftState("No");
+
+    setIsRestoredFromMinimized(false);
 
     if (formRef.current) {
       formRef.current.reset();
@@ -204,24 +281,44 @@ export default function ShortcutEditPage({ isEdit = true }: Props) {
     // Force re-render of all inputs by changing key
     setFormKey((prev) => prev + 1);
 
+    // Reset form data using the custom hook
+    if (hasMinimizedData) {
+      try {
+        await resetModuleData(moduleId);
+      } catch (error) {
+        console.error("Error resetting form data:", error);
+      }
+    }
+
     // Focus the first input field after reset
     setTimeout(() => {
-      inputRefs.current[fieldKeys[0]]?.focus();
-    }, 100); // Slightly longer delay to ensure re-render is complete
+      inputRefs.current["titleEn"]?.focus();
+    }, 100);
   };
 
-  const formRef = useRef<HTMLFormElement>(null);
+  const handleResetClick = () => {
+    setIsResetModalOpen(true);
+  };
 
-  const handlePrintLeaves = (leavesData: any) => {
+  const handlePrintSlider = (sliderData: any) => {
     try {
       const html = PrintCommonLayout({
-        title: `${location.pathname.split("/")[1]} Details`,
-        data: [leavesData],
+        title: "Slider Details",
+        data: [sliderData],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
-          ...printConfigFieldLabels,
-
-          isDefault: "Default Status",
+          titleEn: "Title (EN)",
+          titleAr: "Title (AR)",
+          topTitleEn: "Top Title (EN)",
+          topTitleAr: "Top Title (AR)",
+          keyTagsEn: "Key Tags (EN)",
+          keyTagsAr: "Key Tags (AR)",
+          bannerType: "Banner Type",
+          bannerEn: "Banner (EN)",
+          bannerAr: "Banner (AR)",
+          status: "Status",
+          isDefault: "Default Slider",
+          isActive: "Active Status",
           isDraft: "Draft Status",
           isDeleted: "Deleted Status",
           createdAt: "Created At",
@@ -246,29 +343,20 @@ export default function ShortcutEditPage({ isEdit = true }: Props) {
   };
 
   const handleExportPDF = async () => {
-    console.log("Export PDF clicked");
     try {
-      console.log("sampleReceivingData on pdf click", formData);
       const blob = await pdf(
         <GenericPDF
           data={[formData]}
-          title={`${location.pathname.split("/")[1].replace("-", " ")} Details`}
-          subtitle={`${location.pathname
-            .split("/")[1]
-            .replace("-", " ")} Information`}
+          title="Slider Details"
+          subtitle="Slider Information"
         />
       ).toBlob();
 
-      console.log("blob", blob);
-
       const url = URL.createObjectURL(blob);
-      console.log("url", url);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${location.pathname.split("/")[1]}-details.pdf`;
+      a.download = "slider-details.pdf";
       a.click();
-      console.log("a", a);
-      console.log("url", url);
       URL.revokeObjectURL(url);
     } catch (error) {
       console.log(error);
@@ -276,14 +364,31 @@ export default function ShortcutEditPage({ isEdit = true }: Props) {
     }
   };
 
+  const [popoverOptions, setPopoverOptions] = useState([
+    {
+      label: "Create",
+      icon: <Plus className="w-5 h-5 text-green-500" />,
+      onClick: () => {
+        navigate("/sliders/create");
+      },
+      show: canCreate,
+    },
+    {
+      label: "View",
+      icon: <Eye className="w-5 h-5 text-green-600" />,
+      onClick: () => {
+        navigate("/sliders/view");
+      },
+      show: canView,
+    },
+  ]);
+
   useEffect(() => {
     setPopoverOptions((prevOptions) => {
-      // Filter out any existing draft option first
       const filteredOptions = prevOptions.filter(
         (opt) => opt.label !== "Draft"
       );
 
-      // Add draft option only if not already a draft
       if (!formData.isDraft) {
         return [
           ...filteredOptions,
@@ -295,56 +400,59 @@ export default function ShortcutEditPage({ isEdit = true }: Props) {
                 ...prev,
                 isDraft: true,
               }));
-              toastRestore(
-                `${location.pathname.split("/")[1]} saved as draft successfully`
-              );
+              toastRestore("Slider saved as draft successfully");
             },
-            show: canCreate, // Only show draft option if user can create
+            show: canCreate,
           },
         ];
       }
       return filteredOptions;
     });
-  }, [formData.isDraft, canCreate, location.pathname]);
+  }, [formData.isDraft, canCreate]);
+
+  // Create minimize handler using the custom hook
+  const handleMinimize = useCallback((): SliderModuleData => {
+    return {
+      formData,
+      hasChanges: true,
+      scrollPosition: window.scrollY,
+    };
+  }, [formData]);
 
   return (
     <>
-      <PageLayout
-        title={
-          isEdit
-            ? `${location.pathname.split("/")[1]} Editing`
-            : `${location.pathname.split("/")[1]} Creating`
-        }
+      <MinimizablePageLayout
+        moduleId={moduleId}
+        moduleName={`Edit Slider`}
+        moduleRoute={`/sliders/edit/${id || "new"}`}
+        onMinimize={handleMinimize}
+        title="Edit Slider"
+        listPath="sliders"
+        popoverOptions={popoverOptions}
         videoSrc={video}
         videoHeader="Tutorial video"
-        listPath={`${location.pathname.split("/")[1]}`}
-        popoverOptions={popoverOptions}
         keepChanges={keepCreating}
         onKeepChangesChange={setKeepCreating}
         pdfChecked={pdfChecked}
         onPdfToggle={canPdf ? handlePDFSwitchChange : undefined}
         printEnabled={printEnabled}
         onPrintToggle={canPrint ? handleSwitchChange : undefined}
-        activePage={isEdit ? "edit" : "create"}
-        // Removed onExport prop
+        activePage="edit"
+        module="sliders"
         additionalFooterButtons={
-          // Only show buttons if user can create
           canCreate ? (
-            <div className="flex gap-4 items-center">
+            <div className="flex gap-4 max-[435px]:gap-2">
               <Button
                 variant="outline"
-                className="gap-2 text-primary bg-sky-200 hover:bg-primary rounded-full border-primary w-32 font-semibold!"
+                className="gap-2 hover:bg-primary/90 bg-white rounded-full border-primary w-28 max-[435px]:w-20 font-semibold! text-primary!"
                 onClick={handleResetClick}
               >
                 Reset
               </Button>
               <Button
-                ref={(el) => setRef("submitButton")(el as HTMLButtonElement)}
-                id="submitButton"
-                name="submitButton"
                 variant="outline"
-                className={`gap-2 text-primary rounded-full border-primary w-32 bg-sky-200 hover:bg-primary font-semibold!`}
-                onClick={() => formRef.current?.requestSubmit()}
+                className="gap-2 hover:bg-primary/90 bg-white rounded-full border-primary w-28 max-[435px]:w-20 font-semibold! text-primary!"
+                onClick={handleSubmit}
               >
                 Submit
               </Button>
@@ -358,222 +466,362 @@ export default function ShortcutEditPage({ isEdit = true }: Props) {
             ref={formRef}
             key={formKey}
             onSubmit={handleSubmit}
-            className="space-y-6 relative"
+            className="space-y-6"
           >
-            {/* All fields in one 4-column row */}
+            {/* First Row: Title En, Title Ar, Top Title En, Top Title Ar */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
-              {formFields.map((field) => {
-                if (
-                  !permissionsFieldLevel[
-                    field.name as keyof typeof permissionsFieldLevel
-                  ]
-                ) {
-                  return null; // skip if not allowed
-                }
+              {/* Title En field - only show if user can edit */}
+              {titleEn && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("titleEn")}
+                    id="titleEn"
+                    name="titleEn"
+                    value={formData.titleEn}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("titleAr")}
+                    onCancel={() => setFormData({ ...formData, titleEn: "" })}
+                    labelText="Title (EN)"
+                    tooltipText="Enter the English title"
+                    required
+                  />
+                </div>
+              )}
 
-                if (field.component === "input") {
-                  return (
-                    <div key={field.name} className="space-y-2 relative">
-                      <EditableInput
-                        setRef={setRef(field.name)}
-                        type={field.type}
-                        id={field.name}
-                        name={field.name}
-                        value={formData[field.name]}
-                        onChange={handleChange}
-                        onNext={() =>
-                          field.nextFocus && focusNextInput(field.nextFocus)
-                        }
-                        onCancel={() =>
-                          setFormData({ ...formData, [field.name]: "" })
-                        }
-                        labelText={field.label}
-                        tooltipText={field.tooltip}
-                        required={field.required}
-                      />
-                    </div>
-                  );
-                }
+              {/* Title Ar field - only show if user can edit */}
+              {titleAr && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("titleAr")}
+                    id="titleAr"
+                    name="titleAr"
+                    value={formData.titleAr}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("topTitleEn")}
+                    onCancel={() => setFormData({ ...formData, titleAr: "" })}
+                    labelText="Title (AR)"
+                    tooltipText="Enter the Arabic title"
+                    required
+                  />
+                </div>
+              )}
 
-                if (field.component === "autocomplete") {
-                  return (
-                    <div key={field.name} className="space-y-2 relative">
-                      <Autocomplete
-                        ref={(el: any) => setRef(field.name)(el)}
-                        id={field.name}
-                        name={field.name}
-                        options={field.options || []}
-                        value={formData[field.name]}
-                        labelClassName="rounded-lg"
-                        isSelectableOnly={true}
-                        onValueChange={(value: string) => {
-                          setFormData((prev) => ({
-                            ...prev,
-                            [field.name]: value,
-                          }));
-                          if (field.nextFocus) focusNextInput(field.nextFocus);
-                        }}
-                        onEnterPress={() => {
-                          if (formData[field.name] && field.nextFocus) {
-                            focusNextInput(field.nextFocus);
-                          }
-                        }}
-                        placeholder=" "
-                        labelText={field.label}
-                        className="relative"
-                        styles={{
-                          input: {
-                            borderColor: "var(--primary)",
-                            "&:focus": { borderColor: "var(--primary)" },
-                          },
-                        }}
-                      />
-                    </div>
-                  );
-                }
+              {/* Top Title En field - only show if user can edit */}
+              {topTitleEn && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("topTitleEn")}
+                    id="topTitleEn"
+                    name="topTitleEn"
+                    value={formData.topTitleEn}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("topTitleAr")}
+                    onCancel={() =>
+                      setFormData({ ...formData, topTitleEn: "" })
+                    }
+                    labelText="Top Title (EN)"
+                    tooltipText="Enter the English top title"
+                    required
+                  />
+                </div>
+              )}
 
-                if (field.component === "mutiselect") {
-                  return (
-                    <div key={field.name} className="space-y-2 relative">
-                      <FloatingMultiSelect
-                        label={field.label}
-                        data={field.options || []}
-                        value={
-                          formData[field.name]
-                            ? (formData[field.name] as string)
-                                .split(",")
-                                .map((s) => s.trim())
-                                .filter(Boolean)
-                            : []
-                        }
-                        onChange={(value: string[]) => {
-                          setFormData((prev) => ({
-                            ...prev,
-                            [field.name]: value.join(", "),
-                          }));
-                          if (field.nextFocus) focusNextInput(field.nextFocus);
-                        }}
-                      />
-                    </div>
-                  );
-                }
+              {/* Top Title Ar field - only show if user can edit */}
+              {topTitleAr && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("topTitleAr")}
+                    id="topTitleAr"
+                    name="topTitleAr"
+                    value={formData.topTitleAr}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("keyTagsEn")}
+                    onCancel={() =>
+                      setFormData({ ...formData, topTitleAr: "" })
+                    }
+                    labelText="Top Title (AR)"
+                    tooltipText="Enter the Arabic top title"
+                    required
+                  />
+                </div>
+              )}
+            </div>
 
-                return null;
-              })}
+            {/* Second Row: Key Tags En, Key Tags Ar, Banner Type, Banner En */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
+              {/* Key Tags En field - only show if user can edit */}
+              {keyTagsEn && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("keyTagsEn")}
+                    id="keyTagsEn"
+                    name="keyTagsEn"
+                    value={formData.keyTagsEn}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("keyTagsAr")}
+                    onCancel={() => setFormData({ ...formData, keyTagsEn: "" })}
+                    labelText="Key Tags (EN)"
+                    tooltipText="Enter English key tags (comma separated)"
+                    required
+                  />
+                </div>
+              )}
 
-              {/* Default field - only show if user can create */}
-              {permissionsFieldLevel.isDefault && (
+              {/* Key Tags Ar field - only show if user can edit */}
+              {keyTagsAr && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("keyTagsAr")}
+                    id="keyTagsAr"
+                    name="keyTagsAr"
+                    value={formData.keyTagsAr}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("bannerType")}
+                    onCancel={() => setFormData({ ...formData, keyTagsAr: "" })}
+                    labelText="Key Tags (AR)"
+                    tooltipText="Enter Arabic key tags (comma separated)"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Banner Type field - only show if user can edit */}
+              {bannerType && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("bannerType")}
+                    id="bannerType"
+                    name="bannerType"
+                    value={formData.bannerType}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("bannerEn")}
+                    onCancel={() =>
+                      setFormData({ ...formData, bannerType: "" })
+                    }
+                    labelText="Banner Type"
+                    tooltipText="Enter banner type (e.g., Hero, Service, Tech)"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Banner En field - only show if user can edit */}
+              {bannerEn && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("bannerEn")}
+                    id="bannerEn"
+                    name="bannerEn"
+                    value={formData.bannerEn}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("bannerAr")}
+                    onCancel={() => setFormData({ ...formData, bannerEn: "" })}
+                    labelText="Banner (EN)"
+                    tooltipText="Enter English banner filename"
+                    required
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Third Row: Banner Ar, Status, Default */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
+              {/* Banner Ar field - only show if user can edit */}
+              {bannerAr && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("bannerAr")}
+                    id="bannerAr"
+                    name="bannerAr"
+                    value={formData.bannerAr}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("status")}
+                    onCancel={() => setFormData({ ...formData, bannerAr: "" })}
+                    labelText="Banner (AR)"
+                    tooltipText="Enter Arabic banner filename"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Status field - only show if user can edit */}
+              {status && (
+                <div className="space-y-2">
+                  <SwitchSelect
+                    ref={(el: any) => setRef("status")(el)}
+                    id="status"
+                    name="status"
+                    labelText="Status"
+                    multiSelect={false}
+                    options={[
+                      {
+                        label: "Active",
+                        value: "active",
+                        date: "Set active slider",
+                      },
+                      {
+                        label: "Inactive",
+                        value: "inactive",
+                        date: "Set inactive slider",
+                      },
+                      {
+                        label: "Draft",
+                        value: "draft",
+                        date: "Set draft slider",
+                      },
+                      {
+                        label: "Delete",
+                        value: "deleted",
+                        date: "Set delete slider",
+                      },
+                    ]}
+                    value={formData.status}
+                    onValueChange={(value: string | string[]) => {
+                      const stringValue = Array.isArray(value)
+                        ? value[0] || ""
+                        : value;
+                      setFormData((prev) => ({
+                        ...prev,
+                        status: stringValue as
+                          | "active"
+                          | "inactive"
+                          | "draft"
+                          | "deleted",
+                        isDeleted: stringValue === "deleted",
+                        isDraft: stringValue === "draft",
+                        isActive: stringValue === "active",
+                      }));
+                    }}
+                    placeholder=""
+                    styles={{
+                      input: {
+                        borderColor: "var(--primary)",
+                        "&:focus": {
+                          borderColor: "var(--primary)",
+                        },
+                      },
+                    }}
+                    tooltipText="Set the slider status"
+                  />
+                </div>
+              )}
+
+              {/* Default field - only show if user can edit */}
+              {isDefault && (
                 <div className="space-y-2 relative">
-                  <Autocomplete
+                  <SwitchSelect
                     ref={(el: any) => setRef("isDefault")(el)}
                     id="isDefault"
                     name="isDefault"
-                    options={["No", "Yes"]}
+                    multiSelect={false}
+                    options={[
+                      {
+                        label: "Yes",
+                        value: "Yes",
+                        date: "Set default slider",
+                      },
+                      {
+                        label: "No",
+                        value: "No",
+                        date: "Remove default slider",
+                      },
+                    ]}
                     value={isDefaultState === "Yes" ? "Yes" : "No"}
                     labelClassName="rounded-lg"
-                    isSelectableOnly={true}
-                    onValueChange={(value: string) => {
-                      const isYes = value === "Yes";
+                    onValueChange={(value: string | string[]) => {
+                      const isYes = Array.isArray(value)
+                        ? value[0] === "Yes"
+                        : value === "Yes";
                       setIsDefaultState(isYes ? "Yes" : "No");
                       const newValue = isYes;
                       setFormData((prev) => ({
                         ...prev,
                         isDefault: newValue,
                       }));
-                      // Call focusNextInput if needed
-                      focusNextInput("isDraft");
                     }}
                     onEnterPress={() => {
                       if (
                         formData.isDefault === true ||
                         formData.isDefault === false
                       ) {
-                        focusNextInput("isDraft");
+                        focusNextInput("actions");
                       }
                     }}
                     placeholder=" "
                     labelText="Default"
                     className="relative"
-                    styles={{
-                      input: {
-                        borderColor: "var(--primary)",
-                        "&:focus": {
-                          borderColor: "var(--primary)",
-                        },
-                      },
-                    }}
+                    tooltipText="Set as default slider"
                   />
                 </div>
               )}
 
-              {/* Draft field - only show if user can create */}
-              {permissionsFieldLevel.isDraft && (
-                <div className="space-y-2 relative">
-                  <Autocomplete
-                    ref={(el: any) => setRef("isDraft")(el)}
-                    id="isDraft"
-                    name="isDraft"
-                    options={["No", "Yes"]}
-                    value={isDraftState === "Yes" ? "Yes" : "No"}
-                    labelClassName="rounded-lg"
-                    isSelectableOnly={true}
-                    onValueChange={(value: string) => {
-                      const isYes = value === "Yes";
-                      setIsDraftState(isYes ? "Yes" : "No");
-                      const newValue = isYes;
-                      setFormData((prev) => ({
-                        ...prev,
-                        isDraft: newValue,
-                      }));
-                      focusNextInput("fileUploadElement");
-                    }}
-                    onEnterPress={() => {
-                      if (
-                        formData.isDraft === true ||
-                        formData.isDraft === false
-                      ) {
-                        focusNextInput("fileUploadElement");
-                      }
-                    }}
-                    placeholder=" "
-                    labelText="Draft"
-                    className="relative"
-                    styles={{
-                      input: {
+              {/* Actions */}
+              <div className="space-y-2">
+                <ActionsAutocomplete
+                  ref={(el: any) => setRef("actions")(el)}
+                  id="actions"
+                  name="actions"
+                  labelText="Action"
+                  value={selectedAction}
+                  actions={[
+                    {
+                      action: "Created",
+                      user: "John",
+                      role: "Super User",
+                      date: "06 Aug 2025",
+                      value: "created",
+                    },
+                    {
+                      action: "Updated",
+                      user: "Sarah",
+                      role: "Admin",
+                      date: "08 Aug 2025",
+                      value: "updated",
+                    },
+                    {
+                      action: "Inactive",
+                      user: "Mike",
+                      role: "Admin",
+                      date: "08 Aug 2025",
+                      value: "inactive",
+                    },
+                    {
+                      action: "Drafted",
+                      user: "John",
+                      role: "Super User",
+                      date: "07 Aug 2025",
+                      value: "drafted",
+                    },
+                  ]}
+                  placeholder=""
+                  onValueChange={(value: string) => {
+                    setSelectedAction(value);
+                  }}
+                  styles={{
+                    input: {
+                      borderColor: "var(--primary)",
+                      "&:focus": {
                         borderColor: "var(--primary)",
-                        "&:focus": {
-                          borderColor: "var(--primary)",
-                        },
                       },
-                    }}
-                  />
-                </div>
-              )}
+                    },
+                  }}
+                  tooltipText="Slider Action History"
+                />
+              </div>
             </div>
           </form>
         </div>
-      </PageLayout>
+      </MinimizablePageLayout>
 
       <ResetFormModal
         opened={isResetModalOpen}
         onClose={() => setIsResetModalOpen(false)}
         onConfirm={handleReset}
         title="Reset Form"
-        message="Are you sure you want to reset the form? All changes will be lost."
+        message="Are you sure you want to reset the form?"
         confirmText="Reset"
         cancelText="Cancel"
       />
-
-      {/* Options Modal */}
-      <Modal
-        opened={isOptionModalOpen}
-        onClose={() => setIsOptionModalOpen(false)}
-        title="Options"
-        size="xl"
-        overlayProps={{ backgroundOpacity: 0.55, blur: 3 }}
-      >
-        <div className="pt-5 pb-14 px-5">Modal Content</div>
-      </Modal>
     </>
   );
 }

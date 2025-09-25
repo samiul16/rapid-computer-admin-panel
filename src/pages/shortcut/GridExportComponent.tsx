@@ -22,16 +22,29 @@ interface SimpleFilterProps {
   data: any[];
   setFilteredData: (filtered: any[]) => void;
   setIsExportOpen: (visible: boolean) => void;
-  title: string;
-  fileName: string;
 }
+
+const mockData = [
+  {
+    name: "Bangladesh",
+    code: "BD",
+    currency: "BDT",
+    status: "active",
+    created_at: "2024-06-01",
+  },
+  {
+    name: "India",
+    code: "IN",
+    currency: "INR",
+    status: "active",
+    created_at: "2024-06-02",
+  },
+];
 
 export default function SimpleFilterComponent({
   data,
   setFilteredData,
   setIsExportOpen,
-  title,
-  fileName,
 }: SimpleFilterProps) {
   const [search, setSearch] = useState("");
   const [selectedFilters, setSelectedFilters] = useState<Set<string>>(
@@ -76,16 +89,37 @@ export default function SimpleFilterComponent({
     });
   };
 
-  const handleCSV = () => exportToCSV(data, fileName + ".csv");
-  const handleExcel = () => exportToExcel(data, fileName + ".xlsx");
+  const handleCSV = () => exportToCSV(mockData, "countries.csv");
+  const handleExcel = () => exportToExcel(mockData, "countries.xlsx");
   const handleExport = async () => {
     console.log("Export clicked");
     try {
       const blob = await pdf(
         <PDF
-          data={data}
-          title={title}
-          subtitle={title + " Information Report"}
+          data={[
+            {
+              code: "BD",
+              name: "Bangladesh",
+              name_in_bangla: "বাংলাদেশ",
+              name_in_arabic: "البنغلاديش",
+              created_at: "2025-06-26T12:00:00.000Z",
+              updated_at: "2025-06-26T12:00:00.000Z",
+              deleted_at: null,
+              drafted_at: null,
+              is_active: true,
+              is_draft: false,
+              is_deleted: false,
+              flag_url: "https://flagcdn.com/16x12/bd.png",
+              country_code: "BD",
+              country_name: "Bangladesh",
+              country_flag: "🇧🇩",
+              description: "The central business district of the city",
+              is_default: true,
+              is_drafted: false,
+            },
+          ]}
+          title="Country Details"
+          subtitle="Country Information Report"
         />
       ).toBlob();
 
@@ -95,7 +129,7 @@ export default function SimpleFilterComponent({
       console.log("url", url);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${fileName}-summary.pdf`;
+      a.download = "countries-summary.pdf";
       a.click();
       console.log("a", a);
       console.log("url", url);

@@ -1467,10 +1467,11 @@ import ReceivedVoucherCreatePage from "./pages/received-voucher/CreatePage";
 import ReceivedVoucherEditPage from "./pages/received-voucher/EditPage";
 import ReceivedVoucherPage from "./pages/received-voucher/ReceivedVoucherPage";
 import SubscribePage from "./pages/subscribe/SubscribePage";
+
 import ShortcutPage from "./pages/shortcut/ShortcutPage";
 import ShortcutCreatePage from "./pages/shortcut/CreatePage";
 import ShortcutEditPage from "./pages/shortcut/EditPage";
-import ShortcutDetails from "./pages/shortcut/DetailsPage";
+import ShortcutDetails from "./pages/shortcut/ShortcutDetails";
 
 // Team Members
 import TeamMembersPage from "./pages/team-members/TeamMemebrsPage";
