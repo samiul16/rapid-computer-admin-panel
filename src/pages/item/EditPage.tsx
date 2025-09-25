@@ -12,30 +12,40 @@ import { Check, Eye, Plus } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useColorsPermissions, usePermission } from "@/hooks/usePermissions";
-// import { useLanguageLabels } from "@/hooks/useLanguageLabels";
+import { useLanguageLabels } from "@/hooks/useLanguageLabels";
 import { useAppSelector } from "@/store/hooks";
 import MinimizablePageLayout from "@/components/MinimizablePageLayout";
 import { useMinimizedModuleData } from "@/hooks/useMinimizedModuleData";
 import { SwitchSelect } from "@/components/common/SwitchAutoComplete";
 import { ActionsAutocomplete } from "@/components/common/ActionsAutocomplete";
 
-type BrandData = {
-  name: string;
-  code: string;
+type ItemMasterData = {
+  itemCode: string;
+  itemName: string;
+  arabicName: string;
+  costPrice: number;
+  regularPrice: number;
+  offerPrice: number;
+  startDate: string;
+  endDate: string;
+  openingStock: number;
+  category: string;
+  subCategory: string;
+  unit: string;
   description: string;
-  status: "active" | "inactive" | "draft" | "deleted";
+  status: "active" | "inactive" | "draft";
   isDefault: boolean;
   isActive: boolean;
   isDraft: boolean;
-  isDeleted: boolean;
   createdAt: Date | null;
   draftedAt: Date | null;
   updatedAt: Date | null;
   deletedAt: Date | null;
+  isDeleted: boolean;
 };
 
-type BrandModuleData = {
-  formData: BrandData;
+type ItemModuleData = {
+  formData: ItemMasterData;
   hasChanges: boolean;
   scrollPosition: number;
 };
@@ -44,10 +54,20 @@ type Props = {
   isEdit?: boolean;
 };
 
-const initialData: BrandData = {
-  name: "Apex",
-  code: "BRD001",
-  description: "Premium performance brand",
+const initialData: ItemMasterData = {
+  itemCode: "ITM001",
+  itemName: "Laptop Pro 15",
+  arabicName: "لابتوب برو 15",
+  costPrice: 1200,
+  regularPrice: 1500,
+  offerPrice: 1350,
+  startDate: "2024-01-01",
+  endDate: "2024-12-31",
+  openingStock: 50,
+  category: "Electronics",
+  subCategory: "Laptops",
+  unit: "Piece",
+  description: "High-performance laptop for professionals",
   status: "active",
   isDefault: false,
   isActive: true,
@@ -59,14 +79,14 @@ const initialData: BrandData = {
   deletedAt: null,
 };
 
-export default function BrandEditPage({ isEdit = true }: Props) {
+export default function ItemEditPage({ isEdit = true }: Props) {
   const navigate = useNavigate();
   const { id } = useParams();
-  // const labels = useLanguageLabels();
+  const labels = useLanguageLabels();
   const { isRTL } = useAppSelector((state) => state.language);
 
   // Get module ID for this edit page
-  const moduleId = `brand-edit-module-${id || "new"}`;
+  const moduleId = `item-edit-module-${id || "new"}`;
 
   // Use the custom hook for minimized module data
   const {
@@ -74,7 +94,7 @@ export default function BrandEditPage({ isEdit = true }: Props) {
     hasMinimizedData,
     resetModuleData,
     getModuleScrollPosition,
-  } = useMinimizedModuleData<BrandModuleData>(moduleId);
+  } = useMinimizedModuleData<ItemModuleData>(moduleId);
 
   const [keepCreating, setKeepCreating] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
@@ -95,18 +115,38 @@ export default function BrandEditPage({ isEdit = true }: Props) {
   const { canCreate, canView } = useColorsPermissions();
 
   // Field-level permissions
-  const name: boolean = usePermission("brands", "edit", "name");
-  const code: boolean = usePermission("brands", "edit", "code");
-  const description: boolean = usePermission("brands", "edit", "description");
-  const status: boolean = usePermission("brands", "edit", "status");
-  const isDefault: boolean = usePermission("brands", "edit", "isDefault");
-  const canPdf: boolean = usePermission("brands", "pdf");
-  const canPrint: boolean = usePermission("brands", "print");
+  const itemName: boolean = usePermission("items", "edit", "itemName");
+  const itemCode: boolean = usePermission("items", "edit", "itemCode");
+  const arabicName: boolean = usePermission("items", "edit", "arabicName");
+  const costPrice: boolean = usePermission("items", "edit", "costPrice");
+  const regularPrice: boolean = usePermission("items", "edit", "regularPrice");
+  const offerPrice: boolean = usePermission("items", "edit", "offerPrice");
+  const startDate: boolean = usePermission("items", "edit", "startDate");
+  const endDate: boolean = usePermission("items", "edit", "endDate");
+  const openingStock: boolean = usePermission("items", "edit", "openingStock");
+  const category: boolean = usePermission("items", "edit", "category");
+  const subCategory: boolean = usePermission("items", "edit", "subCategory");
+  const unit: boolean = usePermission("items", "edit", "unit");
+  const description: boolean = usePermission("items", "edit", "description");
+  const status: boolean = usePermission("items", "edit", "status");
+  const isDefault: boolean = usePermission("items", "edit", "isDefault");
+  const canPdf: boolean = usePermission("items", "pdf");
+  const canPrint: boolean = usePermission("items", "print");
 
   // Form state
-  const [formData, setFormData] = useState<BrandData>({
-    name: "",
-    code: "",
+  const [formData, setFormData] = useState<ItemMasterData>({
+    itemCode: "",
+    itemName: "",
+    arabicName: "",
+    costPrice: 0,
+    regularPrice: 0,
+    offerPrice: 0,
+    startDate: "",
+    endDate: "",
+    openingStock: 0,
+    category: "",
+    subCategory: "",
+    unit: "",
     description: "",
     status: "active",
     isDefault: false,
@@ -144,7 +184,7 @@ export default function BrandEditPage({ isEdit = true }: Props) {
       (hasMinimizedData &&
         moduleData?.formData &&
         !isRestoredFromMinimized &&
-        !formData.name);
+        !formData.itemName);
 
     if (hasMinimizedData && moduleData?.formData && shouldAutoRestore) {
       setFormData(moduleData.formData);
@@ -168,7 +208,7 @@ export default function BrandEditPage({ isEdit = true }: Props) {
     moduleData,
     isRestoredFromMinimized,
     shouldRestoreFromMinimized,
-    formData.name,
+    formData.itemName,
     moduleId,
     getModuleScrollPosition,
   ]);
@@ -205,24 +245,34 @@ export default function BrandEditPage({ isEdit = true }: Props) {
       await handleExportPDF();
     }
     if (printEnabled) {
-      handlePrintBrand(formData);
+      handlePrintItem(formData);
     }
 
     // keep switch functionality
     if (keepCreating) {
-      toastSuccess("Brand updated successfully!");
+      toastSuccess("Item updated successfully!");
       handleReset();
     } else {
-      toastSuccess("Brand updated successfully!");
-      navigate("/brands");
+      toastSuccess("Item updated successfully!");
+      navigate("/items");
     }
   };
 
   // Update handleReset function to use the custom hook
   const handleReset = async () => {
     setFormData({
-      name: "",
-      code: "",
+      itemCode: "",
+      itemName: "",
+      arabicName: "",
+      costPrice: 0,
+      regularPrice: 0,
+      offerPrice: 0,
+      startDate: "",
+      endDate: "",
+      openingStock: 0,
+      category: "",
+      subCategory: "",
+      unit: "",
       description: "",
       status: "active",
       isDefault: false,
@@ -256,7 +306,7 @@ export default function BrandEditPage({ isEdit = true }: Props) {
 
     // Focus the first input field after reset
     setTimeout(() => {
-      inputRefs.current["name"]?.focus();
+      inputRefs.current["itemName"]?.focus();
     }, 100);
   };
 
@@ -264,18 +314,27 @@ export default function BrandEditPage({ isEdit = true }: Props) {
     setIsResetModalOpen(true);
   };
 
-  const handlePrintBrand = (brandData: any) => {
+  const handlePrintItem = (itemData: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "Brand Details",
-        data: [brandData],
+        title: "Item Details",
+        data: [itemData],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
-          name: "Brand Name",
-          code: "Brand Code",
+          itemCode: "Item Code",
+          itemName: "Item Name",
+          arabicName: "Arabic Name",
+          costPrice: "Cost Price",
+          regularPrice: "Regular Price",
+          offerPrice: "Offer Price",
+          startDate: "Start Date",
+          endDate: "End Date",
+          openingStock: "Opening Stock",
+          category: "Category",
+          subCategory: "Sub Category",
+          unit: "Unit",
           description: "Description",
           status: "Status",
-          isDefault: "Default Brand",
           isActive: "Active Status",
           isDraft: "Draft Status",
           isDeleted: "Deleted Status",
@@ -305,15 +364,15 @@ export default function BrandEditPage({ isEdit = true }: Props) {
       const blob = await pdf(
         <GenericPDF
           data={[formData]}
-          title="Brand Details"
-          subtitle="Brand Information"
+          title="Item Details"
+          subtitle="Item Information"
         />
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "brand-details.pdf";
+      a.download = "item-details.pdf";
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
@@ -327,7 +386,7 @@ export default function BrandEditPage({ isEdit = true }: Props) {
       label: "Create",
       icon: <Plus className="w-5 h-5 text-green-500" />,
       onClick: () => {
-        navigate("/brands/create");
+        navigate("/items/create");
       },
       show: canCreate,
     },
@@ -335,7 +394,7 @@ export default function BrandEditPage({ isEdit = true }: Props) {
       label: "View",
       icon: <Eye className="w-5 h-5 text-green-600" />,
       onClick: () => {
-        navigate("/brands/view");
+        navigate("/items/view");
       },
       show: canView,
     },
@@ -358,7 +417,7 @@ export default function BrandEditPage({ isEdit = true }: Props) {
                 ...prev,
                 isDraft: true,
               }));
-              toastRestore("Color saved as draft successfully");
+              toastRestore("Item saved as draft successfully");
             },
             show: canCreate,
           },
@@ -369,7 +428,7 @@ export default function BrandEditPage({ isEdit = true }: Props) {
   }, [formData.isDraft, canCreate]);
 
   // Create minimize handler using the custom hook
-  const handleMinimize = useCallback((): BrandModuleData => {
+  const handleMinimize = useCallback((): ItemModuleData => {
     return {
       formData,
       hasChanges: true,
@@ -381,11 +440,11 @@ export default function BrandEditPage({ isEdit = true }: Props) {
     <>
       <MinimizablePageLayout
         moduleId={moduleId}
-        moduleName={`Edit Brand`}
-        moduleRoute={`/brands/edit/${id || "new"}`}
+        moduleName={labels.editingItem}
+        moduleRoute={`/items/edit/${id || "new"}`}
         onMinimize={handleMinimize}
-        title="Edit Brand"
-        listPath="brands"
+        title={labels.editingItem}
+        listPath="items"
         popoverOptions={popoverOptions}
         videoSrc={video}
         videoHeader="Tutorial video"
@@ -396,7 +455,7 @@ export default function BrandEditPage({ isEdit = true }: Props) {
         printEnabled={printEnabled}
         onPrintToggle={canPrint ? handleSwitchChange : undefined}
         activePage="edit"
-        module="brands"
+        module="items"
         additionalFooterButtons={
           canCreate ? (
             <div className="flex gap-4 max-[435px]:gap-2">
@@ -405,14 +464,14 @@ export default function BrandEditPage({ isEdit = true }: Props) {
                 className="gap-2 hover:bg-primary/90 bg-white rounded-full border-primary w-28 max-[435px]:w-20 font-semibold! text-primary!"
                 onClick={handleResetClick}
               >
-                Reset
+                {labels.reset}
               </Button>
               <Button
                 variant="outline"
                 className="gap-2 hover:bg-primary/90 bg-white rounded-full border-primary w-28 max-[435px]:w-20 font-semibold! text-primary!"
                 onClick={handleSubmit}
               >
-                Submit
+                {labels.submit}
               </Button>
             </div>
           ) : null
@@ -426,39 +485,59 @@ export default function BrandEditPage({ isEdit = true }: Props) {
             onSubmit={handleSubmit}
             className="space-y-6"
           >
-            {/* First Row: Brand Name, Code, Description */}
+            {/* First Row: Item Name, Item Code, Arabic Name, Description */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
-              {/* Brand Name field - only show if user can edit */}
-              {name && (
+              {/* Item Name field - only show if user can edit */}
+              {itemName && (
                 <div className="space-y-2">
                   <EditableInput
-                    setRef={setRef("name")}
-                    id="name"
-                    name="name"
-                    value={formData.name}
+                    setRef={setRef("itemName")}
+                    id="itemName"
+                    name="itemName"
+                    value={formData.itemName}
                     onChange={handleChange}
-                    onNext={() => focusNextInput("code")}
-                    onCancel={() => setFormData({ ...formData, name: "" })}
-                    labelText="Brand Name"
-                    tooltipText="Enter the brand name"
+                    onNext={() => focusNextInput("itemCode")}
+                    onCancel={() => setFormData({ ...formData, itemName: "" })}
+                    labelText={labels.itemName}
+                    tooltipText={labels.itemNameTooltip}
                     required
                   />
                 </div>
               )}
 
-              {/* Brand Code field - only show if user can edit */}
-              {code && (
+              {/* Item Code field - only show if user can edit */}
+              {itemCode && (
                 <div className="space-y-2">
                   <EditableInput
-                    setRef={setRef("code")}
-                    id="code"
-                    name="code"
-                    value={formData.code}
+                    setRef={setRef("itemCode")}
+                    id="itemCode"
+                    name="itemCode"
+                    value={formData.itemCode}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("arabicName")}
+                    onCancel={() => setFormData({ ...formData, itemCode: "" })}
+                    labelText={labels.itemCode}
+                    tooltipText={labels.itemCodeTooltip}
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Arabic Name field - only show if user can edit */}
+              {arabicName && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("arabicName")}
+                    id="arabicName"
+                    name="arabicName"
+                    value={formData.arabicName}
                     onChange={handleChange}
                     onNext={() => focusNextInput("description")}
-                    onCancel={() => setFormData({ ...formData, code: "" })}
-                    labelText="Brand Code"
-                    tooltipText="Enter the brand code (e.g., BRD001)"
+                    onCancel={() =>
+                      setFormData({ ...formData, arabicName: "" })
+                    }
+                    labelText={labels.arabicName}
+                    tooltipText={labels.arabicNameTooltip}
                     required
                   />
                 </div>
@@ -473,91 +552,221 @@ export default function BrandEditPage({ isEdit = true }: Props) {
                     name="description"
                     value={formData.description}
                     onChange={handleChange}
-                    onNext={() => focusNextInput("status")}
+                    onNext={() => focusNextInput("costPrice")}
                     onCancel={() =>
                       setFormData({ ...formData, description: "" })
                     }
-                    labelText="Description"
-                    tooltipText="Enter brand description"
+                    labelText={labels.description}
+                    tooltipText="Enter a description for the item"
+                    type="text"
                     required
-                  />
-                </div>
-              )}
-
-              {/* Status field - only show if user can edit */}
-              {status && (
-                <div className="space-y-2">
-                  <SwitchSelect
-                    ref={(el: any) => setRef("status")(el)}
-                    id="status"
-                    name="status"
-                    labelText="Status"
-                    multiSelect={false} // Single select mode
-                    options={[
-                      {
-                        label: "Active",
-                        value: "active",
-                        date: "Set active country",
-                      },
-                      {
-                        label: "Inactive",
-                        value: "InActive",
-                        date: "Set inactive country",
-                      },
-                      {
-                        label: "Draft",
-                        value: "Draft",
-                        date: "Set draft country",
-                      },
-                      {
-                        label: "Delete",
-                        value: "Delete",
-                        date: "Set delete country",
-                      },
-                    ]}
-                    value={formData.status}
-                    onValueChange={(value: string | string[]) => {
-                      const stringValue = Array.isArray(value)
-                        ? value[0] || ""
-                        : value;
-                      console.log("switch value", stringValue);
-                      setFormData((prev) => ({
-                        ...prev,
-                        status: stringValue as
-                          | "active"
-                          | "inactive"
-                          | "draft"
-                          | "deleted",
-                        isDeleted: stringValue === "deleted",
-                        isDraft: stringValue === "Draft",
-                        isActive: stringValue === "Active",
-                      }));
-
-                      // Update your form data
-                      setFormData((prev) => ({
-                        ...prev,
-                        isDeleted: stringValue === "Delete",
-                        isDraft: stringValue === "Draft",
-                        isActive: stringValue === "Active",
-                      }));
-                    }}
-                    placeholder=""
-                    styles={{
-                      input: {
-                        borderColor: "var(--primary)",
-                        "&:focus": {
-                          borderColor: "var(--primary)",
-                        },
-                      },
-                    }}
-                    tooltipText="Set the brand status"
                   />
                 </div>
               )}
             </div>
 
-            {/* Second Row: Status, Default */}
+            {/* Second Row: Cost Price, Regular Price, Offer Price, Opening Stock */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
+              {/* Cost Price field - only show if user can edit */}
+              {costPrice && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("costPrice")}
+                    id="costPrice"
+                    name="costPrice"
+                    type="number"
+                    value={formData.costPrice.toString()}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        costPrice: parseFloat(e.target.value) || 0,
+                      })
+                    }
+                    onNext={() => focusNextInput("regularPrice")}
+                    onCancel={() => setFormData({ ...formData, costPrice: 0 })}
+                    labelText={labels.costPrice}
+                    tooltipText={labels.costPriceTooltip}
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Regular Price field - only show if user can edit */}
+              {regularPrice && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("regularPrice")}
+                    id="regularPrice"
+                    name="regularPrice"
+                    type="number"
+                    value={formData.regularPrice.toString()}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        regularPrice: parseFloat(e.target.value) || 0,
+                      })
+                    }
+                    onNext={() => focusNextInput("offerPrice")}
+                    onCancel={() =>
+                      setFormData({ ...formData, regularPrice: 0 })
+                    }
+                    labelText={labels.regularPrice}
+                    tooltipText={labels.regularPriceTooltip}
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Offer Price field - only show if user can edit */}
+              {offerPrice && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("offerPrice")}
+                    id="offerPrice"
+                    name="offerPrice"
+                    type="number"
+                    value={formData.offerPrice.toString()}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        offerPrice: parseFloat(e.target.value) || 0,
+                      })
+                    }
+                    onNext={() => focusNextInput("openingStock")}
+                    onCancel={() => setFormData({ ...formData, offerPrice: 0 })}
+                    labelText={labels.offerPrice}
+                    tooltipText={labels.offerPriceTooltip}
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Opening Stock field - only show if user can edit */}
+              {openingStock && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("openingStock")}
+                    id="openingStock"
+                    name="openingStock"
+                    type="number"
+                    value={formData.openingStock.toString()}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        openingStock: parseInt(e.target.value) || 0,
+                      })
+                    }
+                    onNext={() => focusNextInput("category")}
+                    onCancel={() =>
+                      setFormData({ ...formData, openingStock: 0 })
+                    }
+                    labelText={labels.openingStock}
+                    tooltipText={labels.openingStockTooltip}
+                    required
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Third Row: Category, Sub Category, Unit, Start Date */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
+              {/* Category field - only show if user can edit */}
+              {category && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("category")}
+                    id="category"
+                    name="category"
+                    value={formData.category}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("subCategory")}
+                    onCancel={() => setFormData({ ...formData, category: "" })}
+                    labelText={labels.category}
+                    tooltipText={labels.categoryTooltip}
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Sub Category field - only show if user can edit */}
+              {subCategory && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("subCategory")}
+                    id="subCategory"
+                    name="subCategory"
+                    value={formData.subCategory}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("unit")}
+                    onCancel={() =>
+                      setFormData({ ...formData, subCategory: "" })
+                    }
+                    labelText={labels.subCategory}
+                    tooltipText={labels.subCategoryTooltip}
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Unit field - only show if user can edit */}
+              {unit && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("unit")}
+                    id="unit"
+                    name="unit"
+                    value={formData.unit}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("startDate")}
+                    onCancel={() => setFormData({ ...formData, unit: "" })}
+                    labelText={labels.unit}
+                    tooltipText={labels.unitTooltip}
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Start Date field - only show if user can edit */}
+              {startDate && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("startDate")}
+                    id="startDate"
+                    name="startDate"
+                    type="date"
+                    value={formData.startDate}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("endDate")}
+                    onCancel={() => setFormData({ ...formData, startDate: "" })}
+                    labelText={labels.startDate}
+                    tooltipText={labels.startDateTooltip}
+                    required
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Fourth Row: End Date, Default, Status */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
+              {/* End Date field - only show if user can edit */}
+              {endDate && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("endDate")}
+                    id="endDate"
+                    name="endDate"
+                    type="date"
+                    value={formData.endDate}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("isDefault")}
+                    onCancel={() => setFormData({ ...formData, endDate: "" })}
+                    labelText={labels.endDate}
+                    tooltipText={labels.endDateTooltip}
+                    required
+                  />
+                </div>
+              )}
+
               {/* Default field - only show if user can edit */}
               {isDefault && (
                 <div className="space-y-2 relative">
@@ -568,22 +777,22 @@ export default function BrandEditPage({ isEdit = true }: Props) {
                     multiSelect={false}
                     options={[
                       {
-                        label: "Yes",
-                        value: "Yes",
-                        date: "Set default brand",
+                        label: labels.yes,
+                        value: labels.yes,
+                        date: "Set default item",
                       },
                       {
-                        label: "No",
-                        value: "No",
-                        date: "Remove default brand",
+                        label: labels.no,
+                        value: labels.no,
+                        date: "Remove default item",
                       },
                     ]}
-                    value={isDefaultState === "Yes" ? "Yes" : "No"}
+                    value={isDefaultState === "Yes" ? labels.yes : labels.no}
                     labelClassName="rounded-lg"
                     onValueChange={(value: string | string[]) => {
                       const isYes = Array.isArray(value)
-                        ? value[0] === "Yes"
-                        : value === "Yes";
+                        ? value[0] === labels.yes
+                        : value === labels.yes;
                       setIsDefaultState(isYes ? "Yes" : "No");
                       const newValue = isYes;
                       setFormData((prev) => ({
@@ -596,13 +805,66 @@ export default function BrandEditPage({ isEdit = true }: Props) {
                         formData.isDefault === true ||
                         formData.isDefault === false
                       ) {
-                        focusNextInput("actions");
+                        focusNextInput("status");
                       }
                     }}
                     placeholder=" "
-                    labelText="Default"
+                    labelText={labels.default}
                     className="relative"
-                    tooltipText="Set as default brand"
+                    tooltipText={labels.defaultItemTooltip}
+                  />
+                </div>
+              )}
+
+              {/* Status field - only show if user can edit */}
+              {status && (
+                <div className="space-y-2">
+                  <SwitchSelect
+                    ref={(el: any) => setRef("statusSwitch")(el)}
+                    id="statusSwitch"
+                    name="statusSwitch"
+                    labelText={labels.status}
+                    multiSelect={false}
+                    options={[
+                      {
+                        label: "Active",
+                        value: "active",
+                        date: "Set active",
+                      },
+                      {
+                        label: "Inactive",
+                        value: "inactive",
+                        date: "Set inactive",
+                      },
+                      {
+                        label: "Draft",
+                        value: "draft",
+                        date: "Set draft",
+                      },
+                    ]}
+                    value={formData.status}
+                    onValueChange={(value: string | string[]) => {
+                      const stringValue = Array.isArray(value)
+                        ? value[0] || ""
+                        : value;
+
+                      setFormData((prev) => ({
+                        ...prev,
+                        status: stringValue as "active" | "inactive" | "draft",
+                        isDraft: stringValue === "draft",
+                        isActive: stringValue === "active",
+                      }));
+                    }}
+                    placeholder=""
+                    styles={{
+                      input: {
+                        borderColor: "var(--primary)",
+                        "&:focus": {
+                          borderColor: "var(--primary)",
+                        },
+                      },
+                    }}
+                    tooltipText={labels.itemStatusTooltip}
                   />
                 </div>
               )}
@@ -657,7 +919,7 @@ export default function BrandEditPage({ isEdit = true }: Props) {
                       },
                     },
                   }}
-                  tooltipText="Brand Action History"
+                  tooltipText="Item Action History"
                 />
               </div>
             </div>
@@ -669,10 +931,10 @@ export default function BrandEditPage({ isEdit = true }: Props) {
         opened={isResetModalOpen}
         onClose={() => setIsResetModalOpen(false)}
         onConfirm={handleReset}
-        title="Reset Form"
-        message="Are you sure you want to reset the form?"
-        confirmText="Reset"
-        cancelText="Cancel"
+        title={labels.resetForm}
+        message={labels.resetFormMessage}
+        confirmText={labels.resetFormConfirm}
+        cancelText={labels.cancel}
       />
     </>
   );

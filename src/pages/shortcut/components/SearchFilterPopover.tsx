@@ -45,6 +45,10 @@ const SearchFilterPopover = ({
   const [internalSelectedValue, setInternalSelectedValue] =
     useState<string>("");
   const [selectedOption, setSelectedOption] = useState<string>("");
+  // Default company selection (aligns with header combobox)
+  const [selectedCompany, setSelectedCompany] = useState<string>(
+    "Rapid ERP Solutions"
+  );
 
   useEffect(() => {
     if (!isFilterOpen && !showVisibility) {
@@ -112,12 +116,18 @@ const SearchFilterPopover = ({
             <Autocomplete
               inputClassName="h-[40px]"
               className="w-full"
-              id="isDefault"
-              name="isDefault"
-              options={["test", "test2"]}
+              id="companyName"
+              name="companyName"
+              hideCheckMark
+              options={[
+                "Rapid ERP Solutions",
+                "TechCorp Inc",
+                "Global Systems Ltd",
+                "Innovation Hub",
+              ]}
+              value={selectedCompany}
               onValueChange={(value: string) => {
-                // Handle company selection
-                console.log("Selected company:", value);
+                setSelectedCompany(value);
               }}
               placeholder=" "
               labelText="Company"

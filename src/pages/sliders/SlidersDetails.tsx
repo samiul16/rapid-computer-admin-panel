@@ -15,76 +15,59 @@ import { pdf } from "@react-pdf/renderer";
 import { Edit, Plus } from "lucide-react";
 import { ResetFormModal } from "@/components/common/ResetFormModal";
 import { usePermission } from "@/hooks/usePermissions";
-import { useLanguageLabels } from "@/hooks/useLanguageLabels";
 import MinimizablePageLayout from "@/components/MinimizablePageLayout";
 
-const MOCK_ITEMS = [
+const MOCK_SLIDERS = [
   {
     id: "1",
-    itemName: "Laptop Pro 15",
-    itemCode: "ITM001",
-    arabicName: "لابتوب برو 15",
-    costPrice: 1200,
-    regularPrice: 1500,
-    offerPrice: 1350,
-    startDate: "2024-01-01",
-    endDate: "2024-12-31",
-    openingStock: 50,
-    category: "Electronics",
-    subCategory: "Laptops",
-    unit: "Piece",
-    description: "High-performance laptop for professionals",
+    titleEn: "Welcome to Our Platform",
+    titleAr: "مرحباً بكم في منصتنا",
+    topTitleEn: "Get Started",
+    topTitleAr: "ابدأ الآن",
+    keyTagsEn: "Welcome, Platform, Introduction",
+    keyTagsAr: "ترحيب، منصة، مقدمة",
+    bannerType: "Hero",
+    bannerEn: "hero-banner-en.jpg",
+    bannerAr: "hero-banner-ar.jpg",
     status: "Active",
   },
   {
     id: "2",
-    itemName: "Wireless Mouse",
-    itemCode: "ITM002",
-    arabicName: "ماوس لاسلكي",
-    costPrice: 25,
-    regularPrice: 35,
-    offerPrice: 30,
-    startDate: "2024-02-01",
-    endDate: "2024-12-31",
-    openingStock: 200,
-    category: "Electronics",
-    subCategory: "Accessories",
-    unit: "Piece",
-    description: "Ergonomic wireless mouse with precision tracking",
+    titleEn: "Premium Services",
+    titleAr: "خدمات متميزة",
+    topTitleEn: "Quality First",
+    topTitleAr: "الجودة أولاً",
+    keyTagsEn: "Premium, Quality, Services",
+    keyTagsAr: "متميز، جودة، خدمات",
+    bannerType: "Service",
+    bannerEn: "service-banner-en.jpg",
+    bannerAr: "service-banner-ar.jpg",
     status: "Active",
   },
   {
     id: "3",
-    itemName: "Office Chair",
-    itemCode: "ITM003",
-    arabicName: "كرسي مكتب",
-    costPrice: 150,
-    regularPrice: 200,
-    offerPrice: 180,
-    startDate: "2024-03-01",
-    endDate: "2024-12-31",
-    openingStock: 30,
-    category: "Furniture",
-    subCategory: "Office",
-    unit: "Piece",
-    description: "Comfortable ergonomic office chair",
+    titleEn: "Latest Technology",
+    titleAr: "أحدث التقنيات",
+    topTitleEn: "Innovation",
+    topTitleAr: "الابتكار",
+    keyTagsEn: "Technology, Innovation, Modern",
+    keyTagsAr: "تقنية، ابتكار، حديث",
+    bannerType: "Tech",
+    bannerEn: "tech-banner-en.jpg",
+    bannerAr: "tech-banner-ar.jpg",
     status: "Draft",
   },
   {
     id: "4",
-    itemName: "Coffee Machine",
-    itemCode: "ITM004",
-    arabicName: "آلة قهوة",
-    costPrice: 300,
-    regularPrice: 400,
-    offerPrice: 350,
-    startDate: "2024-04-01",
-    endDate: "2024-12-31",
-    openingStock: 15,
-    category: "Appliances",
-    subCategory: "Kitchen",
-    unit: "Piece",
-    description: "Professional coffee machine for office use",
+    titleEn: "Customer Support",
+    titleAr: "دعم العملاء",
+    topTitleEn: "24/7 Help",
+    topTitleAr: "مساعدة 24/7",
+    keyTagsEn: "Support, Help, Customer",
+    keyTagsAr: "دعم، مساعدة، عميل",
+    bannerType: "Support",
+    bannerEn: "support-banner-en.jpg",
+    bannerAr: "support-banner-ar.jpg",
     status: "InActive",
   },
 ];
@@ -103,14 +86,13 @@ export type HistoryEntry = {
   print: boolean;
 };
 
-export default function ItemDetailsPage() {
+export default function SliderDetailsPage() {
   // const { t } = useTranslation();
   const navigate = useNavigate();
-  const labels = useLanguageLabels();
 
   const [keepChanges, setKeepChanges] = useState(false);
   const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState("1");
+  const [selectedSlider, setSelectedSlider] = useState("1");
   const location = useLocation();
   const isViewPage = location.pathname.includes("/view");
   const [pdfChecked, setPdfChecked] = useState(false);
@@ -121,44 +103,44 @@ export default function ItemDetailsPage() {
   // const { canCreate, canView, canEdit, canDelete } = useUserMasterPermissions();
 
   // Field-level permissions
-  const canPdf: boolean = usePermission("items", "pdf");
-  const canPrint: boolean = usePermission("items", "print");
-  const canSeeHistory: boolean = usePermission("items", "history");
+  const canPdf: boolean = usePermission("sliders", "pdf");
+  const canPrint: boolean = usePermission("sliders", "print");
+  const canSeeHistory: boolean = usePermission("sliders", "history");
 
-  let itemData = {
-    id: selectedItem,
-    itemName:
-      MOCK_ITEMS.find((i) => i.id === selectedItem)?.itemName ||
-      "Laptop Pro 15",
-    itemCode:
-      MOCK_ITEMS.find((i) => i.id === selectedItem)?.itemCode || "ITM001",
-    arabicName:
-      MOCK_ITEMS.find((i) => i.id === selectedItem)?.arabicName ||
-      "لابتوب برو 15",
-    costPrice: MOCK_ITEMS.find((i) => i.id === selectedItem)?.costPrice || 1200,
-    regularPrice:
-      MOCK_ITEMS.find((i) => i.id === selectedItem)?.regularPrice || 1500,
-    offerPrice:
-      MOCK_ITEMS.find((i) => i.id === selectedItem)?.offerPrice || 1350,
-    startDate:
-      MOCK_ITEMS.find((i) => i.id === selectedItem)?.startDate || "2024-01-01",
-    endDate:
-      MOCK_ITEMS.find((i) => i.id === selectedItem)?.endDate || "2024-12-31",
-    openingStock:
-      MOCK_ITEMS.find((i) => i.id === selectedItem)?.openingStock || 50,
-    category:
-      MOCK_ITEMS.find((i) => i.id === selectedItem)?.category || "Electronics",
-    subCategory:
-      MOCK_ITEMS.find((i) => i.id === selectedItem)?.subCategory || "Laptops",
-    unit: MOCK_ITEMS.find((i) => i.id === selectedItem)?.unit || "Piece",
-    description:
-      MOCK_ITEMS.find((i) => i.id === selectedItem)?.description ||
-      "High-performance laptop for professionals",
+  let sliderData = {
+    id: selectedSlider,
+    titleEn:
+      MOCK_SLIDERS.find((s) => s.id === selectedSlider)?.titleEn ||
+      "Welcome to Our Platform",
+    titleAr:
+      MOCK_SLIDERS.find((s) => s.id === selectedSlider)?.titleAr ||
+      "مرحباً بكم في منصتنا",
+    topTitleEn:
+      MOCK_SLIDERS.find((s) => s.id === selectedSlider)?.topTitleEn ||
+      "Get Started",
+    topTitleAr:
+      MOCK_SLIDERS.find((s) => s.id === selectedSlider)?.topTitleAr ||
+      "ابدأ الآن",
+    keyTagsEn:
+      MOCK_SLIDERS.find((s) => s.id === selectedSlider)?.keyTagsEn ||
+      "Welcome, Platform, Introduction",
+    keyTagsAr:
+      MOCK_SLIDERS.find((s) => s.id === selectedSlider)?.keyTagsAr ||
+      "ترحيب، منصة، مقدمة",
+    bannerType:
+      MOCK_SLIDERS.find((s) => s.id === selectedSlider)?.bannerType || "Hero",
+    bannerEn:
+      MOCK_SLIDERS.find((s) => s.id === selectedSlider)?.bannerEn ||
+      "hero-banner-en.jpg",
+    bannerAr:
+      MOCK_SLIDERS.find((s) => s.id === selectedSlider)?.bannerAr ||
+      "hero-banner-ar.jpg",
     isDefault: true,
     isActive: true,
     isDraft: false,
     isDeleted: false,
-    status: MOCK_ITEMS.find((i) => i.id === selectedItem)?.status || "Active",
+    status:
+      MOCK_SLIDERS.find((s) => s.id === selectedSlider)?.status || "Active",
     createdAt: "2023-05-15T10:30:00Z",
     updatedAt: "2025-01-15T14:30:00Z",
     draftedAt: "2025-05-20T14:45:00Z",
@@ -174,21 +156,17 @@ export default function ItemDetailsPage() {
     }
     console.log("isViewPage", isViewPage);
     if (isViewPage) {
-      itemData = {
-        id: selectedItem,
-        itemName: "",
-        itemCode: "",
-        arabicName: "",
-        costPrice: 0,
-        regularPrice: 0,
-        offerPrice: 0,
-        startDate: "",
-        endDate: "",
-        openingStock: 0,
-        category: "",
-        subCategory: "",
-        unit: "",
-        description: "",
+      sliderData = {
+        id: selectedSlider,
+        titleEn: "",
+        titleAr: "",
+        topTitleEn: "",
+        topTitleAr: "",
+        keyTagsEn: "",
+        keyTagsAr: "",
+        bannerType: "",
+        bannerEn: "",
+        bannerAr: "",
         isDefault: true,
         isActive: true,
         isDraft: false,
@@ -202,27 +180,23 @@ export default function ItemDetailsPage() {
     }
   }, []);
 
-  const handlePrintItem = (item: any) => {
+  const handlePrintSlider = (slider: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "Item Master Details",
-        data: [item],
+        title: "Slider Master Details",
+        data: [slider],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
-          itemCode: "Item Code",
-          itemName: "Item Name",
-          arabicName: "Arabic Name",
-          costPrice: "Cost Price",
-          regularPrice: "Regular Price",
-          offerPrice: "Offer Price",
-          startDate: "Start Date",
-          endDate: "End Date",
-          openingStock: "Opening Stock",
-          category: "Category",
-          subCategory: "Sub Category",
-          unit: "Unit",
-          description: "Description",
-          isDefault: "Default Item",
+          titleEn: "Title (EN)",
+          titleAr: "Title (AR)",
+          topTitleEn: "Top Title (EN)",
+          topTitleAr: "Top Title (AR)",
+          keyTagsEn: "Key Tags (EN)",
+          keyTagsAr: "Key Tags (AR)",
+          bannerType: "Banner Type",
+          bannerEn: "Banner (EN)",
+          bannerAr: "Banner (AR)",
+          isDefault: "Default Slider",
           isActive: "Active Status",
           isDraft: "Draft Status",
           isDeleted: "Deleted Status",
@@ -251,19 +225,19 @@ export default function ItemDetailsPage() {
   const handleExportPDF = async () => {
     console.log("Export PDF clicked");
     try {
-      console.log("itemData on pdf click", itemData);
+      console.log("sliderData on pdf click", sliderData);
       const blob = await pdf(
         <GenericPDF
-          data={[itemData]}
-          title="Item Master Details"
-          subtitle="Item Information"
+          data={[sliderData]}
+          title="Slider Master Details"
+          subtitle="Slider Information"
         />
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "item-details.pdf";
+      a.download = "slider-details.pdf";
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
@@ -307,25 +281,25 @@ export default function ItemDetailsPage() {
   return (
     <>
       <MinimizablePageLayout
-        moduleId="item-details-module"
-        moduleName="Viewing Item"
-        moduleRoute="/items/view"
-        title="Viewing Item"
+        moduleId="slider-details-module"
+        moduleName="Slider Details"
+        moduleRoute="/sliders/view"
+        title="Viewing Slider"
         videoSrc={video}
         videoHeader="Tutorial video"
-        listPath="items"
+        listPath="sliders"
         activePage="view"
-        module="items"
+        module="sliders"
         popoverOptions={[
           {
             label: "Create",
             icon: <Plus className="w-5 h-5 text-green-600" />,
-            onClick: () => navigate("/items/create"),
+            onClick: () => navigate("/sliders/create"),
           },
           {
             label: "Edit",
             icon: <Edit className="w-5 h-5 text-blue-600" />,
-            onClick: () => navigate("/items/edit/1"),
+            onClick: () => navigate("/sliders/edit/1"),
           },
         ]}
         keepChanges={keepChanges}
@@ -349,192 +323,149 @@ export default function ItemDetailsPage() {
                   handleExportPDF();
                 }
                 if (printEnabled) {
-                  handlePrintItem(itemData);
+                  handlePrintSlider(sliderData);
                 }
               }
             : undefined
         }
       >
-        {/* Row 1: Item Selection, Item Name, Item Code, Arabic Name */}
+        {/* Row 1: Slider Selection, Title En, Title Ar, Top Title En */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
           <div className="mt-1">
             <Autocomplete
-              options={MOCK_ITEMS}
-              value={selectedItem}
-              onValueChange={setSelectedItem}
+              options={MOCK_SLIDERS}
+              value={selectedSlider}
+              onValueChange={setSelectedSlider}
               placeholder=" "
-              displayKey="itemName"
+              displayKey="titleEn"
               valueKey="id"
-              searchKey="itemName"
+              searchKey="titleEn"
               disabled={false}
               className="w-[96%] bg-gray-100 rounded-xl"
               labelClassName="bg-gray-50 rounded-2xl"
-              labelText={labels.itemName}
+              labelText="Slider Title"
               isShowTemplateIcon={false}
             />
           </div>
 
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">{labels.itemName}</h3>
+              <h3 className="font-normal text-gray-600">Title (EN)</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(itemData.itemName)}
+              {displayValue(sliderData.titleEn)}
             </div>
           </div>
 
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">{labels.itemCode}</h3>
+              <h3 className="font-normal text-gray-600">Title (AR)</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(itemData.itemCode)}
+              {displayValue(sliderData.titleAr)}
             </div>
           </div>
 
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">{labels.arabicName}</h3>
+              <h3 className="font-normal text-gray-600">Top Title (EN)</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(itemData.arabicName)}
-            </div>
-          </div>
-        </div>
-
-        {/* Row 2: Cost Price, Regular Price, Offer Price, Opening Stock */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-          <div className="">
-            <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">{labels.costPrice}</h3>
-            </div>
-            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(itemData.costPrice ? `$${itemData.costPrice}` : "")}
-            </div>
-          </div>
-
-          <div className="">
-            <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">
-                {labels.regularPrice}
-              </h3>
-            </div>
-            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(
-                itemData.regularPrice ? `$${itemData.regularPrice}` : ""
-              )}
-            </div>
-          </div>
-
-          <div className="">
-            <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">{labels.offerPrice}</h3>
-            </div>
-            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(
-                itemData.offerPrice ? `$${itemData.offerPrice}` : ""
-              )}
-            </div>
-          </div>
-
-          <div className="">
-            <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">
-                {labels.openingStock}
-              </h3>
-            </div>
-            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(itemData.openingStock)}
+              {displayValue(sliderData.topTitleEn)}
             </div>
           </div>
         </div>
 
-        {/* Row 3: Category, Sub Category, Unit, Description */}
+        {/* Row 2: Top Title Ar, Key Tags En, Key Tags Ar, Banner Type */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">{labels.category}</h3>
+              <h3 className="font-normal text-gray-600">Top Title (AR)</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(itemData.category)}
+              {displayValue(sliderData.topTitleAr)}
             </div>
           </div>
 
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">
-                {labels.subCategory}
-              </h3>
+              <h3 className="font-normal text-gray-600">Key Tags (EN)</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(itemData.subCategory)}
+              {displayValue(sliderData.keyTagsEn)}
             </div>
           </div>
 
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">{labels.unit}</h3>
+              <h3 className="font-normal text-gray-600">Key Tags (AR)</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(itemData.unit)}
+              {displayValue(sliderData.keyTagsAr)}
             </div>
           </div>
 
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">
-                {labels.description}
-              </h3>
+              <h3 className="font-normal text-gray-600">Banner Type</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(itemData.description)}
+              {displayValue(sliderData.bannerType)}
             </div>
           </div>
         </div>
 
-        {/* Row 4: Start Date, End Date, Status, Default */}
+        {/* Row 3: Banner En, Banner Ar, Status, Default */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">{labels.startDate}</h3>
+              <h3 className="font-normal text-gray-600">Banner (EN)</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(itemData.startDate)}
+              {displayValue(sliderData.bannerEn)}
             </div>
           </div>
 
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">{labels.endDate}</h3>
+              <h3 className="font-normal text-gray-600">Banner (AR)</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(itemData.endDate)}
+              {displayValue(sliderData.bannerAr)}
             </div>
           </div>
 
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">{labels.status}</h3>
+              <h3 className="font-normal text-gray-600">Status</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(itemData.status)}
+              {displayValue(sliderData.status)}
             </div>
           </div>
 
           <div className="">
             <div className="flex flex-col">
               <div className="">
-                <span className="text-[15px] text-gray-600">
-                  {labels.default}
-                </span>
+                <span className="text-[15px] text-gray-600">Default</span>
               </div>
               <div className="">
-                {itemData.isDefault ? (
-                  <span className="text-black text-[15px]">{labels.yes}</span>
+                {sliderData.isDefault ? (
+                  <span className="text-black text-[15px]">Yes</span>
                 ) : (
-                  <span className="text-black text-[15px]">{labels.no}</span>
+                  <span className="text-black text-[15px]">No</span>
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Row 4: Action */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+          <div className="">
+            <h3 className="font-normal mb-1 text-gray-600">Action</h3>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              Updated
             </div>
           </div>
         </div>
@@ -547,10 +478,10 @@ export default function ItemDetailsPage() {
         columnData={mockHistoryData}
         title="History"
         statusInfo={{
-          created: getRelativeTime(itemData.createdAt),
-          updated: getRelativeTime(itemData.updatedAt),
-          drafted: getRelativeTime(itemData.draftedAt),
-          deleted: getRelativeTime(itemData.deletedAt),
+          created: getRelativeTime(sliderData.createdAt),
+          updated: getRelativeTime(sliderData.updatedAt),
+          drafted: getRelativeTime(sliderData.draftedAt),
+          deleted: getRelativeTime(sliderData.deletedAt),
         }}
       />
 

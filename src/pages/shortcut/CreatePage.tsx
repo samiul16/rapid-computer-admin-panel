@@ -1,116 +1,140 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import video from "@/assets/videos/test.mp4";
-import { Autocomplete } from "@/components/common/Autocomplete";
 import EditableInput from "@/components/common/EditableInput";
-import PageLayout from "@/components/common/PageLayout";
 import GenericPDF from "@/components/common/pdf";
 import { ResetFormModal } from "@/components/common/ResetFormModal";
 import { Button } from "@/components/ui/button";
-import { usePermission } from "@/hooks/usePermissions";
 import { PrintCommonLayout } from "@/lib/printContents/PrintCommonLayout";
 import { printHtmlContent } from "@/lib/printHtmlContent";
 import { toastError, toastRestore, toastSuccess } from "@/lib/toast";
-import type { RootState } from "@/store";
-import { Modal } from "@mantine/core";
 import { pdf } from "@react-pdf/renderer";
 import { Check, Edit, Eye, Plus } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
-import { useSelector } from "react-redux";
-import { useLocation, useNavigate } from "react-router-dom";
-import {
-  formFields,
-  initialDataWithValue,
-  initialProperties,
-  printConfigFieldLabels,
-  type ModuleCreateEditPageTypes,
-  type ModuleFieldsType,
-} from "./config/ModuleLevelConfig";
-import { getModuleFromPath } from "@/lib/utils";
-import { FloatingMultiSelect } from "@/components/common/FloatingMultiSelect";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useColorsPermissions, usePermission } from "@/hooks/usePermissions";
+import { useLanguageLabels } from "@/hooks/useLanguageLabels";
+import { useAppSelector } from "@/store/hooks";
+import MinimizablePageLayout from "@/components/MinimizablePageLayout";
+import { SwitchSelect } from "@/components/common/SwitchAutoComplete";
+
+type ShortcutData = {
+  indexName: string;
+  title: string;
+  titleValue: string;
+  fontAwesomeIcon: string;
+  status: "active" | "inactive" | "draft";
+  isDefault: boolean;
+  isActive: boolean;
+  isDraft: boolean;
+  createdAt: Date | null;
+  draftedAt: Date | null;
+  updatedAt: Date | null;
+  deletedAt: Date | null;
+  isDeleted: boolean;
+};
 
 type Props = {
   isEdit?: boolean;
 };
 
-export default function ShortcutCreatePage({ isEdit = false }: Props) {
-  const navigate = useNavigate();
-  const { isRTL } = useSelector((state: RootState) => state.language);
+const initialData: ShortcutData = {
+  indexName: "Dashboard",
+  title: "Dashboard",
+  titleValue: "Main Dashboard",
+  fontAwesomeIcon: "fas fa-tachometer-alt",
+  status: "active",
+  isDefault: false,
+  isActive: true,
+  isDraft: false,
+  createdAt: new Date(),
+  draftedAt: null,
+  updatedAt: new Date(),
+  deletedAt: null,
+  isDeleted: false,
+};
 
-  const location = useLocation();
+export default function ShortcutFormPage({ isEdit = false }: Props) {
+  const navigate = useNavigate();
+  const labels = useLanguageLabels();
+  const { isRTL } = useAppSelector((state) => state.language);
 
   const [keepCreating, setKeepCreating] = useState(false);
-  const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
-  const [isDefaultState, setIsDefaultState] = useState<"Yes" | "No">("No");
-  const [isDraftState, setIsDraftState] = useState<"Yes" | "No">("No");
-
+  const formRef = useRef<HTMLFormElement>(null);
   const [printEnabled, setPrintEnabled] = useState(false);
   const [pdfChecked, setPdfChecked] = useState(false);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
-
-  const detectedModule = getModuleFromPath(location.pathname);
+  const [formKey, setFormKey] = useState(0);
+  const [isDefaultState, setIsDefaultState] = useState<"Yes" | "No">("No");
 
   // Permission checks
-  const canCreate = usePermission(detectedModule, "create");
-  const canView = usePermission(detectedModule, "view");
-  const canEdit = usePermission(detectedModule, "edit");
-  const canDelete = usePermission(detectedModule, "delete");
-  const canPdf: boolean = usePermission(detectedModule, "pdf");
-  const canPrint: boolean = usePermission(detectedModule, "print");
-
-  console.log("canCreate", canCreate);
-  console.log("canView", canView);
-  console.log("canEdit", canEdit);
-  console.log("canDelete", canDelete);
+  const { canCreate, canView } = useColorsPermissions();
 
   // Field-level permissions
-  const fieldKeys = Object.keys(
-    initialProperties
-  ) as (keyof ModuleFieldsType)[];
-  const permissionsFieldLevel = usePermission<keyof ModuleCreateEditPageTypes>(
-    detectedModule,
+  const indexName: boolean = usePermission("shortcut", "create", "indexName");
+  const title: boolean = usePermission("shortcut", "create", "title");
+  const titleValue: boolean = usePermission(
+    "shortcut",
     "create",
-    [...fieldKeys, "isDefault", "isDraft"]
+    "titleValue"
   );
-
-  console.log("permissionsFieldLevel", permissionsFieldLevel);
+  const fontAwesomeIcon: boolean = usePermission(
+    "shortcut",
+    "create",
+    "fontAwesomeIcon"
+  );
+  const status: boolean = usePermission("shortcut", "create", "status");
+  const isDefault: boolean = usePermission("shortcut", "create", "isDefault");
+  const canPdf: boolean = usePermission("shortcut", "pdf");
+  const canPrint: boolean = usePermission("shortcut", "print");
 
   // Form state
-  const [formData, setFormData] = useState<ModuleCreateEditPageTypes>({
-    ...initialProperties,
-
-    isDefault: isDefaultState === "Yes",
+  const [formData, setFormData] = useState<ShortcutData>({
+    indexName: "",
+    title: "",
+    titleValue: "",
+    fontAwesomeIcon: "",
+    status: "active",
+    isDefault: false,
+    isActive: true,
     isDraft: false,
+    isDeleted: false,
     createdAt: null,
     draftedAt: null,
     updatedAt: null,
     deletedAt: null,
   });
 
+  // Initialize with edit data if available
+  useEffect(() => {
+    if (isEdit && initialData) {
+      setFormData(initialData);
+      setIsDefaultState(initialData.isDefault ? "Yes" : "No");
+    }
+  }, [isEdit]);
+
   const [popoverOptions, setPopoverOptions] = useState([
     {
       label: isEdit ? "Create" : "Edit",
       icon: isEdit ? (
-        <Plus className="w-5 h-5 text-green-500" /> // Green for Plus
+        <Plus className="w-5 h-5 text-green-500" />
       ) : (
-        <Edit className="w-5 h-5 text-blue-500" /> // Blue for Edit
+        <Edit className="w-5 h-5 text-blue-500" />
       ),
       onClick: () => {
         if (isEdit) {
-          navigate(`${location.pathname}/create`);
+          navigate("/shortcut/create");
         } else {
-          navigate(`${location.pathname}/edit/undefined`);
+          navigate("/shortcut/edit/undefined");
         }
       },
-      // Only show if user has permission
       show: canCreate,
     },
     {
       label: "View",
-      icon: <Eye className="w-5 h-5 text-green-600" />, // Added neutral color for Eye
+      icon: <Eye className="w-5 h-5 text-green-600" />,
       onClick: () => {
-        navigate(`${location.pathname}/view`);
+        navigate("/shortcut/view");
       },
-      // Only show if user has permission
       show: canView,
     },
   ]);
@@ -124,53 +148,34 @@ export default function ShortcutCreatePage({ isEdit = false }: Props) {
     inputRefs.current[nextField]?.focus();
   };
 
-  // Initialize with edit data if available
-  useEffect(() => {
-    if (isEdit && initialDataWithValue) {
-      setFormData({
-        ...initialDataWithValue,
-      });
-      setIsDraftState(initialDataWithValue.isDraft ? "Yes" : "No");
-    }
-  }, [isEdit]);
-
   // Handle form field changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
-    setFormData({
+    const newFormData = {
       ...formData,
       [name]: type === "checkbox" ? checked : value,
-    });
+    };
+    setFormData(newFormData);
   };
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
-    // Normal submit logic here (API call)------------
 
     if (pdfChecked) {
       await handleExportPDF();
     }
     if (printEnabled) {
-      handlePrintLeaves(formData);
+      handlePrintShortcut(formData);
     }
 
     // keep switch functionality
     if (keepCreating) {
-      toastSuccess(
-        `${location.pathname.split("/")[1]} ${
-          isEdit ? "updated" : "created"
-        } successfully!`
-      );
+      toastSuccess("Shortcut created successfully!");
       handleReset();
     } else {
-      toastSuccess(
-        `${location.pathname.split("/")[1]} ${
-          isEdit ? "updated" : "created"
-        } successfully!`
-      );
-      navigate(`/${location.pathname.split("/")[1]}`);
+      toastSuccess("Shortcut created successfully!");
+      navigate("/shortcut");
     }
   };
 
@@ -178,23 +183,23 @@ export default function ShortcutCreatePage({ isEdit = false }: Props) {
     setIsResetModalOpen(true);
   };
 
-  // Add this state
-  const [formKey, setFormKey] = useState(0);
-
-  // Update handleReset function
-  const handleReset = () => {
+  const handleReset = async () => {
     setFormData({
-      ...initialProperties,
-
+      indexName: "",
+      title: "",
+      titleValue: "",
+      fontAwesomeIcon: "",
+      status: "active",
       isDefault: false,
+      isActive: true,
       isDraft: false,
+      isDeleted: false,
       createdAt: new Date(),
       draftedAt: null,
       updatedAt: new Date(),
       deletedAt: null,
     });
     setIsDefaultState("No");
-    setIsDraftState("No");
 
     if (formRef.current) {
       formRef.current.reset();
@@ -205,22 +210,23 @@ export default function ShortcutCreatePage({ isEdit = false }: Props) {
 
     // Focus the first input field after reset
     setTimeout(() => {
-      inputRefs.current[fieldKeys[0]]?.focus();
-    }, 100); // Slightly longer delay to ensure re-render is complete
+      inputRefs.current["indexName"]?.focus();
+    }, 100);
   };
 
-  const formRef = useRef<HTMLFormElement>(null);
-
-  const handlePrintLeaves = (leavesData: any) => {
+  const handlePrintShortcut = (shortcutData: any) => {
     try {
       const html = PrintCommonLayout({
-        title: `${location.pathname.split("/")[1]} Details`,
-        data: [leavesData],
+        title: "Shortcut Details",
+        data: [shortcutData],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
-          ...printConfigFieldLabels,
-
-          isDefault: "Default Status",
+          indexName: "Index Name",
+          title: "Title",
+          titleValue: "Title Value",
+          fontAwesomeIcon: "Font Awesome Icon",
+          status: "Status",
+          isActive: "Active Status",
           isDraft: "Draft Status",
           isDeleted: "Deleted Status",
           createdAt: "Created At",
@@ -245,29 +251,20 @@ export default function ShortcutCreatePage({ isEdit = false }: Props) {
   };
 
   const handleExportPDF = async () => {
-    console.log("Export PDF clicked");
     try {
-      console.log("sampleReceivingData on pdf click", formData);
       const blob = await pdf(
         <GenericPDF
           data={[formData]}
-          title={`${location.pathname.split("/")[1].replace("-", " ")} Details`}
-          subtitle={`${location.pathname
-            .split("/")[1]
-            .replace("-", " ")} Information`}
+          title="Shortcut Details"
+          subtitle="Shortcut Information"
         />
       ).toBlob();
 
-      console.log("blob", blob);
-
       const url = URL.createObjectURL(blob);
-      console.log("url", url);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${location.pathname.split("/")[1]}-details.pdf`;
+      a.download = "shortcut-details.pdf";
       a.click();
-      console.log("a", a);
-      console.log("url", url);
       URL.revokeObjectURL(url);
     } catch (error) {
       console.log(error);
@@ -294,58 +291,65 @@ export default function ShortcutCreatePage({ isEdit = false }: Props) {
                 ...prev,
                 isDraft: true,
               }));
-              toastRestore(
-                `${location.pathname.split("/")[1]} saved as draft successfully`
-              );
+              toastRestore("Shortcut saved as draft successfully");
             },
-            show: canCreate, // Only show draft option if user can create
+            show: canCreate,
           },
         ];
       }
       return filteredOptions;
     });
-  }, [formData.isDraft, canCreate, location.pathname]);
+  }, [formData.isDraft, canCreate]);
+
+  // Create minimize handler
+  const handleMinimize = useCallback(() => {
+    return {
+      formData,
+      hasChanges: true,
+      scrollPosition: window.scrollY,
+    };
+  }, [formData]);
 
   return (
     <>
-      <PageLayout
-        title={
+      <MinimizablePageLayout
+        moduleId="shortcut-form-module"
+        moduleName={isEdit ? "Edit Shortcut" : "Adding Shortcut"}
+        moduleRoute={
           isEdit
-            ? `${location.pathname.split("/")[1]} Editing`
-            : `${location.pathname.split("/")[1]} Creating`
+            ? `/shortcut/edit/${formData.title || "new"}`
+            : "/shortcut/create"
         }
+        onMinimize={handleMinimize}
+        title={isEdit ? "Edit Shortcut" : "Add Shortcut"}
+        listPath="shortcut"
+        popoverOptions={popoverOptions}
         videoSrc={video}
         videoHeader="Tutorial video"
-        listPath={`${location.pathname.split("/")[1]}`}
-        popoverOptions={popoverOptions}
         keepChanges={keepCreating}
         onKeepChangesChange={setKeepCreating}
         pdfChecked={pdfChecked}
         onPdfToggle={canPdf ? handlePDFSwitchChange : undefined}
         printEnabled={printEnabled}
         onPrintToggle={canPrint ? handleSwitchChange : undefined}
-        activePage={isEdit ? "edit" : "create"}
-        // Removed onExport prop
+        activePage="create"
+        module="shortcut"
         additionalFooterButtons={
-          // Only show buttons if user can create
           canCreate ? (
-            <div className="flex gap-4 items-center">
+            <div className="flex gap-4 max-[435px]:gap-2">
               <Button
                 variant="outline"
-                className="gap-2 text-primary bg-sky-200 hover:bg-primary rounded-full border-primary w-32 font-semibold!"
+                className="gap-2 hover:bg-primary/90! bg-white dark:bg-gray-900 rounded-full border-primary w-28 max-[435px]:w-20 font-semibold! text-primary!"
                 onClick={handleResetClick}
               >
-                Reset
+                {labels.reset}
               </Button>
               <Button
-                ref={(el) => setRef("submitButton")(el as HTMLButtonElement)}
-                id="submitButton"
-                name="submitButton"
                 variant="outline"
-                className={`gap-2 text-primary rounded-full border-primary w-32 bg-sky-200 hover:bg-primary font-semibold!`}
-                onClick={() => formRef.current?.requestSubmit()}
+                className="gap-2 hover:bg-primary/90 bg-white dark:bg-gray-900 rounded-full border-primary w-28 max-[435px]:w-20 font-semibold! text-primary!"
+                onClick={handleSubmit}
               >
-                Submit
+                {labels.submit}
               </Button>
             </div>
           ) : null
@@ -359,184 +363,176 @@ export default function ShortcutCreatePage({ isEdit = false }: Props) {
             onSubmit={handleSubmit}
             className="space-y-6 relative"
           >
-            {/* All fields in one 4-column row */}
+            {/* First Row: Index Name, Title, Title Value, Font Awesome Icon */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
-              {formFields.map((field) => {
-                if (
-                  !permissionsFieldLevel[
-                    field.name as keyof typeof permissionsFieldLevel
-                  ]
-                ) {
-                  return null; // skip if not allowed
-                }
+              {/* Index Name field - only show if user can create */}
+              {indexName && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("indexName")}
+                    id="indexName"
+                    name="indexName"
+                    value={formData.indexName}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("title")}
+                    onCancel={() => setFormData({ ...formData, indexName: "" })}
+                    labelText="Index Name"
+                    tooltipText="Enter the shortcut index name"
+                    required
+                  />
+                </div>
+              )}
 
-                if (field.component === "input") {
-                  return (
-                    <div key={field.name} className="space-y-2 relative">
-                      <EditableInput
-                        setRef={setRef(field.name)}
-                        type={field.type}
-                        id={field.name}
-                        name={field.name}
-                        value={formData[field.name]}
-                        onChange={handleChange}
-                        onNext={() =>
-                          field.nextFocus && focusNextInput(field.nextFocus)
-                        }
-                        onCancel={() =>
-                          setFormData({ ...formData, [field.name]: "" })
-                        }
-                        labelText={field.label}
-                        tooltipText={field.tooltip}
-                        required={field.required}
-                      />
-                    </div>
-                  );
-                }
+              {/* Title field - only show if user can create */}
+              {title && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("title")}
+                    id="title"
+                    name="title"
+                    value={formData.title}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("titleValue")}
+                    onCancel={() => setFormData({ ...formData, title: "" })}
+                    labelText="Title"
+                    tooltipText="Enter the shortcut title"
+                    required
+                  />
+                </div>
+              )}
 
-                if (field.component === "autocomplete") {
-                  return (
-                    <div key={field.name} className="space-y-2 relative">
-                      <Autocomplete
-                        ref={(el: any) => setRef(field.name)(el)}
-                        id={field.name}
-                        name={field.name}
-                        options={field.options || []}
-                        value={formData[field.name]}
-                        labelClassName="rounded-lg"
-                        isSelectableOnly={true}
-                        onValueChange={(value: string) => {
-                          setFormData((prev) => ({
-                            ...prev,
-                            [field.name]: value,
-                          }));
-                          if (field.nextFocus) focusNextInput(field.nextFocus);
-                        }}
-                        onEnterPress={() => {
-                          if (formData[field.name] && field.nextFocus) {
-                            focusNextInput(field.nextFocus);
-                          }
-                        }}
-                        placeholder=" "
-                        labelText={field.label}
-                        className="relative"
-                        styles={{
-                          input: {
-                            borderColor: "var(--primary)",
-                            "&:focus": { borderColor: "var(--primary)" },
-                          },
-                        }}
-                      />
-                    </div>
-                  );
-                }
+              {/* Title Value field - only show if user can create */}
+              {titleValue && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("titleValue")}
+                    id="titleValue"
+                    name="titleValue"
+                    value={formData.titleValue}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("fontAwesomeIcon")}
+                    onCancel={() =>
+                      setFormData({ ...formData, titleValue: "" })
+                    }
+                    labelText="Title Value"
+                    tooltipText="Enter the shortcut title value"
+                    required
+                  />
+                </div>
+              )}
 
-                if (field.component === "mutiselect") {
-                  return (
-                    <div key={field.name} className="space-y-2 relative">
-                      <FloatingMultiSelect
-                        label={field.label}
-                        data={field.options || []}
-                        value={
-                          formData[field.name]
-                            ? (formData[field.name] as string)
-                                .split(",")
-                                .map((s) => s.trim())
-                                .filter(Boolean)
-                            : []
-                        }
-                        onChange={(value: string[]) => {
-                          setFormData((prev) => ({
-                            ...prev,
-                            [field.name]: value.join(", "),
-                          }));
-                          if (field.nextFocus) focusNextInput(field.nextFocus);
-                        }}
-                      />
-                    </div>
-                  );
-                }
+              {/* Font Awesome Icon field - only show if user can create */}
+              {fontAwesomeIcon && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("fontAwesomeIcon")}
+                    id="fontAwesomeIcon"
+                    name="fontAwesomeIcon"
+                    value={formData.fontAwesomeIcon}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("status")}
+                    onCancel={() =>
+                      setFormData({ ...formData, fontAwesomeIcon: "" })
+                    }
+                    labelText="Font Awesome Icon"
+                    tooltipText="Enter Font Awesome icon class (e.g., fas fa-home)"
+                    required
+                  />
+                </div>
+              )}
+            </div>
 
-                return null;
-              })}
-
+            {/* Second Row: Default, Status */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
               {/* Default field - only show if user can create */}
-              {permissionsFieldLevel.isDefault && (
+              {isDefault && (
                 <div className="space-y-2 relative">
-                  <Autocomplete
+                  <SwitchSelect
                     ref={(el: any) => setRef("isDefault")(el)}
                     id="isDefault"
                     name="isDefault"
-                    options={["No", "Yes"]}
-                    value={isDefaultState === "Yes" ? "Yes" : "No"}
+                    multiSelect={false}
+                    options={[
+                      {
+                        label: labels.yes,
+                        value: labels.yes,
+                        date: "Set default shortcut",
+                      },
+                      {
+                        label: labels.no,
+                        value: labels.no,
+                        date: "Remove default shortcut",
+                      },
+                    ]}
+                    value={isDefaultState === "Yes" ? labels.yes : labels.no}
                     labelClassName="rounded-lg"
-                    isSelectableOnly={true}
-                    onValueChange={(value: string) => {
-                      const isYes = value === "Yes";
+                    onValueChange={(value: string | string[]) => {
+                      const isYes = Array.isArray(value)
+                        ? value[0] === labels.yes
+                        : value === labels.yes;
                       setIsDefaultState(isYes ? "Yes" : "No");
                       const newValue = isYes;
                       setFormData((prev) => ({
                         ...prev,
                         isDefault: newValue,
                       }));
-                      // Call focusNextInput if needed
-                      focusNextInput("isDraft");
                     }}
                     onEnterPress={() => {
                       if (
                         formData.isDefault === true ||
                         formData.isDefault === false
                       ) {
-                        focusNextInput("isDraft");
+                        // Form submission or next action
                       }
                     }}
                     placeholder=" "
                     labelText="Default"
                     className="relative"
-                    styles={{
-                      input: {
-                        borderColor: "var(--primary)",
-                        "&:focus": {
-                          borderColor: "var(--primary)",
-                        },
-                      },
-                    }}
+                    tooltipText="Set as default shortcut"
                   />
                 </div>
               )}
 
-              {/* Draft field - only show if user can create */}
-              {permissionsFieldLevel.isDraft && (
-                <div className="space-y-2 relative">
-                  <Autocomplete
-                    ref={(el: any) => setRef("isDraft")(el)}
-                    id="isDraft"
-                    name="isDraft"
-                    options={["No", "Yes"]}
-                    value={isDraftState === "Yes" ? "Yes" : "No"}
-                    labelClassName="rounded-lg"
-                    isSelectableOnly={true}
-                    onValueChange={(value: string) => {
-                      const isYes = value === "Yes";
-                      setIsDraftState(isYes ? "Yes" : "No");
-                      const newValue = isYes;
+              {/* Status field - only show if user can create */}
+              {status && (
+                <div className="space-y-2">
+                  <SwitchSelect
+                    ref={(el: any) => setRef("statusSwitch")(el)}
+                    id="statusSwitch"
+                    name="statusSwitch"
+                    labelText="Status"
+                    multiSelect={false}
+                    options={[
+                      {
+                        label: "Active",
+                        value: "active",
+                        date: "Set active",
+                      },
+                      {
+                        label: "Inactive",
+                        value: "inactive",
+                        date: "Set inactive",
+                      },
+                      {
+                        label: "Draft",
+                        value: "draft",
+                        date: "Set draft",
+                      },
+                    ]}
+                    value={formData.status}
+                    onValueChange={(value: string | string[]) => {
+                      const stringValue = Array.isArray(value)
+                        ? value[0] || ""
+                        : value;
+
                       setFormData((prev) => ({
                         ...prev,
-                        isDraft: newValue,
+                        status: stringValue as "active" | "inactive" | "draft",
+                        isDraft: stringValue === "draft",
+                        isActive: stringValue === "active",
                       }));
-                      focusNextInput("submitButton");
                     }}
-                    onEnterPress={() => {
-                      if (
-                        formData.isDraft === true ||
-                        formData.isDraft === false
-                      ) {
-                        focusNextInput("submitButton");
-                      }
-                    }}
-                    placeholder=" "
-                    labelText="Draft"
-                    className="relative"
+                    placeholder=""
                     styles={{
                       input: {
                         borderColor: "var(--primary)",
@@ -545,34 +541,24 @@ export default function ShortcutCreatePage({ isEdit = false }: Props) {
                         },
                       },
                     }}
+                    tooltipText="Set the shortcut status"
                   />
                 </div>
               )}
             </div>
           </form>
         </div>
-      </PageLayout>
+      </MinimizablePageLayout>
 
       <ResetFormModal
         opened={isResetModalOpen}
         onClose={() => setIsResetModalOpen(false)}
         onConfirm={handleReset}
-        title="Reset Form"
-        message="Are you sure you want to reset the form? All changes will be lost."
-        confirmText="Reset"
-        cancelText="Cancel"
+        title={labels.resetForm}
+        message={labels.resetFormMessage}
+        confirmText={labels.resetFormConfirm}
+        cancelText={labels.cancel}
       />
-
-      {/* Options Modal */}
-      <Modal
-        opened={isOptionModalOpen}
-        onClose={() => setIsOptionModalOpen(false)}
-        title="Options"
-        size="xl"
-        overlayProps={{ backgroundOpacity: 0.55, blur: 3 }}
-      >
-        <div className="pt-5 pb-14 px-5">Modal Content</div>
-      </Modal>
     </>
   );
 }

@@ -1467,10 +1467,11 @@ import ReceivedVoucherCreatePage from "./pages/received-voucher/CreatePage";
 import ReceivedVoucherEditPage from "./pages/received-voucher/EditPage";
 import ReceivedVoucherPage from "./pages/received-voucher/ReceivedVoucherPage";
 import SubscribePage from "./pages/subscribe/SubscribePage";
+
 import ShortcutPage from "./pages/shortcut/ShortcutPage";
 import ShortcutCreatePage from "./pages/shortcut/CreatePage";
 import ShortcutEditPage from "./pages/shortcut/EditPage";
-import ShortcutDetails from "./pages/shortcut/DetailsPage";
+import ShortcutDetails from "./pages/shortcut/ShortcutDetails";
 
 // Team Members
 import TeamMembersPage from "./pages/team-members/TeamMemebrsPage";
@@ -1489,10 +1490,12 @@ import ContactFormPage from "./pages/contact-form/ContactFormPage";
 import ContactFormCreatePage from "./pages/contact-form/CreatePage";
 import ContactFormEditPage from "./pages/contact-form/EditPage";
 import ContactFormDetails from "./pages/contact-form/DetailsPage";
+
 import SlidersPage from "./pages/sliders/SlidersPage";
 import SlidersCreatePage from "./pages/sliders/CreatePage";
 import SlidersEditPage from "./pages/sliders/EditPage";
-import SlidersDetails from "./pages/sliders/DetailsPage";
+import SlidersDetails from "./pages/sliders/SlidersDetails";
+
 import BlogPage from "./pages/blog/BlogPage";
 import BlogCreatePage from "./pages/blog/CreatePage";
 import BlogEditPage from "./pages/blog/EditPage";

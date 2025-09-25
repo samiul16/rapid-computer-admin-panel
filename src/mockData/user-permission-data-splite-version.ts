@@ -21,7 +21,6 @@ import { initialProperties as TicketsData } from "@/pages/tickets/config/ModuleL
 import { initialProperties as projectContractTypeData } from "@/pages/projectContractType/config/ModuleLevelConfig";
 import { initialProperties as projectStatusData } from "@/pages/project-status/config/ModuleLevelConfig";
 import { initialProperties as blogData } from "@/pages/blog/config/ModuleLevelConfig";
-import { initialProperties as slidersData } from "@/pages/sliders/config/ModuleLevelConfig";
 import { initialProperties as contractData } from "@/pages/contract/config/ModuleLevelConfig";
 import { initialProperties as ticketPrioritiesData } from "@/pages/ticket-priorities/config/ModuleLevelConfig";
 import { initialProperties as garagesData } from "@/pages/garages/config/ModuleLevelConfig";
@@ -60,7 +59,6 @@ import { initialProperties as bedData } from "@/pages/bed/config/ModuleLevelConf
 import { initialProperties as bedAssignData } from "@/pages/bed-assign/config/ModuleLevelConfig";
 import { initialProperties as bedTransferData } from "@/pages/bed-transfer/config/ModuleLevelConfig";
 import { initialProperties as bedReportsData } from "@/pages/bed-reports/config/ModuleLevelConfig";
-import { initialProperties as shortcutData } from "@/pages/shortcut/config/ModuleLevelConfig";
 import { initialProperties as receivedVoucherData } from "@/pages/received-voucher/config/ModuleLevelConfig";
 import { initialProperties as billData } from "@/pages/bill/config/ModuleLevelConfig";
 import { initialProperties as patientAppointmentData } from "@/pages/patient-appoinment/config/ModuleLevelConfig";
@@ -2615,65 +2613,6 @@ export const userPermissionDataSpliteVersion = {
     },
   },
 
-  sliders: {
-    formPermissions: {
-      create: true,
-      view: true,
-      edit: true,
-      delete: true,
-      restore: true,
-      export: true,
-      import: true,
-      pdf: true,
-      print: true,
-      history: true,
-    },
-    fieldPermissions: {
-      ...buildPermissions(slidersData),
-
-      isDefault: {
-        view: true,
-        edit: true,
-        create: true,
-      },
-      isDraft: {
-        view: true,
-        edit: true,
-        create: true,
-      },
-      isActive: {
-        view: true,
-        edit: true,
-        create: true,
-      },
-      isDeleted: {
-        view: true,
-        edit: true,
-        create: true,
-      },
-      createdAt: {
-        view: true,
-        edit: false,
-        create: true,
-      },
-      updatedAt: {
-        view: true,
-        edit: false,
-        create: true,
-      },
-      draftedAt: {
-        view: true,
-        edit: false,
-        create: true,
-      },
-      deletedAt: {
-        view: true,
-        edit: false,
-        create: true,
-      },
-    },
-  },
-
   bed: {
     formPermissions: {
       create: true,
@@ -2866,65 +2805,6 @@ export const userPermissionDataSpliteVersion = {
     },
     fieldPermissions: {
       ...buildPermissions(bedTransferData),
-
-      isDefault: {
-        view: true,
-        edit: true,
-        create: true,
-      },
-      isDraft: {
-        view: true,
-        edit: true,
-        create: true,
-      },
-      isActive: {
-        view: true,
-        edit: true,
-        create: true,
-      },
-      isDeleted: {
-        view: true,
-        edit: true,
-        create: true,
-      },
-      createdAt: {
-        view: true,
-        edit: false,
-        create: true,
-      },
-      updatedAt: {
-        view: true,
-        edit: false,
-        create: true,
-      },
-      draftedAt: {
-        view: true,
-        edit: false,
-        create: true,
-      },
-      deletedAt: {
-        view: true,
-        edit: false,
-        create: true,
-      },
-    },
-  },
-
-  shortcut: {
-    formPermissions: {
-      create: true,
-      view: true,
-      edit: true,
-      delete: true,
-      restore: true,
-      export: true,
-      import: true,
-      pdf: true,
-      print: true,
-      history: true,
-    },
-    fieldPermissions: {
-      ...buildPermissions(shortcutData),
 
       isDefault: {
         view: true,
