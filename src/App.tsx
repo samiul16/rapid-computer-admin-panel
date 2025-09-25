@@ -143,8 +143,8 @@ import ReservationPage from "./pages/reservation/ReservationPage";
 // Item Components
 import ItemCreatePage from "./pages/item/CreatePage";
 import ItemEditPage from "./pages/item/EditPage";
-import ItemDetails from "./pages/item/ItemDeatils";
-import ItemPage from "./pages/item/ItemPage";
+import ItemDetails from "./pages/item/ItemsDetails";
+import ItemPage from "./pages/item/ItemsPage";
 
 // Bank Components
 import BankDetails from "./pages/bank/BankDetails";
