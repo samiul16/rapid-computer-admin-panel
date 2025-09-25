@@ -69,7 +69,7 @@ export const fixedColumnsValues: (keyof ModuleFieldsType)[] = ["slNo"];
 
 // column key and title for data table view
 export const tableViewColumnSchema: TableViewDataTableColumnConfig[] = [
-  { key: "slNo", title: "SL.NO", size: 80, minSize: 80 },
+  { key: "slNo", title: "SL.NO", size: 100, minSize: 100 },
   { key: "name", title: "Name" },
   { key: "groups", title: "Groups" },
   { key: "categories", title: "Categories" },
