@@ -17,16 +17,11 @@ import { useAppSelector } from "@/store/hooks";
 import MinimizablePageLayout from "@/components/MinimizablePageLayout";
 import { SwitchSelect } from "@/components/common/SwitchAutoComplete";
 
-type SliderData = {
-  titleEn: string;
-  titleAr: string;
-  topTitleEn: string;
-  topTitleAr: string;
-  keyTagsEn: string;
-  keyTagsAr: string;
-  bannerType: string;
-  bannerEn: string;
-  bannerAr: string;
+type ShortcutData = {
+  indexName: string;
+  title: string;
+  titleValue: string;
+  fontAwesomeIcon: string;
   status: "active" | "inactive" | "draft";
   isDefault: boolean;
   isActive: boolean;
@@ -42,16 +37,11 @@ type Props = {
   isEdit?: boolean;
 };
 
-const initialData: SliderData = {
-  titleEn: "Welcome to Our Platform",
-  titleAr: "مرحباً بكم في منصتنا",
-  topTitleEn: "Get Started",
-  topTitleAr: "ابدأ الآن",
-  keyTagsEn: "Welcome, Platform, Introduction",
-  keyTagsAr: "ترحيب، منصة، مقدمة",
-  bannerType: "Hero",
-  bannerEn: "hero-banner-en.jpg",
-  bannerAr: "hero-banner-ar.jpg",
+const initialData: ShortcutData = {
+  indexName: "Dashboard",
+  title: "Dashboard",
+  titleValue: "Main Dashboard",
+  fontAwesomeIcon: "fas fa-tachometer-alt",
   status: "active",
   isDefault: false,
   isActive: true,
@@ -63,7 +53,7 @@ const initialData: SliderData = {
   isDeleted: false,
 };
 
-export default function SliderFormPage({ isEdit = false }: Props) {
+export default function ShortcutFormPage({ isEdit = false }: Props) {
   const navigate = useNavigate();
   const labels = useLanguageLabels();
   const { isRTL } = useAppSelector((state) => state.language);
@@ -80,31 +70,29 @@ export default function SliderFormPage({ isEdit = false }: Props) {
   const { canCreate, canView } = useColorsPermissions();
 
   // Field-level permissions
-  const titleEn: boolean = usePermission("sliders", "create", "titleEn");
-  const titleAr: boolean = usePermission("sliders", "create", "titleAr");
-  const topTitleEn: boolean = usePermission("sliders", "create", "topTitleEn");
-  const topTitleAr: boolean = usePermission("sliders", "create", "topTitleAr");
-  const keyTagsEn: boolean = usePermission("sliders", "create", "keyTagsEn");
-  const keyTagsAr: boolean = usePermission("sliders", "create", "keyTagsAr");
-  const bannerType: boolean = usePermission("sliders", "create", "bannerType");
-  const bannerEn: boolean = usePermission("sliders", "create", "bannerEn");
-  const bannerAr: boolean = usePermission("sliders", "create", "bannerAr");
-  const status: boolean = usePermission("sliders", "create", "status");
-  const isDefault: boolean = usePermission("sliders", "create", "isDefault");
-  const canPdf: boolean = usePermission("sliders", "pdf");
-  const canPrint: boolean = usePermission("sliders", "print");
+  const indexName: boolean = usePermission("shortcuts", "create", "indexName");
+  const title: boolean = usePermission("shortcuts", "create", "title");
+  const titleValue: boolean = usePermission(
+    "shortcuts",
+    "create",
+    "titleValue"
+  );
+  const fontAwesomeIcon: boolean = usePermission(
+    "shortcuts",
+    "create",
+    "fontAwesomeIcon"
+  );
+  const status: boolean = usePermission("shortcuts", "create", "status");
+  const isDefault: boolean = usePermission("shortcuts", "create", "isDefault");
+  const canPdf: boolean = usePermission("shortcuts", "pdf");
+  const canPrint: boolean = usePermission("shortcuts", "print");
 
   // Form state
-  const [formData, setFormData] = useState<SliderData>({
-    titleEn: "",
-    titleAr: "",
-    topTitleEn: "",
-    topTitleAr: "",
-    keyTagsEn: "",
-    keyTagsAr: "",
-    bannerType: "",
-    bannerEn: "",
-    bannerAr: "",
+  const [formData, setFormData] = useState<ShortcutData>({
+    indexName: "",
+    title: "",
+    titleValue: "",
+    fontAwesomeIcon: "",
     status: "active",
     isDefault: false,
     isActive: true,
@@ -134,9 +122,9 @@ export default function SliderFormPage({ isEdit = false }: Props) {
       ),
       onClick: () => {
         if (isEdit) {
-          navigate("/sliders/create");
+          navigate("/shortcuts/create");
         } else {
-          navigate("/sliders/edit/undefined");
+          navigate("/shortcuts/edit/undefined");
         }
       },
       show: canCreate,
@@ -145,7 +133,7 @@ export default function SliderFormPage({ isEdit = false }: Props) {
       label: "View",
       icon: <Eye className="w-5 h-5 text-green-600" />,
       onClick: () => {
-        navigate("/sliders/view");
+        navigate("/shortcuts/view");
       },
       show: canView,
     },
@@ -178,16 +166,16 @@ export default function SliderFormPage({ isEdit = false }: Props) {
       await handleExportPDF();
     }
     if (printEnabled) {
-      handlePrintSlider(formData);
+      handlePrintShortcut(formData);
     }
 
     // keep switch functionality
     if (keepCreating) {
-      toastSuccess("Slider created successfully!");
+      toastSuccess("Shortcut created successfully!");
       handleReset();
     } else {
-      toastSuccess("Slider created successfully!");
-      navigate("/sliders");
+      toastSuccess("Shortcut created successfully!");
+      navigate("/shortcuts");
     }
   };
 
@@ -197,15 +185,10 @@ export default function SliderFormPage({ isEdit = false }: Props) {
 
   const handleReset = async () => {
     setFormData({
-      titleEn: "",
-      titleAr: "",
-      topTitleEn: "",
-      topTitleAr: "",
-      keyTagsEn: "",
-      keyTagsAr: "",
-      bannerType: "",
-      bannerEn: "",
-      bannerAr: "",
+      indexName: "",
+      title: "",
+      titleValue: "",
+      fontAwesomeIcon: "",
       status: "active",
       isDefault: false,
       isActive: true,
@@ -227,26 +210,21 @@ export default function SliderFormPage({ isEdit = false }: Props) {
 
     // Focus the first input field after reset
     setTimeout(() => {
-      inputRefs.current["titleEn"]?.focus();
+      inputRefs.current["indexName"]?.focus();
     }, 100);
   };
 
-  const handlePrintSlider = (sliderData: any) => {
+  const handlePrintShortcut = (shortcutData: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "Slider Details",
-        data: [sliderData],
+        title: "Shortcut Details",
+        data: [shortcutData],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
-          titleEn: "Title (EN)",
-          titleAr: "Title (AR)",
-          topTitleEn: "Top Title (EN)",
-          topTitleAr: "Top Title (AR)",
-          keyTagsEn: "Key Tags (EN)",
-          keyTagsAr: "Key Tags (AR)",
-          bannerType: "Banner Type",
-          bannerEn: "Banner (EN)",
-          bannerAr: "Banner (AR)",
+          indexName: "Index Name",
+          title: "Title",
+          titleValue: "Title Value",
+          fontAwesomeIcon: "Font Awesome Icon",
           status: "Status",
           isActive: "Active Status",
           isDraft: "Draft Status",
@@ -277,15 +255,15 @@ export default function SliderFormPage({ isEdit = false }: Props) {
       const blob = await pdf(
         <GenericPDF
           data={[formData]}
-          title="Slider Details"
-          subtitle="Slider Information"
+          title="Shortcut Details"
+          subtitle="Shortcut Information"
         />
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "slider-details.pdf";
+      a.download = "shortcut-details.pdf";
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
@@ -313,7 +291,7 @@ export default function SliderFormPage({ isEdit = false }: Props) {
                 ...prev,
                 isDraft: true,
               }));
-              toastRestore("Slider saved as draft successfully");
+              toastRestore("Shortcut saved as draft successfully");
             },
             show: canCreate,
           },
@@ -335,16 +313,16 @@ export default function SliderFormPage({ isEdit = false }: Props) {
   return (
     <>
       <MinimizablePageLayout
-        moduleId="slider-form-module"
-        moduleName={isEdit ? "Edit Slider" : "Adding Slider"}
+        moduleId="shortcut-form-module"
+        moduleName={isEdit ? "Edit Shortcut" : "Adding Shortcut"}
         moduleRoute={
           isEdit
-            ? `/sliders/edit/${formData.titleEn || "new"}`
-            : "/sliders/create"
+            ? `/shortcuts/edit/${formData.title || "new"}`
+            : "/shortcuts/create"
         }
         onMinimize={handleMinimize}
-        title={isEdit ? "Edit Slider" : "Add Slider"}
-        listPath="sliders"
+        title={isEdit ? "Edit Shortcut" : "Add Shortcut"}
+        listPath="shortcuts"
         popoverOptions={popoverOptions}
         videoSrc={video}
         videoHeader="Tutorial video"
@@ -355,7 +333,7 @@ export default function SliderFormPage({ isEdit = false }: Props) {
         printEnabled={printEnabled}
         onPrintToggle={canPrint ? handleSwitchChange : undefined}
         activePage="create"
-        module="sliders"
+        module="shortcuts"
         additionalFooterButtons={
           canCreate ? (
             <div className="flex gap-4 max-[435px]:gap-2">
@@ -385,182 +363,87 @@ export default function SliderFormPage({ isEdit = false }: Props) {
             onSubmit={handleSubmit}
             className="space-y-6 relative"
           >
-            {/* First Row: Title En, Title Ar, Top Title En, Top Title Ar */}
+            {/* First Row: Index Name, Title, Title Value, Font Awesome Icon */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
-              {/* Title En field - only show if user can create */}
-              {titleEn && (
+              {/* Index Name field - only show if user can create */}
+              {indexName && (
                 <div className="space-y-2">
                   <EditableInput
-                    setRef={setRef("titleEn")}
-                    id="titleEn"
-                    name="titleEn"
-                    value={formData.titleEn}
+                    setRef={setRef("indexName")}
+                    id="indexName"
+                    name="indexName"
+                    value={formData.indexName}
                     onChange={handleChange}
-                    onNext={() => focusNextInput("titleAr")}
-                    onCancel={() => setFormData({ ...formData, titleEn: "" })}
-                    labelText="Title (EN)"
-                    tooltipText="Enter the English title"
+                    onNext={() => focusNextInput("title")}
+                    onCancel={() => setFormData({ ...formData, indexName: "" })}
+                    labelText="Index Name"
+                    tooltipText="Enter the shortcut index name"
                     required
                   />
                 </div>
               )}
 
-              {/* Title Ar field - only show if user can create */}
-              {titleAr && (
+              {/* Title field - only show if user can create */}
+              {title && (
                 <div className="space-y-2">
                   <EditableInput
-                    setRef={setRef("titleAr")}
-                    id="titleAr"
-                    name="titleAr"
-                    value={formData.titleAr}
+                    setRef={setRef("title")}
+                    id="title"
+                    name="title"
+                    value={formData.title}
                     onChange={handleChange}
-                    onNext={() => focusNextInput("topTitleEn")}
-                    onCancel={() => setFormData({ ...formData, titleAr: "" })}
-                    labelText="Title (AR)"
-                    tooltipText="Enter the Arabic title"
+                    onNext={() => focusNextInput("titleValue")}
+                    onCancel={() => setFormData({ ...formData, title: "" })}
+                    labelText="Title"
+                    tooltipText="Enter the shortcut title"
                     required
                   />
                 </div>
               )}
 
-              {/* Top Title En field - only show if user can create */}
-              {topTitleEn && (
+              {/* Title Value field - only show if user can create */}
+              {titleValue && (
                 <div className="space-y-2">
                   <EditableInput
-                    setRef={setRef("topTitleEn")}
-                    id="topTitleEn"
-                    name="topTitleEn"
-                    value={formData.topTitleEn}
+                    setRef={setRef("titleValue")}
+                    id="titleValue"
+                    name="titleValue"
+                    value={formData.titleValue}
                     onChange={handleChange}
-                    onNext={() => focusNextInput("topTitleAr")}
+                    onNext={() => focusNextInput("fontAwesomeIcon")}
                     onCancel={() =>
-                      setFormData({ ...formData, topTitleEn: "" })
+                      setFormData({ ...formData, titleValue: "" })
                     }
-                    labelText="Top Title (EN)"
-                    tooltipText="Enter the English top title"
+                    labelText="Title Value"
+                    tooltipText="Enter the shortcut title value"
                     required
                   />
                 </div>
               )}
 
-              {/* Top Title Ar field - only show if user can create */}
-              {topTitleAr && (
+              {/* Font Awesome Icon field - only show if user can create */}
+              {fontAwesomeIcon && (
                 <div className="space-y-2">
                   <EditableInput
-                    setRef={setRef("topTitleAr")}
-                    id="topTitleAr"
-                    name="topTitleAr"
-                    value={formData.topTitleAr}
-                    onChange={handleChange}
-                    onNext={() => focusNextInput("keyTagsEn")}
-                    onCancel={() =>
-                      setFormData({ ...formData, topTitleAr: "" })
-                    }
-                    labelText="Top Title (AR)"
-                    tooltipText="Enter the Arabic top title"
-                    required
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Second Row: Key Tags En, Key Tags Ar, Banner Type, Banner En */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
-              {/* Key Tags En field - only show if user can create */}
-              {keyTagsEn && (
-                <div className="space-y-2">
-                  <EditableInput
-                    setRef={setRef("keyTagsEn")}
-                    id="keyTagsEn"
-                    name="keyTagsEn"
-                    value={formData.keyTagsEn}
-                    onChange={handleChange}
-                    onNext={() => focusNextInput("keyTagsAr")}
-                    onCancel={() => setFormData({ ...formData, keyTagsEn: "" })}
-                    labelText="Key Tags (EN)"
-                    tooltipText="Enter English key tags (comma separated)"
-                    required
-                  />
-                </div>
-              )}
-
-              {/* Key Tags Ar field - only show if user can create */}
-              {keyTagsAr && (
-                <div className="space-y-2">
-                  <EditableInput
-                    setRef={setRef("keyTagsAr")}
-                    id="keyTagsAr"
-                    name="keyTagsAr"
-                    value={formData.keyTagsAr}
-                    onChange={handleChange}
-                    onNext={() => focusNextInput("bannerType")}
-                    onCancel={() => setFormData({ ...formData, keyTagsAr: "" })}
-                    labelText="Key Tags (AR)"
-                    tooltipText="Enter Arabic key tags (comma separated)"
-                    required
-                  />
-                </div>
-              )}
-
-              {/* Banner Type field - only show if user can create */}
-              {bannerType && (
-                <div className="space-y-2">
-                  <EditableInput
-                    setRef={setRef("bannerType")}
-                    id="bannerType"
-                    name="bannerType"
-                    value={formData.bannerType}
-                    onChange={handleChange}
-                    onNext={() => focusNextInput("bannerEn")}
-                    onCancel={() =>
-                      setFormData({ ...formData, bannerType: "" })
-                    }
-                    labelText="Banner Type"
-                    tooltipText="Enter banner type (e.g., Hero, Service, Tech)"
-                    required
-                  />
-                </div>
-              )}
-
-              {/* Banner En field - only show if user can create */}
-              {bannerEn && (
-                <div className="space-y-2">
-                  <EditableInput
-                    setRef={setRef("bannerEn")}
-                    id="bannerEn"
-                    name="bannerEn"
-                    value={formData.bannerEn}
-                    onChange={handleChange}
-                    onNext={() => focusNextInput("bannerAr")}
-                    onCancel={() => setFormData({ ...formData, bannerEn: "" })}
-                    labelText="Banner (EN)"
-                    tooltipText="Enter English banner filename"
-                    required
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Third Row: Banner Ar, Default, Status */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
-              {/* Banner Ar field - only show if user can create */}
-              {bannerAr && (
-                <div className="space-y-2">
-                  <EditableInput
-                    setRef={setRef("bannerAr")}
-                    id="bannerAr"
-                    name="bannerAr"
-                    value={formData.bannerAr}
+                    setRef={setRef("fontAwesomeIcon")}
+                    id="fontAwesomeIcon"
+                    name="fontAwesomeIcon"
+                    value={formData.fontAwesomeIcon}
                     onChange={handleChange}
                     onNext={() => focusNextInput("status")}
-                    onCancel={() => setFormData({ ...formData, bannerAr: "" })}
-                    labelText="Banner (AR)"
-                    tooltipText="Enter Arabic banner filename"
+                    onCancel={() =>
+                      setFormData({ ...formData, fontAwesomeIcon: "" })
+                    }
+                    labelText="Font Awesome Icon"
+                    tooltipText="Enter Font Awesome icon class (e.g., fas fa-home)"
                     required
                   />
                 </div>
               )}
+            </div>
 
+            {/* Second Row: Default, Status */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
               {/* Default field - only show if user can create */}
               {isDefault && (
                 <div className="space-y-2 relative">
@@ -573,12 +456,12 @@ export default function SliderFormPage({ isEdit = false }: Props) {
                       {
                         label: labels.yes,
                         value: labels.yes,
-                        date: "Set default slider",
+                        date: "Set default shortcut",
                       },
                       {
                         label: labels.no,
                         value: labels.no,
-                        date: "Remove default slider",
+                        date: "Remove default shortcut",
                       },
                     ]}
                     value={isDefaultState === "Yes" ? labels.yes : labels.no}
@@ -605,7 +488,7 @@ export default function SliderFormPage({ isEdit = false }: Props) {
                     placeholder=" "
                     labelText="Default"
                     className="relative"
-                    tooltipText="Set as default slider"
+                    tooltipText="Set as default shortcut"
                   />
                 </div>
               )}
@@ -658,7 +541,7 @@ export default function SliderFormPage({ isEdit = false }: Props) {
                         },
                       },
                     }}
-                    tooltipText="Set the slider status"
+                    tooltipText="Set the shortcut status"
                   />
                 </div>
               )}

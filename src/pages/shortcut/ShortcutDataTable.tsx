@@ -3,18 +3,13 @@ import FixedColumnDataTable from "@/components/common/country-page-table/FixedCo
 import useIsMobile from "@/hooks/useIsMobile";
 import { useColorsPermissions } from "@/hooks/usePermissions";
 
-// Slider interface to match the grid component
-interface SliderItem {
+// Shortcut interface to match the grid component
+interface ShortcutItem {
   id: string;
-  titleEn: string;
-  titleAr: string;
-  topTitleEn: string;
-  topTitleAr: string;
-  keyTagsEn: string;
-  keyTagsAr: string;
-  bannerType: string;
-  bannerEn: string;
-  bannerAr: string;
+  indexName: string;
+  title: string;
+  titleValue: string;
+  fontAwesomeIcon: string;
   status: "active" | "inactive" | "draft";
   createdAt: string;
   updatedAt: string;
@@ -26,18 +21,13 @@ interface SliderItem {
   actionMessage: string;
 }
 
-const mockSliders: SliderItem[] = [
+const mockShortcuts: ShortcutItem[] = [
   {
     id: "1",
-    titleEn: "Welcome to Our Platform",
-    titleAr: "مرحباً بكم في منصتنا",
-    topTitleEn: "Get Started",
-    topTitleAr: "ابدأ الآن",
-    keyTagsEn: "Welcome, Platform, Introduction",
-    keyTagsAr: "ترحيب، منصة، مقدمة",
-    bannerType: "Hero",
-    bannerEn: "hero-banner-en.jpg",
-    bannerAr: "hero-banner-ar.jpg",
+    indexName: "Dashboard",
+    title: "Dashboard",
+    titleValue: "Main Dashboard",
+    fontAwesomeIcon: "fas fa-tachometer-alt",
     status: "active",
     createdAt: "2023-01-15",
     updatedAt: "2023-11-20",
@@ -50,15 +40,10 @@ const mockSliders: SliderItem[] = [
   },
   {
     id: "2",
-    titleEn: "Premium Services",
-    titleAr: "خدمات متميزة",
-    topTitleEn: "Quality First",
-    topTitleAr: "الجودة أولاً",
-    keyTagsEn: "Premium, Quality, Services",
-    keyTagsAr: "متميز، جودة، خدمات",
-    bannerType: "Service",
-    bannerEn: "service-banner-en.jpg",
-    bannerAr: "service-banner-ar.jpg",
+    indexName: "Users",
+    title: "User Management",
+    titleValue: "Manage Users",
+    fontAwesomeIcon: "fas fa-users",
     status: "active",
     createdAt: "2023-01-18",
     updatedAt: "2023-10-15",
@@ -71,15 +56,10 @@ const mockSliders: SliderItem[] = [
   },
   {
     id: "3",
-    titleEn: "Latest Technology",
-    titleAr: "أحدث التقنيات",
-    topTitleEn: "Innovation",
-    topTitleAr: "الابتكار",
-    keyTagsEn: "Technology, Innovation, Modern",
-    keyTagsAr: "تقنية، ابتكار، حديث",
-    bannerType: "Tech",
-    bannerEn: "tech-banner-en.jpg",
-    bannerAr: "tech-banner-ar.jpg",
+    indexName: "Products",
+    title: "Product Catalog",
+    titleValue: "Manage Products",
+    fontAwesomeIcon: "fas fa-box",
     status: "active",
     createdAt: "2023-02-01",
     updatedAt: "2023-11-10",
@@ -92,15 +72,10 @@ const mockSliders: SliderItem[] = [
   },
   {
     id: "4",
-    titleEn: "Customer Support",
-    titleAr: "دعم العملاء",
-    topTitleEn: "24/7 Help",
-    topTitleAr: "مساعدة 24/7",
-    keyTagsEn: "Support, Help, Customer",
-    keyTagsAr: "دعم، مساعدة، عميل",
-    bannerType: "Support",
-    bannerEn: "support-banner-en.jpg",
-    bannerAr: "support-banner-ar.jpg",
+    indexName: "Orders",
+    title: "Order Management",
+    titleValue: "Process Orders",
+    fontAwesomeIcon: "fas fa-shopping-cart",
     status: "active",
     createdAt: "2023-02-10",
     updatedAt: "2023-11-05",
@@ -113,15 +88,10 @@ const mockSliders: SliderItem[] = [
   },
   {
     id: "5",
-    titleEn: "Special Offers",
-    titleAr: "عروض خاصة",
-    topTitleEn: "Limited Time",
-    topTitleAr: "وقت محدود",
-    keyTagsEn: "Offers, Discount, Special",
-    keyTagsAr: "عروض، خصم، خاص",
-    bannerType: "Promo",
-    bannerEn: "promo-banner-en.jpg",
-    bannerAr: "promo-banner-ar.jpg",
+    indexName: "Reports",
+    title: "Analytics",
+    titleValue: "View Reports",
+    fontAwesomeIcon: "fas fa-chart-bar",
     status: "active",
     createdAt: "2023-02-15",
     updatedAt: "2023-10-28",
@@ -134,15 +104,10 @@ const mockSliders: SliderItem[] = [
   },
   {
     id: "6",
-    titleEn: "About Us",
-    titleAr: "من نحن",
-    topTitleEn: "Our Story",
-    topTitleAr: "قصتنا",
-    keyTagsEn: "About, Company, Story",
-    keyTagsAr: "حول، شركة، قصة",
-    bannerType: "About",
-    bannerEn: "about-banner-en.jpg",
-    bannerAr: "about-banner-ar.jpg",
+    indexName: "Settings",
+    title: "System Settings",
+    titleValue: "Configure System",
+    fontAwesomeIcon: "fas fa-cog",
     status: "draft",
     createdAt: "2023-03-01",
     updatedAt: "2023-11-15",
@@ -155,15 +120,10 @@ const mockSliders: SliderItem[] = [
   },
   {
     id: "7",
-    titleEn: "Contact Information",
-    titleAr: "معلومات الاتصال",
-    topTitleEn: "Get in Touch",
-    topTitleAr: "تواصل معنا",
-    keyTagsEn: "Contact, Information, Reach",
-    keyTagsAr: "اتصال، معلومات، تواصل",
-    bannerType: "Contact",
-    bannerEn: "contact-banner-en.jpg",
-    bannerAr: "contact-banner-ar.jpg",
+    indexName: "Notifications",
+    title: "Notifications",
+    titleValue: "Manage Alerts",
+    fontAwesomeIcon: "fas fa-bell",
     status: "active",
     createdAt: "2023-03-10",
     updatedAt: "2023-11-08",
@@ -176,15 +136,10 @@ const mockSliders: SliderItem[] = [
   },
   {
     id: "8",
-    titleEn: "Product Showcase",
-    titleAr: "عرض المنتجات",
-    topTitleEn: "Featured",
-    topTitleAr: "مميز",
-    keyTagsEn: "Products, Showcase, Featured",
-    keyTagsAr: "منتجات، عرض، مميز",
-    bannerType: "Product",
-    bannerEn: "product-banner-en.jpg",
-    bannerAr: "product-banner-ar.jpg",
+    indexName: "Messages",
+    title: "Messages",
+    titleValue: "View Messages",
+    fontAwesomeIcon: "fas fa-envelope",
     status: "inactive",
     createdAt: "2023-03-20",
     updatedAt: "2023-10-22",
@@ -197,15 +152,10 @@ const mockSliders: SliderItem[] = [
   },
   {
     id: "9",
-    titleEn: "News & Updates",
-    titleAr: "الأخبار والتحديثات",
-    topTitleEn: "Latest News",
-    topTitleAr: "آخر الأخبار",
-    keyTagsEn: "News, Updates, Latest",
-    keyTagsAr: "أخبار، تحديثات، آخر",
-    bannerType: "News",
-    bannerEn: "news-banner-en.jpg",
-    bannerAr: "news-banner-ar.jpg",
+    indexName: "Calendar",
+    title: "Calendar",
+    titleValue: "Schedule Events",
+    fontAwesomeIcon: "fas fa-calendar",
     status: "active",
     createdAt: "2023-04-01",
     updatedAt: "2023-11-25",
@@ -218,15 +168,10 @@ const mockSliders: SliderItem[] = [
   },
   {
     id: "10",
-    titleEn: "Partnership Program",
-    titleAr: "برنامج الشراكة",
-    topTitleEn: "Join Us",
-    topTitleAr: "انضم إلينا",
-    keyTagsEn: "Partnership, Join, Program",
-    keyTagsAr: "شراكة، انضم، برنامج",
-    bannerType: "Partnership",
-    bannerEn: "partnership-banner-en.jpg",
-    bannerAr: "partnership-banner-ar.jpg",
+    indexName: "Files",
+    title: "File Manager",
+    titleValue: "Manage Files",
+    fontAwesomeIcon: "fas fa-folder",
     status: "draft",
     createdAt: "2023-04-10",
     updatedAt: "2023-11-18",
@@ -239,7 +184,7 @@ const mockSliders: SliderItem[] = [
   },
 ];
 
-export default function SlidersDataTable({
+export default function ShortcutDataTable({
   viewMode,
   setViewMode,
   dataTableFilter,
@@ -271,51 +216,9 @@ export default function SlidersDataTable({
 
   const componentColumns = [
     {
-      accessorKey: "titleEn",
-      title: "Title (EN)",
-      options: [...new Set(mockSliders.map((item) => item.titleEn))],
-      filterFn: (row: any, columnId: any, filterValue: any) => {
-        if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as string;
-        return filterValue.some((filterVal: string) =>
-          cellValue.toLowerCase().includes(filterVal.toLowerCase())
-        );
-      },
-      sortingFn: (row1: any, row2: any) => {
-        return row1.getValue("titleEn").localeCompare(row2.getValue("titleEn"));
-      },
-      size: isMobile ? 120 : 180,
-      minSize: 120,
-      meta: {
-        exportLabel: "Title (EN)",
-        readOnly: !canCreate,
-      },
-    },
-    {
-      accessorKey: "titleAr",
-      title: "Title (AR)",
-      options: [...new Set(mockSliders.map((item) => item.titleAr))],
-      filterFn: (row: any, columnId: any, filterValue: any) => {
-        if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as string;
-        return filterValue.some((filterVal: string) =>
-          cellValue.toLowerCase().includes(filterVal.toLowerCase())
-        );
-      },
-      sortingFn: (row1: any, row2: any) => {
-        return row1.getValue("titleAr").localeCompare(row2.getValue("titleAr"));
-      },
-      size: isMobile ? 120 : 180,
-      minSize: 120,
-      meta: {
-        exportLabel: "Title (AR)",
-        readOnly: !canCreate,
-      },
-    },
-    {
-      accessorKey: "topTitleEn",
-      title: "Top Title (EN)",
-      options: [...new Set(mockSliders.map((item) => item.topTitleEn))],
+      accessorKey: "indexName",
+      title: "Index Name",
+      options: [...new Set(mockShortcuts.map((item) => item.indexName))],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
         const cellValue = row.getValue(columnId) as string;
@@ -325,20 +228,20 @@ export default function SlidersDataTable({
       },
       sortingFn: (row1: any, row2: any) => {
         return row1
-          .getValue("topTitleEn")
-          .localeCompare(row2.getValue("topTitleEn"));
+          .getValue("indexName")
+          .localeCompare(row2.getValue("indexName"));
       },
       size: isMobile ? 120 : 150,
       minSize: 120,
       meta: {
-        exportLabel: "Top Title (EN)",
+        exportLabel: "Index Name",
         readOnly: !canCreate,
       },
     },
     {
-      accessorKey: "topTitleAr",
-      title: "Top Title (AR)",
-      options: [...new Set(mockSliders.map((item) => item.topTitleAr))],
+      accessorKey: "title",
+      title: "Title",
+      options: [...new Set(mockShortcuts.map((item) => item.title))],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
         const cellValue = row.getValue(columnId) as string;
@@ -347,60 +250,58 @@ export default function SlidersDataTable({
         );
       },
       sortingFn: (row1: any, row2: any) => {
-        return row1
-          .getValue("topTitleAr")
-          .localeCompare(row2.getValue("topTitleAr"));
-      },
-      size: isMobile ? 120 : 150,
-      minSize: 120,
-      meta: {
-        exportLabel: "Top Title (AR)",
-        readOnly: !canCreate,
-      },
-    },
-    {
-      accessorKey: "bannerType",
-      title: "Banner Type",
-      options: [...new Set(mockSliders.map((item) => item.bannerType))],
-      filterFn: (row: any, columnId: any, filterValue: any) => {
-        if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as string;
-        return filterValue.some((filterVal: string) =>
-          cellValue.toLowerCase().includes(filterVal.toLowerCase())
-        );
-      },
-      sortingFn: (row1: any, row2: any) => {
-        return row1
-          .getValue("bannerType")
-          .localeCompare(row2.getValue("bannerType"));
-      },
-      size: isMobile ? 100 : 120,
-      minSize: 100,
-      meta: {
-        exportLabel: "Banner Type",
-        readOnly: !canCreate,
-      },
-    },
-    {
-      accessorKey: "keyTagsEn",
-      title: "Key Tags (EN)",
-      options: [...new Set(mockSliders.map((item) => item.keyTagsEn))],
-      filterFn: (row: any, columnId: any, filterValue: any) => {
-        if (!filterValue || filterValue.length === 0) return true;
-        const cellValue = row.getValue(columnId) as string;
-        return filterValue.some((filterVal: string) =>
-          cellValue.toLowerCase().includes(filterVal.toLowerCase())
-        );
-      },
-      sortingFn: (row1: any, row2: any) => {
-        return row1
-          .getValue("keyTagsEn")
-          .localeCompare(row2.getValue("keyTagsEn"));
+        return row1.getValue("title").localeCompare(row2.getValue("title"));
       },
       size: isMobile ? 150 : 200,
       minSize: 150,
       meta: {
-        exportLabel: "Key Tags (EN)",
+        exportLabel: "Title",
+        readOnly: !canCreate,
+      },
+    },
+    {
+      accessorKey: "titleValue",
+      title: "Title Value",
+      options: [...new Set(mockShortcuts.map((item) => item.titleValue))],
+      filterFn: (row: any, columnId: any, filterValue: any) => {
+        if (!filterValue || filterValue.length === 0) return true;
+        const cellValue = row.getValue(columnId) as string;
+        return filterValue.some((filterVal: string) =>
+          cellValue.toLowerCase().includes(filterVal.toLowerCase())
+        );
+      },
+      sortingFn: (row1: any, row2: any) => {
+        return row1
+          .getValue("titleValue")
+          .localeCompare(row2.getValue("titleValue"));
+      },
+      size: isMobile ? 150 : 200,
+      minSize: 150,
+      meta: {
+        exportLabel: "Title Value",
+        readOnly: !canCreate,
+      },
+    },
+    {
+      accessorKey: "fontAwesomeIcon",
+      title: "Font Awesome Icon",
+      options: [...new Set(mockShortcuts.map((item) => item.fontAwesomeIcon))],
+      filterFn: (row: any, columnId: any, filterValue: any) => {
+        if (!filterValue || filterValue.length === 0) return true;
+        const cellValue = row.getValue(columnId) as string;
+        return filterValue.some((filterVal: string) =>
+          cellValue.toLowerCase().includes(filterVal.toLowerCase())
+        );
+      },
+      sortingFn: (row1: any, row2: any) => {
+        return row1
+          .getValue("fontAwesomeIcon")
+          .localeCompare(row2.getValue("fontAwesomeIcon"));
+      },
+      size: isMobile ? 150 : 200,
+      minSize: 150,
+      meta: {
+        exportLabel: "Font Awesome Icon",
         readOnly: !canCreate,
       },
     },
@@ -510,8 +411,8 @@ export default function SlidersDataTable({
     },
   ];
 
-  const filteredData = mockSliders.filter((item: SliderItem) => {
-    // Sliders use the same flags for demo
+  const filteredData = mockShortcuts.filter((item: ShortcutItem) => {
+    // Shortcuts use the same flags for demo
     if (dataTableFilter.status === "Active") {
       return item.isActive;
     } else if (dataTableFilter.status === "Inactive") {
@@ -533,8 +434,8 @@ export default function SlidersDataTable({
       viewMode={viewMode}
       setViewMode={setViewMode}
       componentColumns={componentColumns}
-      fixedColumns={["titleEn", "titleAr"]}
-      pathName="sliders"
+      fixedColumns={["indexName", "title"]}
+      pathName="shortcuts"
       setShowExport={setShowExport}
       showExport={showExport}
       setShowFilter={setShowFilter}
