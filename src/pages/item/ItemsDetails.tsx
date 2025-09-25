@@ -15,35 +15,76 @@ import { pdf } from "@react-pdf/renderer";
 import { Edit, Plus } from "lucide-react";
 import { ResetFormModal } from "@/components/common/ResetFormModal";
 import { usePermission } from "@/hooks/usePermissions";
+import { useLanguageLabels } from "@/hooks/useLanguageLabels";
 import MinimizablePageLayout from "@/components/MinimizablePageLayout";
 
-const MOCK_BRANDS = [
+const MOCK_ITEMS = [
   {
     id: "1",
-    name: "Apex",
-    code: "BRD001",
-    description: "Premium performance brand",
+    itemName: "Laptop Pro 15",
+    itemCode: "ITM001",
+    arabicName: "لابتوب برو 15",
+    costPrice: 1200,
+    regularPrice: 1500,
+    offerPrice: 1350,
+    startDate: "2024-01-01",
+    endDate: "2024-12-31",
+    openingStock: 50,
+    category: "Electronics",
+    subCategory: "Laptops",
+    unit: "Piece",
+    description: "High-performance laptop for professionals",
     status: "Active",
   },
   {
     id: "2",
-    name: "Velocity",
-    code: "BRD002",
-    description: "High-speed and sports-focused",
+    itemName: "Wireless Mouse",
+    itemCode: "ITM002",
+    arabicName: "ماوس لاسلكي",
+    costPrice: 25,
+    regularPrice: 35,
+    offerPrice: 30,
+    startDate: "2024-02-01",
+    endDate: "2024-12-31",
+    openingStock: 200,
+    category: "Electronics",
+    subCategory: "Accessories",
+    unit: "Piece",
+    description: "Ergonomic wireless mouse with precision tracking",
     status: "Active",
   },
   {
     id: "3",
-    name: "Nimbus",
-    code: "BRD003",
-    description: "Cloud-like comfort and reliability",
+    itemName: "Office Chair",
+    itemCode: "ITM003",
+    arabicName: "كرسي مكتب",
+    costPrice: 150,
+    regularPrice: 200,
+    offerPrice: 180,
+    startDate: "2024-03-01",
+    endDate: "2024-12-31",
+    openingStock: 30,
+    category: "Furniture",
+    subCategory: "Office",
+    unit: "Piece",
+    description: "Comfortable ergonomic office chair",
     status: "Draft",
   },
   {
     id: "4",
-    name: "Quantum",
-    code: "BRD004",
-    description: "Cutting-edge innovation",
+    itemName: "Coffee Machine",
+    itemCode: "ITM004",
+    arabicName: "آلة قهوة",
+    costPrice: 300,
+    regularPrice: 400,
+    offerPrice: 350,
+    startDate: "2024-04-01",
+    endDate: "2024-12-31",
+    openingStock: 15,
+    category: "Appliances",
+    subCategory: "Kitchen",
+    unit: "Piece",
+    description: "Professional coffee machine for office use",
     status: "InActive",
   },
 ];
@@ -62,13 +103,14 @@ export type HistoryEntry = {
   print: boolean;
 };
 
-export default function BrandDetailsPage() {
+export default function ItemDetailsPage() {
   // const { t } = useTranslation();
   const navigate = useNavigate();
+  const labels = useLanguageLabels();
 
   const [keepChanges, setKeepChanges] = useState(false);
   const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
-  const [selectedBrand, setSelectedBrand] = useState("1");
+  const [selectedItem, setSelectedItem] = useState("1");
   const location = useLocation();
   const isViewPage = location.pathname.includes("/view");
   const [pdfChecked, setPdfChecked] = useState(false);
@@ -79,22 +121,44 @@ export default function BrandDetailsPage() {
   // const { canCreate, canView, canEdit, canDelete } = useUserMasterPermissions();
 
   // Field-level permissions
-  const canPdf: boolean = usePermission("brands", "pdf");
-  const canPrint: boolean = usePermission("brands", "print");
-  const canSeeHistory: boolean = usePermission("brands", "history");
+  const canPdf: boolean = usePermission("items", "pdf");
+  const canPrint: boolean = usePermission("items", "print");
+  const canSeeHistory: boolean = usePermission("items", "history");
 
-  let brandData = {
-    id: selectedBrand,
-    name: MOCK_BRANDS.find((b) => b.id === selectedBrand)?.name || "Apex",
-    code: MOCK_BRANDS.find((b) => b.id === selectedBrand)?.code || "BRD001",
+  let itemData = {
+    id: selectedItem,
+    itemName:
+      MOCK_ITEMS.find((i) => i.id === selectedItem)?.itemName ||
+      "Laptop Pro 15",
+    itemCode:
+      MOCK_ITEMS.find((i) => i.id === selectedItem)?.itemCode || "ITM001",
+    arabicName:
+      MOCK_ITEMS.find((i) => i.id === selectedItem)?.arabicName ||
+      "لابتوب برو 15",
+    costPrice: MOCK_ITEMS.find((i) => i.id === selectedItem)?.costPrice || 1200,
+    regularPrice:
+      MOCK_ITEMS.find((i) => i.id === selectedItem)?.regularPrice || 1500,
+    offerPrice:
+      MOCK_ITEMS.find((i) => i.id === selectedItem)?.offerPrice || 1350,
+    startDate:
+      MOCK_ITEMS.find((i) => i.id === selectedItem)?.startDate || "2024-01-01",
+    endDate:
+      MOCK_ITEMS.find((i) => i.id === selectedItem)?.endDate || "2024-12-31",
+    openingStock:
+      MOCK_ITEMS.find((i) => i.id === selectedItem)?.openingStock || 50,
+    category:
+      MOCK_ITEMS.find((i) => i.id === selectedItem)?.category || "Electronics",
+    subCategory:
+      MOCK_ITEMS.find((i) => i.id === selectedItem)?.subCategory || "Laptops",
+    unit: MOCK_ITEMS.find((i) => i.id === selectedItem)?.unit || "Piece",
     description:
-      MOCK_BRANDS.find((b) => b.id === selectedBrand)?.description ||
-      "Premium performance brand",
+      MOCK_ITEMS.find((i) => i.id === selectedItem)?.description ||
+      "High-performance laptop for professionals",
     isDefault: true,
     isActive: true,
     isDraft: false,
     isDeleted: false,
-    status: MOCK_BRANDS.find((b) => b.id === selectedBrand)?.status || "Active",
+    status: MOCK_ITEMS.find((i) => i.id === selectedItem)?.status || "Active",
     createdAt: "2023-05-15T10:30:00Z",
     updatedAt: "2025-01-15T14:30:00Z",
     draftedAt: "2025-05-20T14:45:00Z",
@@ -110,10 +174,20 @@ export default function BrandDetailsPage() {
     }
     console.log("isViewPage", isViewPage);
     if (isViewPage) {
-      brandData = {
-        id: selectedBrand,
-        name: "",
-        code: "",
+      itemData = {
+        id: selectedItem,
+        itemName: "",
+        itemCode: "",
+        arabicName: "",
+        costPrice: 0,
+        regularPrice: 0,
+        offerPrice: 0,
+        startDate: "",
+        endDate: "",
+        openingStock: 0,
+        category: "",
+        subCategory: "",
+        unit: "",
         description: "",
         isDefault: true,
         isActive: true,
@@ -128,17 +202,27 @@ export default function BrandDetailsPage() {
     }
   }, []);
 
-  const handlePrintBrand = (brand: any) => {
+  const handlePrintItem = (item: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "Brand Master Details",
-        data: [brand],
+        title: "Item Master Details",
+        data: [item],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
-          name: "Brand Name",
-          code: "Brand Code",
+          itemCode: "Item Code",
+          itemName: "Item Name",
+          arabicName: "Arabic Name",
+          costPrice: "Cost Price",
+          regularPrice: "Regular Price",
+          offerPrice: "Offer Price",
+          startDate: "Start Date",
+          endDate: "End Date",
+          openingStock: "Opening Stock",
+          category: "Category",
+          subCategory: "Sub Category",
+          unit: "Unit",
           description: "Description",
-          isDefault: "Default Brand",
+          isDefault: "Default Item",
           isActive: "Active Status",
           isDraft: "Draft Status",
           isDeleted: "Deleted Status",
@@ -167,19 +251,19 @@ export default function BrandDetailsPage() {
   const handleExportPDF = async () => {
     console.log("Export PDF clicked");
     try {
-      console.log("brandData on pdf click", brandData);
+      console.log("itemData on pdf click", itemData);
       const blob = await pdf(
         <GenericPDF
-          data={[brandData]}
-          title="Brand Master Details"
-          subtitle="Brand Information"
+          data={[itemData]}
+          title="Item Master Details"
+          subtitle="Item Information"
         />
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "brand-details.pdf";
+      a.download = "item-details.pdf";
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
@@ -223,25 +307,25 @@ export default function BrandDetailsPage() {
   return (
     <>
       <MinimizablePageLayout
-        moduleId="brand-details-module"
-        moduleName="Brand Details"
-        moduleRoute="/brands/view"
-        title="Viewing Brand"
+        moduleId="item-details-module"
+        moduleName="Viewing Item"
+        moduleRoute="/items/view"
+        title="Viewing Item"
         videoSrc={video}
         videoHeader="Tutorial video"
-        listPath="brands"
+        listPath="items"
         activePage="view"
-        module="brands"
+        module="items"
         popoverOptions={[
           {
             label: "Create",
             icon: <Plus className="w-5 h-5 text-green-600" />,
-            onClick: () => navigate("/brands/create"),
+            onClick: () => navigate("/items/create"),
           },
           {
             label: "Edit",
             icon: <Edit className="w-5 h-5 text-blue-600" />,
-            onClick: () => navigate("/brands/edit/1"),
+            onClick: () => navigate("/items/edit/1"),
           },
         ]}
         keepChanges={keepChanges}
@@ -265,89 +349,192 @@ export default function BrandDetailsPage() {
                   handleExportPDF();
                 }
                 if (printEnabled) {
-                  handlePrintBrand(brandData);
+                  handlePrintItem(itemData);
                 }
               }
             : undefined
         }
       >
-        {/* Row 1: Brand Selection, Name, Code */}
+        {/* Row 1: Item Selection, Item Name, Item Code, Arabic Name */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
           <div className="mt-1">
             <Autocomplete
-              options={MOCK_BRANDS}
-              value={selectedBrand}
-              onValueChange={setSelectedBrand}
+              options={MOCK_ITEMS}
+              value={selectedItem}
+              onValueChange={setSelectedItem}
               placeholder=" "
-              displayKey="name"
+              displayKey="itemName"
               valueKey="id"
-              searchKey="name"
+              searchKey="itemName"
               disabled={false}
               className="w-[96%] bg-gray-100 rounded-xl"
               labelClassName="bg-gray-50 rounded-2xl"
-              labelText="Brand Name"
+              labelText={labels.itemName}
               isShowTemplateIcon={false}
             />
           </div>
 
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Brand Name</h3>
+              <h3 className="font-normal text-gray-600">{labels.itemName}</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(brandData.name)}
+              {displayValue(itemData.itemName)}
             </div>
           </div>
 
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Brand Code</h3>
+              <h3 className="font-normal text-gray-600">{labels.itemCode}</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(brandData.code)}
+              {displayValue(itemData.itemCode)}
             </div>
           </div>
 
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Description</h3>
+              <h3 className="font-normal text-gray-600">{labels.arabicName}</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(brandData.description)}
+              {displayValue(itemData.arabicName)}
             </div>
           </div>
         </div>
 
-        {/* Row 2: Description, Status, Default */}
+        {/* Row 2: Cost Price, Regular Price, Offer Price, Opening Stock */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Status</h3>
+              <h3 className="font-normal text-gray-600">{labels.costPrice}</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(brandData.status)}
+              {displayValue(itemData.costPrice ? `$${itemData.costPrice}` : "")}
+            </div>
+          </div>
+
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">
+                {labels.regularPrice}
+              </h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(
+                itemData.regularPrice ? `$${itemData.regularPrice}` : ""
+              )}
+            </div>
+          </div>
+
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">{labels.offerPrice}</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(
+                itemData.offerPrice ? `$${itemData.offerPrice}` : ""
+              )}
+            </div>
+          </div>
+
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">
+                {labels.openingStock}
+              </h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(itemData.openingStock)}
+            </div>
+          </div>
+        </div>
+
+        {/* Row 3: Category, Sub Category, Unit, Description */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">{labels.category}</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(itemData.category)}
+            </div>
+          </div>
+
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">
+                {labels.subCategory}
+              </h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(itemData.subCategory)}
+            </div>
+          </div>
+
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">{labels.unit}</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(itemData.unit)}
+            </div>
+          </div>
+
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">
+                {labels.description}
+              </h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(itemData.description)}
+            </div>
+          </div>
+        </div>
+
+        {/* Row 4: Start Date, End Date, Status, Default */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">{labels.startDate}</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(itemData.startDate)}
+            </div>
+          </div>
+
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">{labels.endDate}</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(itemData.endDate)}
+            </div>
+          </div>
+
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">{labels.status}</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(itemData.status)}
             </div>
           </div>
 
           <div className="">
             <div className="flex flex-col">
               <div className="">
-                <span className="text-[15px] text-gray-600">Default</span>
+                <span className="text-[15px] text-gray-600">
+                  {labels.default}
+                </span>
               </div>
               <div className="">
-                {brandData.isDefault ? (
-                  <span className="text-black text-[15px]">Yes</span>
+                {itemData.isDefault ? (
+                  <span className="text-black text-[15px]">{labels.yes}</span>
                 ) : (
-                  <span className="text-black text-[15px]">No</span>
+                  <span className="text-black text-[15px]">{labels.no}</span>
                 )}
               </div>
-            </div>
-          </div>
-
-          <div className="">
-            <h3 className="font-normal mb-1 text-gray-600">Action</h3>
-            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              Updated
             </div>
           </div>
         </div>
@@ -360,10 +547,10 @@ export default function BrandDetailsPage() {
         columnData={mockHistoryData}
         title="History"
         statusInfo={{
-          created: getRelativeTime(brandData.createdAt),
-          updated: getRelativeTime(brandData.updatedAt),
-          drafted: getRelativeTime(brandData.draftedAt),
-          deleted: getRelativeTime(brandData.deletedAt),
+          created: getRelativeTime(itemData.createdAt),
+          updated: getRelativeTime(itemData.updatedAt),
+          drafted: getRelativeTime(itemData.draftedAt),
+          deleted: getRelativeTime(itemData.deletedAt),
         }}
       />
 

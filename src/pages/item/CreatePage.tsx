@@ -368,12 +368,12 @@ export default function ItemFormPage({ isEdit = false }: Props) {
     <>
       <MinimizablePageLayout
         moduleId="item-form-module"
-        moduleName={isEdit ? "Edit Item" : "Adding Item"}
+        moduleName={isEdit ? labels.editingItem : labels.addingItem}
         moduleRoute={
           isEdit ? `/items/edit/${formData.itemName || "new"}` : "/items/create"
         }
         onMinimize={handleMinimize}
-        title={isEdit ? "Edit Item" : "Add Item"}
+        title={isEdit ? labels.editingItem : labels.addingItem}
         listPath="items"
         popoverOptions={popoverOptions}
         videoSrc={video}
@@ -428,8 +428,8 @@ export default function ItemFormPage({ isEdit = false }: Props) {
                     onChange={handleChange}
                     onNext={() => focusNextInput("itemCode")}
                     onCancel={() => setFormData({ ...formData, itemName: "" })}
-                    labelText="Item Name"
-                    tooltipText="Enter the item name"
+                    labelText={labels.itemName}
+                    tooltipText={labels.itemNameTooltip}
                     required
                   />
                 </div>
@@ -446,8 +446,8 @@ export default function ItemFormPage({ isEdit = false }: Props) {
                     onChange={handleChange}
                     onNext={() => focusNextInput("arabicName")}
                     onCancel={() => setFormData({ ...formData, itemCode: "" })}
-                    labelText="Item Code"
-                    tooltipText="Enter the item code (e.g., ITM001)"
+                    labelText={labels.itemCode}
+                    tooltipText={labels.itemCodeTooltip}
                     required
                   />
                 </div>
@@ -466,8 +466,8 @@ export default function ItemFormPage({ isEdit = false }: Props) {
                     onCancel={() =>
                       setFormData({ ...formData, arabicName: "" })
                     }
-                    labelText="Arabic Name"
-                    tooltipText="Enter the Arabic name for the item"
+                    labelText={labels.arabicName}
+                    tooltipText={labels.arabicNameTooltip}
                     required
                   />
                 </div>
@@ -486,7 +486,7 @@ export default function ItemFormPage({ isEdit = false }: Props) {
                     onCancel={() =>
                       setFormData({ ...formData, description: "" })
                     }
-                    labelText="Description"
+                    labelText={labels.description}
                     tooltipText="Enter a description for the item"
                     type="text"
                     required
@@ -514,8 +514,8 @@ export default function ItemFormPage({ isEdit = false }: Props) {
                     }
                     onNext={() => focusNextInput("regularPrice")}
                     onCancel={() => setFormData({ ...formData, costPrice: 0 })}
-                    labelText="Cost Price"
-                    tooltipText="Enter the cost price"
+                    labelText={labels.costPrice}
+                    tooltipText={labels.costPriceTooltip}
                     required
                   />
                 </div>
@@ -540,8 +540,8 @@ export default function ItemFormPage({ isEdit = false }: Props) {
                     onCancel={() =>
                       setFormData({ ...formData, regularPrice: 0 })
                     }
-                    labelText="Regular Price"
-                    tooltipText="Enter the regular selling price"
+                    labelText={labels.regularPrice}
+                    tooltipText={labels.regularPriceTooltip}
                     required
                   />
                 </div>
@@ -564,8 +564,8 @@ export default function ItemFormPage({ isEdit = false }: Props) {
                     }
                     onNext={() => focusNextInput("openingStock")}
                     onCancel={() => setFormData({ ...formData, offerPrice: 0 })}
-                    labelText="Offer Price"
-                    tooltipText="Enter the special offer price"
+                    labelText={labels.offerPrice}
+                    tooltipText={labels.offerPriceTooltip}
                     required
                   />
                 </div>
@@ -590,8 +590,8 @@ export default function ItemFormPage({ isEdit = false }: Props) {
                     onCancel={() =>
                       setFormData({ ...formData, openingStock: 0 })
                     }
-                    labelText="Opening Stock"
-                    tooltipText="Enter the initial stock quantity"
+                    labelText={labels.openingStock}
+                    tooltipText={labels.openingStockTooltip}
                     required
                   />
                 </div>
@@ -611,8 +611,8 @@ export default function ItemFormPage({ isEdit = false }: Props) {
                     onChange={handleChange}
                     onNext={() => focusNextInput("subCategory")}
                     onCancel={() => setFormData({ ...formData, category: "" })}
-                    labelText="Category"
-                    tooltipText="Enter the item category"
+                    labelText={labels.category}
+                    tooltipText={labels.categoryTooltip}
                     required
                   />
                 </div>
@@ -631,8 +631,8 @@ export default function ItemFormPage({ isEdit = false }: Props) {
                     onCancel={() =>
                       setFormData({ ...formData, subCategory: "" })
                     }
-                    labelText="Sub Category"
-                    tooltipText="Enter the item sub category"
+                    labelText={labels.subCategory}
+                    tooltipText={labels.subCategoryTooltip}
                     required
                   />
                 </div>
@@ -649,8 +649,8 @@ export default function ItemFormPage({ isEdit = false }: Props) {
                     onChange={handleChange}
                     onNext={() => focusNextInput("startDate")}
                     onCancel={() => setFormData({ ...formData, unit: "" })}
-                    labelText="Unit"
-                    tooltipText="Enter the unit of measurement"
+                    labelText={labels.unit}
+                    tooltipText={labels.unitTooltip}
                     required
                   />
                 </div>
@@ -668,8 +668,8 @@ export default function ItemFormPage({ isEdit = false }: Props) {
                     onChange={handleChange}
                     onNext={() => focusNextInput("endDate")}
                     onCancel={() => setFormData({ ...formData, startDate: "" })}
-                    labelText="Start Date"
-                    tooltipText="Enter the start date"
+                    labelText={labels.startDate}
+                    tooltipText={labels.startDateTooltip}
                     required
                   />
                 </div>
@@ -690,8 +690,8 @@ export default function ItemFormPage({ isEdit = false }: Props) {
                     onChange={handleChange}
                     onNext={() => focusNextInput("isDefault")}
                     onCancel={() => setFormData({ ...formData, endDate: "" })}
-                    labelText="End Date"
-                    tooltipText="Enter the end date"
+                    labelText={labels.endDate}
+                    tooltipText={labels.endDateTooltip}
                     required
                   />
                 </div>
@@ -741,14 +741,10 @@ export default function ItemFormPage({ isEdit = false }: Props) {
                     placeholder=" "
                     labelText="Default"
                     className="relative"
-                    tooltipText="Set as default item"
+                    tooltipText={labels.defaultItemTooltip}
                   />
                 </div>
               )}
-            </div>
-
-            {/* Fifth Row: Status */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
               {/* Status field - only show if user can create */}
               {status && (
                 <div className="space-y-2">
@@ -797,7 +793,7 @@ export default function ItemFormPage({ isEdit = false }: Props) {
                         },
                       },
                     }}
-                    tooltipText="Set the item status"
+                    tooltipText={labels.itemStatusTooltip}
                   />
                 </div>
               )}

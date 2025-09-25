@@ -75,7 +75,6 @@ export interface LanguageLabels {
   // assets module
   assetCategory: string;
   assetNameTooltip: string;
-  descriptionTooltip: string;
 
   // rental module
   rentalCategory: string;
@@ -199,7 +198,6 @@ export interface LanguageLabels {
   serviceTooltip: string;
   budgetTooltip: string;
   priorityTooltip: string;
-  startDateTooltip: string;
   assigneeTooltip: string;
   contactTooltip: string;
   sourceTooltip: string;
@@ -439,7 +437,6 @@ export interface LanguageLabels {
   loyaltyPrograms: string;
   creatingLoyaltyPrograms: string;
   editingLoyaltyPrograms: string;
-  endDateTooltip: string;
   minimumPurchaseTooltip: string;
   accountCreationPointTooltip: string;
   birthdayPointTooltip: string;
@@ -463,6 +460,40 @@ export interface LanguageLabels {
   bomCodeTooltip: string;
   referenceCodeTooltip: string;
   routingTooltip: string;
+
+  // items module
+  items: string;
+  creatingItems: string;
+  editingItems: string;
+  addingItem: string;
+  editingItem: string;
+  itemCode: string;
+  itemName: string;
+  arabicName: string;
+  costPrice: string;
+  regularPrice: string;
+  offerPrice: string;
+  startDate: string;
+  endDate: string;
+  openingStock: string;
+  category: string;
+  subCategory: string;
+  unit: string;
+  description: string;
+  itemCodeTooltip: string;
+  itemNameTooltip: string;
+  arabicNameTooltip: string;
+  costPriceTooltip: string;
+  regularPriceTooltip: string;
+  offerPriceTooltip: string;
+  startDateTooltip: string;
+  endDateTooltip: string;
+  openingStockTooltip: string;
+  categoryTooltip: string;
+  subCategoryTooltip: string;
+  unitTooltip: string;
+  defaultItemTooltip: string;
+  itemStatusTooltip: string;
 }
 
 export const LANGUAGE_LABELS: Record<string, LanguageLabels> = {
@@ -508,7 +539,6 @@ export const LANGUAGE_LABELS: Record<string, LanguageLabels> = {
     codeTooltip: "Code",
     assetCategory: "Category",
     assetNameTooltip: "Name",
-    descriptionTooltip: "Description",
     // rental module
     rentalCategory: "Category",
     rentalNameTooltip: "Rental Name",
@@ -909,6 +939,38 @@ export const LANGUAGE_LABELS: Record<string, LanguageLabels> = {
     bomCodeTooltip: "Bom Code",
     referenceCodeTooltip: "Reference Code",
     routingTooltip: "Routing",
+
+    // items module
+    items: "Items",
+    creatingItems: "Creating Items",
+    editingItems: "Editing Items",
+    addingItem: "Adding Item",
+    editingItem: "Edit Item",
+    itemCode: "Item Code",
+    itemName: "Item Name",
+    arabicName: "Arabic Name",
+    costPrice: "Cost Price",
+    regularPrice: "Regular Price",
+    offerPrice: "Offer Price",
+    startDate: "Start Date",
+    endDate: "End Date",
+    openingStock: "Opening Stock",
+    category: "Category",
+    subCategory: "Sub Category",
+    unit: "Unit",
+    description: "Description",
+    itemCodeTooltip: "Enter the item code (e.g., ITM001)",
+    itemNameTooltip: "Enter the item name",
+    arabicNameTooltip: "Enter the Arabic name for the item",
+    costPriceTooltip: "Enter the cost price",
+    regularPriceTooltip: "Enter the regular selling price",
+    offerPriceTooltip: "Enter the special offer price",
+    openingStockTooltip: "Enter the initial stock quantity",
+    categoryTooltip: "Enter the item category",
+    subCategoryTooltip: "Enter the item sub category",
+    unitTooltip: "Enter the unit of measurement",
+    defaultItemTooltip: "Set as default item",
+    itemStatusTooltip: "Set the item status",
   },
   ar: {
     date: "Date",
@@ -952,7 +1014,6 @@ export const LANGUAGE_LABELS: Record<string, LanguageLabels> = {
     codeTooltip: "الرمز",
     assetCategory: "Category",
     assetNameTooltip: "Name",
-    descriptionTooltip: "Description",
     // rental module
     rentalCategory: "Category",
     rentalNameTooltip: "اسم التاجرة",
@@ -1339,6 +1400,38 @@ export const LANGUAGE_LABELS: Record<string, LanguageLabels> = {
     bomCodeTooltip: "Bom Code",
     referenceCodeTooltip: "Reference Code",
     routingTooltip: "Routing",
+
+    // items module
+    items: "العناصر",
+    creatingItems: "إنشاء العناصر",
+    editingItems: "تحرير العناصر",
+    addingItem: "إضافة عنصر",
+    editingItem: "تحرير العنصر",
+    itemCode: "كود العنصر",
+    itemName: "اسم العنصر",
+    arabicName: "الاسم العربي",
+    costPrice: "سعر التكلفة",
+    regularPrice: "السعر العادي",
+    offerPrice: "سعر العرض",
+    startDate: "تاريخ البداية",
+    endDate: "تاريخ النهاية",
+    openingStock: "المخزون الافتتاحي",
+    category: "الفئة",
+    subCategory: "الفئة الفرعية",
+    unit: "الوحدة",
+    description: "الوصف",
+    itemCodeTooltip: "أدخل كود العنصر (مثل ITM001)",
+    itemNameTooltip: "أدخل اسم العنصر",
+    arabicNameTooltip: "أدخل الاسم العربي للعنصر",
+    costPriceTooltip: "أدخل سعر التكلفة",
+    regularPriceTooltip: "أدخل سعر البيع العادي",
+    offerPriceTooltip: "أدخل سعر العرض الخاص",
+    openingStockTooltip: "أدخل كمية المخزون الأولية",
+    categoryTooltip: "أدخل فئة العنصر",
+    subCategoryTooltip: "أدخل الفئة الفرعية للعنصر",
+    unitTooltip: "أدخل وحدة القياس",
+    defaultItemTooltip: "تعيين كعنصر افتراضي",
+    itemStatusTooltip: "تعيين حالة العنصر",
   },
   hi: {
     date: "Date",
@@ -1381,7 +1474,6 @@ export const LANGUAGE_LABELS: Record<string, LanguageLabels> = {
     isdTooltip: "देश ISD",
     codeTooltip: "कोड",
     assetNameTooltip: "संपादित कर रहे हैं",
-    descriptionTooltip: "विवरण",
     assetCategory: "क्याटेगरी",
     // rental module
     rentalCategory: "क्याटेगरी",
@@ -1768,6 +1860,38 @@ export const LANGUAGE_LABELS: Record<string, LanguageLabels> = {
     bomCodeTooltip: "Bom Code",
     referenceCodeTooltip: "Reference Code",
     routingTooltip: "Routing",
+
+    // items module
+    items: "आइटम",
+    creatingItems: "आइटम बनाना",
+    editingItems: "आइटम संपादित करना",
+    addingItem: "आइटम जोड़ना",
+    editingItem: "आइटम संपादित करें",
+    itemCode: "आइटम कोड",
+    itemName: "आइटम नाम",
+    arabicName: "अरबी नाम",
+    costPrice: "लागत मूल्य",
+    regularPrice: "नियमित मूल्य",
+    offerPrice: "ऑफर मूल्य",
+    startDate: "प्रारंभ तिथि",
+    endDate: "समाप्ति तिथि",
+    openingStock: "प्रारंभिक स्टॉक",
+    category: "श्रेणी",
+    subCategory: "उप श्रेणी",
+    unit: "इकाई",
+    description: "विवरण",
+    itemCodeTooltip: "आइटम कोड दर्ज करें (जैसे ITM001)",
+    itemNameTooltip: "आइटम नाम दर्ज करें",
+    arabicNameTooltip: "आइटम के लिए अरबी नाम दर्ज करें",
+    costPriceTooltip: "लागत मूल्य दर्ज करें",
+    regularPriceTooltip: "नियमित बिक्री मूल्य दर्ज करें",
+    offerPriceTooltip: "विशेष ऑफर मूल्य दर्ज करें",
+    openingStockTooltip: "प्रारंभिक स्टॉक मात्रा दर्ज करें",
+    categoryTooltip: "आइटम श्रेणी दर्ज करें",
+    subCategoryTooltip: "आइटम उप श्रेणी दर्ज करें",
+    unitTooltip: "माप की इकाई दर्ज करें",
+    defaultItemTooltip: "डिफ़ॉल्ट आइटम के रूप में सेट करें",
+    itemStatusTooltip: "आइटम स्थिति सेट करें",
   },
   ur: {
     date: "Date",
@@ -1811,7 +1935,6 @@ export const LANGUAGE_LABELS: Record<string, LanguageLabels> = {
     isdTooltip: "ملک ISD",
     codeTooltip: "کوڈ",
     assetNameTooltip: "میں ترمیم",
-    descriptionTooltip: "تفصیل",
     assetCategory: "کیٹیگری",
     // rental module
     rentalCategory: "کیٹیگری",
@@ -2201,6 +2324,38 @@ export const LANGUAGE_LABELS: Record<string, LanguageLabels> = {
     bomCodeTooltip: "Bom Code",
     referenceCodeTooltip: "Reference Code",
     routingTooltip: "Routing",
+
+    // items module
+    items: "آئٹمز",
+    creatingItems: "آئٹمز بنانا",
+    editingItems: "آئٹمز میں ترمیم کرنا",
+    addingItem: "آئٹم شامل کرنا",
+    editingItem: "آئٹم میں ترمیم کریں",
+    itemCode: "آئٹم کوڈ",
+    itemName: "آئٹم کا نام",
+    arabicName: "عربی نام",
+    costPrice: "لاگت کی قیمت",
+    regularPrice: "عام قیمت",
+    offerPrice: "آفر کی قیمت",
+    startDate: "شروع کی تاریخ",
+    endDate: "اختتام کی تاریخ",
+    openingStock: "افتتاحی اسٹاک",
+    category: "قسم",
+    subCategory: "ذیلی قسم",
+    unit: "یونٹ",
+    description: "تفصیل",
+    itemCodeTooltip: "آئٹم کوڈ درج کریں (مثال: ITM001)",
+    itemNameTooltip: "آئٹم کا نام درج کریں",
+    arabicNameTooltip: "آئٹم کے لیے عربی نام درج کریں",
+    costPriceTooltip: "لاگت کی قیمت درج کریں",
+    regularPriceTooltip: "عام فروخت کی قیمت درج کریں",
+    offerPriceTooltip: "خصوصی آفر کی قیمت درج کریں",
+    openingStockTooltip: "ابتدائی اسٹاک کی مقدار درج کریں",
+    categoryTooltip: "آئٹم کی قسم درج کریں",
+    subCategoryTooltip: "آئٹم کی ذیلی قسم درج کریں",
+    unitTooltip: "پیمائش کی یونٹ درج کریں",
+    defaultItemTooltip: "ڈیفالٹ آئٹم کے طور پر سیٹ کریں",
+    itemStatusTooltip: "آئٹم کی حالت سیٹ کریں",
   },
   bn: {
     date: "তারিখ",
@@ -2243,7 +2398,6 @@ export const LANGUAGE_LABELS: Record<string, LanguageLabels> = {
     isdTooltip: "দেশ ISD",
     codeTooltip: "কোড",
     assetNameTooltip: "সম্পাদনা নাম",
-    descriptionTooltip: "বিবরণ",
     rentalNameTooltip: "সম্পাদনা নাম",
     rentalDescriptionTooltip: "বিবরণ",
     assetCategory: "ক্যাটেগরি",
@@ -2630,5 +2784,37 @@ export const LANGUAGE_LABELS: Record<string, LanguageLabels> = {
     bomCodeTooltip: "Bom Code",
     referenceCodeTooltip: "Reference Code",
     routingTooltip: "Routing",
+
+    // items module
+    items: "Items",
+    creatingItems: "Creating Items",
+    editingItems: "Editing Items",
+    addingItem: "Adding Item",
+    editingItem: "Edit Item",
+    itemCode: "Item Code",
+    itemName: "Item Name",
+    arabicName: "Arabic Name",
+    costPrice: "Cost Price",
+    regularPrice: "Regular Price",
+    offerPrice: "Offer Price",
+    startDate: "Start Date",
+    endDate: "End Date",
+    openingStock: "Opening Stock",
+    category: "Category",
+    subCategory: "Sub Category",
+    unit: "Unit",
+    description: "Description",
+    itemCodeTooltip: "Enter the item code (e.g., ITM001)",
+    itemNameTooltip: "Enter the item name",
+    arabicNameTooltip: "Enter the Arabic name for the item",
+    costPriceTooltip: "Enter the cost price",
+    regularPriceTooltip: "Enter the regular selling price",
+    offerPriceTooltip: "Enter the special offer price",
+    openingStockTooltip: "Enter the initial stock quantity",
+    categoryTooltip: "Enter the item category",
+    subCategoryTooltip: "Enter the item sub category",
+    unitTooltip: "Enter the unit of measurement",
+    defaultItemTooltip: "Set as default item",
+    itemStatusTooltip: "Set the item status",
   },
 };
