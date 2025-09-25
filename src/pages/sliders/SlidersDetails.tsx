@@ -17,33 +17,57 @@ import { ResetFormModal } from "@/components/common/ResetFormModal";
 import { usePermission } from "@/hooks/usePermissions";
 import MinimizablePageLayout from "@/components/MinimizablePageLayout";
 
-const MOCK_BRANDS = [
+const MOCK_SLIDERS = [
   {
     id: "1",
-    name: "Apex",
-    code: "BRD001",
-    description: "Premium performance brand",
+    titleEn: "Welcome to Our Platform",
+    titleAr: "مرحباً بكم في منصتنا",
+    topTitleEn: "Get Started",
+    topTitleAr: "ابدأ الآن",
+    keyTagsEn: "Welcome, Platform, Introduction",
+    keyTagsAr: "ترحيب، منصة، مقدمة",
+    bannerType: "Hero",
+    bannerEn: "hero-banner-en.jpg",
+    bannerAr: "hero-banner-ar.jpg",
     status: "Active",
   },
   {
     id: "2",
-    name: "Velocity",
-    code: "BRD002",
-    description: "High-speed and sports-focused",
+    titleEn: "Premium Services",
+    titleAr: "خدمات متميزة",
+    topTitleEn: "Quality First",
+    topTitleAr: "الجودة أولاً",
+    keyTagsEn: "Premium, Quality, Services",
+    keyTagsAr: "متميز، جودة، خدمات",
+    bannerType: "Service",
+    bannerEn: "service-banner-en.jpg",
+    bannerAr: "service-banner-ar.jpg",
     status: "Active",
   },
   {
     id: "3",
-    name: "Nimbus",
-    code: "BRD003",
-    description: "Cloud-like comfort and reliability",
+    titleEn: "Latest Technology",
+    titleAr: "أحدث التقنيات",
+    topTitleEn: "Innovation",
+    topTitleAr: "الابتكار",
+    keyTagsEn: "Technology, Innovation, Modern",
+    keyTagsAr: "تقنية، ابتكار، حديث",
+    bannerType: "Tech",
+    bannerEn: "tech-banner-en.jpg",
+    bannerAr: "tech-banner-ar.jpg",
     status: "Draft",
   },
   {
     id: "4",
-    name: "Quantum",
-    code: "BRD004",
-    description: "Cutting-edge innovation",
+    titleEn: "Customer Support",
+    titleAr: "دعم العملاء",
+    topTitleEn: "24/7 Help",
+    topTitleAr: "مساعدة 24/7",
+    keyTagsEn: "Support, Help, Customer",
+    keyTagsAr: "دعم، مساعدة، عميل",
+    bannerType: "Support",
+    bannerEn: "support-banner-en.jpg",
+    bannerAr: "support-banner-ar.jpg",
     status: "InActive",
   },
 ];
@@ -62,13 +86,13 @@ export type HistoryEntry = {
   print: boolean;
 };
 
-export default function BrandDetailsPage() {
+export default function SliderDetailsPage() {
   // const { t } = useTranslation();
   const navigate = useNavigate();
 
   const [keepChanges, setKeepChanges] = useState(false);
   const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
-  const [selectedBrand, setSelectedBrand] = useState("1");
+  const [selectedSlider, setSelectedSlider] = useState("1");
   const location = useLocation();
   const isViewPage = location.pathname.includes("/view");
   const [pdfChecked, setPdfChecked] = useState(false);
@@ -79,22 +103,44 @@ export default function BrandDetailsPage() {
   // const { canCreate, canView, canEdit, canDelete } = useUserMasterPermissions();
 
   // Field-level permissions
-  const canPdf: boolean = usePermission("brands", "pdf");
-  const canPrint: boolean = usePermission("brands", "print");
-  const canSeeHistory: boolean = usePermission("brands", "history");
+  const canPdf: boolean = usePermission("sliders", "pdf");
+  const canPrint: boolean = usePermission("sliders", "print");
+  const canSeeHistory: boolean = usePermission("sliders", "history");
 
-  let brandData = {
-    id: selectedBrand,
-    name: MOCK_BRANDS.find((b) => b.id === selectedBrand)?.name || "Apex",
-    code: MOCK_BRANDS.find((b) => b.id === selectedBrand)?.code || "BRD001",
-    description:
-      MOCK_BRANDS.find((b) => b.id === selectedBrand)?.description ||
-      "Premium performance brand",
+  let sliderData = {
+    id: selectedSlider,
+    titleEn:
+      MOCK_SLIDERS.find((s) => s.id === selectedSlider)?.titleEn ||
+      "Welcome to Our Platform",
+    titleAr:
+      MOCK_SLIDERS.find((s) => s.id === selectedSlider)?.titleAr ||
+      "مرحباً بكم في منصتنا",
+    topTitleEn:
+      MOCK_SLIDERS.find((s) => s.id === selectedSlider)?.topTitleEn ||
+      "Get Started",
+    topTitleAr:
+      MOCK_SLIDERS.find((s) => s.id === selectedSlider)?.topTitleAr ||
+      "ابدأ الآن",
+    keyTagsEn:
+      MOCK_SLIDERS.find((s) => s.id === selectedSlider)?.keyTagsEn ||
+      "Welcome, Platform, Introduction",
+    keyTagsAr:
+      MOCK_SLIDERS.find((s) => s.id === selectedSlider)?.keyTagsAr ||
+      "ترحيب، منصة، مقدمة",
+    bannerType:
+      MOCK_SLIDERS.find((s) => s.id === selectedSlider)?.bannerType || "Hero",
+    bannerEn:
+      MOCK_SLIDERS.find((s) => s.id === selectedSlider)?.bannerEn ||
+      "hero-banner-en.jpg",
+    bannerAr:
+      MOCK_SLIDERS.find((s) => s.id === selectedSlider)?.bannerAr ||
+      "hero-banner-ar.jpg",
     isDefault: true,
     isActive: true,
     isDraft: false,
     isDeleted: false,
-    status: MOCK_BRANDS.find((b) => b.id === selectedBrand)?.status || "Active",
+    status:
+      MOCK_SLIDERS.find((s) => s.id === selectedSlider)?.status || "Active",
     createdAt: "2023-05-15T10:30:00Z",
     updatedAt: "2025-01-15T14:30:00Z",
     draftedAt: "2025-05-20T14:45:00Z",
@@ -110,11 +156,17 @@ export default function BrandDetailsPage() {
     }
     console.log("isViewPage", isViewPage);
     if (isViewPage) {
-      brandData = {
-        id: selectedBrand,
-        name: "",
-        code: "",
-        description: "",
+      sliderData = {
+        id: selectedSlider,
+        titleEn: "",
+        titleAr: "",
+        topTitleEn: "",
+        topTitleAr: "",
+        keyTagsEn: "",
+        keyTagsAr: "",
+        bannerType: "",
+        bannerEn: "",
+        bannerAr: "",
         isDefault: true,
         isActive: true,
         isDraft: false,
@@ -128,17 +180,23 @@ export default function BrandDetailsPage() {
     }
   }, []);
 
-  const handlePrintBrand = (brand: any) => {
+  const handlePrintSlider = (slider: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "Brand Master Details",
-        data: [brand],
+        title: "Slider Master Details",
+        data: [slider],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
-          name: "Brand Name",
-          code: "Brand Code",
-          description: "Description",
-          isDefault: "Default Brand",
+          titleEn: "Title (EN)",
+          titleAr: "Title (AR)",
+          topTitleEn: "Top Title (EN)",
+          topTitleAr: "Top Title (AR)",
+          keyTagsEn: "Key Tags (EN)",
+          keyTagsAr: "Key Tags (AR)",
+          bannerType: "Banner Type",
+          bannerEn: "Banner (EN)",
+          bannerAr: "Banner (AR)",
+          isDefault: "Default Slider",
           isActive: "Active Status",
           isDraft: "Draft Status",
           isDeleted: "Deleted Status",
@@ -167,19 +225,19 @@ export default function BrandDetailsPage() {
   const handleExportPDF = async () => {
     console.log("Export PDF clicked");
     try {
-      console.log("brandData on pdf click", brandData);
+      console.log("sliderData on pdf click", sliderData);
       const blob = await pdf(
         <GenericPDF
-          data={[brandData]}
-          title="Brand Master Details"
-          subtitle="Brand Information"
+          data={[sliderData]}
+          title="Slider Master Details"
+          subtitle="Slider Information"
         />
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "brand-details.pdf";
+      a.download = "slider-details.pdf";
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
@@ -223,25 +281,25 @@ export default function BrandDetailsPage() {
   return (
     <>
       <MinimizablePageLayout
-        moduleId="brand-details-module"
-        moduleName="Brand Details"
-        moduleRoute="/brands/view"
-        title="Viewing Brand"
+        moduleId="slider-details-module"
+        moduleName="Slider Details"
+        moduleRoute="/sliders/view"
+        title="Viewing Slider"
         videoSrc={video}
         videoHeader="Tutorial video"
-        listPath="brands"
+        listPath="sliders"
         activePage="view"
-        module="brands"
+        module="sliders"
         popoverOptions={[
           {
             label: "Create",
             icon: <Plus className="w-5 h-5 text-green-600" />,
-            onClick: () => navigate("/brands/create"),
+            onClick: () => navigate("/sliders/create"),
           },
           {
             label: "Edit",
             icon: <Edit className="w-5 h-5 text-blue-600" />,
-            onClick: () => navigate("/brands/edit/1"),
+            onClick: () => navigate("/sliders/edit/1"),
           },
         ]}
         keepChanges={keepChanges}
@@ -265,67 +323,124 @@ export default function BrandDetailsPage() {
                   handleExportPDF();
                 }
                 if (printEnabled) {
-                  handlePrintBrand(brandData);
+                  handlePrintSlider(sliderData);
                 }
               }
             : undefined
         }
       >
-        {/* Row 1: Brand Selection, Name, Code */}
+        {/* Row 1: Slider Selection, Title En, Title Ar, Top Title En */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
           <div className="mt-1">
             <Autocomplete
-              options={MOCK_BRANDS}
-              value={selectedBrand}
-              onValueChange={setSelectedBrand}
+              options={MOCK_SLIDERS}
+              value={selectedSlider}
+              onValueChange={setSelectedSlider}
               placeholder=" "
-              displayKey="name"
+              displayKey="titleEn"
               valueKey="id"
-              searchKey="name"
+              searchKey="titleEn"
               disabled={false}
               className="w-[96%] bg-gray-100 rounded-xl"
               labelClassName="bg-gray-50 rounded-2xl"
-              labelText="Brand Name"
+              labelText="Slider Title"
               isShowTemplateIcon={false}
             />
           </div>
 
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Brand Name</h3>
+              <h3 className="font-normal text-gray-600">Title (EN)</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(brandData.name)}
+              {displayValue(sliderData.titleEn)}
             </div>
           </div>
 
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Brand Code</h3>
+              <h3 className="font-normal text-gray-600">Title (AR)</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(brandData.code)}
+              {displayValue(sliderData.titleAr)}
             </div>
           </div>
 
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Description</h3>
+              <h3 className="font-normal text-gray-600">Top Title (EN)</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(brandData.description)}
+              {displayValue(sliderData.topTitleEn)}
             </div>
           </div>
         </div>
 
-        {/* Row 2: Description, Status, Default */}
+        {/* Row 2: Top Title Ar, Key Tags En, Key Tags Ar, Banner Type */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">Top Title (AR)</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(sliderData.topTitleAr)}
+            </div>
+          </div>
+
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">Key Tags (EN)</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(sliderData.keyTagsEn)}
+            </div>
+          </div>
+
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">Key Tags (AR)</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(sliderData.keyTagsAr)}
+            </div>
+          </div>
+
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">Banner Type</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(sliderData.bannerType)}
+            </div>
+          </div>
+        </div>
+
+        {/* Row 3: Banner En, Banner Ar, Status, Default */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">Banner (EN)</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(sliderData.bannerEn)}
+            </div>
+          </div>
+
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">Banner (AR)</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(sliderData.bannerAr)}
+            </div>
+          </div>
+
           <div className="">
             <div className="flex justify-between items-center mb-1">
               <h3 className="font-normal text-gray-600">Status</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(brandData.status)}
+              {displayValue(sliderData.status)}
             </div>
           </div>
 
@@ -335,7 +450,7 @@ export default function BrandDetailsPage() {
                 <span className="text-[15px] text-gray-600">Default</span>
               </div>
               <div className="">
-                {brandData.isDefault ? (
+                {sliderData.isDefault ? (
                   <span className="text-black text-[15px]">Yes</span>
                 ) : (
                   <span className="text-black text-[15px]">No</span>
@@ -343,7 +458,10 @@ export default function BrandDetailsPage() {
               </div>
             </div>
           </div>
+        </div>
 
+        {/* Row 4: Action */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
           <div className="">
             <h3 className="font-normal mb-1 text-gray-600">Action</h3>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
@@ -360,10 +478,10 @@ export default function BrandDetailsPage() {
         columnData={mockHistoryData}
         title="History"
         statusInfo={{
-          created: getRelativeTime(brandData.createdAt),
-          updated: getRelativeTime(brandData.updatedAt),
-          drafted: getRelativeTime(brandData.draftedAt),
-          deleted: getRelativeTime(brandData.deletedAt),
+          created: getRelativeTime(sliderData.createdAt),
+          updated: getRelativeTime(sliderData.updatedAt),
+          drafted: getRelativeTime(sliderData.draftedAt),
+          deleted: getRelativeTime(sliderData.deletedAt),
         }}
       />
 
