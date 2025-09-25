@@ -75,8 +75,6 @@ export const hasPermission = (
   action: string,
   fieldName?: string
 ): boolean => {
-  console.log("=====>>> hasPermission", moduleName, action, fieldName);
-  console.log("======>>> permissions:", permissions?.modules);
   if (!permissions?.modules?.[moduleName]) {
     return false;
   }

@@ -32,7 +32,7 @@ const summaryData = {
 const cardConfigs = [
   {
     key: "total" as keyof typeof summaryData,
-    title: "Total Tickets",
+    title: "Total",
     imgSrc: "/counter-1.svg",
     icon: <Eye />,
     color: "blue",
@@ -40,7 +40,7 @@ const cardConfigs = [
   },
   {
     key: "active" as keyof typeof summaryData,
-    title: "Active Tickets",
+    title: "Active",
     imgSrc: "/counter-active.svg",
     icon: <BadgeCheck />,
     color: "green",
@@ -48,7 +48,7 @@ const cardConfigs = [
   },
   {
     key: "inactive" as keyof typeof summaryData,
-    title: "Inactive Tickets",
+    title: "Inactive",
     imgSrc: "/counter-inactive.svg",
     icon: <CircleMinus />,
     color: "gray",
@@ -56,7 +56,7 @@ const cardConfigs = [
   },
   {
     key: "draft" as keyof typeof summaryData,
-    title: "Draft Tickets",
+    title: "Draft",
     imgSrc: "/counter-draft.svg",
     icon: <FileCheck />,
     color: "yellow",
@@ -64,7 +64,7 @@ const cardConfigs = [
   },
   {
     key: "updated" as keyof typeof summaryData,
-    title: "Updated Tickets",
+    title: "Updated",
     imgSrc: "/counter-updated.svg",
     icon: <CheckCircle2 />,
     color: "purple",
@@ -72,7 +72,7 @@ const cardConfigs = [
   },
   {
     key: "deleted" as keyof typeof summaryData,
-    title: "Deleted Tickets",
+    title: "Deleted",
     imgSrc: "/counter-deleted.svg",
     icon: <Trash2 />,
     color: "red",

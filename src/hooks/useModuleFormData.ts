@@ -5,6 +5,9 @@ import type {
   OpeningStockModuleData,
   StockTransferModuleData,
   SubCategoryFormData,
+  PurchaseReturnModuleData,
+  TicketModuleData,
+  BlogModuleData,
 } from "@/types/modules";
 
 export function useSubCategoryFormData() {
@@ -27,4 +30,18 @@ export function useOpeningStockFormData() {
 
 export function useInvoiceFormData() {
   return useMinimizedModuleData<InvoiceModuleData>("invoice-form-module");
+}
+
+export function usePurchaseReturnFormData() {
+  return useMinimizedModuleData<PurchaseReturnModuleData>(
+    "purchase-return-form-module"
+  );
+}
+
+export function useTicketFormData() {
+  return useMinimizedModuleData<TicketModuleData>("ticket-form-module");
+}
+
+export function useBlogFormData() {
+  return useMinimizedModuleData<BlogModuleData>("blog-form-module");
 }

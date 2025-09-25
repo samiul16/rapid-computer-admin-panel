@@ -1,9 +1,15 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { MultiSelect, type MultiSelectProps } from "@mantine/core";
 import { useState } from "react";
 import clsx from "clsx";
 
-type FloatingMultiSelectProps = MultiSelectProps & {
+type OptionType = { label: string; value: string };
+
+type FloatingMultiSelectProps = Omit<MultiSelectProps, "onChange" | "value"> & {
   label: string;
+  value: string[]; // keep as string[] for Mantine
+  data: OptionType[];
+  onChange: (options: OptionType[]) => void;
 };
 
 export function FloatingMultiSelect({
@@ -22,7 +28,14 @@ export function FloatingMultiSelect({
       <MultiSelect
         data={data}
         value={value}
-        onChange={onChange}
+        onChange={(selectedValues: string[]) => {
+          const selectedOptions = data.filter((option) =>
+            selectedValues.includes(option.value)
+          );
+
+          console.log("Selected options (full objects):", selectedOptions);
+          onChange(selectedOptions); // Pass full objects to parent
+        }}
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
         searchable

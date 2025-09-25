@@ -332,7 +332,7 @@ type FieldConfig = {
   name: StringKeys<ModuleFieldsType>;
   label: string;
   type?: React.HTMLInputTypeAttribute;
-  component: "autocomplete" | "input" | "mutiselect";
+  component: "autocomplete" | "input" | "mutiselect" | "textarea";
   placeholder?: string;
   options?: string[];
   nextFocus?: string;
@@ -386,7 +386,7 @@ export const formFields: FieldConfig[] = [
   {
     name: "description",
     label: "Description",
-    component: "input",
+    component: "textarea",
     nextFocus: "descriptionAr",
     tooltip: "Enter description",
     required: true,
@@ -394,7 +394,7 @@ export const formFields: FieldConfig[] = [
   {
     name: "descriptionAr",
     label: "Description (Ar)",
-    component: "input",
+    component: "textarea",
     nextFocus: "attachment",
     tooltip: "Enter description (Ar)",
     required: true,

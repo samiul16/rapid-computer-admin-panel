@@ -6,12 +6,17 @@ import {
   FileCheck,
   Trash2,
 } from "lucide-react";
-import { useState } from "react";
-import GmailTabs from "@/components/common/TableTabs";
-import PageHeader from "./components/PageHeader";
+import { useEffect, useState } from "react";
+import PageLayout from "@/layouts/PageLayout/MainPageLayout"; // Update path as needed
 import ComponnetLevelGridView from "./ComponentLevelGridView";
 import ComponnetLevelDataTable from "./ComponentLevelDataTableView";
-import TabsCounter from "@/components/common/TabsCounter";
+import TabsCounter from "@/pages/Country/components/TabsCounter";
+import CounterTabs from "@/components/CounterTabs";
+import { useAppSelector } from "@/store/hooks";
+import { cn } from "@/lib/utils";
+import { selectMinimizedModulesForUser } from "@/store/minimizedModulesSlice";
+import MobileCounterTabs from "@/components/MobileCounterTabs";
+import useIsMobile from "@/hooks/useIsMobile";
 import { useLocation } from "react-router-dom";
 
 // Mock data - replace with real data from your API
@@ -27,43 +32,48 @@ const summaryData = {
 const cardConfigs = [
   {
     key: "total" as keyof typeof summaryData,
-    title: "TOTAL",
+    title: "Total",
+    imgSrc: "/counter-1.svg",
     icon: <Eye />,
     color: "blue",
     total: summaryData.total,
   },
   {
     key: "active" as keyof typeof summaryData,
-    title: "ACTIVE",
+    title: "Active",
+    imgSrc: "/counter-active.svg",
     icon: <BadgeCheck />,
     color: "green",
     total: summaryData.active,
   },
   {
     key: "inactive" as keyof typeof summaryData,
-    title: "INACTIVE",
+    title: "Inactive",
+    imgSrc: "/counter-inactive.svg",
     icon: <CircleMinus />,
     color: "gray",
     total: summaryData.inactive,
   },
   {
     key: "draft" as keyof typeof summaryData,
-    title: "DRAFT",
+    title: "Draft",
+    imgSrc: "/counter-draft.svg",
     icon: <FileCheck />,
     color: "yellow",
     total: summaryData.draft,
   },
   {
     key: "updated" as keyof typeof summaryData,
-    title: "UPDATED",
+    title: "Updated",
+    imgSrc: "/counter-updated.svg",
     icon: <CheckCircle2 />,
     color: "purple",
     total: summaryData.updated,
   },
-
   {
     key: "deleted" as keyof typeof summaryData,
-    title: "DELETED",
+    title: "Deleted",
+    imgSrc: "/counter-deleted.svg",
     icon: <Trash2 />,
     color: "red",
     total: summaryData.deleted,
@@ -80,6 +90,13 @@ export default function SubscribePage() {
   const [dataTableFilter, setDataTableFilter] = useState({});
   const basePathName = useLocation().pathname;
 
+  // Get current user id and that user's minimized modules array
+  const userId = useAppSelector((state) => state.auth.user?.userId);
+  const isMobile = useIsMobile();
+  const minimizedModulesForUser = useAppSelector((state) =>
+    selectMinimizedModulesForUser(state, userId ?? "__no_user__")
+  );
+
   // Mock data - replace with real data from your API
   const summaryData = {
     total: 42,
@@ -90,60 +107,66 @@ export default function SubscribePage() {
     updated: 2,
   };
 
-  return (
-    <div className="w-100vw px-2 py-4 dark:bg-gray-900">
-      {/* Header Section */}
-      <PageHeader
-        setViewMode={setViewMode}
+  // Get view mode from URL query parameter
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const viewModeParam = urlParams.get("view");
+    if (viewModeParam) {
+      setViewMode(viewModeParam);
+    }
+  }, []);
+
+  // Tabs Section Component
+  const tabsSection =
+    viewMode === "grid" ? (
+      <TabsCounter
+        cardConfigs={cardConfigs}
+        summaryData={summaryData}
         viewMode={viewMode}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        setIsFilterOpen={setIsFilterOpen}
-        isFilterOpen={isFilterOpen}
+        setViewMode={setViewMode}
         setIsExportOpen={setIsExportOpen}
+        isExportOpen={isExportOpen}
+        setIsFilterOpen={setIsFilterOpen}
         setShowVisibility={setShowVisibility}
-        showVisibility={showVisibility}
-        setTimeLabel={setTimeLabel}
-        title={basePathName.split("/")[1].replace("-", " ")}
+        timeLabel={timeLabel}
       />
-      {/* Grap section or gmail tab */}
-      {viewMode === "grid" ? (
-        <TabsCounter
-          cardConfigs={cardConfigs}
-          summaryData={summaryData}
-          timeLabel={timeLabel}
-          viewMode={viewMode}
-          setViewMode={setViewMode}
+    ) : isMobile ? (
+      <MobileCounterTabs
+        dataTableFilter={dataTableFilter}
+        setDataTableFilter={setDataTableFilter}
+      />
+    ) : (
+      <CounterTabs
+        dataTableFilter={dataTableFilter}
+        setDataTableFilter={setDataTableFilter}
+      />
+    );
+
+  // Main Content Component
+  const mainContent =
+    viewMode === "grid" ? (
+      <div
+        className={
+          "h-[calc(100vh-440px)] md:h-[calc(100vh-440px)] lg:h-[calc(100vh-440px)] xl:h-[calc(100vh-440px)] scroll-smooth [scrollbar-gutter:stable]"
+        }
+      >
+        <ComponnetLevelGridView
+          searchQuery={searchQuery}
+          setIsFilterOpen={setIsFilterOpen}
+          isFilterOpen={isFilterOpen}
           setIsExportOpen={setIsExportOpen}
           isExportOpen={isExportOpen}
-          setIsFilterOpen={setIsFilterOpen}
-          setShowVisibility={setShowVisibility}
         />
-      ) : (
-        <GmailTabs
-          setIsExportOpen={setIsExportOpen}
-          isExportOpen={isExportOpen}
-          setIsFilterOpen={setIsFilterOpen}
-          setShowVisibility={setShowVisibility}
-          dataTableFilter={dataTableFilter}
-          setDataTableFilter={setDataTableFilter}
-          viewMode={viewMode}
-          setViewMode={setViewMode}
-        />
-      )}
-      {/* Scrollable Content Area */}
-      {viewMode === "grid" ? (
-        <div className="mt-8 h-[calc(100vh-420px)] md:h-[calc(100vh-420px)] lg:h-[calc(100vh-420px)] xl:h-[calc(100vh-420px)] border-1 rounded-lg scroll-smooth [scrollbar-gutter:stable]">
-          <ComponnetLevelGridView
-            searchQuery={searchQuery}
-            setIsFilterOpen={setIsFilterOpen}
-            isFilterOpen={isFilterOpen}
-            setIsExportOpen={setIsExportOpen}
-            isExportOpen={isExportOpen}
-          />
-        </div>
-      ) : (
-        <div className="mt-4 h-[calc(100vh-322px)] overflow-y-auto overflow-x-hidden border rounded-lg scroll-smooth [scrollbar-gutter:stable]">
+      </div>
+    ) : (
+      <div
+        className={cn(
+          minimizedModulesForUser.length > 0
+            ? "h-[calc(100vh-477px)]"
+            : "h-[calc(100vh-396px)]"
+        )}
+      >
+        <div className="overflow-y-auto overflow-x-hidden scroll-smooth [scrollbar-gutter:stable] h-full">
           <ComponnetLevelDataTable
             viewMode={viewMode}
             searchQuery={searchQuery}
@@ -155,9 +178,33 @@ export default function SubscribePage() {
             showFilter={isFilterOpen}
             setShowVisibility={setShowVisibility}
             showVisibility={showVisibility}
+            setIsFilterOpen={setIsFilterOpen}
+            isFilterOpen={isFilterOpen}
           />
         </div>
-      )}
-    </div>
+      </div>
+    );
+
+  return (
+    <PageLayout
+      title={basePathName.split("/")[1].replace("-", " ")}
+      createPath={`/${basePathName.split("/")[1]}/create`}
+      viewMode={viewMode}
+      setViewMode={setViewMode}
+      searchQuery={searchQuery}
+      setSearchQuery={setSearchQuery}
+      setIsFilterOpen={setIsFilterOpen}
+      isFilterOpen={isFilterOpen}
+      setIsExportOpen={setIsExportOpen}
+      isExportOpen={isExportOpen}
+      setShowVisibility={setShowVisibility}
+      showVisibility={showVisibility}
+      setTimeLabel={setTimeLabel}
+      tabsSection={tabsSection}
+      pathName={basePathName.split("/")[1]}
+      showCreateButton={false}
+    >
+      {mainContent}
+    </PageLayout>
   );
 }
