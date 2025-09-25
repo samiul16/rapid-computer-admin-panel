@@ -1,40 +1,27 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useRef, useEffect } from "react";
-import { useTranslation } from "react-i18next";
-import { Trash2, Undo2, MoreVertical } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import EditableInput, {
-  type EditableInputRef,
-} from "@/components/common/EditableInput";
-// Removed Autocomplete import - not needed for item form
 import video from "@/assets/videos/test.mp4";
+import EditableInput from "@/components/common/EditableInput";
 import GenericPDF from "@/components/common/pdf";
-import { printHtmlContent } from "@/lib/printHtmlContent";
-import { toastError } from "@/lib/toast";
-import { pdf } from "@react-pdf/renderer";
+import { ResetFormModal } from "@/components/common/ResetFormModal";
+import { Button } from "@/components/ui/button";
 import { PrintCommonLayout } from "@/lib/printContents/PrintCommonLayout";
-import PageLayout from "@/components/common/PageLayout";
-import LanguageTranslatorModal from "@/components/common/LanguageTranslatorModel";
+import { printHtmlContent } from "@/lib/printHtmlContent";
+import { toastError, toastRestore, toastSuccess } from "@/lib/toast";
+import { pdf } from "@react-pdf/renderer";
+import { Check, Edit, Eye, Plus } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useColorsPermissions, usePermission } from "@/hooks/usePermissions";
+import { useLanguageLabels } from "@/hooks/useLanguageLabels";
+import { useAppSelector } from "@/store/hooks";
+import MinimizablePageLayout from "@/components/MinimizablePageLayout";
+import { SwitchSelect } from "@/components/common/SwitchAutoComplete";
 
-// Define Item interface to ensure type consistency
-interface Item {
-  id: string;
-  itemCode: string;
+type BrandData = {
   name: string;
-  arabicName: string;
-  costPrice: number;
-  regularPrice: number;
-  offerPrice: number;
-  startDate: Date | null;
-  endDate: Date | null;
-  openingStock: number;
-  category: string;
-  subCategory: string;
-  unit: string;
-  itemImage: string;
+  code: string;
   description: string;
+  status: "active" | "inactive" | "draft";
   isDefault: boolean;
   isActive: boolean;
   isDraft: boolean;
@@ -43,28 +30,17 @@ interface Item {
   updatedAt: Date | null;
   deletedAt: Date | null;
   isDeleted: boolean;
-}
+};
 
 type Props = {
   isEdit?: boolean;
 };
 
-const initialData: Item = {
-  id: "1",
-  itemCode: "ITM001",
-  name: "Grilled Chicken Breast",
-  arabicName: "صدر دجاج مشوي",
-  costPrice: 8.5,
-  regularPrice: 15.0,
-  offerPrice: 12.0,
-  startDate: new Date("2024-01-15"),
-  endDate: new Date("2024-12-31"),
-  openingStock: 50,
-  category: "Main Course",
-  subCategory: "Chicken",
-  unit: "Piece",
-  itemImage: "",
-  description: "Fresh grilled chicken breast with herbs and spices",
+const initialData: BrandData = {
+  name: "Apex",
+  code: "BRD001",
+  description: "Premium performance brand",
+  status: "active",
   isDefault: false,
   isActive: true,
   isDraft: false,
@@ -75,291 +51,167 @@ const initialData: Item = {
   isDeleted: false,
 };
 
-// Mock data not needed for item form
-
-export default function ItemFormPage({ isEdit = false }: Props) {
-  const { t } = useTranslation();
+export default function BrandFormPage({ isEdit = false }: Props) {
   const navigate = useNavigate();
+  const labels = useLanguageLabels();
+  const { isRTL } = useAppSelector((state) => state.language);
+
   const [keepCreating, setKeepCreating] = useState(false);
-
   const formRef = useRef<HTMLFormElement>(null);
-  const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
-
-  const itemCodeInputRef = useRef<EditableInputRef>(null);
-  const nameInputRef = useRef<EditableInputRef>(null);
-  const arabicNameInputRef = useRef<EditableInputRef>(null);
-  const costPriceInputRef = useRef<EditableInputRef>(null);
-  const regularPriceInputRef = useRef<EditableInputRef>(null);
-  const offerPriceInputRef = useRef<EditableInputRef>(null);
-  const startDateInputRef = useRef<EditableInputRef>(null);
-  const endDateInputRef = useRef<EditableInputRef>(null);
-  const openingStockInputRef = useRef<EditableInputRef>(null);
-  const categoryInputRef = useRef<EditableInputRef>(null);
-  const subCategoryInputRef = useRef<EditableInputRef>(null);
-  const unitInputRef = useRef<EditableInputRef>(null);
-  const descriptionInputRef = useRef<EditableInputRef>(null);
-  const defaultSwitchRef = useRef<HTMLButtonElement>(null);
-  const activeSwitchRef = useRef<HTMLButtonElement>(null);
-  const draftSwitchRef = useRef<HTMLButtonElement>(null);
-  const deleteButtonRef = useRef<HTMLButtonElement>(null);
   const [printEnabled, setPrintEnabled] = useState(false);
   const [pdfChecked, setPdfChecked] = useState(false);
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  const [formKey, setFormKey] = useState(0);
+  const [isDefaultState, setIsDefaultState] = useState<"Yes" | "No">("No");
 
-  // Translation state
-  const [translations, setTranslations] = useState([
-    { id: 1, english: "", arabic: "", bangla: "" },
-  ]);
+  // Permission checks
+  const { canCreate, canView } = useColorsPermissions();
+
+  // Field-level permissions
+  const name: boolean = usePermission("brands", "create", "name");
+  const code: boolean = usePermission("brands", "create", "code");
+  const description: boolean = usePermission("brands", "create", "description");
+  const status: boolean = usePermission("brands", "create", "status");
+  const isDefault: boolean = usePermission("brands", "create", "isDefault");
+  const canPdf: boolean = usePermission("brands", "pdf");
+  const canPrint: boolean = usePermission("brands", "print");
 
   // Form state
-  const [formData, setFormData] = useState<Item>({
-    id: "",
-    itemCode: "",
+  const [formData, setFormData] = useState<BrandData>({
     name: "",
-    arabicName: "",
-    costPrice: 0,
-    regularPrice: 0,
-    offerPrice: 0,
-    startDate: null,
-    endDate: null,
-    openingStock: 0,
-    category: "",
-    subCategory: "",
-    unit: "",
-    itemImage: "",
+    code: "",
     description: "",
+    status: "active",
     isDefault: false,
     isActive: true,
     isDraft: false,
+    isDeleted: false,
     createdAt: null,
     draftedAt: null,
     updatedAt: null,
     deletedAt: null,
-    isDeleted: false,
   });
-
-  // Item form doesn't need filtered options
-
-  // Update translation data when item name changes
-  useEffect(() => {
-    setTranslations([
-      { id: 1, english: formData.name || "", arabic: "", bangla: "" },
-    ]);
-  }, [formData.name]);
-
-  // Item form doesn't need country/state/city filtering
-  // These useEffect hooks are removed for item interface
-
-  // Update the focusNextInput function for item form fields
-  const focusNextInput = (currentField: string) => {
-    console.log("Current field:", currentField);
-    switch (currentField) {
-      case "itemCode":
-        nameInputRef.current?.focus();
-        break;
-      case "name":
-        arabicNameInputRef.current?.focus();
-        break;
-      case "arabicName":
-        costPriceInputRef.current?.focus();
-        break;
-      case "costPrice":
-        regularPriceInputRef.current?.focus();
-        break;
-      case "regularPrice":
-        offerPriceInputRef.current?.focus();
-        break;
-      case "offerPrice":
-        startDateInputRef.current?.focus();
-        break;
-      case "startDate":
-        endDateInputRef.current?.focus();
-        break;
-      case "endDate":
-        openingStockInputRef.current?.focus();
-        break;
-      case "openingStock":
-        categoryInputRef.current?.focus();
-        break;
-      case "category":
-        subCategoryInputRef.current?.focus();
-        break;
-      case "subCategory":
-        unitInputRef.current?.focus();
-        break;
-      case "unit":
-        descriptionInputRef.current?.focus();
-        break;
-      case "description":
-        defaultSwitchRef.current?.focus();
-        break;
-      case "default":
-        activeSwitchRef.current?.focus();
-        break;
-      case "active":
-        draftSwitchRef.current?.focus();
-        break;
-      case "draft":
-        deleteButtonRef.current?.focus();
-        break;
-      default:
-        break;
-    }
-  };
-
-  const getRelativeTime = (dateString: string | null | Date) => {
-    if (!dateString) return "--/--/----";
-
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInMs = now.getTime() - date.getTime();
-
-    const minutes = Math.floor(diffInMs / (1000 * 60));
-    const hours = Math.floor(diffInMs / (1000 * 60 * 60));
-    const days = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
-    const months = Math.floor(diffInMs / (1000 * 60 * 60 * 24 * 30));
-    const years = Math.floor(diffInMs / (1000 * 60 * 60 * 24 * 365));
-
-    if (years > 0) {
-      return `${years}y ago`;
-    } else if (months > 0) {
-      return `${months}mo ago`;
-    } else if (days > 0) {
-      return `${days}d ago`;
-    } else if (hours > 0) {
-      return `${hours}h ago`;
-    } else if (minutes > 0) {
-      return `${minutes}m ago`;
-    } else {
-      return "Just now";
-    }
-  };
-
-  // Add this function to handle key navigation for switches and buttons
-  const handleSwitchKeyDown = (
-    e: React.KeyboardEvent,
-    currentField: string
-  ) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      // Trigger the switch/button action first
-      switch (currentField) {
-        case "default":
-          setFormData({ ...formData, isDefault: !formData.isDefault });
-          break;
-        case "active":
-          setFormData({ ...formData, isActive: !formData.isActive });
-          break;
-        case "draft":
-          setFormData({ ...formData, isDraft: !formData.isDraft });
-          break;
-        case "delete":
-          setFormData({ ...formData, isDeleted: !formData.isDeleted });
-          break;
-      }
-      // Then move to next field
-      setTimeout(() => focusNextInput(currentField), 50);
-    }
-  };
 
   // Initialize with edit data if available
   useEffect(() => {
     if (isEdit && initialData) {
-      setFormData({
-        ...initialData,
-      });
+      setFormData(initialData);
+      setIsDefaultState(initialData.isDefault ? "Yes" : "No");
     }
-  }, [isEdit, initialData]);
+  }, [isEdit]);
+
+  const [popoverOptions, setPopoverOptions] = useState([
+    {
+      label: isEdit ? "Create" : "Edit",
+      icon: isEdit ? (
+        <Plus className="w-5 h-5 text-green-500" />
+      ) : (
+        <Edit className="w-5 h-5 text-blue-500" />
+      ),
+      onClick: () => {
+        if (isEdit) {
+          navigate("/brands/create");
+        } else {
+          navigate("/brands/edit/undefined");
+        }
+      },
+      show: canCreate,
+    },
+    {
+      label: "View",
+      icon: <Eye className="w-5 h-5 text-green-600" />,
+      onClick: () => {
+        navigate("/brands/view");
+      },
+      show: canView,
+    },
+  ]);
+
+  // focus next input field
+  const inputRefs = useRef<Record<string, HTMLElement | null>>({});
+  const setRef = (name: string) => (el: HTMLElement | null) => {
+    inputRefs.current[name] = el;
+  };
+  const focusNextInput = (nextField: string) => {
+    inputRefs.current[nextField]?.focus();
+  };
 
   // Handle form field changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
-    setFormData({
+    const newFormData = {
       ...formData,
       [name]: type === "checkbox" ? checked : value,
-    });
-  };
-
-  // Handle numeric input changes
-  const handleNumericChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    const numericValue = parseFloat(value) || 0;
-    setFormData({
-      ...formData,
-      [name]: numericValue,
-    });
-  };
-
-  // Handle date input changes
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value ? new Date(value) : null,
-    });
+    };
+    setFormData(newFormData);
   };
 
   // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
-  };
 
-  // Handle form reset
-  const handleReset = () => {
-    if (window.confirm(t("form.resetConfirm"))) {
-      setFormData({
-        id: "",
-        itemCode: "",
-        name: "",
-        arabicName: "",
-        costPrice: 0,
-        regularPrice: 0,
-        offerPrice: 0,
-        startDate: null,
-        endDate: null,
-        openingStock: 0,
-        category: "",
-        subCategory: "",
-        unit: "",
-        itemImage: "",
-        description: "",
-        isDefault: false,
-        isActive: true,
-        isDraft: false,
-        createdAt: new Date(),
-        draftedAt: null,
-        updatedAt: new Date(),
-        deletedAt: null,
-        isDeleted: false,
-      });
-      if (formRef.current) {
-        formRef.current.reset();
-      }
+    if (pdfChecked) {
+      await handleExportPDF();
+    }
+    if (printEnabled) {
+      handlePrintBrand(formData);
+    }
+
+    // keep switch functionality
+    if (keepCreating) {
+      toastSuccess("Brand created successfully!");
+      handleReset();
+    } else {
+      toastSuccess("Brand created successfully!");
+      navigate("/brands");
     }
   };
 
-  const handlePrintItem = (itemData: any) => {
+  const handleResetClick = () => {
+    setIsResetModalOpen(true);
+  };
+
+  const handleReset = async () => {
+    setFormData({
+      name: "",
+      code: "",
+      description: "",
+      status: "active",
+      isDefault: false,
+      isActive: true,
+      isDraft: false,
+      isDeleted: false,
+      createdAt: new Date(),
+      draftedAt: null,
+      updatedAt: new Date(),
+      deletedAt: null,
+    });
+    setIsDefaultState("No");
+
+    if (formRef.current) {
+      formRef.current.reset();
+    }
+
+    // Force re-render of all inputs by changing key
+    setFormKey((prev) => prev + 1);
+
+    // Focus the first input field after reset
+    setTimeout(() => {
+      inputRefs.current["name"]?.focus();
+    }, 100);
+  };
+
+  const handlePrintBrand = (brandData: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "Item Details",
-        data: [itemData],
+        title: "Brand Details",
+        data: [brandData],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
-          itemCode: "Item Code",
-          name: "Item Name",
-          arabicName: "Arabic Name",
-          costPrice: "Cost Price",
-          regularPrice: "Regular Price",
-          offerPrice: "Offer Price",
-          startDate: "Start Date",
-          endDate: "End Date",
-          openingStock: "Opening Stock",
-          category: "Category",
-          subCategory: "Sub Category",
-          unit: "Unit",
-          itemImage: "Item Image",
+          name: "Brand Name",
+          code: "Brand Code",
           description: "Description",
-          isDefault: "Default Item",
+          status: "Status",
           isActive: "Active Status",
           isDraft: "Draft Status",
           isDeleted: "Deleted Status",
@@ -378,42 +230,27 @@ export default function ItemFormPage({ isEdit = false }: Props) {
 
   const handleSwitchChange = (checked: boolean) => {
     setPrintEnabled(checked);
-    if (checked && formData) {
-      // Small delay to allow switch animation to complete
-      setTimeout(() => handlePrintItem(formData), 100);
-    }
   };
 
   const handlePDFSwitchChange = (pdfChecked: boolean) => {
     setPdfChecked(pdfChecked);
-    if (pdfChecked) {
-      // Small delay to allow switch animation to complete
-      setTimeout(() => handleExportPDF(), 100);
-    }
   };
 
   const handleExportPDF = async () => {
-    console.log("Export PDF clicked");
     try {
-      console.log("itemData on pdf click", formData);
       const blob = await pdf(
         <GenericPDF
           data={[formData]}
-          title="Item Details"
-          subtitle="Item Report"
+          title="Brand Details"
+          subtitle="Brand Information"
         />
       ).toBlob();
 
-      console.log("blob", blob);
-
       const url = URL.createObjectURL(blob);
-      console.log("url", url);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "item-details.pdf";
+      a.download = "brand-details.pdf";
       a.click();
-      console.log("a", a);
-      console.log("url", url);
       URL.revokeObjectURL(url);
     } catch (error) {
       console.log(error);
@@ -421,404 +258,271 @@ export default function ItemFormPage({ isEdit = false }: Props) {
     }
   };
 
+  useEffect(() => {
+    setPopoverOptions((prevOptions) => {
+      // Filter out any existing draft option first
+      const filteredOptions = prevOptions.filter(
+        (opt) => opt.label !== "Draft"
+      );
+
+      // Add draft option only if not already a draft
+      if (!formData.isDraft) {
+        return [
+          ...filteredOptions,
+          {
+            label: "Draft",
+            icon: <Check className="text-green-500" />,
+            onClick: () => {
+              setFormData((prev) => ({
+                ...prev,
+                isDraft: true,
+              }));
+              toastRestore("Brand saved as draft successfully");
+            },
+            show: canCreate,
+          },
+        ];
+      }
+      return filteredOptions;
+    });
+  }, [formData.isDraft, canCreate]);
+
+  // Create minimize handler
+  const handleMinimize = useCallback(() => {
+    return {
+      formData,
+      hasChanges: true,
+      scrollPosition: window.scrollY,
+    };
+  }, [formData]);
+
   return (
     <>
-      <PageLayout
-        title={isEdit ? t("form.editingItem") : t("form.creatingItem")}
+      <MinimizablePageLayout
+        moduleId="brand-form-module"
+        moduleName={isEdit ? "Edit Brand" : "Adding Brand"}
+        moduleRoute={
+          isEdit ? `/brands/edit/${formData.name || "new"}` : "/brands/create"
+        }
+        onMinimize={handleMinimize}
+        title={isEdit ? "Edit Brand" : "Add Brand"}
+        listPath="brands"
+        popoverOptions={popoverOptions}
         videoSrc={video}
-        videoHeader="Rapid ERP Video"
-        listPath="/items"
-        popoverOptions={[
-          {
-            label: isEdit ? "Create" : "Edit",
-            onClick: () => {
-              // Handle navigation based on current state
-              if (isEdit) {
-                // Navigate to create page
-                navigate("/items/create");
-              } else {
-                // Navigate to edit page
-                navigate("/items/edit/undefined");
-              }
-            },
-          },
-          {
-            label: "View",
-            onClick: () => {
-              navigate("/items/view");
-            },
-          },
-        ]}
+        videoHeader="Tutorial video"
         keepChanges={keepCreating}
         onKeepChangesChange={setKeepCreating}
         pdfChecked={pdfChecked}
-        onPdfToggle={handlePDFSwitchChange}
+        onPdfToggle={canPdf ? handlePDFSwitchChange : undefined}
         printEnabled={printEnabled}
-        onPrintToggle={handleSwitchChange}
+        onPrintToggle={canPrint ? handleSwitchChange : undefined}
+        activePage="create"
+        module="brands"
         additionalFooterButtons={
-          <div className="flex gap-4">
-            <Button
-              variant="outline"
-              className="gap-2 text-primary rounded-full border-primary"
-              onClick={handleReset}
-            >
-              {t("button.reset")}
-            </Button>
-            <Button
-              variant="outline"
-              className="gap-2 text-primary rounded-full border-primary"
-              onClick={() => formRef.current?.requestSubmit()}
-            >
-              {t("button.submit")}
-            </Button>
-          </div>
+          canCreate ? (
+            <div className="flex gap-4 max-[435px]:gap-2">
+              <Button
+                variant="outline"
+                className="gap-2 hover:bg-primary/90! bg-white dark:bg-gray-900 rounded-full border-primary w-28 max-[435px]:w-20 font-semibold! text-primary!"
+                onClick={handleResetClick}
+              >
+                {labels.reset}
+              </Button>
+              <Button
+                variant="outline"
+                className="gap-2 hover:bg-primary/90 bg-white dark:bg-gray-900 rounded-full border-primary w-28 max-[435px]:w-20 font-semibold! text-primary!"
+                onClick={handleSubmit}
+              >
+                {labels.submit}
+              </Button>
+            </div>
+          ) : null
         }
         className="w-full"
       >
-        <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
-          {/* First Row: Item Code, Item Name, Arabic Name */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">{t("form.itemCode")}</h3>
-              <EditableInput
-                ref={itemCodeInputRef}
-                id="itemCode"
-                name="itemCode"
-                className="w-full h-10"
-                value={formData.itemCode}
-                onChange={handleChange}
-                maxLength={10}
-                onNext={() => focusNextInput("itemCode")}
-                onCancel={() => {}}
-                tooltipText="Please enter item code (e.g., ITM001)"
-                required
-              />
+        <div dir={isRTL ? "rtl" : "ltr"}>
+          <form
+            ref={formRef}
+            key={formKey}
+            onSubmit={handleSubmit}
+            className="space-y-6 relative"
+          >
+            {/* First Row: Brand Name, Code, Description */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
+              {/* Brand Name field - only show if user can create */}
+              {name && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("name")}
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("code")}
+                    onCancel={() => setFormData({ ...formData, name: "" })}
+                    labelText="Brand Name"
+                    tooltipText="Enter the brand name"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Brand Code field - only show if user can create */}
+              {code && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("code")}
+                    id="code"
+                    name="code"
+                    value={formData.code}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("description")}
+                    onCancel={() => setFormData({ ...formData, code: "" })}
+                    labelText="Brand Code"
+                    tooltipText="Enter the brand code (e.g., BRD001)"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Description field - only show if user can create */}
+              {description && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("description")}
+                    id="description"
+                    name="description"
+                    value={formData.description}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("status")}
+                    onCancel={() =>
+                      setFormData({ ...formData, description: "" })
+                    }
+                    labelText="Description"
+                    tooltipText="Enter a description for the brand"
+                    type="text"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Default field - only show if user can create */}
+              {isDefault && (
+                <div className="space-y-2 relative">
+                  <SwitchSelect
+                    ref={(el: any) => setRef("isDefault")(el)}
+                    id="isDefault"
+                    name="isDefault"
+                    multiSelect={false}
+                    options={[
+                      {
+                        label: labels.yes,
+                        value: labels.yes,
+                        date: "Set default brand",
+                      },
+                      {
+                        label: labels.no,
+                        value: labels.no,
+                        date: "Remove default brand",
+                      },
+                    ]}
+                    value={isDefaultState === "Yes" ? labels.yes : labels.no}
+                    labelClassName="rounded-lg"
+                    onValueChange={(value: string | string[]) => {
+                      const isYes = Array.isArray(value)
+                        ? value[0] === labels.yes
+                        : value === labels.yes;
+                      setIsDefaultState(isYes ? "Yes" : "No");
+                      const newValue = isYes;
+                      setFormData((prev) => ({
+                        ...prev,
+                        isDefault: newValue,
+                      }));
+                    }}
+                    onEnterPress={() => {
+                      if (
+                        formData.isDefault === true ||
+                        formData.isDefault === false
+                      ) {
+                        // Form submission or next action
+                      }
+                    }}
+                    placeholder=" "
+                    labelText="Default"
+                    className="relative"
+                    tooltipText="Set as default brand"
+                  />
+                </div>
+              )}
             </div>
 
-            <div className="space-y-2">
-              <div className="flex justify-between items-center mb-1">
-                <h3 className="font-medium">Item Name</h3>
-                <MoreVertical
-                  className="h-4 w-4 cursor-pointer"
-                  onClick={() => setIsOptionModalOpen(true)}
-                />
-              </div>
-              <EditableInput
-                ref={nameInputRef}
-                id="name"
-                name="name"
-                className="w-full h-10"
-                value={formData.name}
-                onChange={handleChange}
-                onNext={() => focusNextInput("name")}
-                onCancel={() => {}}
-                tooltipText="Please enter item name"
-                required
-              />
-            </div>
+            {/* Second Row: Default and Status */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
+              {/* Status field - only show if user can create */}
+              {status && (
+                <div className="space-y-2">
+                  <SwitchSelect
+                    ref={(el: any) => setRef("statusSwitch")(el)}
+                    id="statusSwitch"
+                    name="statusSwitch"
+                    labelText="Status"
+                    multiSelect={false}
+                    options={[
+                      {
+                        label: "Active",
+                        value: "active",
+                        date: "Set active",
+                      },
+                      {
+                        label: "Inactive",
+                        value: "inactive",
+                        date: "Set inactive",
+                      },
+                      {
+                        label: "Draft",
+                        value: "draft",
+                        date: "Set draft",
+                      },
+                    ]}
+                    value={formData.status}
+                    onValueChange={(value: string | string[]) => {
+                      const stringValue = Array.isArray(value)
+                        ? value[0] || ""
+                        : value;
 
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">Arabic Name</h3>
-              <EditableInput
-                ref={arabicNameInputRef}
-                id="arabicName"
-                name="arabicName"
-                className="w-full h-10"
-                value={formData.arabicName}
-                onChange={handleChange}
-                onNext={() => focusNextInput("arabicName")}
-                onCancel={() => {}}
-                tooltipText="Please enter Arabic name"
-              />
+                      setFormData((prev) => ({
+                        ...prev,
+                        status: stringValue as "active" | "inactive" | "draft",
+                        isDraft: stringValue === "draft",
+                        isActive: stringValue === "active",
+                      }));
+                    }}
+                    placeholder=""
+                    styles={{
+                      input: {
+                        borderColor: "var(--primary)",
+                        "&:focus": {
+                          borderColor: "var(--primary)",
+                        },
+                      },
+                    }}
+                    tooltipText="Set the brand status"
+                  />
+                </div>
+              )}
             </div>
-          </div>
+          </form>
+        </div>
+      </MinimizablePageLayout>
 
-          {/* Second Row: Cost Price, Regular Price, Offer Price */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">Cost Price</h3>
-              <EditableInput
-                ref={costPriceInputRef}
-                id="costPrice"
-                name="costPrice"
-                type="number"
-                className="w-full h-10"
-                value={formData.costPrice.toString()}
-                onChange={handleNumericChange}
-                onNext={() => focusNextInput("costPrice")}
-                onCancel={() => {}}
-                tooltipText="Please enter cost price"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">Regular Price</h3>
-              <EditableInput
-                ref={regularPriceInputRef}
-                id="regularPrice"
-                name="regularPrice"
-                type="number"
-                className="w-full h-10"
-                value={formData.regularPrice.toString()}
-                onChange={handleNumericChange}
-                onNext={() => focusNextInput("regularPrice")}
-                onCancel={() => {}}
-                tooltipText="Please enter regular price"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">Offer Price</h3>
-              <EditableInput
-                ref={offerPriceInputRef}
-                id="offerPrice"
-                name="offerPrice"
-                type="number"
-                className="w-full h-10"
-                value={formData.offerPrice.toString()}
-                onChange={handleNumericChange}
-                onNext={() => focusNextInput("offerPrice")}
-                onCancel={() => {}}
-                tooltipText="Please enter offer price"
-              />
-            </div>
-          </div>
-
-          {/* Third Row: Start Date, End Date, Opening Stock */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">Start Date</h3>
-              <EditableInput
-                ref={startDateInputRef}
-                id="startDate"
-                name="startDate"
-                type="date"
-                className="w-full h-10"
-                value={
-                  formData.startDate
-                    ? formData.startDate.toISOString().split("T")[0]
-                    : ""
-                }
-                onChange={handleDateChange}
-                onNext={() => focusNextInput("startDate")}
-                onCancel={() => {}}
-                tooltipText="Please enter start date"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">End Date</h3>
-              <EditableInput
-                ref={endDateInputRef}
-                id="endDate"
-                name="endDate"
-                type="date"
-                className="w-full h-10"
-                value={
-                  formData.endDate
-                    ? formData.endDate.toISOString().split("T")[0]
-                    : ""
-                }
-                onChange={handleDateChange}
-                onNext={() => focusNextInput("endDate")}
-                onCancel={() => {}}
-                tooltipText="Please enter end date"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">Opening Stock</h3>
-              <EditableInput
-                ref={openingStockInputRef}
-                id="openingStock"
-                name="openingStock"
-                type="number"
-                className="w-full h-10"
-                value={formData.openingStock.toString()}
-                onChange={handleNumericChange}
-                onNext={() => focusNextInput("openingStock")}
-                onCancel={() => {}}
-                tooltipText="Please enter opening stock"
-              />
-            </div>
-          </div>
-
-          {/* Fourth Row: Category, Sub Category, Unit */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">Category</h3>
-              <EditableInput
-                ref={categoryInputRef}
-                id="category"
-                name="category"
-                className="w-full h-10"
-                value={formData.category}
-                onChange={handleChange}
-                onNext={() => focusNextInput("category")}
-                onCancel={() => {}}
-                tooltipText="Please enter category"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">Sub Category</h3>
-              <EditableInput
-                ref={subCategoryInputRef}
-                id="subCategory"
-                name="subCategory"
-                className="w-full h-10"
-                value={formData.subCategory}
-                onChange={handleChange}
-                onNext={() => focusNextInput("subCategory")}
-                onCancel={() => {}}
-                tooltipText="Please enter sub category"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">Unit</h3>
-              <EditableInput
-                ref={unitInputRef}
-                id="unit"
-                name="unit"
-                className="w-full h-10"
-                value={formData.unit}
-                onChange={handleChange}
-                onNext={() => focusNextInput("unit")}
-                onCancel={() => {}}
-                tooltipText="Please enter unit"
-              />
-            </div>
-          </div>
-
-          {/* Fifth Row: Description */}
-          <div className="grid grid-cols-1 gap-4">
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">Description</h3>
-              <EditableInput
-                ref={descriptionInputRef}
-                id="description"
-                name="description"
-                className="w-full h-10"
-                value={formData.description}
-                onChange={handleChange}
-                onNext={() => focusNextInput("description")}
-                onCancel={() => {}}
-                tooltipText="Please enter item description"
-              />
-            </div>
-          </div>
-
-          {/* Sixth Row: Default, Draft, Active, Delete */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">{t("common.default")}</h3>
-              <div className="h-10 flex items-center">
-                <Switch
-                  ref={defaultSwitchRef}
-                  id="isDefault"
-                  name="isDefault"
-                  className=""
-                  checked={formData.isDefault}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, isDefault: checked })
-                  }
-                  onKeyDown={(e) => handleSwitchKeyDown(e, "default")}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">{t("common.active")}</h3>
-              <div className="h-10 flex items-center">
-                <Switch
-                  ref={activeSwitchRef}
-                  id="isActive"
-                  name="isActive"
-                  className=""
-                  checked={formData.isActive}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, isActive: checked })
-                  }
-                  onKeyDown={(e) => handleSwitchKeyDown(e, "active")}
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">{t("common.draft")}</h3>
-              <div className="h-10 flex items-center">
-                <Switch
-                  ref={draftSwitchRef}
-                  id="isDraft"
-                  name="isDraft"
-                  className=""
-                  checked={formData.isDraft}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, isDraft: checked })
-                  }
-                  onKeyDown={(e) => handleSwitchKeyDown(e, "draft")}
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">
-                {formData.isDeleted ? t("button.restore") : t("button.delete")}
-              </h3>
-              <div className="h-10 flex items-center">
-                <Button
-                  ref={deleteButtonRef}
-                  variant="ghost"
-                  size="icon"
-                  onClick={() =>
-                    setFormData({
-                      ...formData,
-                      isDeleted: !formData.isDeleted,
-                    })
-                  }
-                  onKeyDown={(e) => handleSwitchKeyDown(e, "delete")}
-                >
-                  {formData.isDeleted ? (
-                    <Undo2 className="text-green-500" />
-                  ) : (
-                    <Trash2 className="text-red-500" />
-                  )}
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Seventh Row: Dates */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <h3 className="font-medium mb-1">Created</h3>
-              <p>{getRelativeTime(formData.createdAt)}</p>
-            </div>
-            <div>
-              <h3 className="font-medium mb-1">Updated</h3>
-              <p>{getRelativeTime(formData.updatedAt)}</p>
-            </div>
-            <div>
-              <h3 className="font-medium mb-1">Drafted</h3>
-              <p>{getRelativeTime(formData.draftedAt)}</p>
-            </div>
-            <div>
-              <h3 className="font-medium mb-1">Deleted</h3>
-              <p>{getRelativeTime(formData.deletedAt)}</p>
-            </div>
-          </div>
-        </form>
-      </PageLayout>
-
-      {/* Language Translator Modal */}
-      <LanguageTranslatorModal
-        isOpen={isOptionModalOpen}
-        onClose={() => setIsOptionModalOpen(false)}
-        title="Item Language Translator"
-        initialData={translations}
-        onSave={(data) => {
-          setTranslations(data);
-          console.log("Item translations saved:", data);
-        }}
+      <ResetFormModal
+        opened={isResetModalOpen}
+        onClose={() => setIsResetModalOpen(false)}
+        onConfirm={handleReset}
+        title={labels.resetForm}
+        message={labels.resetFormMessage}
+        confirmText={labels.resetFormConfirm}
+        cancelText={labels.cancel}
       />
     </>
   );

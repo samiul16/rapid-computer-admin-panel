@@ -1,656 +1,678 @@
-import { useState, useRef, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { useTranslation } from "react-i18next";
-import { Trash2, Undo2, MoreVertical } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import EditableInput from "@/components/common/EditableInput";
-import { Autocomplete } from "@mantine/core";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import video from "@/assets/videos/test.mp4";
-import PageLayout from "@/components/common/PageLayout";
-import LanguageTranslatorModal from "@/components/common/LanguageTranslatorModel";
+import EditableInput from "@/components/common/EditableInput";
+import GenericPDF from "@/components/common/pdf";
+import { ResetFormModal } from "@/components/common/ResetFormModal";
+import { Button } from "@/components/ui/button";
+import { PrintCommonLayout } from "@/lib/printContents/PrintCommonLayout";
+import { printHtmlContent } from "@/lib/printHtmlContent";
+import { toastError, toastRestore, toastSuccess } from "@/lib/toast";
+import { pdf } from "@react-pdf/renderer";
+import { Check, Eye, Plus } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useColorsPermissions, usePermission } from "@/hooks/usePermissions";
+// import { useLanguageLabels } from "@/hooks/useLanguageLabels";
+import { useAppSelector } from "@/store/hooks";
+import MinimizablePageLayout from "@/components/MinimizablePageLayout";
+import { useMinimizedModuleData } from "@/hooks/useMinimizedModuleData";
+import { SwitchSelect } from "@/components/common/SwitchAutoComplete";
+import { ActionsAutocomplete } from "@/components/common/ActionsAutocomplete";
 
-// Define Item interface
-interface Item {
-  id: string;
-  itemCode: string;
+type BrandData = {
   name: string;
-  arabicName: string;
-  costPrice: number;
-  regularPrice: number;
-  offerPrice: number;
-  startDate: Date | null;
-  endDate: Date | null;
-  openingStock: number;
-  category: string;
-  subCategory: string;
-  unit: string;
-  itemImage: string;
+  code: string;
   description: string;
+  status: "active" | "inactive" | "draft" | "deleted";
   isDefault: boolean;
   isActive: boolean;
   isDraft: boolean;
+  isDeleted: boolean;
   createdAt: Date | null;
   draftedAt: Date | null;
   updatedAt: Date | null;
   deletedAt: Date | null;
-  isDeleted: boolean;
-}
+};
+
+type BrandModuleData = {
+  formData: BrandData;
+  hasChanges: boolean;
+  scrollPosition: number;
+};
 
 type Props = {
   isEdit?: boolean;
 };
 
-const initialData: Item = {
-  id: "1",
-  itemCode: "ITM001",
-  name: "Grilled Chicken Breast",
-  arabicName: "صدر دجاج مشوي",
-  costPrice: 8.5,
-  regularPrice: 15.0,
-  offerPrice: 12.0,
-  startDate: new Date("2024-01-15"),
-  endDate: new Date("2024-12-31"),
-  openingStock: 50,
-  category: "Main Course",
-  subCategory: "Chicken",
-  unit: "Piece",
-  itemImage: "",
-  description: "Fresh grilled chicken breast with herbs and spices",
+const initialData: BrandData = {
+  name: "Apex",
+  code: "BRD001",
+  description: "Premium performance brand",
+  status: "active",
   isDefault: false,
   isActive: true,
   isDraft: false,
+  isDeleted: false,
   createdAt: new Date(),
   draftedAt: null,
   updatedAt: new Date(),
   deletedAt: null,
-  isDeleted: false,
 };
 
-// Item form doesn't need mock dropdown data
-
-// Type definition for TypeScript
-export type HistoryEntry = {
-  id: string;
-  date: string;
-  user: string;
-  status: "Active" | "InActive" | "Delete" | "Draft";
-  export: "Single" | "Bulk";
-  pdf: boolean;
-  csv: boolean;
-  xls: boolean;
-  doc: boolean;
-  print: boolean;
-};
-
-const ITEM_CODES = [
-  "ITM001",
-  "ITM002",
-  "ITM003",
-  "ITM004",
-  "ITM005",
-  "ITM006",
-  "ITM007",
-  "ITM008",
-  "ITM009",
-  "ITM010",
-];
-
-export default function EditPage({ isEdit = false }: Props) {
-  const { id } = useParams<{ id: string }>();
-  const { t } = useTranslation();
+export default function BrandEditPage({ isEdit = true }: Props) {
   const navigate = useNavigate();
+  const { id } = useParams();
+  // const labels = useLanguageLabels();
+  const { isRTL } = useAppSelector((state) => state.language);
+
+  // Get module ID for this edit page
+  const moduleId = `brand-edit-module-${id || "new"}`;
+
+  // Use the custom hook for minimized module data
+  const {
+    moduleData,
+    hasMinimizedData,
+    resetModuleData,
+    getModuleScrollPosition,
+  } = useMinimizedModuleData<BrandModuleData>(moduleId);
+
   const [keepCreating, setKeepCreating] = useState(false);
-
   const formRef = useRef<HTMLFormElement>(null);
-  const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
-  const [pdfChecked, setPdfChecked] = useState(false);
+  const [isDefaultState, setIsDefaultState] = useState<"Yes" | "No" | string>(
+    "No"
+  );
+
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [printEnabled, setPrintEnabled] = useState(false);
+  const [pdfChecked, setPdfChecked] = useState(false);
+  const [formKey, setFormKey] = useState(0);
+  const [isRestoredFromMinimized, setIsRestoredFromMinimized] = useState(false);
+  const [shouldRestoreFromMinimized, setShouldRestoreFromMinimized] =
+    useState(false);
+  const [selectedAction, setSelectedAction] = useState<string>("");
 
-  const [selectedCode, setSelectedCode] = useState("");
+  // Permission checks
+  const { canCreate, canView } = useColorsPermissions();
 
-  // Translation state
-  const [translations, setTranslations] = useState([
-    { id: 1, english: "", arabic: "", bangla: "" },
-  ]);
+  // Field-level permissions
+  const name: boolean = usePermission("brands", "edit", "name");
+  const code: boolean = usePermission("brands", "edit", "code");
+  const description: boolean = usePermission("brands", "edit", "description");
+  const status: boolean = usePermission("brands", "edit", "status");
+  const isDefault: boolean = usePermission("brands", "edit", "isDefault");
+  const canPdf: boolean = usePermission("brands", "pdf");
+  const canPrint: boolean = usePermission("brands", "print");
 
   // Form state
-  const [formData, setFormData] = useState<Item>({
-    id: "",
-    itemCode: "",
+  const [formData, setFormData] = useState<BrandData>({
     name: "",
-    arabicName: "",
-    costPrice: 0,
-    regularPrice: 0,
-    offerPrice: 0,
-    startDate: null,
-    endDate: null,
-    openingStock: 0,
-    category: "",
-    subCategory: "",
-    unit: "",
-    itemImage: "",
+    code: "",
     description: "",
+    status: "active",
     isDefault: false,
     isActive: true,
     isDraft: false,
+    isDeleted: false,
     createdAt: null,
     draftedAt: null,
     updatedAt: null,
     deletedAt: null,
-    isDeleted: false,
   });
 
-  // Item form doesn't need filtered dropdown options
+  // focus next input field
+  const inputRefs = useRef<Record<string, HTMLElement | null>>({});
+  const setRef = (name: string) => (el: HTMLElement | null) => {
+    inputRefs.current[name] = el;
+  };
+  const focusNextInput = (nextField: string) => {
+    inputRefs.current[nextField]?.focus();
+  };
 
-  // Update translation data when item name changes
+  // Check for restore flag from taskbar
   useEffect(() => {
-    setTranslations([
-      { id: 1, english: formData.name || "", arabic: "", bangla: "" },
-    ]);
-  }, [formData.name]);
+    const shouldRestore = localStorage.getItem(`restore-${moduleId}`);
+    if (shouldRestore === "true") {
+      setShouldRestoreFromMinimized(true);
+      localStorage.removeItem(`restore-${moduleId}`);
+    }
+  }, [moduleId]);
 
-  // Item form doesn't need country/state filtering logic
+  // Restore logic using the custom hook
+  useEffect(() => {
+    const shouldAutoRestore =
+      shouldRestoreFromMinimized ||
+      (hasMinimizedData &&
+        moduleData?.formData &&
+        !isRestoredFromMinimized &&
+        !formData.name);
+
+    if (hasMinimizedData && moduleData?.formData && shouldAutoRestore) {
+      setFormData(moduleData.formData);
+
+      // Restore UI states based on form data
+      setIsDefaultState(moduleData.formData.isDefault ? "Yes" : "No");
+
+      setIsRestoredFromMinimized(true);
+      setShouldRestoreFromMinimized(false);
+
+      // Restore scroll position
+      const scrollPosition = getModuleScrollPosition(moduleId);
+      if (scrollPosition) {
+        setTimeout(() => {
+          window.scrollTo(0, scrollPosition);
+        }, 200);
+      }
+    }
+  }, [
+    hasMinimizedData,
+    moduleData,
+    isRestoredFromMinimized,
+    shouldRestoreFromMinimized,
+    formData.name,
+    moduleId,
+    getModuleScrollPosition,
+  ]);
 
   // Initialize with edit data if available
   useEffect(() => {
-    if (initialData) {
+    if (
+      isEdit &&
+      initialData &&
+      !hasMinimizedData &&
+      !isRestoredFromMinimized
+    ) {
       setFormData(initialData);
-      setSelectedCode(initialData.itemCode);
+      setIsDefaultState(initialData.isDefault ? "Yes" : "No");
+      setIsDefaultState(initialData.isDefault ? "Yes" : "No");
     }
-  }, [initialData]);
-
-  useEffect(() => {
-    if (id && id !== "undefined") {
-      const fetchedData = initialData;
-      setFormData(fetchedData);
-      setSelectedCode(fetchedData.itemCode);
-    }
-  }, [id]);
+  }, [isEdit, hasMinimizedData, isRestoredFromMinimized, moduleId]);
 
   // Handle form field changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
-    setFormData({
+    const newFormData = {
       ...formData,
       [name]: type === "checkbox" ? checked : value,
-    });
-  };
-
-  // Handle numeric input changes
-  const handleNumericChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    const numericValue = parseFloat(value) || 0;
-    setFormData({
-      ...formData,
-      [name]: numericValue,
-    });
-  };
-
-  // Handle date input changes
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value ? new Date(value) : null,
-    });
+    };
+    setFormData(newFormData);
   };
 
   // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
+
+    if (pdfChecked) {
+      await handleExportPDF();
+    }
+    if (printEnabled) {
+      handlePrintBrand(formData);
+    }
+
+    // keep switch functionality
+    if (keepCreating) {
+      toastSuccess("Brand updated successfully!");
+      handleReset();
+    } else {
+      toastSuccess("Brand updated successfully!");
+      navigate("/brands");
+    }
   };
 
-  // Handle form reset
-  const handleReset = () => {
-    if (window.confirm(t("form.resetConfirm"))) {
-      setFormData({
-        id: "",
-        itemCode: "",
-        name: "",
-        arabicName: "",
-        costPrice: 0,
-        regularPrice: 0,
-        offerPrice: 0,
-        startDate: null,
-        endDate: null,
-        openingStock: 0,
-        category: "",
-        subCategory: "",
-        unit: "",
-        itemImage: "",
-        description: "",
-        isDefault: false,
-        isActive: true,
-        isDraft: false,
-        createdAt: new Date(),
-        draftedAt: null,
-        updatedAt: new Date(),
-        deletedAt: null,
-        isDeleted: false,
-      });
+  // Update handleReset function to use the custom hook
+  const handleReset = async () => {
+    setFormData({
+      name: "",
+      code: "",
+      description: "",
+      status: "active",
+      isDefault: false,
+      isActive: true,
+      isDraft: false,
+      isDeleted: false,
+      createdAt: new Date(),
+      draftedAt: null,
+      updatedAt: new Date(),
+      deletedAt: null,
+    });
+    setIsDefaultState("No");
 
-      if (formRef.current) {
-        formRef.current.reset();
+    setIsRestoredFromMinimized(false);
+
+    if (formRef.current) {
+      formRef.current.reset();
+    }
+
+    // Force re-render of all inputs by changing key
+    setFormKey((prev) => prev + 1);
+
+    // Reset form data using the custom hook
+    if (hasMinimizedData) {
+      try {
+        await resetModuleData(moduleId);
+      } catch (error) {
+        console.error("Error resetting form data:", error);
       }
     }
+
+    // Focus the first input field after reset
+    setTimeout(() => {
+      inputRefs.current["name"]?.focus();
+    }, 100);
   };
 
-  const getRelativeTime = (dateString: string | null | Date) => {
-    if (!dateString) return "--/--/----";
+  const handleResetClick = () => {
+    setIsResetModalOpen(true);
+  };
 
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInMs = now.getTime() - date.getTime();
-
-    const minutes = Math.floor(diffInMs / (1000 * 60));
-    const hours = Math.floor(diffInMs / (1000 * 60 * 60));
-    const days = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
-    const months = Math.floor(diffInMs / (1000 * 60 * 60 * 24 * 30));
-    const years = Math.floor(diffInMs / (1000 * 60 * 60 * 24 * 365));
-
-    if (years > 0) {
-      return `${years}y ago`;
-    } else if (months > 0) {
-      return `${months}mo ago`;
-    } else if (days > 0) {
-      return `${days}d ago`;
-    } else if (hours > 0) {
-      return `${hours}h ago`;
-    } else if (minutes > 0) {
-      return `${minutes}m ago`;
-    } else {
-      return "Just now";
+  const handlePrintBrand = (brandData: any) => {
+    try {
+      const html = PrintCommonLayout({
+        title: "Brand Details",
+        data: [brandData],
+        excludeFields: ["id", "__v", "_id"],
+        fieldLabels: {
+          name: "Brand Name",
+          code: "Brand Code",
+          description: "Description",
+          status: "Status",
+          isDefault: "Default Brand",
+          isActive: "Active Status",
+          isDraft: "Draft Status",
+          isDeleted: "Deleted Status",
+          createdAt: "Created At",
+          updatedAt: "Updated At",
+          draftedAt: "Drafted At",
+          deletedAt: "Deleted At",
+        },
+      });
+      printHtmlContent(html);
+    } catch (error) {
+      console.log(error);
+      toastError("Something went wrong when printing");
     }
   };
 
-  // PDF and Print handlers
-  const handlePDFSwitchChange = (checked: boolean) => {
-    setPdfChecked(checked);
-    if (checked) {
-      console.log("Export PDF for:", formData);
-      // Add your PDF export logic here
-    }
-  };
-
-  const handlePrintSwitchChange = (checked: boolean) => {
+  const handleSwitchChange = (checked: boolean) => {
     setPrintEnabled(checked);
-    if (checked) {
-      console.log("Print data for:", formData);
-      // Add your print logic here
+  };
+
+  const handlePDFSwitchChange = (pdfChecked: boolean) => {
+    setPdfChecked(pdfChecked);
+  };
+
+  const handleExportPDF = async () => {
+    try {
+      const blob = await pdf(
+        <GenericPDF
+          data={[formData]}
+          title="Brand Details"
+          subtitle="Brand Information"
+        />
+      ).toBlob();
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "brand-details.pdf";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.log(error);
+      toastError("Something went wrong when generating PDF");
     }
   };
+
+  const [popoverOptions, setPopoverOptions] = useState([
+    {
+      label: "Create",
+      icon: <Plus className="w-5 h-5 text-green-500" />,
+      onClick: () => {
+        navigate("/brands/create");
+      },
+      show: canCreate,
+    },
+    {
+      label: "View",
+      icon: <Eye className="w-5 h-5 text-green-600" />,
+      onClick: () => {
+        navigate("/brands/view");
+      },
+      show: canView,
+    },
+  ]);
+
+  useEffect(() => {
+    setPopoverOptions((prevOptions) => {
+      const filteredOptions = prevOptions.filter(
+        (opt) => opt.label !== "Draft"
+      );
+
+      if (!formData.isDraft) {
+        return [
+          ...filteredOptions,
+          {
+            label: "Draft",
+            icon: <Check className="text-green-500" />,
+            onClick: () => {
+              setFormData((prev) => ({
+                ...prev,
+                isDraft: true,
+              }));
+              toastRestore("Color saved as draft successfully");
+            },
+            show: canCreate,
+          },
+        ];
+      }
+      return filteredOptions;
+    });
+  }, [formData.isDraft, canCreate]);
+
+  // Create minimize handler using the custom hook
+  const handleMinimize = useCallback((): BrandModuleData => {
+    return {
+      formData,
+      hasChanges: true,
+      scrollPosition: window.scrollY,
+    };
+  }, [formData]);
 
   return (
     <>
-      <PageLayout
-        title={isEdit ? t("form.editingItem") : t("form.creatingItem")}
+      <MinimizablePageLayout
+        moduleId={moduleId}
+        moduleName={`Edit Brand`}
+        moduleRoute={`/brands/edit/${id || "new"}`}
+        onMinimize={handleMinimize}
+        title="Edit Brand"
+        listPath="brands"
+        popoverOptions={popoverOptions}
         videoSrc={video}
-        videoHeader="Rapid ERP Video"
-        listPath="/items"
-        popoverOptions={[
-          {
-            label: isEdit ? "Create" : "Edit",
-            onClick: () => {
-              navigate("/items/create");
-            },
-          },
-          {
-            label: "View",
-            onClick: () => {
-              navigate("/items/view");
-            },
-          },
-        ]}
+        videoHeader="Tutorial video"
         keepChanges={keepCreating}
         onKeepChangesChange={setKeepCreating}
         pdfChecked={pdfChecked}
-        onPdfToggle={handlePDFSwitchChange}
+        onPdfToggle={canPdf ? handlePDFSwitchChange : undefined}
         printEnabled={printEnabled}
-        onPrintToggle={handlePrintSwitchChange}
+        onPrintToggle={canPrint ? handleSwitchChange : undefined}
+        activePage="edit"
+        module="brands"
         additionalFooterButtons={
-          <div className="flex gap-4">
-            <Button
-              variant="outline"
-              className="gap-2 text-primary rounded-full border-primary"
-              onClick={handleReset}
-            >
-              {t("button.reset")}
-            </Button>
-            <Button
-              variant="outline"
-              className="gap-2 text-primary rounded-full border-primary"
-              onClick={() => formRef.current?.requestSubmit()}
-            >
-              {t("button.submit")}
-            </Button>
-          </div>
+          canCreate ? (
+            <div className="flex gap-4 max-[435px]:gap-2">
+              <Button
+                variant="outline"
+                className="gap-2 hover:bg-primary/90 bg-white rounded-full border-primary w-28 max-[435px]:w-20 font-semibold! text-primary!"
+                onClick={handleResetClick}
+              >
+                Reset
+              </Button>
+              <Button
+                variant="outline"
+                className="gap-2 hover:bg-primary/90 bg-white rounded-full border-primary w-28 max-[435px]:w-20 font-semibold! text-primary!"
+                onClick={handleSubmit}
+              >
+                Submit
+              </Button>
+            </div>
+          ) : null
         }
         className="w-full"
       >
-        <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
-          {/* First Row: Item Code, Item Name, Arabic Name */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">{t("form.itemCode")}</h3>
-              <Autocomplete
-                data={ITEM_CODES}
-                value={selectedCode}
-                onChange={(value) => {
-                  setSelectedCode(value);
-                  setFormData({
-                    ...formData,
-                    itemCode: value,
-                  });
-                }}
-                placeholder="Select an item code..."
-                disabled={false}
-                className="w-full"
-                styles={{
-                  input: {
-                    "&:focus": {
-                      borderColor: "var(--primary)",
+        <div dir={isRTL ? "rtl" : "ltr"}>
+          <form
+            ref={formRef}
+            key={formKey}
+            onSubmit={handleSubmit}
+            className="space-y-6"
+          >
+            {/* First Row: Brand Name, Code, Description */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
+              {/* Brand Name field - only show if user can edit */}
+              {name && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("name")}
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("code")}
+                    onCancel={() => setFormData({ ...formData, name: "" })}
+                    labelText="Brand Name"
+                    tooltipText="Enter the brand name"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Brand Code field - only show if user can edit */}
+              {code && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("code")}
+                    id="code"
+                    name="code"
+                    value={formData.code}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("description")}
+                    onCancel={() => setFormData({ ...formData, code: "" })}
+                    labelText="Brand Code"
+                    tooltipText="Enter the brand code (e.g., BRD001)"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Description field - only show if user can edit */}
+              {description && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("description")}
+                    id="description"
+                    name="description"
+                    value={formData.description}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("status")}
+                    onCancel={() =>
+                      setFormData({ ...formData, description: "" })
+                    }
+                    labelText="Description"
+                    tooltipText="Enter brand description"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Status field - only show if user can edit */}
+              {status && (
+                <div className="space-y-2">
+                  <SwitchSelect
+                    ref={(el: any) => setRef("status")(el)}
+                    id="status"
+                    name="status"
+                    labelText="Status"
+                    multiSelect={false} // Single select mode
+                    options={[
+                      {
+                        label: "Active",
+                        value: "active",
+                        date: "Set active country",
+                      },
+                      {
+                        label: "Inactive",
+                        value: "InActive",
+                        date: "Set inactive country",
+                      },
+                      {
+                        label: "Draft",
+                        value: "Draft",
+                        date: "Set draft country",
+                      },
+                      {
+                        label: "Delete",
+                        value: "Delete",
+                        date: "Set delete country",
+                      },
+                    ]}
+                    value={formData.status}
+                    onValueChange={(value: string | string[]) => {
+                      const stringValue = Array.isArray(value)
+                        ? value[0] || ""
+                        : value;
+                      console.log("switch value", stringValue);
+                      setFormData((prev) => ({
+                        ...prev,
+                        status: stringValue as
+                          | "active"
+                          | "inactive"
+                          | "draft"
+                          | "deleted",
+                        isDeleted: stringValue === "deleted",
+                        isDraft: stringValue === "Draft",
+                        isActive: stringValue === "Active",
+                      }));
+
+                      // Update your form data
+                      setFormData((prev) => ({
+                        ...prev,
+                        isDeleted: stringValue === "Delete",
+                        isDraft: stringValue === "Draft",
+                        isActive: stringValue === "Active",
+                      }));
+                    }}
+                    placeholder=""
+                    styles={{
+                      input: {
+                        borderColor: "var(--primary)",
+                        "&:focus": {
+                          borderColor: "var(--primary)",
+                        },
+                      },
+                    }}
+                    tooltipText="Set the brand status"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Second Row: Status, Default */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
+              {/* Default field - only show if user can edit */}
+              {isDefault && (
+                <div className="space-y-2 relative">
+                  <SwitchSelect
+                    ref={(el: any) => setRef("isDefault")(el)}
+                    id="isDefault"
+                    name="isDefault"
+                    multiSelect={false}
+                    options={[
+                      {
+                        label: "Yes",
+                        value: "Yes",
+                        date: "Set default brand",
+                      },
+                      {
+                        label: "No",
+                        value: "No",
+                        date: "Remove default brand",
+                      },
+                    ]}
+                    value={isDefaultState === "Yes" ? "Yes" : "No"}
+                    labelClassName="rounded-lg"
+                    onValueChange={(value: string | string[]) => {
+                      const isYes = Array.isArray(value)
+                        ? value[0] === "Yes"
+                        : value === "Yes";
+                      setIsDefaultState(isYes ? "Yes" : "No");
+                      const newValue = isYes;
+                      setFormData((prev) => ({
+                        ...prev,
+                        isDefault: newValue,
+                      }));
+                    }}
+                    onEnterPress={() => {
+                      if (
+                        formData.isDefault === true ||
+                        formData.isDefault === false
+                      ) {
+                        focusNextInput("actions");
+                      }
+                    }}
+                    placeholder=" "
+                    labelText="Default"
+                    className="relative"
+                    tooltipText="Set as default brand"
+                  />
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="space-y-2">
+                <ActionsAutocomplete
+                  ref={(el: any) => setRef("actions")(el)}
+                  id="actions"
+                  name="actions"
+                  labelText="Action"
+                  value={selectedAction}
+                  actions={[
+                    {
+                      action: "Created",
+                      user: "John",
+                      role: "Super User",
+                      date: "06 Aug 2025",
+                      value: "created",
                     },
-                  },
-                }}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex justify-between items-center mb-1">
-                <h3 className="font-medium">{t("form.itemName")}</h3>
-                <MoreVertical
-                  className="h-4 w-4 cursor-pointer"
-                  onClick={() => setIsOptionModalOpen(true)}
-                />
-              </div>
-              <EditableInput
-                id="name"
-                name="name"
-                className="w-full h-10"
-                value={formData.name}
-                onChange={handleChange}
-                onNext={() => setIsOptionModalOpen(true)}
-                onCancel={() => setIsOptionModalOpen(false)}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">Arabic Name</h3>
-              <EditableInput
-                id="arabicName"
-                name="arabicName"
-                className="w-full h-10"
-                value={formData.arabicName}
-                onChange={handleChange}
-                onNext={() => {}}
-                onCancel={() => {}}
-              />
-            </div>
-          </div>
-
-          {/* Second Row: Cost Price, Regular Price, Offer Price */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">Cost Price</h3>
-              <EditableInput
-                id="costPrice"
-                name="costPrice"
-                type="number"
-                className="w-full h-10"
-                value={formData.costPrice.toString()}
-                onChange={handleNumericChange}
-                onNext={() => {}}
-                onCancel={() => {}}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">Regular Price</h3>
-              <EditableInput
-                id="regularPrice"
-                name="regularPrice"
-                type="number"
-                className="w-full h-10"
-                value={formData.regularPrice.toString()}
-                onChange={handleNumericChange}
-                onNext={() => {}}
-                onCancel={() => {}}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">Offer Price</h3>
-              <EditableInput
-                id="offerPrice"
-                name="offerPrice"
-                type="number"
-                className="w-full h-10"
-                value={formData.offerPrice.toString()}
-                onChange={handleNumericChange}
-                onNext={() => {}}
-                onCancel={() => {}}
-              />
-            </div>
-          </div>
-
-          {/* Third Row: Start Date, End Date, Opening Stock */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">Start Date</h3>
-              <EditableInput
-                id="startDate"
-                name="startDate"
-                type="date"
-                className="w-full h-10"
-                value={
-                  formData.startDate
-                    ? formData.startDate.toISOString().split("T")[0]
-                    : ""
-                }
-                onChange={handleDateChange}
-                onNext={() => {}}
-                onCancel={() => {}}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">End Date</h3>
-              <EditableInput
-                id="endDate"
-                name="endDate"
-                type="date"
-                className="w-full h-10"
-                value={
-                  formData.endDate
-                    ? formData.endDate.toISOString().split("T")[0]
-                    : ""
-                }
-                onChange={handleDateChange}
-                onNext={() => {}}
-                onCancel={() => {}}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">Opening Stock</h3>
-              <EditableInput
-                id="openingStock"
-                name="openingStock"
-                type="number"
-                className="w-full h-10"
-                value={formData.openingStock.toString()}
-                onChange={handleNumericChange}
-                onNext={() => {}}
-                onCancel={() => {}}
-              />
-            </div>
-          </div>
-
-          {/* Fourth Row: Category, Sub Category, Unit */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">Category</h3>
-              <EditableInput
-                id="category"
-                name="category"
-                className="w-full h-10"
-                value={formData.category}
-                onChange={handleChange}
-                onNext={() => {}}
-                onCancel={() => {}}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">Sub Category</h3>
-              <EditableInput
-                id="subCategory"
-                name="subCategory"
-                className="w-full h-10"
-                value={formData.subCategory}
-                onChange={handleChange}
-                onNext={() => {}}
-                onCancel={() => {}}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">Unit</h3>
-              <EditableInput
-                id="unit"
-                name="unit"
-                className="w-full h-10"
-                value={formData.unit}
-                onChange={handleChange}
-                onNext={() => {}}
-                onCancel={() => {}}
-              />
-            </div>
-          </div>
-
-          {/* Fifth Row: Description */}
-          <div className="grid grid-cols-1 gap-4">
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">Description</h3>
-              <EditableInput
-                id="description"
-                name="description"
-                className="w-full h-10"
-                value={formData.description}
-                onChange={handleChange}
-                onNext={() => {}}
-                onCancel={() => {}}
-              />
-            </div>
-          </div>
-
-          {/* Sixth Row: Status Switches */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">{t("common.default")}</h3>
-              <div className="h-10 flex items-center">
-                <Switch
-                  id="isDefault"
-                  name="isDefault"
-                  className="data-[state=checked]:bg-blue-400"
-                  checked={formData.isDefault}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, isDefault: checked })
-                  }
+                    {
+                      action: "Updated",
+                      user: "Sarah",
+                      role: "Admin",
+                      date: "08 Aug 2025",
+                      value: "updated",
+                    },
+                    {
+                      action: "Inactive",
+                      user: "Mike",
+                      role: "Admin",
+                      date: "08 Aug 2025",
+                      value: "inactive",
+                    },
+                    {
+                      action: "Drafted",
+                      user: "John",
+                      role: "Super User",
+                      date: "07 Aug 2025",
+                      value: "drafted",
+                    },
+                  ]}
+                  placeholder=""
+                  onValueChange={(value: string) => {
+                    setSelectedAction(value);
+                  }}
+                  styles={{
+                    input: {
+                      borderColor: "var(--primary)",
+                      "&:focus": {
+                        borderColor: "var(--primary)",
+                      },
+                    },
+                  }}
+                  tooltipText="Brand Action History"
                 />
               </div>
             </div>
+          </form>
+        </div>
+      </MinimizablePageLayout>
 
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">{t("common.active")}</h3>
-              <div className="h-10 flex items-center">
-                <Switch
-                  id="isActive"
-                  name="isActive"
-                  className="data-[state=checked]:bg-blue-400"
-                  checked={formData.isActive}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, isActive: checked })
-                  }
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">{t("common.draft")}</h3>
-              <div className="h-10 flex items-center">
-                <Switch
-                  id="isDraft"
-                  name="isDraft"
-                  className="data-[state=checked]:bg-blue-400"
-                  checked={formData.isDraft}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, isDraft: checked })
-                  }
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="font-medium mb-1">
-                {formData.isDeleted ? t("button.restore") : t("button.delete")}
-              </h3>
-              <div className="h-10 flex items-center">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() =>
-                    setFormData({
-                      ...formData,
-                      isDeleted: !formData.isDeleted,
-                    })
-                  }
-                >
-                  {formData.isDeleted ? (
-                    <Undo2 className="text-green-500" />
-                  ) : (
-                    <Trash2 className="text-red-500" />
-                  )}
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Seventh Row: Dates */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <h3 className="font-medium mb-1">Created</h3>
-              <p>{getRelativeTime(formData.createdAt)}</p>
-            </div>
-            <div>
-              <h3 className="font-medium mb-1">Updated</h3>
-              <p>{getRelativeTime(formData.updatedAt)}</p>
-            </div>
-            <div>
-              <h3 className="font-medium mb-1">Drafted</h3>
-              <p>{getRelativeTime(formData.draftedAt)}</p>
-            </div>
-            <div>
-              <h3 className="font-medium mb-1">Deleted</h3>
-              <p>{getRelativeTime(formData.deletedAt)}</p>
-            </div>
-          </div>
-        </form>
-      </PageLayout>
-
-      {/* Language Translator Modal */}
-      <LanguageTranslatorModal
-        isOpen={isOptionModalOpen}
-        onClose={() => setIsOptionModalOpen(false)}
-        title="Item Language Translator"
-        initialData={translations}
-        onSave={(data) => {
-          setTranslations(data);
-          console.log("Item translations saved:", data);
-        }}
+      <ResetFormModal
+        opened={isResetModalOpen}
+        onClose={() => setIsResetModalOpen(false)}
+        onConfirm={handleReset}
+        title="Reset Form"
+        message="Are you sure you want to reset the form?"
+        confirmText="Reset"
+        cancelText="Cancel"
       />
     </>
   );
