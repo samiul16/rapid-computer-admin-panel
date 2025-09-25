@@ -70,22 +70,22 @@ export default function ShortcutFormPage({ isEdit = false }: Props) {
   const { canCreate, canView } = useColorsPermissions();
 
   // Field-level permissions
-  const indexName: boolean = usePermission("shortcuts", "create", "indexName");
-  const title: boolean = usePermission("shortcuts", "create", "title");
+  const indexName: boolean = usePermission("shortcut", "create", "indexName");
+  const title: boolean = usePermission("shortcut", "create", "title");
   const titleValue: boolean = usePermission(
-    "shortcuts",
+    "shortcut",
     "create",
     "titleValue"
   );
   const fontAwesomeIcon: boolean = usePermission(
-    "shortcuts",
+    "shortcut",
     "create",
     "fontAwesomeIcon"
   );
-  const status: boolean = usePermission("shortcuts", "create", "status");
-  const isDefault: boolean = usePermission("shortcuts", "create", "isDefault");
-  const canPdf: boolean = usePermission("shortcuts", "pdf");
-  const canPrint: boolean = usePermission("shortcuts", "print");
+  const status: boolean = usePermission("shortcut", "create", "status");
+  const isDefault: boolean = usePermission("shortcut", "create", "isDefault");
+  const canPdf: boolean = usePermission("shortcut", "pdf");
+  const canPrint: boolean = usePermission("shortcut", "print");
 
   // Form state
   const [formData, setFormData] = useState<ShortcutData>({
@@ -122,9 +122,9 @@ export default function ShortcutFormPage({ isEdit = false }: Props) {
       ),
       onClick: () => {
         if (isEdit) {
-          navigate("/shortcuts/create");
+          navigate("/shortcut/create");
         } else {
-          navigate("/shortcuts/edit/undefined");
+          navigate("/shortcut/edit/undefined");
         }
       },
       show: canCreate,
@@ -133,7 +133,7 @@ export default function ShortcutFormPage({ isEdit = false }: Props) {
       label: "View",
       icon: <Eye className="w-5 h-5 text-green-600" />,
       onClick: () => {
-        navigate("/shortcuts/view");
+        navigate("/shortcut/view");
       },
       show: canView,
     },
@@ -175,7 +175,7 @@ export default function ShortcutFormPage({ isEdit = false }: Props) {
       handleReset();
     } else {
       toastSuccess("Shortcut created successfully!");
-      navigate("/shortcuts");
+      navigate("/shortcut");
     }
   };
 
@@ -317,12 +317,12 @@ export default function ShortcutFormPage({ isEdit = false }: Props) {
         moduleName={isEdit ? "Edit Shortcut" : "Adding Shortcut"}
         moduleRoute={
           isEdit
-            ? `/shortcuts/edit/${formData.title || "new"}`
-            : "/shortcuts/create"
+            ? `/shortcut/edit/${formData.title || "new"}`
+            : "/shortcut/create"
         }
         onMinimize={handleMinimize}
         title={isEdit ? "Edit Shortcut" : "Add Shortcut"}
-        listPath="shortcuts"
+        listPath="shortcut"
         popoverOptions={popoverOptions}
         videoSrc={video}
         videoHeader="Tutorial video"
@@ -333,7 +333,7 @@ export default function ShortcutFormPage({ isEdit = false }: Props) {
         printEnabled={printEnabled}
         onPrintToggle={canPrint ? handleSwitchChange : undefined}
         activePage="create"
-        module="shortcuts"
+        module="shortcut"
         additionalFooterButtons={
           canCreate ? (
             <div className="flex gap-4 max-[435px]:gap-2">

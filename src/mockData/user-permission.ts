@@ -11077,7 +11077,7 @@ export const userPermission = {
         },
       },
     },
-    shortcuts: {
+    shortcut: {
       formPermissions: {
         create: true,
         view: true,

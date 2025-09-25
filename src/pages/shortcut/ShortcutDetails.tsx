@@ -17,58 +17,54 @@ import { ResetFormModal } from "@/components/common/ResetFormModal";
 import { usePermission } from "@/hooks/usePermissions";
 import MinimizablePageLayout from "@/components/MinimizablePageLayout";
 
-const MOCK_SLIDERS = [
+const MOCK_SHORTCUTS = [
   {
     id: "1",
-    titleEn: "Welcome to Our Platform",
-    titleAr: "مرحباً بكم في منصتنا",
-    topTitleEn: "Get Started",
-    topTitleAr: "ابدأ الآن",
-    keyTagsEn: "Welcome, Platform, Introduction",
-    keyTagsAr: "ترحيب، منصة، مقدمة",
-    bannerType: "Hero",
-    bannerEn: "hero-banner-en.jpg",
-    bannerAr: "hero-banner-ar.jpg",
+    indexName: "Dashboard",
+    title: "Dashboard",
+    titleValue: "Main Dashboard",
+    fontAwesomeIcon: "fas fa-tachometer-alt",
     status: "Active",
   },
   {
     id: "2",
-    titleEn: "Premium Services",
-    titleAr: "خدمات متميزة",
-    topTitleEn: "Quality First",
-    topTitleAr: "الجودة أولاً",
-    keyTagsEn: "Premium, Quality, Services",
-    keyTagsAr: "متميز، جودة، خدمات",
-    bannerType: "Service",
-    bannerEn: "service-banner-en.jpg",
-    bannerAr: "service-banner-ar.jpg",
+    indexName: "Users",
+    title: "User Management",
+    titleValue: "Manage Users",
+    fontAwesomeIcon: "fas fa-users",
     status: "Active",
   },
   {
     id: "3",
-    titleEn: "Latest Technology",
-    titleAr: "أحدث التقنيات",
-    topTitleEn: "Innovation",
-    topTitleAr: "الابتكار",
-    keyTagsEn: "Technology, Innovation, Modern",
-    keyTagsAr: "تقنية، ابتكار، حديث",
-    bannerType: "Tech",
-    bannerEn: "tech-banner-en.jpg",
-    bannerAr: "tech-banner-ar.jpg",
+    indexName: "Settings",
+    title: "Settings",
+    titleValue: "System Settings",
+    fontAwesomeIcon: "fas fa-cog",
     status: "Draft",
   },
   {
     id: "4",
-    titleEn: "Customer Support",
-    titleAr: "دعم العملاء",
-    topTitleEn: "24/7 Help",
-    topTitleAr: "مساعدة 24/7",
-    keyTagsEn: "Support, Help, Customer",
-    keyTagsAr: "دعم، مساعدة، عميل",
-    bannerType: "Support",
-    bannerEn: "support-banner-en.jpg",
-    bannerAr: "support-banner-ar.jpg",
+    indexName: "Reports",
+    title: "Reports",
+    titleValue: "View Reports",
+    fontAwesomeIcon: "fas fa-chart-bar",
     status: "InActive",
+  },
+  {
+    id: "5",
+    indexName: "Profile",
+    title: "User Profile",
+    titleValue: "Manage Profile",
+    fontAwesomeIcon: "fas fa-user",
+    status: "Active",
+  },
+  {
+    id: "6",
+    indexName: "Help",
+    title: "Help Center",
+    titleValue: "Get Help",
+    fontAwesomeIcon: "fas fa-question-circle",
+    status: "Active",
   },
 ];
 
@@ -86,13 +82,13 @@ export type HistoryEntry = {
   print: boolean;
 };
 
-export default function SliderDetailsPage() {
+export default function ShortcutDetailsPage() {
   // const { t } = useTranslation();
   const navigate = useNavigate();
 
   const [keepChanges, setKeepChanges] = useState(false);
   const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
-  const [selectedSlider, setSelectedSlider] = useState("1");
+  const [selectedShortcut, setSelectedShortcut] = useState("1");
   const location = useLocation();
   const isViewPage = location.pathname.includes("/view");
   const [pdfChecked, setPdfChecked] = useState(false);
@@ -103,44 +99,30 @@ export default function SliderDetailsPage() {
   // const { canCreate, canView, canEdit, canDelete } = useUserMasterPermissions();
 
   // Field-level permissions
-  const canPdf: boolean = usePermission("sliders", "pdf");
-  const canPrint: boolean = usePermission("sliders", "print");
-  const canSeeHistory: boolean = usePermission("sliders", "history");
+  const canPdf: boolean = usePermission("shortcut", "pdf");
+  const canPrint: boolean = usePermission("shortcut", "print");
+  const canSeeHistory: boolean = usePermission("shortcut", "history");
 
-  let sliderData = {
-    id: selectedSlider,
-    titleEn:
-      MOCK_SLIDERS.find((s) => s.id === selectedSlider)?.titleEn ||
-      "Welcome to Our Platform",
-    titleAr:
-      MOCK_SLIDERS.find((s) => s.id === selectedSlider)?.titleAr ||
-      "مرحباً بكم في منصتنا",
-    topTitleEn:
-      MOCK_SLIDERS.find((s) => s.id === selectedSlider)?.topTitleEn ||
-      "Get Started",
-    topTitleAr:
-      MOCK_SLIDERS.find((s) => s.id === selectedSlider)?.topTitleAr ||
-      "ابدأ الآن",
-    keyTagsEn:
-      MOCK_SLIDERS.find((s) => s.id === selectedSlider)?.keyTagsEn ||
-      "Welcome, Platform, Introduction",
-    keyTagsAr:
-      MOCK_SLIDERS.find((s) => s.id === selectedSlider)?.keyTagsAr ||
-      "ترحيب، منصة، مقدمة",
-    bannerType:
-      MOCK_SLIDERS.find((s) => s.id === selectedSlider)?.bannerType || "Hero",
-    bannerEn:
-      MOCK_SLIDERS.find((s) => s.id === selectedSlider)?.bannerEn ||
-      "hero-banner-en.jpg",
-    bannerAr:
-      MOCK_SLIDERS.find((s) => s.id === selectedSlider)?.bannerAr ||
-      "hero-banner-ar.jpg",
+  let shortcutData = {
+    id: selectedShortcut,
+    indexName:
+      MOCK_SHORTCUTS.find((s) => s.id === selectedShortcut)?.indexName ||
+      "Dashboard",
+    title:
+      MOCK_SHORTCUTS.find((s) => s.id === selectedShortcut)?.title ||
+      "Dashboard",
+    titleValue:
+      MOCK_SHORTCUTS.find((s) => s.id === selectedShortcut)?.titleValue ||
+      "Main Dashboard",
+    fontAwesomeIcon:
+      MOCK_SHORTCUTS.find((s) => s.id === selectedShortcut)?.fontAwesomeIcon ||
+      "fas fa-tachometer-alt",
     isDefault: true,
     isActive: true,
     isDraft: false,
     isDeleted: false,
     status:
-      MOCK_SLIDERS.find((s) => s.id === selectedSlider)?.status || "Active",
+      MOCK_SHORTCUTS.find((s) => s.id === selectedShortcut)?.status || "Active",
     createdAt: "2023-05-15T10:30:00Z",
     updatedAt: "2025-01-15T14:30:00Z",
     draftedAt: "2025-05-20T14:45:00Z",
@@ -156,17 +138,12 @@ export default function SliderDetailsPage() {
     }
     console.log("isViewPage", isViewPage);
     if (isViewPage) {
-      sliderData = {
-        id: selectedSlider,
-        titleEn: "",
-        titleAr: "",
-        topTitleEn: "",
-        topTitleAr: "",
-        keyTagsEn: "",
-        keyTagsAr: "",
-        bannerType: "",
-        bannerEn: "",
-        bannerAr: "",
+      shortcutData = {
+        id: selectedShortcut,
+        indexName: "",
+        title: "",
+        titleValue: "",
+        fontAwesomeIcon: "",
         isDefault: true,
         isActive: true,
         isDraft: false,
@@ -180,23 +157,18 @@ export default function SliderDetailsPage() {
     }
   }, []);
 
-  const handlePrintSlider = (slider: any) => {
+  const handlePrintShortcut = (shortcut: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "Slider Master Details",
-        data: [slider],
+        title: "Shortcut Master Details",
+        data: [shortcut],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
-          titleEn: "Title (EN)",
-          titleAr: "Title (AR)",
-          topTitleEn: "Top Title (EN)",
-          topTitleAr: "Top Title (AR)",
-          keyTagsEn: "Key Tags (EN)",
-          keyTagsAr: "Key Tags (AR)",
-          bannerType: "Banner Type",
-          bannerEn: "Banner (EN)",
-          bannerAr: "Banner (AR)",
-          isDefault: "Default Slider",
+          indexName: "Index Name",
+          title: "Title",
+          titleValue: "Title Value",
+          fontAwesomeIcon: "Font Awesome Icon",
+          isDefault: "Default Shortcut",
           isActive: "Active Status",
           isDraft: "Draft Status",
           isDeleted: "Deleted Status",
@@ -225,19 +197,19 @@ export default function SliderDetailsPage() {
   const handleExportPDF = async () => {
     console.log("Export PDF clicked");
     try {
-      console.log("sliderData on pdf click", sliderData);
+      console.log("shortcutData on pdf click", shortcutData);
       const blob = await pdf(
         <GenericPDF
-          data={[sliderData]}
-          title="Slider Master Details"
-          subtitle="Slider Information"
+          data={[shortcutData]}
+          title="Shortcut Master Details"
+          subtitle="Shortcut Information"
         />
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "slider-details.pdf";
+      a.download = "shortcut-details.pdf";
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
@@ -281,25 +253,25 @@ export default function SliderDetailsPage() {
   return (
     <>
       <MinimizablePageLayout
-        moduleId="slider-details-module"
-        moduleName="Slider Details"
-        moduleRoute="/sliders/view"
-        title="Viewing Slider"
+        moduleId="shortcut-details-module"
+        moduleName="Shortcut Details"
+        moduleRoute="/shortcut/view"
+        title="Viewing Shortcut"
         videoSrc={video}
         videoHeader="Tutorial video"
-        listPath="sliders"
+        listPath="shortcut"
         activePage="view"
-        module="sliders"
+        module="shortcut"
         popoverOptions={[
           {
             label: "Create",
             icon: <Plus className="w-5 h-5 text-green-600" />,
-            onClick: () => navigate("/sliders/create"),
+            onClick: () => navigate("/shortcut/create"),
           },
           {
             label: "Edit",
             icon: <Edit className="w-5 h-5 text-blue-600" />,
-            onClick: () => navigate("/sliders/edit/1"),
+            onClick: () => navigate("/shortcut/edit/1"),
           },
         ]}
         keepChanges={keepChanges}
@@ -323,115 +295,74 @@ export default function SliderDetailsPage() {
                   handleExportPDF();
                 }
                 if (printEnabled) {
-                  handlePrintSlider(sliderData);
+                  handlePrintShortcut(shortcutData);
                 }
               }
             : undefined
         }
       >
-        {/* Row 1: Slider Selection, Title En, Title Ar, Top Title En */}
+        {/* Row 1: Shortcut Selection, Index Name, Title, Title Value */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
           <div className="mt-1">
             <Autocomplete
-              options={MOCK_SLIDERS}
-              value={selectedSlider}
-              onValueChange={setSelectedSlider}
+              options={MOCK_SHORTCUTS}
+              value={selectedShortcut}
+              onValueChange={setSelectedShortcut}
               placeholder=" "
-              displayKey="titleEn"
+              displayKey="title"
               valueKey="id"
-              searchKey="titleEn"
+              searchKey="title"
               disabled={false}
               className="w-[96%] bg-gray-100 rounded-xl"
               labelClassName="bg-gray-50 rounded-2xl"
-              labelText="Slider Title"
+              labelText="Shortcut Title"
               isShowTemplateIcon={false}
             />
           </div>
 
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Title (EN)</h3>
+              <h3 className="font-normal text-gray-600">Index Name</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(sliderData.titleEn)}
+              {displayValue(shortcutData.indexName)}
             </div>
           </div>
 
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Title (AR)</h3>
+              <h3 className="font-normal text-gray-600">Title</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(sliderData.titleAr)}
+              {displayValue(shortcutData.title)}
             </div>
           </div>
 
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Top Title (EN)</h3>
+              <h3 className="font-normal text-gray-600">Title Value</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(sliderData.topTitleEn)}
-            </div>
-          </div>
-        </div>
-
-        {/* Row 2: Top Title Ar, Key Tags En, Key Tags Ar, Banner Type */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-          <div className="">
-            <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Top Title (AR)</h3>
-            </div>
-            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(sliderData.topTitleAr)}
-            </div>
-          </div>
-
-          <div className="">
-            <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Key Tags (EN)</h3>
-            </div>
-            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(sliderData.keyTagsEn)}
-            </div>
-          </div>
-
-          <div className="">
-            <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Key Tags (AR)</h3>
-            </div>
-            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(sliderData.keyTagsAr)}
-            </div>
-          </div>
-
-          <div className="">
-            <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Banner Type</h3>
-            </div>
-            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(sliderData.bannerType)}
+              {displayValue(shortcutData.titleValue)}
             </div>
           </div>
         </div>
 
-        {/* Row 3: Banner En, Banner Ar, Status, Default */}
+        {/* Row 2: Font Awesome Icon, Status, Default, Action */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Banner (EN)</h3>
+              <h3 className="font-normal text-gray-600">Font Awesome Icon</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(sliderData.bannerEn)}
-            </div>
-          </div>
-
-          <div className="">
-            <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Banner (AR)</h3>
-            </div>
-            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(sliderData.bannerAr)}
+              <i
+                className={`${displayValue(
+                  shortcutData.fontAwesomeIcon
+                )} text-blue-500 text-lg`}
+              ></i>
+              <span className="ml-2">
+                {displayValue(shortcutData.fontAwesomeIcon)}
+              </span>
             </div>
           </div>
 
@@ -440,7 +371,7 @@ export default function SliderDetailsPage() {
               <h3 className="font-normal text-gray-600">Status</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(sliderData.status)}
+              {displayValue(shortcutData.status)}
             </div>
           </div>
 
@@ -450,7 +381,7 @@ export default function SliderDetailsPage() {
                 <span className="text-[15px] text-gray-600">Default</span>
               </div>
               <div className="">
-                {sliderData.isDefault ? (
+                {shortcutData.isDefault ? (
                   <span className="text-black text-[15px]">Yes</span>
                 ) : (
                   <span className="text-black text-[15px]">No</span>
@@ -458,10 +389,7 @@ export default function SliderDetailsPage() {
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Row 4: Action */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
           <div className="">
             <h3 className="font-normal mb-1 text-gray-600">Action</h3>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
@@ -478,10 +406,10 @@ export default function SliderDetailsPage() {
         columnData={mockHistoryData}
         title="History"
         statusInfo={{
-          created: getRelativeTime(sliderData.createdAt),
-          updated: getRelativeTime(sliderData.updatedAt),
-          drafted: getRelativeTime(sliderData.draftedAt),
-          deleted: getRelativeTime(sliderData.deletedAt),
+          created: getRelativeTime(shortcutData.createdAt),
+          updated: getRelativeTime(shortcutData.updatedAt),
+          drafted: getRelativeTime(shortcutData.draftedAt),
+          deleted: getRelativeTime(shortcutData.deletedAt),
         }}
       />
 

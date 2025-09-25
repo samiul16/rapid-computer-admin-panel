@@ -435,7 +435,7 @@ export default function ShortcutDataTable({
       setViewMode={setViewMode}
       componentColumns={componentColumns}
       fixedColumns={["indexName", "title"]}
-      pathName="shortcuts"
+      pathName="shortcut"
       setShowExport={setShowExport}
       showExport={showExport}
       setShowFilter={setShowFilter}

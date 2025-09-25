@@ -19,16 +19,11 @@ import { useMinimizedModuleData } from "@/hooks/useMinimizedModuleData";
 import { SwitchSelect } from "@/components/common/SwitchAutoComplete";
 import { ActionsAutocomplete } from "@/components/common/ActionsAutocomplete";
 
-type SliderData = {
-  titleEn: string;
-  titleAr: string;
-  topTitleEn: string;
-  topTitleAr: string;
-  keyTagsEn: string;
-  keyTagsAr: string;
-  bannerType: string;
-  bannerEn: string;
-  bannerAr: string;
+type ShortcutData = {
+  indexName: string;
+  title: string;
+  titleValue: string;
+  fontAwesomeIcon: string;
   status: "active" | "inactive" | "draft" | "deleted";
   isDefault: boolean;
   isActive: boolean;
@@ -40,8 +35,8 @@ type SliderData = {
   deletedAt: Date | null;
 };
 
-type SliderModuleData = {
-  formData: SliderData;
+type ShortcutModuleData = {
+  formData: ShortcutData;
   hasChanges: boolean;
   scrollPosition: number;
 };
@@ -50,16 +45,11 @@ type Props = {
   isEdit?: boolean;
 };
 
-const initialData: SliderData = {
-  titleEn: "Welcome to Our Platform",
-  titleAr: "مرحباً بكم في منصتنا",
-  topTitleEn: "Get Started",
-  topTitleAr: "ابدأ الآن",
-  keyTagsEn: "Welcome, Platform, Introduction",
-  keyTagsAr: "ترحيب، منصة، مقدمة",
-  bannerType: "Hero",
-  bannerEn: "hero-banner-en.jpg",
-  bannerAr: "hero-banner-ar.jpg",
+const initialData: ShortcutData = {
+  indexName: "Dashboard",
+  title: "Dashboard",
+  titleValue: "Main Dashboard",
+  fontAwesomeIcon: "fas fa-tachometer-alt",
   status: "active",
   isDefault: false,
   isActive: true,
@@ -71,14 +61,14 @@ const initialData: SliderData = {
   deletedAt: null,
 };
 
-export default function SliderEditPage({ isEdit = true }: Props) {
+export default function ShortcutEditPage({ isEdit = true }: Props) {
   const navigate = useNavigate();
   const { id } = useParams();
   // const labels = useLanguageLabels();
   const { isRTL } = useAppSelector((state) => state.language);
 
   // Get module ID for this edit page
-  const moduleId = `slider-edit-module-${id || "new"}`;
+  const moduleId = `shortcut-edit-module-${id || "new"}`;
 
   // Use the custom hook for minimized module data
   const {
@@ -86,7 +76,7 @@ export default function SliderEditPage({ isEdit = true }: Props) {
     hasMinimizedData,
     resetModuleData,
     getModuleScrollPosition,
-  } = useMinimizedModuleData<SliderModuleData>(moduleId);
+  } = useMinimizedModuleData<ShortcutModuleData>(moduleId);
 
   const [keepCreating, setKeepCreating] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
@@ -107,31 +97,25 @@ export default function SliderEditPage({ isEdit = true }: Props) {
   const { canCreate, canView } = useColorsPermissions();
 
   // Field-level permissions
-  const titleEn: boolean = usePermission("sliders", "edit", "titleEn");
-  const titleAr: boolean = usePermission("sliders", "edit", "titleAr");
-  const topTitleEn: boolean = usePermission("sliders", "edit", "topTitleEn");
-  const topTitleAr: boolean = usePermission("sliders", "edit", "topTitleAr");
-  const keyTagsEn: boolean = usePermission("sliders", "edit", "keyTagsEn");
-  const keyTagsAr: boolean = usePermission("sliders", "edit", "keyTagsAr");
-  const bannerType: boolean = usePermission("sliders", "edit", "bannerType");
-  const bannerEn: boolean = usePermission("sliders", "edit", "bannerEn");
-  const bannerAr: boolean = usePermission("sliders", "edit", "bannerAr");
-  const status: boolean = usePermission("sliders", "edit", "status");
-  const isDefault: boolean = usePermission("sliders", "edit", "isDefault");
-  const canPdf: boolean = usePermission("sliders", "pdf");
-  const canPrint: boolean = usePermission("sliders", "print");
+  const indexName: boolean = usePermission("shortcut", "edit", "indexName");
+  const title: boolean = usePermission("shortcut", "edit", "title");
+  const titleValue: boolean = usePermission("shortcut", "edit", "titleValue");
+  const fontAwesomeIcon: boolean = usePermission(
+    "shortcut",
+    "edit",
+    "fontAwesomeIcon"
+  );
+  const status: boolean = usePermission("shortcut", "edit", "status");
+  const isDefault: boolean = usePermission("shortcut", "edit", "isDefault");
+  const canPdf: boolean = usePermission("shortcut", "pdf");
+  const canPrint: boolean = usePermission("shortcut", "print");
 
   // Form state
-  const [formData, setFormData] = useState<SliderData>({
-    titleEn: "",
-    titleAr: "",
-    topTitleEn: "",
-    topTitleAr: "",
-    keyTagsEn: "",
-    keyTagsAr: "",
-    bannerType: "",
-    bannerEn: "",
-    bannerAr: "",
+  const [formData, setFormData] = useState<ShortcutData>({
+    indexName: "",
+    title: "",
+    titleValue: "",
+    fontAwesomeIcon: "",
     status: "active",
     isDefault: false,
     isActive: true,
@@ -168,7 +152,7 @@ export default function SliderEditPage({ isEdit = true }: Props) {
       (hasMinimizedData &&
         moduleData?.formData &&
         !isRestoredFromMinimized &&
-        !formData.titleEn);
+        !formData.title);
 
     if (hasMinimizedData && moduleData?.formData && shouldAutoRestore) {
       setFormData(moduleData.formData);
@@ -192,7 +176,7 @@ export default function SliderEditPage({ isEdit = true }: Props) {
     moduleData,
     isRestoredFromMinimized,
     shouldRestoreFromMinimized,
-    formData.titleEn,
+    formData.title,
     moduleId,
     getModuleScrollPosition,
   ]);
@@ -214,7 +198,7 @@ export default function SliderEditPage({ isEdit = true }: Props) {
     hasMinimizedData,
     isRestoredFromMinimized,
     moduleId,
-    formData.titleEn,
+    formData.title,
   ]);
 
   // Handle form field changes
@@ -235,31 +219,26 @@ export default function SliderEditPage({ isEdit = true }: Props) {
       await handleExportPDF();
     }
     if (printEnabled) {
-      handlePrintSlider(formData);
+      handlePrintShortcut(formData);
     }
 
     // keep switch functionality
     if (keepCreating) {
-      toastSuccess("Slider updated successfully!");
+      toastSuccess("Shortcut updated successfully!");
       handleReset();
     } else {
-      toastSuccess("Slider updated successfully!");
-      navigate("/sliders");
+      toastSuccess("Shortcut updated successfully!");
+      navigate("/shortcut");
     }
   };
 
   // Update handleReset function to use the custom hook
   const handleReset = async () => {
     setFormData({
-      titleEn: "",
-      titleAr: "",
-      topTitleEn: "",
-      topTitleAr: "",
-      keyTagsEn: "",
-      keyTagsAr: "",
-      bannerType: "",
-      bannerEn: "",
-      bannerAr: "",
+      indexName: "",
+      title: "",
+      titleValue: "",
+      fontAwesomeIcon: "",
       status: "active",
       isDefault: false,
       isActive: true,
@@ -292,7 +271,7 @@ export default function SliderEditPage({ isEdit = true }: Props) {
 
     // Focus the first input field after reset
     setTimeout(() => {
-      inputRefs.current["titleEn"]?.focus();
+      inputRefs.current["indexName"]?.focus();
     }, 100);
   };
 
@@ -300,24 +279,19 @@ export default function SliderEditPage({ isEdit = true }: Props) {
     setIsResetModalOpen(true);
   };
 
-  const handlePrintSlider = (sliderData: any) => {
+  const handlePrintShortcut = (shortcutData: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "Slider Details",
-        data: [sliderData],
+        title: "Shortcut Details",
+        data: [shortcutData],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
-          titleEn: "Title (EN)",
-          titleAr: "Title (AR)",
-          topTitleEn: "Top Title (EN)",
-          topTitleAr: "Top Title (AR)",
-          keyTagsEn: "Key Tags (EN)",
-          keyTagsAr: "Key Tags (AR)",
-          bannerType: "Banner Type",
-          bannerEn: "Banner (EN)",
-          bannerAr: "Banner (AR)",
+          indexName: "Index Name",
+          title: "Title",
+          titleValue: "Title Value",
+          fontAwesomeIcon: "Font Awesome Icon",
           status: "Status",
-          isDefault: "Default Slider",
+          isDefault: "Default Shortcut",
           isActive: "Active Status",
           isDraft: "Draft Status",
           isDeleted: "Deleted Status",
@@ -347,15 +321,15 @@ export default function SliderEditPage({ isEdit = true }: Props) {
       const blob = await pdf(
         <GenericPDF
           data={[formData]}
-          title="Slider Details"
-          subtitle="Slider Information"
+          title="Shortcut Details"
+          subtitle="Shortcut Information"
         />
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "slider-details.pdf";
+      a.download = "shortcut-details.pdf";
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
@@ -369,7 +343,7 @@ export default function SliderEditPage({ isEdit = true }: Props) {
       label: "Create",
       icon: <Plus className="w-5 h-5 text-green-500" />,
       onClick: () => {
-        navigate("/sliders/create");
+        navigate("/shortcut/create");
       },
       show: canCreate,
     },
@@ -377,7 +351,7 @@ export default function SliderEditPage({ isEdit = true }: Props) {
       label: "View",
       icon: <Eye className="w-5 h-5 text-green-600" />,
       onClick: () => {
-        navigate("/sliders/view");
+        navigate("/shortcut/view");
       },
       show: canView,
     },
@@ -400,7 +374,7 @@ export default function SliderEditPage({ isEdit = true }: Props) {
                 ...prev,
                 isDraft: true,
               }));
-              toastRestore("Slider saved as draft successfully");
+              toastRestore("Shortcut saved as draft successfully");
             },
             show: canCreate,
           },
@@ -411,7 +385,7 @@ export default function SliderEditPage({ isEdit = true }: Props) {
   }, [formData.isDraft, canCreate]);
 
   // Create minimize handler using the custom hook
-  const handleMinimize = useCallback((): SliderModuleData => {
+  const handleMinimize = useCallback((): ShortcutModuleData => {
     return {
       formData,
       hasChanges: true,
@@ -423,11 +397,11 @@ export default function SliderEditPage({ isEdit = true }: Props) {
     <>
       <MinimizablePageLayout
         moduleId={moduleId}
-        moduleName={`Edit Slider`}
-        moduleRoute={`/sliders/edit/${id || "new"}`}
+        moduleName={`Edit Shortcut`}
+        moduleRoute={`/shortcut/edit/${id || "new"}`}
         onMinimize={handleMinimize}
-        title="Edit Slider"
-        listPath="sliders"
+        title="Edit Shortcut"
+        listPath="shortcut"
         popoverOptions={popoverOptions}
         videoSrc={video}
         videoHeader="Tutorial video"
@@ -438,7 +412,7 @@ export default function SliderEditPage({ isEdit = true }: Props) {
         printEnabled={printEnabled}
         onPrintToggle={canPrint ? handleSwitchChange : undefined}
         activePage="edit"
-        module="sliders"
+        module="shortcut"
         additionalFooterButtons={
           canCreate ? (
             <div className="flex gap-4 max-[435px]:gap-2">
@@ -468,182 +442,87 @@ export default function SliderEditPage({ isEdit = true }: Props) {
             onSubmit={handleSubmit}
             className="space-y-6"
           >
-            {/* First Row: Title En, Title Ar, Top Title En, Top Title Ar */}
+            {/* First Row: Index Name, Title, Title Value, Font Awesome Icon */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
-              {/* Title En field - only show if user can edit */}
-              {titleEn && (
+              {/* Index Name field - only show if user can edit */}
+              {indexName && (
                 <div className="space-y-2">
                   <EditableInput
-                    setRef={setRef("titleEn")}
-                    id="titleEn"
-                    name="titleEn"
-                    value={formData.titleEn}
+                    setRef={setRef("indexName")}
+                    id="indexName"
+                    name="indexName"
+                    value={formData.indexName}
                     onChange={handleChange}
-                    onNext={() => focusNextInput("titleAr")}
-                    onCancel={() => setFormData({ ...formData, titleEn: "" })}
-                    labelText="Title (EN)"
-                    tooltipText="Enter the English title"
+                    onNext={() => focusNextInput("title")}
+                    onCancel={() => setFormData({ ...formData, indexName: "" })}
+                    labelText="Index Name"
+                    tooltipText="Enter the index name for the shortcut"
                     required
                   />
                 </div>
               )}
 
-              {/* Title Ar field - only show if user can edit */}
-              {titleAr && (
+              {/* Title field - only show if user can edit */}
+              {title && (
                 <div className="space-y-2">
                   <EditableInput
-                    setRef={setRef("titleAr")}
-                    id="titleAr"
-                    name="titleAr"
-                    value={formData.titleAr}
+                    setRef={setRef("title")}
+                    id="title"
+                    name="title"
+                    value={formData.title}
                     onChange={handleChange}
-                    onNext={() => focusNextInput("topTitleEn")}
-                    onCancel={() => setFormData({ ...formData, titleAr: "" })}
-                    labelText="Title (AR)"
-                    tooltipText="Enter the Arabic title"
+                    onNext={() => focusNextInput("titleValue")}
+                    onCancel={() => setFormData({ ...formData, title: "" })}
+                    labelText="Title"
+                    tooltipText="Enter the shortcut title"
                     required
                   />
                 </div>
               )}
 
-              {/* Top Title En field - only show if user can edit */}
-              {topTitleEn && (
+              {/* Title Value field - only show if user can edit */}
+              {titleValue && (
                 <div className="space-y-2">
                   <EditableInput
-                    setRef={setRef("topTitleEn")}
-                    id="topTitleEn"
-                    name="topTitleEn"
-                    value={formData.topTitleEn}
+                    setRef={setRef("titleValue")}
+                    id="titleValue"
+                    name="titleValue"
+                    value={formData.titleValue}
                     onChange={handleChange}
-                    onNext={() => focusNextInput("topTitleAr")}
+                    onNext={() => focusNextInput("fontAwesomeIcon")}
                     onCancel={() =>
-                      setFormData({ ...formData, topTitleEn: "" })
+                      setFormData({ ...formData, titleValue: "" })
                     }
-                    labelText="Top Title (EN)"
-                    tooltipText="Enter the English top title"
+                    labelText="Title Value"
+                    tooltipText="Enter the title value"
                     required
                   />
                 </div>
               )}
 
-              {/* Top Title Ar field - only show if user can edit */}
-              {topTitleAr && (
+              {/* Font Awesome Icon field - only show if user can edit */}
+              {fontAwesomeIcon && (
                 <div className="space-y-2">
                   <EditableInput
-                    setRef={setRef("topTitleAr")}
-                    id="topTitleAr"
-                    name="topTitleAr"
-                    value={formData.topTitleAr}
-                    onChange={handleChange}
-                    onNext={() => focusNextInput("keyTagsEn")}
-                    onCancel={() =>
-                      setFormData({ ...formData, topTitleAr: "" })
-                    }
-                    labelText="Top Title (AR)"
-                    tooltipText="Enter the Arabic top title"
-                    required
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Second Row: Key Tags En, Key Tags Ar, Banner Type, Banner En */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
-              {/* Key Tags En field - only show if user can edit */}
-              {keyTagsEn && (
-                <div className="space-y-2">
-                  <EditableInput
-                    setRef={setRef("keyTagsEn")}
-                    id="keyTagsEn"
-                    name="keyTagsEn"
-                    value={formData.keyTagsEn}
-                    onChange={handleChange}
-                    onNext={() => focusNextInput("keyTagsAr")}
-                    onCancel={() => setFormData({ ...formData, keyTagsEn: "" })}
-                    labelText="Key Tags (EN)"
-                    tooltipText="Enter English key tags (comma separated)"
-                    required
-                  />
-                </div>
-              )}
-
-              {/* Key Tags Ar field - only show if user can edit */}
-              {keyTagsAr && (
-                <div className="space-y-2">
-                  <EditableInput
-                    setRef={setRef("keyTagsAr")}
-                    id="keyTagsAr"
-                    name="keyTagsAr"
-                    value={formData.keyTagsAr}
-                    onChange={handleChange}
-                    onNext={() => focusNextInput("bannerType")}
-                    onCancel={() => setFormData({ ...formData, keyTagsAr: "" })}
-                    labelText="Key Tags (AR)"
-                    tooltipText="Enter Arabic key tags (comma separated)"
-                    required
-                  />
-                </div>
-              )}
-
-              {/* Banner Type field - only show if user can edit */}
-              {bannerType && (
-                <div className="space-y-2">
-                  <EditableInput
-                    setRef={setRef("bannerType")}
-                    id="bannerType"
-                    name="bannerType"
-                    value={formData.bannerType}
-                    onChange={handleChange}
-                    onNext={() => focusNextInput("bannerEn")}
-                    onCancel={() =>
-                      setFormData({ ...formData, bannerType: "" })
-                    }
-                    labelText="Banner Type"
-                    tooltipText="Enter banner type (e.g., Hero, Service, Tech)"
-                    required
-                  />
-                </div>
-              )}
-
-              {/* Banner En field - only show if user can edit */}
-              {bannerEn && (
-                <div className="space-y-2">
-                  <EditableInput
-                    setRef={setRef("bannerEn")}
-                    id="bannerEn"
-                    name="bannerEn"
-                    value={formData.bannerEn}
-                    onChange={handleChange}
-                    onNext={() => focusNextInput("bannerAr")}
-                    onCancel={() => setFormData({ ...formData, bannerEn: "" })}
-                    labelText="Banner (EN)"
-                    tooltipText="Enter English banner filename"
-                    required
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Third Row: Banner Ar, Status, Default */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
-              {/* Banner Ar field - only show if user can edit */}
-              {bannerAr && (
-                <div className="space-y-2">
-                  <EditableInput
-                    setRef={setRef("bannerAr")}
-                    id="bannerAr"
-                    name="bannerAr"
-                    value={formData.bannerAr}
+                    setRef={setRef("fontAwesomeIcon")}
+                    id="fontAwesomeIcon"
+                    name="fontAwesomeIcon"
+                    value={formData.fontAwesomeIcon}
                     onChange={handleChange}
                     onNext={() => focusNextInput("status")}
-                    onCancel={() => setFormData({ ...formData, bannerAr: "" })}
-                    labelText="Banner (AR)"
-                    tooltipText="Enter Arabic banner filename"
+                    onCancel={() =>
+                      setFormData({ ...formData, fontAwesomeIcon: "" })
+                    }
+                    labelText="Font Awesome Icon"
+                    tooltipText="Enter Font Awesome icon class (e.g., fas fa-home)"
                     required
                   />
                 </div>
               )}
+            </div>
 
+            {/* Second Row: Status, Default, Actions */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
               {/* Status field - only show if user can edit */}
               {status && (
                 <div className="space-y-2">
@@ -657,22 +536,22 @@ export default function SliderEditPage({ isEdit = true }: Props) {
                       {
                         label: "Active",
                         value: "active",
-                        date: "Set active slider",
+                        date: "Set active shortcut",
                       },
                       {
                         label: "Inactive",
                         value: "inactive",
-                        date: "Set inactive slider",
+                        date: "Set inactive shortcut",
                       },
                       {
                         label: "Draft",
                         value: "draft",
-                        date: "Set draft slider",
+                        date: "Set draft shortcut",
                       },
                       {
                         label: "Delete",
                         value: "deleted",
-                        date: "Set delete slider",
+                        date: "Set delete shortcut",
                       },
                     ]}
                     value={formData.status}
@@ -701,7 +580,7 @@ export default function SliderEditPage({ isEdit = true }: Props) {
                         },
                       },
                     }}
-                    tooltipText="Set the slider status"
+                    tooltipText="Set the shortcut status"
                   />
                 </div>
               )}
@@ -718,12 +597,12 @@ export default function SliderEditPage({ isEdit = true }: Props) {
                       {
                         label: "Yes",
                         value: "Yes",
-                        date: "Set default slider",
+                        date: "Set default shortcut",
                       },
                       {
                         label: "No",
                         value: "No",
-                        date: "Remove default slider",
+                        date: "Remove default shortcut",
                       },
                     ]}
                     value={isDefaultState === "Yes" ? "Yes" : "No"}
@@ -750,7 +629,7 @@ export default function SliderEditPage({ isEdit = true }: Props) {
                     placeholder=" "
                     labelText="Default"
                     className="relative"
-                    tooltipText="Set as default slider"
+                    tooltipText="Set as default shortcut"
                   />
                 </div>
               )}
@@ -805,7 +684,7 @@ export default function SliderEditPage({ isEdit = true }: Props) {
                       },
                     },
                   }}
-                  tooltipText="Slider Action History"
+                  tooltipText="Shortcut Action History"
                 />
               </div>
             </div>
