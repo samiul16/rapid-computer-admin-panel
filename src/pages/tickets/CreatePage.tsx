@@ -413,13 +413,23 @@ export default function TicketsCreatePage({ isEdit = false }: Props) {
             onSubmit={handleSubmit}
             className="space-y-6 relative"
           >
-            {/* Dynamic Fields Grid */}
+            {/* Dynamic Fields Grid - Rows 1 & 2 */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
               {formFields.map((field, index) => {
                 if (
                   !permissionsFieldLevel[
                     field.name as keyof typeof permissionsFieldLevel
                   ]
+                ) {
+                  return null;
+                }
+
+                // Skip predefinedReply, description, and tags - they will be rendered separately
+                if (
+                  (field.component === "mutiselect" &&
+                    field.name === "predefinedReply") ||
+                  field.name === "description" ||
+                  field.name === "tags"
                 ) {
                   return null;
                 }
@@ -539,12 +549,6 @@ export default function TicketsCreatePage({ isEdit = false }: Props) {
                 }
 
                 if (field.component === "mutiselect") {
-                  console.log(
-                    "name ",
-                    field.name,
-                    "field.options ",
-                    field.options
-                  );
                   return (
                     <div key={field.name} className="space-y-2 relative">
                       <FloatingMultiSelect
@@ -559,15 +563,9 @@ export default function TicketsCreatePage({ isEdit = false }: Props) {
                             : []
                         }
                         onChange={(selectedOptions) => {
-                          console.log(
-                            "FIrst selected as object",
-                            selectedOptions
-                          );
                           const selectedValues = selectedOptions.map(
                             (o) => o.value
                           );
-
-                          console.log("Selected values 566:", selectedValues);
 
                           setFormData((prev) => ({
                             ...prev,
@@ -583,8 +581,161 @@ export default function TicketsCreatePage({ isEdit = false }: Props) {
 
                 return null;
               })}
+            </div>
 
-              {/* Default field */}
+            {/* Row 3: Description, Tags, and Predefined Reply */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
+              {/* Description - First Column */}
+              {(() => {
+                const descriptionField = formFields.find(
+                  (field) => field.name === "description"
+                );
+                if (
+                  !descriptionField ||
+                  !permissionsFieldLevel[
+                    descriptionField.name as keyof typeof permissionsFieldLevel
+                  ]
+                ) {
+                  return <div></div>; // Empty column placeholder
+                }
+
+                if (descriptionField.component === "input") {
+                  return (
+                    <div key="description" className="space-y-2">
+                      <EditableInput
+                        setRef={setRef("description")}
+                        type={descriptionField.type}
+                        id="description"
+                        name="description"
+                        value={formData.description || ""}
+                        onChange={handleChange}
+                        onNext={() =>
+                          descriptionField.nextFocus &&
+                          focusNextInput(descriptionField.nextFocus)
+                        }
+                        onCancel={() =>
+                          setFormData({ ...formData, description: "" })
+                        }
+                        labelText={descriptionField.label}
+                        tooltipText={descriptionField.tooltip}
+                        required={descriptionField.required}
+                      />
+                    </div>
+                  );
+                }
+                return <div></div>;
+              })()}
+
+              {/* Tags - Second Column */}
+              {(() => {
+                const tagsField = formFields.find(
+                  (field) => field.name === "tags"
+                );
+                if (
+                  !tagsField ||
+                  !permissionsFieldLevel[
+                    tagsField.name as keyof typeof permissionsFieldLevel
+                  ]
+                ) {
+                  return <div></div>; // Empty column placeholder
+                }
+
+                if (tagsField.component === "mutiselect") {
+                  return (
+                    <div key="tags" className="space-y-2 relative">
+                      <FloatingMultiSelect
+                        label={tagsField.label}
+                        data={tagsField.options || []}
+                        value={
+                          formData.tags
+                            ? (formData.tags as string)
+                                .split(",")
+                                .map((s) => s.trim())
+                                .filter(Boolean)
+                            : []
+                        }
+                        onChange={(selectedOptions) => {
+                          const selectedValues = selectedOptions.map(
+                            (o) => o.value
+                          );
+
+                          setFormData((prev) => ({
+                            ...prev,
+                            tags: selectedValues.join(", "),
+                          }));
+
+                          if (tagsField.nextFocus)
+                            focusNextInput(tagsField.nextFocus);
+                        }}
+                      />
+                    </div>
+                  );
+                }
+                return <div></div>;
+              })()}
+
+              {/* Predefined Reply - Takes 2 Columns (3rd and 4th) */}
+              {(() => {
+                const predefinedReplyField = formFields.find(
+                  (field) =>
+                    field.component === "mutiselect" &&
+                    field.name === "predefinedReply"
+                );
+
+                if (
+                  !predefinedReplyField ||
+                  !permissionsFieldLevel[
+                    predefinedReplyField.name as keyof typeof permissionsFieldLevel
+                  ]
+                ) {
+                  return (
+                    <>
+                      <div></div> {/* Empty 3rd column */}
+                      <div></div> {/* Empty 4th column */}
+                    </>
+                  );
+                }
+
+                return (
+                  <div
+                    key="predefinedReply"
+                    className="md:col-span-2 space-y-2 relative"
+                  >
+                    <FloatingMultiSelect
+                      label={predefinedReplyField.label}
+                      data={predefinedReplyField.options || []}
+                      value={
+                        formData[predefinedReplyField.name]
+                          ? (formData[predefinedReplyField.name] as string)
+                              .split(",")
+                              .map((s) => s.trim())
+                              .filter(Boolean)
+                          : []
+                      }
+                      onChange={(selectedOptions) => {
+                        const selectedValues = selectedOptions.map(
+                          (o) => o.value
+                        );
+
+                        setFormData((prev) => ({
+                          ...prev,
+                          [predefinedReplyField.name]:
+                            selectedValues.join(", "),
+                        }));
+
+                        if (predefinedReplyField.nextFocus) {
+                          focusNextInput(predefinedReplyField.nextFocus);
+                        }
+                      }}
+                    />
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* Row 4: Default and Status */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
+              {/* Default field - First Column */}
               {permissionsFieldLevel.isDefault && (
                 <div className="space-y-2 relative">
                   <SwitchSelect
@@ -633,12 +784,10 @@ export default function TicketsCreatePage({ isEdit = false }: Props) {
                   />
                 </div>
               )}
-            </div>
 
-            {/* Status Field */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 my-8 relative">
+              {/* Status Field - Second Column */}
               {permissionsFieldLevel.isDraft && (
-                <div className="md:col-span-3 space-y-2">
+                <div className="space-y-2">
                   <SwitchSelect
                     ref={(el: any) => setRef("status")(el)}
                     id="status"
@@ -678,6 +827,10 @@ export default function TicketsCreatePage({ isEdit = false }: Props) {
                   />
                 </div>
               )}
+
+              {/* Empty columns for spacing */}
+              <div></div>
+              <div></div>
             </div>
 
             {/* Image Upload */}

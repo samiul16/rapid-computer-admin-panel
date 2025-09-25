@@ -235,7 +235,7 @@ const DragAlongCell = ({
         minWidth: `${cell.column.columnDef.minSize || cell.column.getSize()}px`,
         maxWidth: `${cell.column.columnDef.maxSize || "none"}`,
       }}
-      className={`px-4 py-2 whitespace-nowrap border-b border-gray-200 dark:border-gray-700 transition-all duration-200 ${
+      className={`px-4 py-1 whitespace-nowrap border-b border-gray-200 dark:border-gray-700 transition-all duration-200 ${
         isCellSelected ? "ring-1 ring-primary ring-inset" : ""
       } ${
         isFixed
@@ -1527,7 +1527,7 @@ function ColumnFilterHeader({
   };
 
   return (
-    <div className="flex items-center gap-1 group/header justify-between min-w-[150px]">
+    <div className="flex items-center gap-1 group/header justify-between min-w-[30px]">
       <div className="flex-1 flex items-center justify-start text-gray-800 dark:text-white! pr-2">
         <span className="truncate">{title}</span>
       </div>
