@@ -21,7 +21,6 @@ import { initialProperties as TicketsData } from "@/pages/tickets/config/ModuleL
 import { initialProperties as projectContractTypeData } from "@/pages/projectContractType/config/ModuleLevelConfig";
 import { initialProperties as projectStatusData } from "@/pages/project-status/config/ModuleLevelConfig";
 import { initialProperties as blogData } from "@/pages/blog/config/ModuleLevelConfig";
-import { initialProperties as slidersData } from "@/pages/sliders/config/ModuleLevelConfig";
 import { initialProperties as contractData } from "@/pages/contract/config/ModuleLevelConfig";
 import { initialProperties as ticketPrioritiesData } from "@/pages/ticket-priorities/config/ModuleLevelConfig";
 import { initialProperties as garagesData } from "@/pages/garages/config/ModuleLevelConfig";
@@ -2571,65 +2570,6 @@ export const userPermissionDataSpliteVersion = {
     },
     fieldPermissions: {
       ...buildPermissions(blogData),
-
-      isDefault: {
-        view: true,
-        edit: true,
-        create: true,
-      },
-      isDraft: {
-        view: true,
-        edit: true,
-        create: true,
-      },
-      isActive: {
-        view: true,
-        edit: true,
-        create: true,
-      },
-      isDeleted: {
-        view: true,
-        edit: true,
-        create: true,
-      },
-      createdAt: {
-        view: true,
-        edit: false,
-        create: true,
-      },
-      updatedAt: {
-        view: true,
-        edit: false,
-        create: true,
-      },
-      draftedAt: {
-        view: true,
-        edit: false,
-        create: true,
-      },
-      deletedAt: {
-        view: true,
-        edit: false,
-        create: true,
-      },
-    },
-  },
-
-  sliders: {
-    formPermissions: {
-      create: true,
-      view: true,
-      edit: true,
-      delete: true,
-      restore: true,
-      export: true,
-      import: true,
-      pdf: true,
-      print: true,
-      history: true,
-    },
-    fieldPermissions: {
-      ...buildPermissions(slidersData),
 
       isDefault: {
         view: true,

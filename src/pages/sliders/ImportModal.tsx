@@ -98,9 +98,9 @@ export default function CsvImportModal({
             Import
           </DialogTitle>
           <DialogClose asChild>
-            <button className="text-gray-500 hover:text-red-500">
+            {/* <button className="text-gray-500 hover:text-red-500">
               <X className="h-5 w-5" />
-            </button>
+            </button> */}
           </DialogClose>
         </div>
 

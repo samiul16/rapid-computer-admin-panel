@@ -1489,10 +1489,12 @@ import ContactFormPage from "./pages/contact-form/ContactFormPage";
 import ContactFormCreatePage from "./pages/contact-form/CreatePage";
 import ContactFormEditPage from "./pages/contact-form/EditPage";
 import ContactFormDetails from "./pages/contact-form/DetailsPage";
+
 import SlidersPage from "./pages/sliders/SlidersPage";
 import SlidersCreatePage from "./pages/sliders/CreatePage";
 import SlidersEditPage from "./pages/sliders/EditPage";
-import SlidersDetails from "./pages/sliders/DetailsPage";
+import SlidersDetails from "./pages/sliders/SlidersDetails";
+
 import BlogPage from "./pages/blog/BlogPage";
 import BlogCreatePage from "./pages/blog/CreatePage";
 import BlogEditPage from "./pages/blog/EditPage";

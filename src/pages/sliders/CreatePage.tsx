@@ -1,120 +1,128 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import video from "@/assets/videos/test.mp4";
-import { Autocomplete } from "@/components/common/Autocomplete";
 import EditableInput from "@/components/common/EditableInput";
-import PageLayout from "@/components/common/PageLayout";
 import GenericPDF from "@/components/common/pdf";
 import { ResetFormModal } from "@/components/common/ResetFormModal";
 import { Button } from "@/components/ui/button";
-import { usePermission } from "@/hooks/usePermissions";
 import { PrintCommonLayout } from "@/lib/printContents/PrintCommonLayout";
 import { printHtmlContent } from "@/lib/printHtmlContent";
 import { toastError, toastRestore, toastSuccess } from "@/lib/toast";
-import type { RootState } from "@/store";
-import { Modal } from "@mantine/core";
 import { pdf } from "@react-pdf/renderer";
-import { Check, Edit, Eye, Plus, Upload, X } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
-import { useSelector } from "react-redux";
-import { useLocation, useNavigate } from "react-router-dom";
-import {
-  formFields,
-  initialDataWithValue,
-  initialProperties,
-  printConfigFieldLabels,
-  type ModuleCreateEditPageTypes,
-  type ModuleFieldsType,
-} from "./config/ModuleLevelConfig";
-import { getModuleFromPath } from "@/lib/utils";
-import { FloatingMultiSelect } from "@/components/common/FloatingMultiSelect";
+import { Check, Edit, Eye, Plus } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useColorsPermissions, usePermission } from "@/hooks/usePermissions";
+import { useLanguageLabels } from "@/hooks/useLanguageLabels";
+import { useAppSelector } from "@/store/hooks";
+import MinimizablePageLayout from "@/components/MinimizablePageLayout";
+import { SwitchSelect } from "@/components/common/SwitchAutoComplete";
+
+type BrandData = {
+  name: string;
+  code: string;
+  description: string;
+  status: "active" | "inactive" | "draft";
+  isDefault: boolean;
+  isActive: boolean;
+  isDraft: boolean;
+  createdAt: Date | null;
+  draftedAt: Date | null;
+  updatedAt: Date | null;
+  deletedAt: Date | null;
+  isDeleted: boolean;
+};
 
 type Props = {
   isEdit?: boolean;
 };
 
-export default function SlidersCreatePage({ isEdit = false }: Props) {
-  const navigate = useNavigate();
-  const { isRTL } = useSelector((state: RootState) => state.language);
+const initialData: BrandData = {
+  name: "Apex",
+  code: "BRD001",
+  description: "Premium performance brand",
+  status: "active",
+  isDefault: false,
+  isActive: true,
+  isDraft: false,
+  createdAt: new Date(),
+  draftedAt: null,
+  updatedAt: new Date(),
+  deletedAt: null,
+  isDeleted: false,
+};
 
-  const location = useLocation();
+export default function BrandFormPage({ isEdit = false }: Props) {
+  const navigate = useNavigate();
+  const labels = useLanguageLabels();
+  const { isRTL } = useAppSelector((state) => state.language);
 
   const [keepCreating, setKeepCreating] = useState(false);
-  const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
-  const [isDefaultState, setIsDefaultState] = useState<"Yes" | "No">("No");
-  const [isDraftState, setIsDraftState] = useState<"Yes" | "No">("No");
-
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
+  const formRef = useRef<HTMLFormElement>(null);
   const [printEnabled, setPrintEnabled] = useState(false);
   const [pdfChecked, setPdfChecked] = useState(false);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
-
-  const detectedModule = getModuleFromPath(location.pathname);
+  const [formKey, setFormKey] = useState(0);
+  const [isDefaultState, setIsDefaultState] = useState<"Yes" | "No">("No");
 
   // Permission checks
-  const canCreate = usePermission(detectedModule, "create");
-  const canView = usePermission(detectedModule, "view");
-  const canEdit = usePermission(detectedModule, "edit");
-  const canDelete = usePermission(detectedModule, "delete");
-  const canPdf: boolean = usePermission(detectedModule, "pdf");
-  const canPrint: boolean = usePermission(detectedModule, "print");
-
-  console.log("canCreate", canCreate);
-  console.log("canView", canView);
-  console.log("canEdit", canEdit);
-  console.log("canDelete", canDelete);
+  const { canCreate, canView } = useColorsPermissions();
 
   // Field-level permissions
-  const fieldKeys = Object.keys(
-    initialProperties
-  ) as (keyof ModuleFieldsType)[];
-  const permissionsFieldLevel = usePermission<keyof ModuleCreateEditPageTypes>(
-    detectedModule,
-    "create",
-    [...fieldKeys, "isDefault", "isDraft"]
-  );
-
-  console.log("permissionsFieldLevel", permissionsFieldLevel);
+  const name: boolean = usePermission("brands", "create", "name");
+  const code: boolean = usePermission("brands", "create", "code");
+  const description: boolean = usePermission("brands", "create", "description");
+  const status: boolean = usePermission("brands", "create", "status");
+  const isDefault: boolean = usePermission("brands", "create", "isDefault");
+  const canPdf: boolean = usePermission("brands", "pdf");
+  const canPrint: boolean = usePermission("brands", "print");
 
   // Form state
-  const [formData, setFormData] = useState<ModuleCreateEditPageTypes>({
-    ...initialProperties,
-
-    isDefault: isDefaultState === "Yes",
+  const [formData, setFormData] = useState<BrandData>({
+    name: "",
+    code: "",
+    description: "",
+    status: "active",
+    isDefault: false,
+    isActive: true,
     isDraft: false,
+    isDeleted: false,
     createdAt: null,
     draftedAt: null,
     updatedAt: null,
     deletedAt: null,
   });
 
+  // Initialize with edit data if available
+  useEffect(() => {
+    if (isEdit && initialData) {
+      setFormData(initialData);
+      setIsDefaultState(initialData.isDefault ? "Yes" : "No");
+    }
+  }, [isEdit]);
+
   const [popoverOptions, setPopoverOptions] = useState([
     {
       label: isEdit ? "Create" : "Edit",
       icon: isEdit ? (
-        <Plus className="w-5 h-5 text-green-500" /> // Green for Plus
+        <Plus className="w-5 h-5 text-green-500" />
       ) : (
-        <Edit className="w-5 h-5 text-blue-500" /> // Blue for Edit
+        <Edit className="w-5 h-5 text-blue-500" />
       ),
       onClick: () => {
         if (isEdit) {
-          navigate(`${location.pathname}/create`);
+          navigate("/brands/create");
         } else {
-          navigate(`${location.pathname}/edit/undefined`);
+          navigate("/brands/edit/undefined");
         }
       },
-      // Only show if user has permission
       show: canCreate,
     },
     {
       label: "View",
-      icon: <Eye className="w-5 h-5 text-green-600" />, // Added neutral color for Eye
+      icon: <Eye className="w-5 h-5 text-green-600" />,
       onClick: () => {
-        navigate(`${location.pathname}/view`);
+        navigate("/brands/view");
       },
-      // Only show if user has permission
       show: canView,
     },
   ]);
@@ -128,53 +136,34 @@ export default function SlidersCreatePage({ isEdit = false }: Props) {
     inputRefs.current[nextField]?.focus();
   };
 
-  // Initialize with edit data if available
-  useEffect(() => {
-    if (isEdit && initialDataWithValue) {
-      setFormData({
-        ...initialDataWithValue,
-      });
-      setIsDraftState(initialDataWithValue.isDraft ? "Yes" : "No");
-    }
-  }, [isEdit, initialDataWithValue]);
-
   // Handle form field changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
-    setFormData({
+    const newFormData = {
       ...formData,
       [name]: type === "checkbox" ? checked : value,
-    });
+    };
+    setFormData(newFormData);
   };
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
-    // Normal submit logic here (API call)------------
 
     if (pdfChecked) {
       await handleExportPDF();
     }
     if (printEnabled) {
-      handlePrintLeaves(formData);
+      handlePrintBrand(formData);
     }
 
     // keep switch functionality
     if (keepCreating) {
-      toastSuccess(
-        `${location.pathname.split("/")[1]} ${
-          isEdit ? "updated" : "created"
-        } successfully!`
-      );
+      toastSuccess("Brand created successfully!");
       handleReset();
     } else {
-      toastSuccess(
-        `${location.pathname.split("/")[1]} ${
-          isEdit ? "updated" : "created"
-        } successfully!`
-      );
-      navigate(`/${location.pathname.split("/")[1]}`);
+      toastSuccess("Brand created successfully!");
+      navigate("/brands");
     }
   };
 
@@ -182,16 +171,16 @@ export default function SlidersCreatePage({ isEdit = false }: Props) {
     setIsResetModalOpen(true);
   };
 
-  // Add this state
-  const [formKey, setFormKey] = useState(0);
-
-  // Update handleReset function
-  const handleReset = () => {
+  const handleReset = async () => {
     setFormData({
-      ...initialProperties,
-
+      name: "",
+      code: "",
+      description: "",
+      status: "active",
       isDefault: false,
+      isActive: true,
       isDraft: false,
+      isDeleted: false,
       createdAt: new Date(),
       draftedAt: null,
       updatedAt: new Date(),
@@ -208,22 +197,22 @@ export default function SlidersCreatePage({ isEdit = false }: Props) {
 
     // Focus the first input field after reset
     setTimeout(() => {
-      inputRefs.current[fieldKeys[0]]?.focus();
-    }, 100); // Slightly longer delay to ensure re-render is complete
+      inputRefs.current["name"]?.focus();
+    }, 100);
   };
 
-  const formRef = useRef<HTMLFormElement>(null);
-
-  const handlePrintLeaves = (leavesData: any) => {
+  const handlePrintBrand = (brandData: any) => {
     try {
       const html = PrintCommonLayout({
-        title: `${location.pathname.split("/")[1]} Details`,
-        data: [leavesData],
+        title: "Brand Details",
+        data: [brandData],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
-          ...printConfigFieldLabels,
-
-          isDefault: "Default Status",
+          name: "Brand Name",
+          code: "Brand Code",
+          description: "Description",
+          status: "Status",
+          isActive: "Active Status",
           isDraft: "Draft Status",
           isDeleted: "Deleted Status",
           createdAt: "Created At",
@@ -248,29 +237,20 @@ export default function SlidersCreatePage({ isEdit = false }: Props) {
   };
 
   const handleExportPDF = async () => {
-    console.log("Export PDF clicked");
     try {
-      console.log("sampleReceivingData on pdf click", formData);
       const blob = await pdf(
         <GenericPDF
           data={[formData]}
-          title={`${location.pathname.split("/")[1].replace("-", " ")} Details`}
-          subtitle={`${location.pathname
-            .split("/")[1]
-            .replace("-", " ")} Information`}
+          title="Brand Details"
+          subtitle="Brand Information"
         />
       ).toBlob();
 
-      console.log("blob", blob);
-
       const url = URL.createObjectURL(blob);
-      console.log("url", url);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${location.pathname.split("/")[1]}-details.pdf`;
+      a.download = "brand-details.pdf";
       a.click();
-      console.log("a", a);
-      console.log("url", url);
       URL.revokeObjectURL(url);
     } catch (error) {
       console.log(error);
@@ -297,11 +277,9 @@ export default function SlidersCreatePage({ isEdit = false }: Props) {
                 ...prev,
                 isDraft: true,
               }));
-              toastRestore(
-                `${location.pathname.split("/")[1]} saved as draft successfully`
-              );
+              toastRestore("Brand saved as draft successfully");
             },
-            show: canCreate, // Only show draft option if user can create
+            show: canCreate,
           },
         ];
       }
@@ -309,106 +287,53 @@ export default function SlidersCreatePage({ isEdit = false }: Props) {
     });
   }, [formData.isDraft, canCreate]);
 
-  // Handle drag events
-  const handleDragEnter = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-
-    const files = e.dataTransfer.files;
-    if (files && files.length > 0) {
-      handleImageFile(files[0]);
-    }
-  };
-
-  // Handle image file selection
-  const handleImageFile = (file: File) => {
-    if (file.type.match("image.*")) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setImagePreview(e.target?.result as string);
-        setFormData({
-          ...formData,
-          attachment: e.target?.result as string,
-        });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  // Handle image upload via file input
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      handleImageFile(file);
-      setTimeout(() => {
-        focusNextInput("submitButton");
-      }, 0);
-    }
-  };
-
-  // Trigger file input click
-  const triggerFileInput = () => {
-    fileInputRef.current?.click();
-  };
+  // Create minimize handler
+  const handleMinimize = useCallback(() => {
+    return {
+      formData,
+      hasChanges: true,
+      scrollPosition: window.scrollY,
+    };
+  }, [formData]);
 
   return (
     <>
-      <PageLayout
-        title={
-          isEdit
-            ? `${location.pathname.split("/")[1]} Editing`
-            : `${location.pathname.split("/")[1]} Creating`
+      <MinimizablePageLayout
+        moduleId="brand-form-module"
+        moduleName={isEdit ? "Edit Brand" : "Adding Brand"}
+        moduleRoute={
+          isEdit ? `/brands/edit/${formData.name || "new"}` : "/brands/create"
         }
+        onMinimize={handleMinimize}
+        title={isEdit ? "Edit Brand" : "Add Brand"}
+        listPath="brands"
+        popoverOptions={popoverOptions}
         videoSrc={video}
         videoHeader="Tutorial video"
-        listPath={`${location.pathname.split("/")[1]}`}
-        popoverOptions={popoverOptions}
         keepChanges={keepCreating}
         onKeepChangesChange={setKeepCreating}
         pdfChecked={pdfChecked}
         onPdfToggle={canPdf ? handlePDFSwitchChange : undefined}
         printEnabled={printEnabled}
         onPrintToggle={canPrint ? handleSwitchChange : undefined}
-        activePage={isEdit ? "edit" : "create"}
-        // Removed onExport prop
+        activePage="create"
+        module="brands"
         additionalFooterButtons={
-          // Only show buttons if user can create
           canCreate ? (
-            <div className="flex gap-4 items-center">
+            <div className="flex gap-4 max-[435px]:gap-2">
               <Button
                 variant="outline"
-                className="gap-2 text-primary bg-sky-200 hover:bg-primary rounded-full border-primary w-32 font-semibold!"
+                className="gap-2 hover:bg-primary/90! bg-white dark:bg-gray-900 rounded-full border-primary w-28 max-[435px]:w-20 font-semibold! text-primary!"
                 onClick={handleResetClick}
               >
-                Reset
+                {labels.reset}
               </Button>
               <Button
-                ref={(el) => setRef("submitButton")(el as HTMLButtonElement)}
-                id="submitButton"
-                name="submitButton"
                 variant="outline"
-                className={`gap-2 text-primary rounded-full border-primary w-32 bg-sky-200 hover:bg-primary font-semibold!`}
-                onClick={() => formRef.current?.requestSubmit()}
+                className="gap-2 hover:bg-primary/90 bg-white dark:bg-gray-900 rounded-full border-primary w-28 max-[435px]:w-20 font-semibold! text-primary!"
+                onClick={handleSubmit}
               >
-                Submit
+                {labels.submit}
               </Button>
             </div>
           ) : null
@@ -422,360 +347,183 @@ export default function SlidersCreatePage({ isEdit = false }: Props) {
             onSubmit={handleSubmit}
             className="space-y-6 relative"
           >
-            {/* All fields in one 4-column row */}
+            {/* First Row: Brand Name, Code, Description */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
-              {formFields.map((field) => {
-                if (
-                  !permissionsFieldLevel[
-                    field.name as keyof typeof permissionsFieldLevel
-                  ]
-                ) {
-                  return null; // skip if not allowed
-                }
+              {/* Brand Name field - only show if user can create */}
+              {name && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("name")}
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("code")}
+                    onCancel={() => setFormData({ ...formData, name: "" })}
+                    labelText="Brand Name"
+                    tooltipText="Enter the brand name"
+                    required
+                  />
+                </div>
+              )}
 
-                if (field.component === "input") {
-                  return (
-                    <div key={field.name} className="space-y-2 relative">
-                      <EditableInput
-                        setRef={setRef(field.name)}
-                        type={field.type}
-                        id={field.name}
-                        name={field.name}
-                        value={formData[field.name]}
-                        onChange={handleChange}
-                        onNext={() =>
-                          field.nextFocus && focusNextInput(field.nextFocus)
-                        }
-                        onCancel={() =>
-                          setFormData({ ...formData, [field.name]: "" })
-                        }
-                        labelText={field.label}
-                        tooltipText={field.tooltip}
-                        required={field.required}
-                      />
-                    </div>
-                  );
-                }
+              {/* Brand Code field - only show if user can create */}
+              {code && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("code")}
+                    id="code"
+                    name="code"
+                    value={formData.code}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("description")}
+                    onCancel={() => setFormData({ ...formData, code: "" })}
+                    labelText="Brand Code"
+                    tooltipText="Enter the brand code (e.g., BRD001)"
+                    required
+                  />
+                </div>
+              )}
 
-                if (field.component === "autocomplete") {
-                  return (
-                    <div key={field.name} className="space-y-2 relative">
-                      <Autocomplete
-                        ref={(el: any) => setRef(field.name)(el)}
-                        id={field.name}
-                        name={field.name}
-                        options={field.options || []}
-                        value={formData[field.name]}
-                        labelClassName="rounded-lg"
-                        isSelectableOnly={true}
-                        onValueChange={(value: string) => {
-                          setFormData((prev) => ({
-                            ...prev,
-                            [field.name]: value,
-                          }));
-                          if (field.nextFocus) focusNextInput(field.nextFocus);
-                        }}
-                        onEnterPress={() => {
-                          if (formData[field.name] && field.nextFocus) {
-                            focusNextInput(field.nextFocus);
-                          }
-                        }}
-                        placeholder=" "
-                        labelText={field.label}
-                        className="relative"
-                        styles={{
-                          input: {
-                            borderColor: "var(--primary)",
-                            "&:focus": { borderColor: "var(--primary)" },
-                          },
-                        }}
-                      />
-                    </div>
-                  );
-                }
-
-                if (field.component === "mutiselect") {
-                  return (
-                    <div key={field.name} className="space-y-2 relative">
-                      <FloatingMultiSelect
-                        label={field.label}
-                        data={field.options || []}
-                        value={
-                          formData[field.name]
-                            ? (formData[field.name] as string)
-                                .split(",")
-                                .map((s) => s.trim())
-                                .filter(Boolean)
-                            : []
-                        }
-                        onChange={(value: string[]) => {
-                          setFormData((prev) => ({
-                            ...prev,
-                            [field.name]: value.join(", "),
-                          }));
-                          if (field.nextFocus) focusNextInput(field.nextFocus);
-                        }}
-                      />
-                    </div>
-                  );
-                }
-
-                return null;
-              })}
+              {/* Description field - only show if user can create */}
+              {description && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("description")}
+                    id="description"
+                    name="description"
+                    value={formData.description}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("status")}
+                    onCancel={() =>
+                      setFormData({ ...formData, description: "" })
+                    }
+                    labelText="Description"
+                    tooltipText="Enter a description for the brand"
+                    type="text"
+                    required
+                  />
+                </div>
+              )}
 
               {/* Default field - only show if user can create */}
-              {permissionsFieldLevel.isDefault && (
+              {isDefault && (
                 <div className="space-y-2 relative">
-                  <Autocomplete
+                  <SwitchSelect
                     ref={(el: any) => setRef("isDefault")(el)}
                     id="isDefault"
                     name="isDefault"
-                    options={["No", "Yes"]}
-                    value={isDefaultState === "Yes" ? "Yes" : "No"}
+                    multiSelect={false}
+                    options={[
+                      {
+                        label: labels.yes,
+                        value: labels.yes,
+                        date: "Set default brand",
+                      },
+                      {
+                        label: labels.no,
+                        value: labels.no,
+                        date: "Remove default brand",
+                      },
+                    ]}
+                    value={isDefaultState === "Yes" ? labels.yes : labels.no}
                     labelClassName="rounded-lg"
-                    isSelectableOnly={true}
-                    onValueChange={(value: string) => {
-                      const isYes = value === "Yes";
+                    onValueChange={(value: string | string[]) => {
+                      const isYes = Array.isArray(value)
+                        ? value[0] === labels.yes
+                        : value === labels.yes;
                       setIsDefaultState(isYes ? "Yes" : "No");
                       const newValue = isYes;
                       setFormData((prev) => ({
                         ...prev,
                         isDefault: newValue,
                       }));
-                      // Call focusNextInput if needed
-                      focusNextInput("isDraft");
                     }}
                     onEnterPress={() => {
                       if (
                         formData.isDefault === true ||
                         formData.isDefault === false
                       ) {
-                        focusNextInput("isDraft");
+                        // Form submission or next action
                       }
                     }}
                     placeholder=" "
                     labelText="Default"
                     className="relative"
-                    styles={{
-                      input: {
-                        borderColor: "var(--primary)",
-                        "&:focus": {
-                          borderColor: "var(--primary)",
-                        },
-                      },
-                    }}
-                  />
-                </div>
-              )}
-
-              {/* Draft field - only show if user can create */}
-              {permissionsFieldLevel.isDraft && (
-                <div className="space-y-2 relative">
-                  <Autocomplete
-                    ref={(el: any) => setRef("isDraft")(el)}
-                    id="isDraft"
-                    name="isDraft"
-                    options={["No", "Yes"]}
-                    value={isDraftState === "Yes" ? "Yes" : "No"}
-                    labelClassName="rounded-lg"
-                    isSelectableOnly={true}
-                    onValueChange={(value: string) => {
-                      const isYes = value === "Yes";
-                      setIsDraftState(isYes ? "Yes" : "No");
-                      const newValue = isYes;
-                      setFormData((prev) => ({
-                        ...prev,
-                        isDraft: newValue,
-                      }));
-                      focusNextInput("fileUploadElement");
-                    }}
-                    onEnterPress={() => {
-                      if (
-                        formData.isDraft === true ||
-                        formData.isDraft === false
-                      ) {
-                        focusNextInput("fileUploadElement");
-                      }
-                    }}
-                    placeholder=" "
-                    labelText="Draft"
-                    className="relative"
-                    styles={{
-                      input: {
-                        borderColor: "var(--primary)",
-                        "&:focus": {
-                          borderColor: "var(--primary)",
-                        },
-                      },
-                    }}
+                    tooltipText="Set as default brand"
                   />
                 </div>
               )}
             </div>
 
-            {/* Image Upload - only show if user can create */}
-            {permissionsFieldLevel.attachment && (
-              <div className="space-y-2 my-8 pt-4 cursor-pointer relative">
-                <div
-                  className={`border-2 border-dashed rounded-lg p-6 bg-[#f8fafc] text-center focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary ${
-                    isDragging
-                      ? "border-blue-500 bg-blue-50"
-                      : "border-gray-300"
-                  }`}
-                  tabIndex={0}
-                  ref={(el) => setRef("fileUploadElement")(el as HTMLElement)}
-                  onDragEnter={handleDragEnter}
-                  onDragLeave={handleDragLeave}
-                  onDragOver={handleDragOver}
-                  onDrop={handleDrop}
-                  onClick={triggerFileInput}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      if (imagePreview) {
-                        setImagePreview(null);
-                        setFormData({ ...formData, attachment: "" });
-                        setTimeout(() => {
-                          triggerFileInput();
-                        }, 0);
-                      } else {
-                        triggerFileInput();
-                      }
-                    }
-                  }}
-                >
-                  {imagePreview ? (
-                    <div className="relative inline-block">
-                      <img
-                        src={imagePreview}
-                        alt={"PI No Image"}
-                        className="w-40 h-28 object-contain rounded-md"
-                      />
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-white shadow-sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setImagePreview(null);
-                          setFormData({ ...formData, attachment: "" });
-                        }}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center gap-2 py-14">
-                      <Upload className="h-10 w-10 text-gray-400" />
-                      <p className="text-base text-gray-500">
-                        {"Drag and drop image or click to upload"}
-                      </p>
-                    </div>
-                  )}
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    onChange={handleImageChange}
-                    accept="image/*"
-                    className="hidden"
-                  />
-                </div>
-              </div>
-            )}
+            {/* Second Row: Default and Status */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
+              {/* Status field - only show if user can create */}
+              {status && (
+                <div className="space-y-2">
+                  <SwitchSelect
+                    ref={(el: any) => setRef("statusSwitch")(el)}
+                    id="statusSwitch"
+                    name="statusSwitch"
+                    labelText="Status"
+                    multiSelect={false}
+                    options={[
+                      {
+                        label: "Active",
+                        value: "active",
+                        date: "Set active",
+                      },
+                      {
+                        label: "Inactive",
+                        value: "inactive",
+                        date: "Set inactive",
+                      },
+                      {
+                        label: "Draft",
+                        value: "draft",
+                        date: "Set draft",
+                      },
+                    ]}
+                    value={formData.status}
+                    onValueChange={(value: string | string[]) => {
+                      const stringValue = Array.isArray(value)
+                        ? value[0] || ""
+                        : value;
 
-            {permissionsFieldLevel.attachmentAr && (
-              <div className="space-y-2 my-8 pt-4 cursor-pointer relative">
-                <div
-                  className={`border-2 border-dashed rounded-lg p-6 bg-[#f8fafc] text-center focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary ${
-                    isDragging
-                      ? "border-blue-500 bg-blue-50"
-                      : "border-gray-300"
-                  }`}
-                  tabIndex={0}
-                  ref={(el) => setRef("fileUploadElement")(el as HTMLElement)}
-                  onDragEnter={handleDragEnter}
-                  onDragLeave={handleDragLeave}
-                  onDragOver={handleDragOver}
-                  onDrop={handleDrop}
-                  onClick={triggerFileInput}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      if (imagePreview) {
-                        setImagePreview(null);
-                        setFormData({ ...formData, attachment: "" });
-                        setTimeout(() => {
-                          triggerFileInput();
-                        }, 0);
-                      } else {
-                        triggerFileInput();
-                      }
-                    }
-                  }}
-                >
-                  {imagePreview ? (
-                    <div className="relative inline-block">
-                      <img
-                        src={imagePreview}
-                        alt={"PI No Image"}
-                        className="w-40 h-28 object-contain rounded-md"
-                      />
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-white shadow-sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setImagePreview(null);
-                          setFormData({ ...formData, attachment: "" });
-                        }}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center gap-2 py-14">
-                      <Upload className="h-10 w-10 text-gray-400" />
-                      <p className="text-base text-gray-500">
-                        {"Drag and drop image or click to upload"}
-                      </p>
-                    </div>
-                  )}
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    onChange={handleImageChange}
-                    accept="image/*"
-                    className="hidden"
+                      setFormData((prev) => ({
+                        ...prev,
+                        status: stringValue as "active" | "inactive" | "draft",
+                        isDraft: stringValue === "draft",
+                        isActive: stringValue === "active",
+                      }));
+                    }}
+                    placeholder=""
+                    styles={{
+                      input: {
+                        borderColor: "var(--primary)",
+                        "&:focus": {
+                          borderColor: "var(--primary)",
+                        },
+                      },
+                    }}
+                    tooltipText="Set the brand status"
                   />
                 </div>
-              </div>
-            )}
-            
+              )}
+            </div>
           </form>
         </div>
-      </PageLayout>
+      </MinimizablePageLayout>
 
       <ResetFormModal
         opened={isResetModalOpen}
         onClose={() => setIsResetModalOpen(false)}
         onConfirm={handleReset}
-        title="Reset Form"
-        message="Are you sure you want to reset the form? All changes will be lost."
-        confirmText="Reset"
-        cancelText="Cancel"
+        title={labels.resetForm}
+        message={labels.resetFormMessage}
+        confirmText={labels.resetFormConfirm}
+        cancelText={labels.cancel}
       />
-
-      {/* Options Modal */}
-      <Modal
-        opened={isOptionModalOpen}
-        onClose={() => setIsOptionModalOpen(false)}
-        title="Options"
-        size="xl"
-        overlayProps={{ backgroundOpacity: 0.55, blur: 3 }}
-      >
-        <div className="pt-5 pb-14 px-5">Modal Content</div>
-      </Modal>
     </>
   );
 }
