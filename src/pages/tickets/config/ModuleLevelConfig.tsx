@@ -581,16 +581,26 @@ export const formFields: FieldConfig[] = [
     tooltip: "Enter tags",
     required: true,
   },
-  // {
-  //   name: "predefinedReply",
-  //   label: "Predefined Reply",
-  //   component: "mutiselect",
-  //   options: [
-  //     "Your issue has been logged. Our team will investigate.",
-  //     "We are currently working on your issue. It will be resolved soon.",
-  //   ],
-  //   tooltip: "Enter predefined reply",
-  // },
+  {
+    name: "predefinedReply",
+    label: "Predefined Reply",
+    component: "mutiselect",
+    options: [
+      {
+        value:
+          "Your issue has been logged. Our team will investigate. Your issue has been logged. Our team will investigate.",
+        label:
+          "Your issue has been logged. Our team will investigate. Your issue has been logged. Our team will investigate. Your issue has been logged. Our team will investigate. Your issue has been logged. Our team will investigate. Your issue has been logged. Our team will investigate. Your issue has been logged. Our team will investigate.",
+      },
+      {
+        value:
+          "We are currently working on your issue. It will be resolved soon.",
+        label:
+          "We are currently working on your issue. It will be resolved soon.",
+      },
+    ],
+    tooltip: "Enter predefined reply",
+  },
   {
     name: "description",
     label: "Description",

@@ -424,6 +424,14 @@ export default function TicketsCreatePage({ isEdit = false }: Props) {
                   return null;
                 }
 
+                // Skip predefinedReply here - it will be rendered separately
+                if (
+                  field.component === "mutiselect" &&
+                  field.name === "predefinedReply"
+                ) {
+                  return null;
+                }
+
                 if (field.component === "input") {
                   return (
                     <div key={field.name} className="space-y-2">
@@ -539,12 +547,6 @@ export default function TicketsCreatePage({ isEdit = false }: Props) {
                 }
 
                 if (field.component === "mutiselect") {
-                  console.log(
-                    "name ",
-                    field.name,
-                    "field.options ",
-                    field.options
-                  );
                   return (
                     <div key={field.name} className="space-y-2 relative">
                       <FloatingMultiSelect
@@ -559,15 +561,9 @@ export default function TicketsCreatePage({ isEdit = false }: Props) {
                             : []
                         }
                         onChange={(selectedOptions) => {
-                          console.log(
-                            "FIrst selected as object",
-                            selectedOptions
-                          );
                           const selectedValues = selectedOptions.map(
                             (o) => o.value
                           );
-
-                          console.log("Selected values 566:", selectedValues);
 
                           setFormData((prev) => ({
                             ...prev,
@@ -634,6 +630,59 @@ export default function TicketsCreatePage({ isEdit = false }: Props) {
                 </div>
               )}
             </div>
+
+            {/* Predefined Reply - Separate Row with Half Width */}
+            {formFields.some(
+              (field) =>
+                field.component === "mutiselect" &&
+                field.name === "predefinedReply"
+            ) && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-8 relative">
+                <div className="space-y-2 relative">
+                  {(() => {
+                    const predefinedReplyField = formFields.find(
+                      (field) =>
+                        field.component === "mutiselect" &&
+                        field.name === "predefinedReply"
+                    );
+
+                    if (!predefinedReplyField) return null;
+
+                    return (
+                      <FloatingMultiSelect
+                        label={predefinedReplyField.label}
+                        data={predefinedReplyField.options || []}
+                        value={
+                          formData[predefinedReplyField.name]
+                            ? (formData[predefinedReplyField.name] as string)
+                                .split(",")
+                                .map((s) => s.trim())
+                                .filter(Boolean)
+                            : []
+                        }
+                        onChange={(selectedOptions) => {
+                          const selectedValues = selectedOptions.map(
+                            (o) => o.value
+                          );
+
+                          setFormData((prev) => ({
+                            ...prev,
+                            [predefinedReplyField.name]:
+                              selectedValues.join(", "),
+                          }));
+
+                          if (predefinedReplyField.nextFocus) {
+                            focusNextInput(predefinedReplyField.nextFocus);
+                          }
+                        }}
+                      />
+                    );
+                  })()}
+                </div>
+                {/* Empty column to maintain half-width layout */}
+                <div></div>
+              </div>
+            )}
 
             {/* Status Field */}
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4 my-8 relative">
