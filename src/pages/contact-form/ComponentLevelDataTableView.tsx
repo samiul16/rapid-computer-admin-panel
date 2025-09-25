@@ -45,11 +45,6 @@ export default function ComponentLevelDataTableView({
 
   const columnSchema: TableViewDataTableColumnConfig[] = [
     ...tableViewColumnSchema,
-
-    // same for all module so you dont have to change this part
-    { key: "createdAt", title: "Created", type: "date", readOnly: true },
-    { key: "updatedAt", title: "Updated", type: "date", readOnly: true },
-    { key: "draftedAt", title: "Drafted", type: "date", readOnly: true },
   ];
 
   const componentColumns = columnSchema.map((schema) =>
@@ -88,6 +83,8 @@ export default function ComponentLevelDataTableView({
       showVisibility={showVisibility}
       isFilterOpen={isFilterOpen}
       setIsFilterOpen={setIsFilterOpen}
+      showStatus={false}
+      showAction={false}
     />
   );
 }

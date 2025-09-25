@@ -1,23 +1,31 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
-import GmailTabs from "@/components/common/TableTabs";
-import VerticalSummaryCards from "@/components/common/grid-data-table/VerticalSummaryCards";
-import VideoModal from "@/components/common/VideoModal";
-import video from "@/assets/videos/test.mp4";
-
+import {
+  BadgeCheck,
+  CheckCircle2,
+  CircleMinus,
+  Eye,
+  FileCheck,
+  Trash2,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import PageLayout from "@/layouts/PageLayout/MainPageLayout";
+import { useAppSelector } from "@/store/hooks";
+import { cn } from "@/lib/utils";
+import { selectMinimizedModulesForUser } from "@/store/minimizedModulesSlice";
+import useIsMobile from "@/hooks/useIsMobile";
 import ComponentLevelGridTable from "./ComponentLevelGridTable";
 import ComponentLevelDataTable from "./ComponentLevelDataTable";
+import TabsCounter from "@/pages/Country/components/TabsCounter";
+import CounterTabs from "@/components/CounterTabs";
+import MobileCounterTabs from "@/components/MobileCounterTabs";
 
 // Mock data - replace with real data from your API
 const summaryData = {
   total: 42,
-  draft: 5,
+  draft: 30,
   active: 30,
-  inactive: 5,
-  deleted: 2,
-  updated: 2,
+  inactive: 20,
+  deleted: 30,
+  updated: 25,
 };
 
 const PAGE_NAME = "purchase returns";
@@ -25,54 +33,70 @@ const PAGE_NAME = "purchase returns";
 const cardConfigs = [
   {
     key: "total" as keyof typeof summaryData,
-    title: `TOTAL ${PAGE_NAME}`,
-    icon: "/book-icon.svg",
+    title: "Total",
+    imgSrc: "/counter-1.svg",
+    icon: <Eye />,
     color: "blue",
     total: summaryData.total,
   },
   {
     key: "active" as keyof typeof summaryData,
-    title: `ACTIVE ${PAGE_NAME}`,
-    icon: "/activity-01.svg",
+    title: "Active",
+    imgSrc: "/counter-active.svg",
+    icon: <BadgeCheck />,
     color: "green",
     total: summaryData.active,
   },
   {
+    key: "inactive" as keyof typeof summaryData,
+    title: "Inactive",
+    imgSrc: "/counter-inactive.svg",
+    icon: <CircleMinus />,
+    color: "gray",
+    total: summaryData.inactive,
+  },
+  {
     key: "draft" as keyof typeof summaryData,
-    title: `DRAFT ${PAGE_NAME}`,
-    icon: "/pencil-edit-02.svg",
+    title: "Draft",
+    imgSrc: "/counter-draft.svg",
+    icon: <FileCheck />,
     color: "yellow",
     total: summaryData.draft,
   },
   {
     key: "updated" as keyof typeof summaryData,
-    title: `UPDATED ${PAGE_NAME}`,
-    icon: "/arrow-reload-horizontal.svg",
+    title: "Updated",
+    imgSrc: "/counter-updated.svg",
+    icon: <CheckCircle2 />,
     color: "purple",
     total: summaryData.updated,
   },
   {
-    key: "inactive" as keyof typeof summaryData,
-    title: `INACTIVE ${PAGE_NAME}`,
-    icon: "/unavailable.svg",
-    color: "gray",
-    total: summaryData.inactive,
-  },
-  {
     key: "deleted" as keyof typeof summaryData,
-    title: `DELETED ${PAGE_NAME}`,
-    icon: "/delete-02.svg",
+    title: "Deleted",
+    imgSrc: "/counter-deleted.svg",
+    icon: <Trash2 />,
     color: "red",
     total: summaryData.deleted,
   },
 ];
 
 export default function PurchaseReturnsPage() {
-  const navigate = useNavigate();
+  // const { t } = useTranslation();
   const [viewMode, setViewMode] = useState("grid");
-  const { t } = useTranslation();
-
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const [showVisibility, setShowVisibility] = useState(false);
+  const [timeLabel, setTimeLabel] = useState("This year");
   const [dataTableFilter, setDataTableFilter] = useState({});
+
+  // Get current user id and that user's minimized modules array
+  const userId = useAppSelector((state) => state.auth.user?.userId);
+  const isMobile = useIsMobile();
+  const minimizedModulesForUser = useAppSelector((state) =>
+    selectMinimizedModulesForUser(state, userId ?? "__no_user__")
+  );
 
   // Mock data - replace with real data from your API
   const summaryData = {
@@ -84,47 +108,103 @@ export default function PurchaseReturnsPage() {
     updated: 2,
   };
 
-  return (
-    <div className=" w-100vw px-2 py-4 dark:bg-gray-900">
-      {/* Header Section */}
-      <div className="flex items-center gap-4 mb-4">
-        <VideoModal src={video} header={"Rapid ERP Video"} />
-        <h1 className="text-2xl font-bold flex-1 text-primary capitalize">
-          {PAGE_NAME}
-        </h1>
-        <Button
-          className="bg-primary text-white rounded-full cursor-pointer"
-          onClick={() => navigate("/purchase-returns/create")}
-        >
-          <span className="hidden sm:inline">{t("button.create")}</span>
-          <span className="sm:hidden">{t("button.create")}</span>
-        </Button>
-      </div>
+  // Get view mode from URL query parameter
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const viewModeParam = urlParams.get("view");
+    if (viewModeParam) {
+      setViewMode(viewModeParam);
+    }
+  }, []);
 
-      {viewMode === "grid" ? (
-        <VerticalSummaryCards data={cardConfigs} statistics={summaryData} />
-      ) : (
-        <GmailTabs
-          dataTableFilter={dataTableFilter}
-          setDataTableFilter={setDataTableFilter}
-          viewMode={viewMode}
+  // Tabs Section Component
+  const tabsSection =
+    viewMode === "grid" ? (
+      <TabsCounter
+        cardConfigs={cardConfigs}
+        summaryData={summaryData}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        setIsExportOpen={setIsExportOpen}
+        isExportOpen={isExportOpen}
+        setIsFilterOpen={setIsFilterOpen}
+        setShowVisibility={setShowVisibility}
+        timeLabel={timeLabel}
+      />
+    ) : isMobile ? (
+      <MobileCounterTabs
+        dataTableFilter={dataTableFilter}
+        setDataTableFilter={setDataTableFilter}
+      />
+    ) : (
+      <CounterTabs
+        dataTableFilter={dataTableFilter}
+        setDataTableFilter={setDataTableFilter}
+      />
+    );
+
+  // Main Content Component
+  const mainContent =
+    viewMode === "grid" ? (
+      <div
+        className={
+          "h-[calc(100vh-440px)] md:h-[calc(100vh-440px)] lg:h-[calc(100vh-440px)] xl:h-[calc(100vh-440px)] scroll-smooth [scrollbar-gutter:stable]"
+        }
+      >
+        <ComponentLevelGridTable
+          searchQuery={searchQuery}
+          setIsFilterOpen={setIsFilterOpen}
+          isFilterOpen={isFilterOpen}
+          setIsExportOpen={setIsExportOpen}
+          isExportOpen={isExportOpen}
           setViewMode={setViewMode}
         />
-      )}
-
-      {viewMode === "grid" ? (
-        <div className="mt-4 h-[calc(100vh-420px)] md:h-[calc(100vh-420px)] lg:h-[calc(100vh-420px)] xl:h-[calc(100vh-420px)] overflow-y-auto overflow-x-hidden border rounded-lg scroll-smooth [scrollbar-gutter:stable]">
-          <ComponentLevelGridTable setViewMode={setViewMode} />
-        </div>
-      ) : (
-        <div className="mt-4 h-[calc(100vh-270px)] md:h-[calc(100vh-270px)] lg:h-[calc(100vh-270px)] xl:h-[calc(100vh-270px)] overflow-y-auto overflow-x-hidden border rounded-lg scroll-smooth [scrollbar-gutter:stable]">
+      </div>
+    ) : (
+      <div
+        className={cn(
+          minimizedModulesForUser.length > 0
+            ? "h-[calc(100vh-477px)]"
+            : "h-[calc(100vh-396px)]"
+        )}
+      >
+        <div className="overflow-y-auto overflow-x-hidden scroll-smooth [scrollbar-gutter:stable] h-full">
           <ComponentLevelDataTable
             viewMode={viewMode}
             setViewMode={setViewMode}
             dataTableFilter={dataTableFilter}
+            setShowExport={setIsExportOpen}
+            showExport={isExportOpen}
+            setShowFilter={setIsFilterOpen}
+            showFilter={isFilterOpen}
+            setShowVisibility={setShowVisibility}
+            showVisibility={showVisibility}
+            setIsFilterOpen={setIsFilterOpen}
+            isFilterOpen={isFilterOpen}
           />
         </div>
-      )}
-    </div>
+      </div>
+    );
+
+  return (
+    <PageLayout
+      title={PAGE_NAME}
+      createPath="/purchase-returns/create"
+      viewMode={viewMode}
+      setViewMode={setViewMode}
+      searchQuery={searchQuery}
+      setSearchQuery={setSearchQuery}
+      setIsFilterOpen={setIsFilterOpen}
+      isFilterOpen={isFilterOpen}
+      setIsExportOpen={setIsExportOpen}
+      isExportOpen={isExportOpen}
+      setShowVisibility={setShowVisibility}
+      showVisibility={showVisibility}
+      setTimeLabel={setTimeLabel}
+      tabsSection={tabsSection}
+      pathName="purchase-returns"
+    >
+      {mainContent}
+    </PageLayout>
   );
 }

@@ -57,6 +57,7 @@ export type TableViewDataType = ModuleFieldsType & {
   isDraft: boolean;
   isDeleted: boolean;
   isUpdated: boolean;
+  message: string;
 };
 
 // add value in array if you want to add fixed columns left side
@@ -64,10 +65,11 @@ export const fixedColumnsValues: (keyof ModuleFieldsType)[] = ["firstName"];
 
 // column key and title for data table view
 export const tableViewColumnSchema: TableViewDataTableColumnConfig[] = [
-  { key: "firstName", title: "First Name" },
-  { key: "lastName", title: "Last Name" },
-  { key: "phone", title: "Phone" },
-  { key: "email", title: "Email" },
+  { key: "firstName", title: "First Name", readOnly: true },
+  { key: "lastName", title: "Last Name", readOnly: true },
+  { key: "phone", title: "Phone", readOnly: true },
+  { key: "email", title: "Email", readOnly: true },
+  { key: "message", title: "Message", readOnly: true },
 ];
 
 // dont change variable name "MOCK_TABLE_DATA"
@@ -86,6 +88,7 @@ export const MOCK_TABLE_DATA: TableViewDataType[] = [
     isDraft: false,
     isDeleted: false,
     isUpdated: true,
+    message: "Contact added",
   },
   {
     id: "2",
@@ -101,6 +104,7 @@ export const MOCK_TABLE_DATA: TableViewDataType[] = [
     isDraft: false,
     isDeleted: false,
     isUpdated: false,
+    message: "Contact updated",
   },
   {
     id: "3",
@@ -116,6 +120,7 @@ export const MOCK_TABLE_DATA: TableViewDataType[] = [
     isDraft: false,
     isDeleted: false,
     isUpdated: true,
+    message: "New contact",
   },
   {
     id: "4",
@@ -131,6 +136,7 @@ export const MOCK_TABLE_DATA: TableViewDataType[] = [
     isDraft: true,
     isDeleted: false,
     isUpdated: false,
+    message: "Pending activation",
   },
   {
     id: "5",
@@ -146,6 +152,7 @@ export const MOCK_TABLE_DATA: TableViewDataType[] = [
     isDraft: false,
     isDeleted: false,
     isUpdated: true,
+    message: "Contact active",
   },
 ];
 

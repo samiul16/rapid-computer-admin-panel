@@ -41,6 +41,21 @@ export const initialProperties: ModuleFieldsType = {
   attachment: "",
 };
 
+export const initialPropertiesForEdit: ModuleFieldsType = {
+  subject: "Test Subject",
+  contact: "Test Contact",
+  email: "News letter find more.",
+  department: "",
+  cc: "",
+  member: "",
+  priority: "",
+  service: "",
+  tags: "",
+  predefinedReply: "",
+  description: "",
+  attachment: "",
+};
+
 /*
 ======================================
 Grid View Config
@@ -420,6 +435,11 @@ type StringKeys<T> = Extract<
   string
 >;
 
+type optionType = {
+  label: string;
+  value: string;
+};
+
 // field config types
 type FieldConfig = {
   name: StringKeys<ModuleFieldsType>;
@@ -427,7 +447,7 @@ type FieldConfig = {
   type?: React.HTMLInputTypeAttribute;
   component: "autocomplete" | "input" | "mutiselect";
   placeholder?: string;
-  options?: string[];
+  options?: optionType[];
   nextFocus?: string;
   tooltip?: string;
   required?: boolean;
@@ -469,7 +489,12 @@ export const formFields: FieldConfig[] = [
     name: "contact",
     label: "Contact",
     component: "autocomplete",
-    options: ["Alice Johnson", "Bob Smith", "Charlie Brown", "David Lee"],
+    options: [
+      { label: "Alice Johnson", value: "Alice Johnson" },
+      { label: "Bob Smith", value: "Bob Smith" },
+      { label: "Charlie Brown", value: "Charlie Brown" },
+      { label: "David Lee", value: "David Lee" },
+    ],
     placeholder: " ",
     nextFocus: "email",
     tooltip: "Select or enter contact",
@@ -487,7 +512,14 @@ export const formFields: FieldConfig[] = [
     name: "department",
     label: "Department",
     component: "mutiselect",
-    options: ["IT", "HR", "Marketing", "Sales", "Finance", "Admin"],
+    options: [
+      { label: "IT", value: "IT" },
+      { label: "HR", value: "HR" },
+      { label: "Marketing", value: "Marketing" },
+      { label: "Sales", value: "Sales" },
+      { label: "Finance", value: "Finance" },
+      { label: "Admin", value: "Admin" },
+    ],
     nextFocus: "cc",
     tooltip: "Enter department",
     required: true,
@@ -504,7 +536,12 @@ export const formFields: FieldConfig[] = [
     name: "member",
     label: "Member",
     component: "autocomplete",
-    options: ["John Doe", "Jane Smith", "Bob Brown", "Sara Lee"],
+    options: [
+      { label: "John Doe", value: "John Doe" },
+      { label: "Jane Smith", value: "Jane Smith" },
+      { label: "Bob Brown", value: "Bob Brown" },
+      { label: "Sara Lee", value: "Sara Lee" },
+    ],
     nextFocus: "priority",
     tooltip: "Enter member",
     required: true,
@@ -513,7 +550,11 @@ export const formFields: FieldConfig[] = [
     name: "priority",
     label: "Priority",
     component: "mutiselect",
-    options: ["Low", "Medium", "High"],
+    options: [
+      { label: "Low", value: "Low" },
+      { label: "Medium", value: "Medium" },
+      { label: "High", value: "High" },
+    ],
     nextFocus: "service",
     tooltip: "Enter priority",
     required: true,
@@ -522,7 +563,11 @@ export const formFields: FieldConfig[] = [
     name: "service",
     label: "Service",
     component: "mutiselect",
-    options: ["Email Hosting", "Web Hosting", "Domain Registration"],
+    options: [
+      { label: "Email Hosting", value: "Email Hosting" },
+      { label: "Web Hosting", value: "Web Hosting" },
+      { label: "Domain Registration", value: "Domain Registration" },
+    ],
     nextFocus: "tags",
     tooltip: "Enter service",
     required: true,
@@ -531,7 +576,7 @@ export const formFields: FieldConfig[] = [
     name: "tags",
     label: "Tags",
     component: "mutiselect",
-    options: ["email", "bug", "content", "writer", "recruitment"],
+    options: [{ value: "email", label: "email" }],
     nextFocus: "predefinedReply",
     tooltip: "Enter tags",
     required: true,
@@ -540,7 +585,20 @@ export const formFields: FieldConfig[] = [
     name: "predefinedReply",
     label: "Predefined Reply",
     component: "mutiselect",
-    options: ["Your issue has been logged. Our team will investigate.", "We are currently working on your issue. It will be resolved soon."],
+    options: [
+      {
+        value:
+          "Your issue has been logged. Our team will investigate. Your issue has been logged. Our team will investigate.",
+        label:
+          "Your issue has been logged. Our team will investigate. Your issue has been logged. Our team will investigate. Your issue has been logged. Our team will investigate. Your issue has been logged. Our team will investigate. Your issue has been logged. Our team will investigate. Your issue has been logged. Our team will investigate.",
+      },
+      {
+        value:
+          "We are currently working on your issue. It will be resolved soon.",
+        label:
+          "We are currently working on your issue. It will be resolved soon.",
+      },
+    ],
     tooltip: "Enter predefined reply",
   },
   {

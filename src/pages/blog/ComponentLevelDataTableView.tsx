@@ -15,12 +15,14 @@ export default function ComponentLevelDataTableView({
   setViewMode,
   dataTableFilter,
   searchQuery,
-  setShowExport,
-  showExport,
   setShowFilter,
   showFilter,
   setShowVisibility,
   showVisibility,
+  setIsFilterOpen,
+  isFilterOpen,
+  setIsExportOpen,
+  isExportOpen,
 }: {
   viewMode: string;
   setViewMode: (viewMode: string) => void;
@@ -32,6 +34,10 @@ export default function ComponentLevelDataTableView({
   showFilter: boolean;
   setShowVisibility: (showVisibility: boolean) => void;
   showVisibility: boolean;
+  setIsFilterOpen: (isFilterOpen: boolean) => void;
+  isFilterOpen: boolean;
+  setIsExportOpen: (isExportOpen: boolean) => void;
+  isExportOpen: boolean;
 }) {
   const location = useLocation();
   const detectedModule = getModuleFromPath(location.pathname);
@@ -76,12 +82,14 @@ export default function ComponentLevelDataTableView({
       componentColumns={componentColumns}
       fixedColumns={fixedColumnsValues}
       pathName={location.pathname.split("/")[1]}
-      setShowExport={setShowExport}
-      showExport={showExport}
+      setShowExport={setIsExportOpen}
+      showExport={isExportOpen}
       setShowFilter={setShowFilter}
       showFilter={showFilter}
       setShowVisibility={setShowVisibility}
       showVisibility={showVisibility}
+      setIsFilterOpen={setIsFilterOpen}
+      isFilterOpen={isFilterOpen}
     />
   );
 }
