@@ -3,11 +3,21 @@ import FixedColumnDataTable from "@/components/common/country-page-table/FixedCo
 import useIsMobile from "@/hooks/useIsMobile";
 import { useColorsPermissions } from "@/hooks/usePermissions";
 
-// Brand interface to match the grid component
-interface BrandItem {
+// Item Master interface to match the grid component
+interface ItemMaster {
   id: string;
-  code: string;
-  name: string;
+  itemCode: string;
+  itemName: string;
+  arabicName: string;
+  costPrice: number;
+  regularPrice: number;
+  offerPrice: number;
+  startDate: string;
+  endDate: string;
+  openingStock: number;
+  category: string;
+  subCategory: string;
+  unit: string;
   description: string;
   status: "active" | "inactive" | "draft";
   createdAt: string;
@@ -20,12 +30,22 @@ interface BrandItem {
   actionMessage: string;
 }
 
-const mockBrands: BrandItem[] = [
+const mockItems: ItemMaster[] = [
   {
     id: "1",
-    code: "BRD001",
-    name: "Apex",
-    description: "Premium performance brand",
+    itemCode: "ITM001",
+    itemName: "Laptop Pro 15",
+    arabicName: "لابتوب برو 15",
+    costPrice: 1200,
+    regularPrice: 1500,
+    offerPrice: 1350,
+    startDate: "2024-01-01",
+    endDate: "2024-12-31",
+    openingStock: 50,
+    category: "Electronics",
+    subCategory: "Laptops",
+    unit: "Piece",
+    description: "High-performance laptop for professionals",
     status: "active",
     createdAt: "2023-01-15",
     updatedAt: "2023-11-20",
@@ -38,9 +58,19 @@ const mockBrands: BrandItem[] = [
   },
   {
     id: "2",
-    code: "BRD002",
-    name: "Velocity",
-    description: "High-speed and sports-focused",
+    itemCode: "ITM002",
+    itemName: "Wireless Mouse",
+    arabicName: "ماوس لاسلكي",
+    costPrice: 25,
+    regularPrice: 35,
+    offerPrice: 30,
+    startDate: "2024-01-01",
+    endDate: "2024-12-31",
+    openingStock: 200,
+    category: "Electronics",
+    subCategory: "Accessories",
+    unit: "Piece",
+    description: "Ergonomic wireless mouse with precision tracking",
     status: "active",
     createdAt: "2023-01-18",
     updatedAt: "2023-10-15",
@@ -53,9 +83,19 @@ const mockBrands: BrandItem[] = [
   },
   {
     id: "3",
-    code: "BRD003",
-    name: "Nimbus",
-    description: "Cloud-like comfort and reliability",
+    itemCode: "ITM003",
+    itemName: "Office Chair",
+    arabicName: "كرسي مكتب",
+    costPrice: 150,
+    regularPrice: 200,
+    offerPrice: 175,
+    startDate: "2024-01-01",
+    endDate: "2024-12-31",
+    openingStock: 30,
+    category: "Furniture",
+    subCategory: "Office Chairs",
+    unit: "Piece",
+    description: "Comfortable ergonomic office chair",
     status: "active",
     createdAt: "2023-02-01",
     updatedAt: "2023-11-10",
@@ -68,9 +108,19 @@ const mockBrands: BrandItem[] = [
   },
   {
     id: "4",
-    code: "BRD004",
-    name: "Quantum",
-    description: "Cutting-edge innovation",
+    itemCode: "ITM004",
+    itemName: "Monitor 24 inch",
+    arabicName: "شاشة 24 بوصة",
+    costPrice: 200,
+    regularPrice: 280,
+    offerPrice: 250,
+    startDate: "2024-01-01",
+    endDate: "2024-12-31",
+    openingStock: 40,
+    category: "Electronics",
+    subCategory: "Monitors",
+    unit: "Piece",
+    description: "Full HD 24-inch LED monitor",
     status: "active",
     createdAt: "2023-02-10",
     updatedAt: "2023-11-05",
@@ -83,28 +133,23 @@ const mockBrands: BrandItem[] = [
   },
   {
     id: "5",
-    code: "BRD005",
-    name: "Heritage",
-    description: "Classic and timeless design",
-    status: "active",
+    itemCode: "ITM005",
+    itemName: "Desk Lamp",
+    arabicName: "مصباح مكتب",
+    costPrice: 30,
+    regularPrice: 45,
+    offerPrice: 38,
+    startDate: "2024-01-01",
+    endDate: "2024-12-31",
+    openingStock: 100,
+    category: "Furniture",
+    subCategory: "Lighting",
+    unit: "Piece",
+    description: "Adjustable LED desk lamp",
+    status: "draft",
     createdAt: "2023-02-15",
     updatedAt: "2023-10-28",
     draftedAt: "2023-02-08",
-    isActive: true,
-    isDraft: false,
-    isDeleted: false,
-    isUpdated: false,
-    actionMessage: "1 day ago",
-  },
-  {
-    id: "6",
-    code: "BRD006",
-    name: "EcoLine",
-    description: "Sustainable, eco-friendly products",
-    status: "draft",
-    createdAt: "2023-03-01",
-    updatedAt: "2023-11-15",
-    draftedAt: "2023-02-20",
     isActive: false,
     isDraft: true,
     isDeleted: false,
@@ -112,15 +157,50 @@ const mockBrands: BrandItem[] = [
     actionMessage: "1 day ago",
   },
   {
-    id: "7",
-    code: "BRD007",
-    name: "Metro",
-    description: "Urban style for everyday use",
+    id: "6",
+    itemCode: "ITM006",
+    itemName: "Keyboard Mechanical",
+    arabicName: "لوحة مفاتيح ميكانيكية",
+    costPrice: 80,
+    regularPrice: 120,
+    offerPrice: 100,
+    startDate: "2024-01-01",
+    endDate: "2024-12-31",
+    openingStock: 75,
+    category: "Electronics",
+    subCategory: "Accessories",
+    unit: "Piece",
+    description: "RGB mechanical gaming keyboard",
     status: "active",
+    createdAt: "2023-03-01",
+    updatedAt: "2023-11-15",
+    draftedAt: "2023-02-20",
+    isActive: true,
+    isDraft: false,
+    isDeleted: false,
+    isUpdated: false,
+    actionMessage: "1 day ago",
+  },
+  {
+    id: "7",
+    itemCode: "ITM007",
+    itemName: "Webcam HD",
+    arabicName: "كاميرا ويب عالية الدقة",
+    costPrice: 60,
+    regularPrice: 85,
+    offerPrice: 70,
+    startDate: "2024-01-01",
+    endDate: "2024-12-31",
+    openingStock: 60,
+    category: "Electronics",
+    subCategory: "Accessories",
+    unit: "Piece",
+    description: "1080p HD webcam for video conferencing",
+    status: "inactive",
     createdAt: "2023-03-10",
     updatedAt: "2023-11-08",
     draftedAt: "2023-03-05",
-    isActive: true,
+    isActive: false,
     isDraft: false,
     isDeleted: false,
     isUpdated: false,
@@ -128,14 +208,24 @@ const mockBrands: BrandItem[] = [
   },
   {
     id: "8",
-    code: "BRD008",
-    name: "TrailFox",
-    description: "Outdoor and rugged performance",
-    status: "inactive",
+    itemCode: "ITM008",
+    itemName: "Office Desk",
+    arabicName: "مكتب مكتب",
+    costPrice: 300,
+    regularPrice: 400,
+    offerPrice: 350,
+    startDate: "2024-01-01",
+    endDate: "2024-12-31",
+    openingStock: 20,
+    category: "Furniture",
+    subCategory: "Desks",
+    unit: "Piece",
+    description: "Spacious wooden office desk",
+    status: "active",
     createdAt: "2023-03-20",
     updatedAt: "2023-10-22",
     draftedAt: "2023-03-15",
-    isActive: false,
+    isActive: true,
     isDraft: false,
     isDeleted: false,
     isUpdated: false,
@@ -143,179 +233,49 @@ const mockBrands: BrandItem[] = [
   },
   {
     id: "9",
-    code: "BRD009",
-    name: "Luxe",
-    description: "Luxury premium collection",
-    status: "active",
+    itemCode: "ITM009",
+    itemName: "USB Hub",
+    arabicName: "محول USB",
+    costPrice: 15,
+    regularPrice: 25,
+    offerPrice: 20,
+    startDate: "2024-01-01",
+    endDate: "2024-12-31",
+    openingStock: 150,
+    category: "Electronics",
+    subCategory: "Accessories",
+    unit: "Piece",
+    description: "7-port USB 3.0 hub",
+    status: "draft",
     createdAt: "2023-04-01",
     updatedAt: "2023-11-25",
     draftedAt: "2023-03-25",
-    isActive: true,
-    isDraft: false,
+    isActive: false,
+    isDraft: true,
     isDeleted: false,
     isUpdated: false,
     actionMessage: "1 day ago",
   },
   {
     id: "10",
-    code: "BRD010",
-    name: "Craft",
-    description: "Handcrafted artisan series",
-    status: "draft",
+    itemCode: "ITM010",
+    itemName: "Desk Organizer",
+    arabicName: "منظم مكتب",
+    costPrice: 20,
+    regularPrice: 30,
+    offerPrice: 25,
+    startDate: "2024-01-01",
+    endDate: "2024-12-31",
+    openingStock: 80,
+    category: "Furniture",
+    subCategory: "Accessories",
+    unit: "Piece",
+    description: "Multi-compartment desk organizer",
+    status: "active",
     createdAt: "2023-04-10",
     updatedAt: "2023-11-18",
     draftedAt: "2023-04-05",
-    isActive: false,
-    isDraft: true,
-    isDeleted: false,
-    isUpdated: false,
-    actionMessage: "1 day ago",
-  },
-  {
-    id: "11",
-    code: "BRD011",
-    name: "Fusion",
-    description: "Blend of style and function",
-    status: "active",
-    createdAt: "2023-04-15",
-    updatedAt: "2023-09-10",
-    draftedAt: "2023-04-10",
     isActive: true,
-    isDraft: false,
-    isDeleted: false,
-    isUpdated: false,
-    actionMessage: "1 day ago",
-  },
-  {
-    id: "12",
-    code: "BRD012",
-    name: "Vivid",
-    description: "Bold colors and expressive designs",
-    status: "inactive",
-    createdAt: "2023-05-01",
-    updatedAt: "2023-11-12",
-    draftedAt: "2023-04-25",
-    isActive: false,
-    isDraft: false,
-    isDeleted: false,
-    isUpdated: false,
-    actionMessage: "1 day ago",
-  },
-  {
-    id: "13",
-    code: "BRD013",
-    name: "Aurora",
-    description: "Elegant and minimalist",
-    status: "active",
-    createdAt: "2023-05-10",
-    updatedAt: "2023-10-30",
-    draftedAt: "2023-05-05",
-    isActive: true,
-    isDraft: false,
-    isDeleted: false,
-    isUpdated: false,
-    actionMessage: "1 day ago",
-  },
-  {
-    id: "14",
-    code: "BRD014",
-    name: "Sonic",
-    description: "Audio and sound-oriented line",
-    status: "draft",
-    createdAt: "2023-05-20",
-    updatedAt: "2023-11-02",
-    draftedAt: "2023-05-15",
-    isActive: false,
-    isDraft: true,
-    isDeleted: false,
-    isUpdated: false,
-    actionMessage: "1 day ago",
-  },
-  {
-    id: "15",
-    code: "BRD015",
-    name: "Titan",
-    description: "Heavy-duty durability",
-    status: "active",
-    createdAt: "2023-06-01",
-    updatedAt: "2023-11-08",
-    draftedAt: "2023-05-25",
-    isActive: true,
-    isDraft: false,
-    isDeleted: false,
-    isUpdated: false,
-    actionMessage: "1 day ago",
-  },
-  {
-    id: "16",
-    code: "BRD016",
-    name: "Zen",
-    description: "Calm aesthetics and simplicity",
-    status: "active",
-    createdAt: "2023-06-10",
-    updatedAt: "2023-10-25",
-    draftedAt: "2023-06-05",
-    isActive: true,
-    isDraft: false,
-    isDeleted: false,
-    isUpdated: false,
-    actionMessage: "1 day ago",
-  },
-  {
-    id: "17",
-    code: "BRD017",
-    name: "Nova",
-    description: "Next-gen styling",
-    status: "inactive",
-    createdAt: "2023-06-15",
-    updatedAt: "2023-06-20",
-    draftedAt: "2023-06-12",
-    isActive: false,
-    isDraft: false,
-    isDeleted: false,
-    isUpdated: false,
-    actionMessage: "1 day ago",
-  },
-  {
-    id: "18",
-    code: "BRD018",
-    name: "Atlas",
-    description: "Travel and adventure line",
-    status: "draft",
-    createdAt: "2023-07-01",
-    updatedAt: "2023-11-15",
-    draftedAt: "2023-06-25",
-    isActive: false,
-    isDraft: true,
-    isDeleted: false,
-    isUpdated: false,
-    actionMessage: "1 day ago",
-  },
-  {
-    id: "19",
-    code: "BRD019",
-    name: "Pulse",
-    description: "Fitness and wellness",
-    status: "active",
-    createdAt: "2023-07-10",
-    updatedAt: "2023-10-18",
-    draftedAt: "2023-07-05",
-    isActive: true,
-    isDraft: false,
-    isDeleted: false,
-    isUpdated: false,
-    actionMessage: "1 day ago",
-  },
-  {
-    id: "20",
-    code: "BRD020",
-    name: "Spark",
-    description: "Starter range and essentials",
-    status: "inactive",
-    createdAt: "2023-07-20",
-    updatedAt: "2023-09-15",
-    draftedAt: "2023-07-15",
-    isActive: false,
     isDraft: false,
     isDeleted: false,
     isUpdated: false,
@@ -323,7 +283,7 @@ const mockBrands: BrandItem[] = [
   },
 ];
 
-export default function BrandsDataTable({
+export default function ItemsDataTable({
   viewMode,
   setViewMode,
   dataTableFilter,
@@ -355,9 +315,9 @@ export default function BrandsDataTable({
 
   const componentColumns = [
     {
-      accessorKey: "name",
-      title: "Name",
-      options: [...new Set(mockBrands.map((item) => item.name))],
+      accessorKey: "itemName",
+      title: "Item Name",
+      options: [...new Set(mockItems.map((item) => item.itemName))],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
         const cellValue = row.getValue(columnId) as string;
@@ -366,19 +326,21 @@ export default function BrandsDataTable({
         );
       },
       sortingFn: (row1: any, row2: any) => {
-        return row1.getValue("name").localeCompare(row2.getValue("name"));
+        return row1
+          .getValue("itemName")
+          .localeCompare(row2.getValue("itemName"));
       },
       size: isMobile ? 120 : 180,
       minSize: 120,
       meta: {
-        exportLabel: "Name",
+        exportLabel: "Item Name",
         readOnly: !canCreate,
       },
     },
     {
-      accessorKey: "code",
-      title: "Code",
-      options: [...new Set(mockBrands.map((item) => item.code))],
+      accessorKey: "arabicName",
+      title: "Arabic Name",
+      options: [...new Set(mockItems.map((item) => item.arabicName))],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
         const cellValue = row.getValue(columnId) as string;
@@ -387,19 +349,201 @@ export default function BrandsDataTable({
         );
       },
       sortingFn: (row1: any, row2: any) => {
-        return row1.getValue("code").localeCompare(row2.getValue("code"));
+        return row1
+          .getValue("arabicName")
+          .localeCompare(row2.getValue("arabicName"));
+      },
+      size: isMobile ? 120 : 180,
+      minSize: 120,
+      meta: {
+        exportLabel: "Arabic Name",
+        readOnly: !canCreate,
+      },
+    },
+    {
+      accessorKey: "itemCode",
+      title: "Item Code",
+      options: [...new Set(mockItems.map((item) => item.itemCode))],
+      filterFn: (row: any, columnId: any, filterValue: any) => {
+        if (!filterValue || filterValue.length === 0) return true;
+        const cellValue = row.getValue(columnId) as string;
+        return filterValue.some((filterVal: string) =>
+          cellValue.toLowerCase().includes(filterVal.toLowerCase())
+        );
+      },
+      sortingFn: (row1: any, row2: any) => {
+        return row1
+          .getValue("itemCode")
+          .localeCompare(row2.getValue("itemCode"));
       },
       size: isMobile ? 100 : 120,
       minSize: 100,
       meta: {
-        exportLabel: "Code",
+        exportLabel: "Item Code",
+        readOnly: !canCreate,
+      },
+    },
+    {
+      accessorKey: "costPrice",
+      title: "Cost Price",
+      options: [...new Set(mockItems.map((item) => item.costPrice.toString()))],
+      filterFn: (row: any, columnId: any, filterValue: any) => {
+        if (!filterValue || filterValue.length === 0) return true;
+        const cellValue = row.getValue(columnId) as number;
+        return filterValue.some((filterVal: string) =>
+          cellValue.toString().includes(filterVal)
+        );
+      },
+      sortingFn: (row1: any, row2: any) => {
+        return row1.getValue("costPrice") - row2.getValue("costPrice");
+      },
+      size: isMobile ? 100 : 120,
+      minSize: 100,
+      meta: {
+        exportLabel: "Cost Price",
+        readOnly: !canCreate,
+      },
+    },
+    {
+      accessorKey: "regularPrice",
+      title: "Regular Price",
+      options: [
+        ...new Set(mockItems.map((item) => item.regularPrice.toString())),
+      ],
+      filterFn: (row: any, columnId: any, filterValue: any) => {
+        if (!filterValue || filterValue.length === 0) return true;
+        const cellValue = row.getValue(columnId) as number;
+        return filterValue.some((filterVal: string) =>
+          cellValue.toString().includes(filterVal)
+        );
+      },
+      sortingFn: (row1: any, row2: any) => {
+        return row1.getValue("regularPrice") - row2.getValue("regularPrice");
+      },
+      size: isMobile ? 120 : 140,
+      minSize: 120,
+      meta: {
+        exportLabel: "Regular Price",
+        readOnly: !canCreate,
+      },
+    },
+    {
+      accessorKey: "offerPrice",
+      title: "Offer Price",
+      options: [
+        ...new Set(mockItems.map((item) => item.offerPrice.toString())),
+      ],
+      filterFn: (row: any, columnId: any, filterValue: any) => {
+        if (!filterValue || filterValue.length === 0) return true;
+        const cellValue = row.getValue(columnId) as number;
+        return filterValue.some((filterVal: string) =>
+          cellValue.toString().includes(filterVal)
+        );
+      },
+      sortingFn: (row1: any, row2: any) => {
+        return row1.getValue("offerPrice") - row2.getValue("offerPrice");
+      },
+      size: isMobile ? 120 : 140,
+      minSize: 120,
+      meta: {
+        exportLabel: "Offer Price",
+        readOnly: !canCreate,
+      },
+    },
+    {
+      accessorKey: "openingStock",
+      title: "Opening Stock",
+      options: [
+        ...new Set(mockItems.map((item) => item.openingStock.toString())),
+      ],
+      filterFn: (row: any, columnId: any, filterValue: any) => {
+        if (!filterValue || filterValue.length === 0) return true;
+        const cellValue = row.getValue(columnId) as number;
+        return filterValue.some((filterVal: string) =>
+          cellValue.toString().includes(filterVal)
+        );
+      },
+      sortingFn: (row1: any, row2: any) => {
+        return row1.getValue("openingStock") - row2.getValue("openingStock");
+      },
+      size: isMobile ? 120 : 140,
+      minSize: 120,
+      meta: {
+        exportLabel: "Opening Stock",
+        readOnly: !canCreate,
+      },
+    },
+    {
+      accessorKey: "category",
+      title: "Category",
+      options: [...new Set(mockItems.map((item) => item.category))],
+      filterFn: (row: any, columnId: any, filterValue: any) => {
+        if (!filterValue || filterValue.length === 0) return true;
+        const cellValue = row.getValue(columnId) as string;
+        return filterValue.some((filterVal: string) =>
+          cellValue.toLowerCase().includes(filterVal.toLowerCase())
+        );
+      },
+      sortingFn: (row1: any, row2: any) => {
+        return row1
+          .getValue("category")
+          .localeCompare(row2.getValue("category"));
+      },
+      size: isMobile ? 120 : 150,
+      minSize: 120,
+      meta: {
+        exportLabel: "Category",
+        readOnly: !canCreate,
+      },
+    },
+    {
+      accessorKey: "subCategory",
+      title: "Sub Category",
+      options: [...new Set(mockItems.map((item) => item.subCategory))],
+      filterFn: (row: any, columnId: any, filterValue: any) => {
+        if (!filterValue || filterValue.length === 0) return true;
+        const cellValue = row.getValue(columnId) as string;
+        return filterValue.some((filterVal: string) =>
+          cellValue.toLowerCase().includes(filterVal.toLowerCase())
+        );
+      },
+      sortingFn: (row1: any, row2: any) => {
+        return row1
+          .getValue("subCategory")
+          .localeCompare(row2.getValue("subCategory"));
+      },
+      size: isMobile ? 120 : 150,
+      minSize: 120,
+      meta: {
+        exportLabel: "Sub Category",
+        readOnly: !canCreate,
+      },
+    },
+    {
+      accessorKey: "unit",
+      title: "Unit",
+      options: [...new Set(mockItems.map((item) => item.unit))],
+      filterFn: (row: any, columnId: any, filterValue: any) => {
+        if (!filterValue || filterValue.length === 0) return true;
+        const cellValue = row.getValue(columnId) as string;
+        return filterValue.some((filterVal: string) =>
+          cellValue.toLowerCase().includes(filterVal.toLowerCase())
+        );
+      },
+      sortingFn: (row1: any, row2: any) => {
+        return row1.getValue("unit").localeCompare(row2.getValue("unit"));
+      },
+      size: isMobile ? 80 : 100,
+      minSize: 80,
+      meta: {
+        exportLabel: "Unit",
         readOnly: !canCreate,
       },
     },
     {
       accessorKey: "description",
       title: "Description",
-      options: [...new Set(mockBrands.map((item) => item.description))],
+      options: [...new Set(mockItems.map((item) => item.description))],
       filterFn: (row: any, columnId: any, filterValue: any) => {
         if (!filterValue || filterValue.length === 0) return true;
         const cellValue = row.getValue(columnId) as string;
@@ -525,8 +669,8 @@ export default function BrandsDataTable({
     },
   ];
 
-  const filteredData = mockBrands.filter((item: BrandItem) => {
-    // Brands use the same flags for demo
+  const filteredData = mockItems.filter((item: ItemMaster) => {
+    // Items use the same flags for demo
     if (dataTableFilter.status === "Active") {
       return item.isActive;
     } else if (dataTableFilter.status === "Inactive") {
@@ -548,8 +692,8 @@ export default function BrandsDataTable({
       viewMode={viewMode}
       setViewMode={setViewMode}
       componentColumns={componentColumns}
-      fixedColumns={["name", "code"]}
-      pathName="brands"
+      fixedColumns={["itemName", "itemCode"]}
+      pathName="items"
       setShowExport={setShowExport}
       showExport={showExport}
       setShowFilter={setShowFilter}
