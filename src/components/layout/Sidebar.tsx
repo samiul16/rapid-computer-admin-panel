@@ -103,6 +103,12 @@ const Sidebar = ({
     },
 
     {
+      key: "dealers",
+      icon: Store,
+      label: t("sidebar.menu.dealers"),
+      path: "/dealers",
+    },
+    {
       key: "permissions",
       icon: Shield,
       label: t("sidebar.menu.permissions"),

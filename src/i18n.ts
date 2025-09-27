@@ -272,6 +272,7 @@ const resources = {
           teamMembers: "Team Members",
           client: "Client",
           contactForm: "Contact Form",
+          dealers: "Dealers",
         },
         search: {
           placeholder: "Search...",
@@ -929,6 +930,7 @@ const resources = {
           openingStockInventory: "إدخال المخزون",
           stockTransfer: "إنتقال المخزون",
           deliveryNote: "مذكرة تسليم",
+          dealers: "الموزعين",
         },
         search: {
           placeholder: "ابحث...",
