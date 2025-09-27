@@ -17,24 +17,24 @@ const SEODashboard: React.FC = () => {
 
         <div className="space-y-4">
           {/* First Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
+            <div className="min-h-[480px]">
               <RankingsWidget />
             </div>
-            <div>
+            <div className="min-h-[480px]">
               <GoogleAnalyticsWidget />
             </div>
-            <div>
+            <div className="min-h-[480px]">
               <GoogleLighthouseWidget />
             </div>
           </div>
 
           {/* Second Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div className="lg:col-span-2">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
+            <div className="lg:col-span-2 min-h-[320px]">
               <BacklinksWidget />
             </div>
-            <div className="lg:col-span-1">
+            <div className="lg:col-span-1 min-h-[320px]">
               <GoogleSearchConsoleWidget />
             </div>
           </div>
