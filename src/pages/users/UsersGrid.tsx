@@ -12,6 +12,7 @@ import type { RootState } from "@/store";
 // import GridExportComponent from "./GridExportComponent";
 import GridFilterComponent from "./GridFilterComponent";
 import useIsMobile from "@/hooks/useIsMobile";
+import UsersSkeleton from "@/components/spinner/GridSkeleton";
 
 // import { usePermission } from "@/hooks/usePermissions";
 
@@ -146,6 +147,9 @@ export default function UsersGrid({
   // const canRestore: boolean = usePermission("users", "restore");
   // const canEdit: boolean = usePermission("users", "edit");
 
+  // Initial loading state
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+
   // Infinite scroll states
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -217,6 +221,15 @@ export default function UsersGrid({
     }
   }, [loadMoreData]);
 
+  // Simulate initial data loading
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsInitialLoading(false);
+    }, 1500); // Simulate 1.5 seconds of loading
+
+    return () => clearTimeout(timer);
+  }, []);
+
   // Add scroll event listener
   useEffect(() => {
     const container = scrollContainerRef.current;
@@ -240,6 +253,11 @@ export default function UsersGrid({
     const viewMode = searchParams.get("view") || "grid";
     navigate(`/users/view/${userId}?fromView=${viewMode}`);
   };
+
+  // Show skeleton loading state
+  if (isInitialLoading) {
+    return <UsersSkeleton />;
+  }
 
   return (
     <div
