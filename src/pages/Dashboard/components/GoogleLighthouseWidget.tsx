@@ -10,8 +10,8 @@ interface CircularProgressProps {
 
 const CircularProgress: React.FC<CircularProgressProps> = ({
   score,
-  size = 80,
-  strokeWidth = 8,
+  size = 120,
+  strokeWidth = 12,
   color,
   label,
 }) => {
@@ -21,7 +21,14 @@ const CircularProgress: React.FC<CircularProgressProps> = ({
   const strokeDashoffset = circumference - (score / 100) * circumference;
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="bg-gray-100 rounded-lg p-4 flex flex-col items-center justify-center h-48 shadow">
+      {/* Title with indicator */}
+      <div className="flex items-center mb-4">
+        <div className="w-3 h-3 rounded-full bg-gray-300 mr-2"></div>
+        <span className="text-sm font-medium text-gray-700">{label}</span>
+      </div>
+
+      {/* Circular progress */}
       <div className="relative" style={{ width: size, height: size }}>
         <svg width={size} height={size} className="transform -rotate-90">
           {/* Background circle */}
@@ -49,18 +56,17 @@ const CircularProgress: React.FC<CircularProgressProps> = ({
         </svg>
         {/* Score text */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-lg font-bold text-gray-900">{score}</span>
+          <span className="text-2xl font-bold text-gray-900">{score}</span>
         </div>
       </div>
-      <span className="text-sm text-gray-600 mt-2 text-center">{label}</span>
     </div>
   );
 };
 
 const GoogleLighthouseWidget: React.FC = () => {
   return (
-    <div className="bg-white rounded-lg shadow-sm p-4">
-      <h2 className="text-lg font-semibold text-gray-800 mb-4">
+    <div className="bg-white rounded-lg p-6 shadow">
+      <h2 className="text-xl font-semibold text-gray-800 mb-6">
         Google Lighthouse
       </h2>
 
