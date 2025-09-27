@@ -10071,6 +10071,167 @@ export const userPermission = {
         },
       },
     },
+    dealers: {
+      formPermissions: {
+        create: true,
+        view: true,
+        edit: true,
+        delete: true,
+        restore: true,
+        export: true,
+        import: true,
+        pdf: true,
+        print: true,
+        history: true,
+      },
+      fieldPermissions: {
+        customerNo: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        customerName: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        shortName: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        vatNumber: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        vendorCode: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        currency: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        phone: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        fax: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        mobile: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        whatsapp: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        country: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        state: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        city: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        postCode: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        address: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        email: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        website: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        language: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        locationUrl: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        paymentMode: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        status: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        isDefault: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        isDraft: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        isActive: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        isDeleted: {
+          view: true,
+          edit: true,
+          create: true,
+        },
+        createdAt: {
+          view: true,
+          edit: false,
+          create: true,
+        },
+        updatedAt: {
+          view: true,
+          edit: false,
+          create: true,
+        },
+        draftedAt: {
+          view: true,
+          edit: false,
+          create: true,
+        },
+        deletedAt: {
+          view: true,
+          edit: false,
+          create: true,
+        },
+      },
+    },
     stockTransfer: {
       formPermissions: {
         create: true,

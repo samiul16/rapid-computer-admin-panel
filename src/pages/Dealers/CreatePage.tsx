@@ -17,10 +17,27 @@ import { useAppSelector } from "@/store/hooks";
 import MinimizablePageLayout from "@/components/MinimizablePageLayout";
 import { SwitchSelect } from "@/components/common/SwitchAutoComplete";
 
-type BrandData = {
-  name: string;
-  code: string;
-  description: string;
+type DealerData = {
+  customerNo: string;
+  customerName: string;
+  shortName: string;
+  vatNumber: string;
+  vendorCode: string;
+  currency: string;
+  phone: string;
+  fax: string;
+  mobile: string;
+  whatsapp: string;
+  country: string;
+  state: string;
+  city: string;
+  postCode: string;
+  address: string;
+  email: string;
+  website: string;
+  language: string;
+  locationUrl: string;
+  paymentMode: string;
   status: "active" | "inactive" | "draft";
   isDefault: boolean;
   isActive: boolean;
@@ -36,10 +53,27 @@ type Props = {
   isEdit?: boolean;
 };
 
-const initialData: BrandData = {
-  name: "Apex",
-  code: "BRD001",
-  description: "Premium performance brand",
+const initialData: DealerData = {
+  customerNo: "CUST001",
+  customerName: "Tech Solutions Ltd",
+  shortName: "TechSol",
+  vatNumber: "VAT123456789",
+  vendorCode: "VEND001",
+  currency: "USD",
+  phone: "+1-555-0123",
+  fax: "+1-555-0124",
+  mobile: "+1-555-0125",
+  whatsapp: "+1-555-0125",
+  country: "United States",
+  state: "California",
+  city: "San Francisco",
+  postCode: "94105",
+  address: "123 Market Street, Suite 100",
+  email: "info@techsolutions.com",
+  website: "www.techsolutions.com",
+  language: "English",
+  locationUrl: "https://maps.google.com/techsolutions",
+  paymentMode: "Credit Card",
   status: "active",
   isDefault: false,
   isActive: true,
@@ -51,7 +85,7 @@ const initialData: BrandData = {
   isDeleted: false,
 };
 
-export default function BrandFormPage({ isEdit = false }: Props) {
+export default function DealerFormPage({ isEdit = false }: Props) {
   const navigate = useNavigate();
   const labels = useLanguageLabels();
   const { isRTL } = useAppSelector((state) => state.language);
@@ -68,19 +102,54 @@ export default function BrandFormPage({ isEdit = false }: Props) {
   const { canCreate, canView } = useColorsPermissions();
 
   // Field-level permissions
-  const name: boolean = usePermission("brands", "create", "name");
-  const code: boolean = usePermission("brands", "create", "code");
-  const description: boolean = usePermission("brands", "create", "description");
-  const status: boolean = usePermission("brands", "create", "status");
-  const isDefault: boolean = usePermission("brands", "create", "isDefault");
-  const canPdf: boolean = usePermission("brands", "pdf");
-  const canPrint: boolean = usePermission("brands", "print");
+  const customerName: boolean = usePermission(
+    "dealers",
+    "create",
+    "customerName"
+  );
+  const customerNo: boolean = usePermission("dealers", "create", "customerNo");
+  const shortName: boolean = usePermission("dealers", "create", "shortName");
+  const vatNumber: boolean = usePermission("dealers", "create", "vatNumber");
+  const vendorCode: boolean = usePermission("dealers", "create", "vendorCode");
+  const currency: boolean = usePermission("dealers", "create", "currency");
+  const phone: boolean = usePermission("dealers", "create", "phone");
+  const mobile: boolean = usePermission("dealers", "create", "mobile");
+  const email: boolean = usePermission("dealers", "create", "email");
+  const country: boolean = usePermission("dealers", "create", "country");
+  const city: boolean = usePermission("dealers", "create", "city");
+  const address: boolean = usePermission("dealers", "create", "address");
+  const paymentMode: boolean = usePermission(
+    "dealers",
+    "create",
+    "paymentMode"
+  );
+  const status: boolean = usePermission("dealers", "create", "status");
+  const isDefault: boolean = usePermission("dealers", "create", "isDefault");
+  const canPdf: boolean = usePermission("dealers", "pdf");
+  const canPrint: boolean = usePermission("dealers", "print");
 
   // Form state
-  const [formData, setFormData] = useState<BrandData>({
-    name: "",
-    code: "",
-    description: "",
+  const [formData, setFormData] = useState<DealerData>({
+    customerNo: "",
+    customerName: "",
+    shortName: "",
+    vatNumber: "",
+    vendorCode: "",
+    currency: "",
+    phone: "",
+    fax: "",
+    mobile: "",
+    whatsapp: "",
+    country: "",
+    state: "",
+    city: "",
+    postCode: "",
+    address: "",
+    email: "",
+    website: "",
+    language: "",
+    locationUrl: "",
+    paymentMode: "",
     status: "active",
     isDefault: false,
     isActive: true,
@@ -110,9 +179,9 @@ export default function BrandFormPage({ isEdit = false }: Props) {
       ),
       onClick: () => {
         if (isEdit) {
-          navigate("/brands/create");
+          navigate("/dealers/create");
         } else {
-          navigate("/brands/edit/undefined");
+          navigate("/dealers/edit/undefined");
         }
       },
       show: canCreate,
@@ -121,7 +190,7 @@ export default function BrandFormPage({ isEdit = false }: Props) {
       label: "View",
       icon: <Eye className="w-5 h-5 text-green-600" />,
       onClick: () => {
-        navigate("/brands/view");
+        navigate("/dealers/view");
       },
       show: canView,
     },
@@ -154,16 +223,16 @@ export default function BrandFormPage({ isEdit = false }: Props) {
       await handleExportPDF();
     }
     if (printEnabled) {
-      handlePrintBrand(formData);
+      handlePrintDealer(formData);
     }
 
     // keep switch functionality
     if (keepCreating) {
-      toastSuccess("Brand created successfully!");
+      toastSuccess("Dealer created successfully!");
       handleReset();
     } else {
-      toastSuccess("Brand created successfully!");
-      navigate("/brands");
+      toastSuccess("Dealer created successfully!");
+      navigate("/dealers");
     }
   };
 
@@ -173,9 +242,26 @@ export default function BrandFormPage({ isEdit = false }: Props) {
 
   const handleReset = async () => {
     setFormData({
-      name: "",
-      code: "",
-      description: "",
+      customerNo: "",
+      customerName: "",
+      shortName: "",
+      vatNumber: "",
+      vendorCode: "",
+      currency: "",
+      phone: "",
+      fax: "",
+      mobile: "",
+      whatsapp: "",
+      country: "",
+      state: "",
+      city: "",
+      postCode: "",
+      address: "",
+      email: "",
+      website: "",
+      language: "",
+      locationUrl: "",
+      paymentMode: "",
       status: "active",
       isDefault: false,
       isActive: true,
@@ -197,20 +283,30 @@ export default function BrandFormPage({ isEdit = false }: Props) {
 
     // Focus the first input field after reset
     setTimeout(() => {
-      inputRefs.current["name"]?.focus();
+      inputRefs.current["customerName"]?.focus();
     }, 100);
   };
 
-  const handlePrintBrand = (brandData: any) => {
+  const handlePrintDealer = (dealerData: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "Brand Details",
-        data: [brandData],
+        title: "Dealer Details",
+        data: [dealerData],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
-          name: "Brand Name",
-          code: "Brand Code",
-          description: "Description",
+          customerName: "Customer Name",
+          customerNo: "Customer No",
+          shortName: "Short Name",
+          vatNumber: "VAT Number",
+          vendorCode: "Vendor Code",
+          currency: "Currency",
+          phone: "Phone",
+          mobile: "Mobile",
+          email: "Email",
+          country: "Country",
+          city: "City",
+          address: "Address",
+          paymentMode: "Payment Mode",
           status: "Status",
           isActive: "Active Status",
           isDraft: "Draft Status",
@@ -241,15 +337,15 @@ export default function BrandFormPage({ isEdit = false }: Props) {
       const blob = await pdf(
         <GenericPDF
           data={[formData]}
-          title="Brand Details"
-          subtitle="Brand Information"
+          title="Dealer Details"
+          subtitle="Dealer Information"
         />
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "brand-details.pdf";
+      a.download = "dealer-details.pdf";
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
@@ -277,7 +373,7 @@ export default function BrandFormPage({ isEdit = false }: Props) {
                 ...prev,
                 isDraft: true,
               }));
-              toastRestore("Brand saved as draft successfully");
+              toastRestore("Dealer saved as draft successfully");
             },
             show: canCreate,
           },
@@ -299,14 +395,16 @@ export default function BrandFormPage({ isEdit = false }: Props) {
   return (
     <>
       <MinimizablePageLayout
-        moduleId="brand-form-module"
-        moduleName={isEdit ? "Edit Brand" : "Adding Brand"}
+        moduleId="dealer-form-module"
+        moduleName={isEdit ? "Edit Dealer" : "Adding Dealer"}
         moduleRoute={
-          isEdit ? `/brands/edit/${formData.name || "new"}` : "/brands/create"
+          isEdit
+            ? `/dealers/edit/${formData.customerName || "new"}`
+            : "/dealers/create"
         }
         onMinimize={handleMinimize}
-        title={isEdit ? "Edit Brand" : "Add Brand"}
-        listPath="brands"
+        title={isEdit ? "Edit Dealer" : "Add Dealer"}
+        listPath="dealers"
         popoverOptions={popoverOptions}
         videoSrc={video}
         videoHeader="Tutorial video"
@@ -317,7 +415,7 @@ export default function BrandFormPage({ isEdit = false }: Props) {
         printEnabled={printEnabled}
         onPrintToggle={canPrint ? handleSwitchChange : undefined}
         activePage="create"
-        module="brands"
+        module="dealers"
         additionalFooterButtons={
           canCreate ? (
             <div className="flex gap-4 max-[435px]:gap-2">
@@ -347,59 +445,264 @@ export default function BrandFormPage({ isEdit = false }: Props) {
             onSubmit={handleSubmit}
             className="space-y-6 relative"
           >
-            {/* First Row: Brand Name, Code, Description */}
+            {/* First Row: Customer Name, Customer No, Short Name, VAT Number */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
-              {/* Brand Name field - only show if user can create */}
-              {name && (
+              {/* Customer Name field - only show if user can create */}
+              {customerName && (
                 <div className="space-y-2">
                   <EditableInput
-                    setRef={setRef("name")}
-                    id="name"
-                    name="name"
-                    value={formData.name}
+                    setRef={setRef("customerName")}
+                    id="customerName"
+                    name="customerName"
+                    value={formData.customerName}
                     onChange={handleChange}
-                    onNext={() => focusNextInput("code")}
-                    onCancel={() => setFormData({ ...formData, name: "" })}
-                    labelText="Brand Name"
-                    tooltipText="Enter the brand name"
-                    required
-                  />
-                </div>
-              )}
-
-              {/* Brand Code field - only show if user can create */}
-              {code && (
-                <div className="space-y-2">
-                  <EditableInput
-                    setRef={setRef("code")}
-                    id="code"
-                    name="code"
-                    value={formData.code}
-                    onChange={handleChange}
-                    onNext={() => focusNextInput("description")}
-                    onCancel={() => setFormData({ ...formData, code: "" })}
-                    labelText="Brand Code"
-                    tooltipText="Enter the brand code (e.g., BRD001)"
-                    required
-                  />
-                </div>
-              )}
-
-              {/* Description field - only show if user can create */}
-              {description && (
-                <div className="space-y-2">
-                  <EditableInput
-                    setRef={setRef("description")}
-                    id="description"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    onNext={() => focusNextInput("status")}
+                    onNext={() => focusNextInput("customerNo")}
                     onCancel={() =>
-                      setFormData({ ...formData, description: "" })
+                      setFormData({ ...formData, customerName: "" })
                     }
-                    labelText="Description"
-                    tooltipText="Enter a description for the brand"
+                    labelText="Customer Name"
+                    tooltipText="Enter the customer name"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Customer No field - only show if user can create */}
+              {customerNo && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("customerNo")}
+                    id="customerNo"
+                    name="customerNo"
+                    value={formData.customerNo}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("shortName")}
+                    onCancel={() =>
+                      setFormData({ ...formData, customerNo: "" })
+                    }
+                    labelText="Customer No"
+                    tooltipText="Enter the customer number (e.g., CUST001)"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Short Name field - only show if user can create */}
+              {shortName && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("shortName")}
+                    id="shortName"
+                    name="shortName"
+                    value={formData.shortName}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("vatNumber")}
+                    onCancel={() => setFormData({ ...formData, shortName: "" })}
+                    labelText="Short Name"
+                    tooltipText="Enter a short name for the customer"
+                    type="text"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* VAT Number field - only show if user can create */}
+              {vatNumber && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("vatNumber")}
+                    id="vatNumber"
+                    name="vatNumber"
+                    value={formData.vatNumber}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("vendorCode")}
+                    onCancel={() => setFormData({ ...formData, vatNumber: "" })}
+                    labelText="VAT Number"
+                    tooltipText="Enter the VAT number"
+                    type="text"
+                    required
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Second Row: Vendor Code, Currency, Phone, Mobile */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
+              {/* Vendor Code field - only show if user can create */}
+              {vendorCode && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("vendorCode")}
+                    id="vendorCode"
+                    name="vendorCode"
+                    value={formData.vendorCode}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("currency")}
+                    onCancel={() =>
+                      setFormData({ ...formData, vendorCode: "" })
+                    }
+                    labelText="Vendor Code"
+                    tooltipText="Enter the vendor code"
+                    type="text"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Currency field - only show if user can create */}
+              {currency && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("currency")}
+                    id="currency"
+                    name="currency"
+                    value={formData.currency}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("phone")}
+                    onCancel={() => setFormData({ ...formData, currency: "" })}
+                    labelText="Currency"
+                    tooltipText="Enter the currency (e.g., USD, EUR)"
+                    type="text"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Phone field - only show if user can create */}
+              {phone && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("phone")}
+                    id="phone"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("mobile")}
+                    onCancel={() => setFormData({ ...formData, phone: "" })}
+                    labelText="Phone"
+                    tooltipText="Enter the phone number"
+                    type="text"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Mobile field - only show if user can create */}
+              {mobile && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("mobile")}
+                    id="mobile"
+                    name="mobile"
+                    value={formData.mobile}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("email")}
+                    onCancel={() => setFormData({ ...formData, mobile: "" })}
+                    labelText="Mobile"
+                    tooltipText="Enter the mobile number"
+                    type="text"
+                    required
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Third Row: Email, Country, City, Address */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
+              {/* Email field - only show if user can create */}
+              {email && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("email")}
+                    id="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("country")}
+                    onCancel={() => setFormData({ ...formData, email: "" })}
+                    labelText="Email"
+                    tooltipText="Enter the email address"
+                    type="email"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Country field - only show if user can create */}
+              {country && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("country")}
+                    id="country"
+                    name="country"
+                    value={formData.country}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("city")}
+                    onCancel={() => setFormData({ ...formData, country: "" })}
+                    labelText="Country"
+                    tooltipText="Enter the country"
+                    type="text"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* City field - only show if user can create */}
+              {city && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("city")}
+                    id="city"
+                    name="city"
+                    value={formData.city}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("address")}
+                    onCancel={() => setFormData({ ...formData, city: "" })}
+                    labelText="City"
+                    tooltipText="Enter the city"
+                    type="text"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Address field - only show if user can create */}
+              {address && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("address")}
+                    id="address"
+                    name="address"
+                    value={formData.address}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("paymentMode")}
+                    onCancel={() => setFormData({ ...formData, address: "" })}
+                    labelText="Address"
+                    tooltipText="Enter the address"
+                    type="text"
+                    required
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Fourth Row: Payment Mode, Status, Default */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
+              {/* Payment Mode field - only show if user can create */}
+              {paymentMode && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("paymentMode")}
+                    id="paymentMode"
+                    name="paymentMode"
+                    value={formData.paymentMode}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("statusSwitch")}
+                    onCancel={() =>
+                      setFormData({ ...formData, paymentMode: "" })
+                    }
+                    labelText="Payment Mode"
+                    tooltipText="Enter the payment mode"
                     type="text"
                     required
                   />
@@ -418,12 +721,12 @@ export default function BrandFormPage({ isEdit = false }: Props) {
                       {
                         label: labels.yes,
                         value: labels.yes,
-                        date: "Set default brand",
+                        date: "Set default dealer",
                       },
                       {
                         label: labels.no,
                         value: labels.no,
-                        date: "Remove default brand",
+                        date: "Remove default dealer",
                       },
                     ]}
                     value={isDefaultState === "Yes" ? labels.yes : labels.no}
@@ -450,13 +753,13 @@ export default function BrandFormPage({ isEdit = false }: Props) {
                     placeholder=" "
                     labelText="Default"
                     className="relative"
-                    tooltipText="Set as default brand"
+                    tooltipText="Set as default dealer"
                   />
                 </div>
               )}
             </div>
 
-            {/* Second Row: Default and Status */}
+            {/* Fifth Row: Status */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
               {/* Status field - only show if user can create */}
               {status && (
@@ -506,7 +809,7 @@ export default function BrandFormPage({ isEdit = false }: Props) {
                         },
                       },
                     }}
-                    tooltipText="Set the brand status"
+                    tooltipText="Set the dealer status"
                   />
                 </div>
               )}
