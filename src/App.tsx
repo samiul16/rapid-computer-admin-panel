@@ -1513,6 +1513,9 @@ import DealersCreatePage from "./pages/Dealers/CreatePage";
 import DealersEditPage from "./pages/Dealers/EditPage";
 import DealersDetails from "./pages/Dealers/DealersDetails";
 
+// SEO Dashboard
+import SEODashboardPage from "./pages/Dashboard/SEODashboard";
+
 function App() {
   const { i18n } = useTranslation();
   const isAuthenticated = useSelector(
@@ -1614,7 +1617,7 @@ function App() {
               <Route element={<MainLayout />}>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/search" element={<Dashboard />} />
-
+                <Route path="/newdashboard" element={<SEODashboardPage />} />
                 {/* Users */}
 
                 {/* Permissions */}

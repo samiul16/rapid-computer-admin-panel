@@ -82,7 +82,12 @@ const Sidebar = ({
       label: t("sidebar.menu.dashboard"),
       path: "/dashboard",
     },
-
+    {
+      key: "newdashboard",
+      icon: LayoutDashboard,
+      label: t("sidebar.menu.dashboard"),
+      path: "/newdashboard",
+    },
     {
       key: "users",
       icon: Users,
