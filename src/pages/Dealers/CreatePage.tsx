@@ -757,10 +757,7 @@ export default function DealerFormPage({ isEdit = false }: Props) {
                   />
                 </div>
               )}
-            </div>
 
-            {/* Fifth Row: Status */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
               {/* Status field - only show if user can create */}
               {status && (
                 <div className="space-y-2">

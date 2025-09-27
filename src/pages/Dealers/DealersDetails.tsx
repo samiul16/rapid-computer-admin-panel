@@ -17,33 +17,73 @@ import { ResetFormModal } from "@/components/common/ResetFormModal";
 import { usePermission } from "@/hooks/usePermissions";
 import MinimizablePageLayout from "@/components/MinimizablePageLayout";
 
-const MOCK_BRANDS = [
+const MOCK_DEALERS = [
   {
     id: "1",
-    name: "Apex",
-    code: "BRD001",
-    description: "Premium performance brand",
+    customerName: "Tech Solutions Ltd",
+    customerNo: "CUST001",
+    shortName: "TechSol",
+    vatNumber: "VAT123456789",
+    vendorCode: "VEND001",
+    currency: "USD",
+    phone: "+1-555-0123",
+    mobile: "+1-555-0125",
+    email: "info@techsolutions.com",
+    country: "United States",
+    city: "San Francisco",
+    address: "123 Market Street, Suite 100",
+    paymentMode: "Credit Card",
     status: "Active",
   },
   {
     id: "2",
-    name: "Velocity",
-    code: "BRD002",
-    description: "High-speed and sports-focused",
+    customerName: "Global Electronics Inc",
+    customerNo: "CUST002",
+    shortName: "GlobalElec",
+    vatNumber: "VAT987654321",
+    vendorCode: "VEND002",
+    currency: "EUR",
+    phone: "+44-20-7946-0958",
+    mobile: "+44-20-7946-0959",
+    email: "contact@globalelectronics.com",
+    country: "United Kingdom",
+    city: "London",
+    address: "456 Oxford Street, London",
+    paymentMode: "Bank Transfer",
     status: "Active",
   },
   {
     id: "3",
-    name: "Nimbus",
-    code: "BRD003",
-    description: "Cloud-like comfort and reliability",
+    customerName: "Digital Innovations Corp",
+    customerNo: "CUST003",
+    shortName: "DigitalCorp",
+    vatNumber: "VAT456789123",
+    vendorCode: "VEND003",
+    currency: "USD",
+    phone: "+1-555-0456",
+    mobile: "+1-555-0457",
+    email: "hello@digitalinnovations.com",
+    country: "Canada",
+    city: "Toronto",
+    address: "789 Bay Street, Toronto",
+    paymentMode: "PayPal",
     status: "Draft",
   },
   {
     id: "4",
-    name: "Quantum",
-    code: "BRD004",
-    description: "Cutting-edge innovation",
+    customerName: "Future Systems AG",
+    customerNo: "CUST004",
+    shortName: "FutureSys",
+    vatNumber: "VAT789123456",
+    vendorCode: "VEND004",
+    currency: "EUR",
+    phone: "+49-30-12345678",
+    mobile: "+49-30-12345679",
+    email: "info@futuresystems.de",
+    country: "Germany",
+    city: "Berlin",
+    address: "321 Unter den Linden, Berlin",
+    paymentMode: "Wire Transfer",
     status: "InActive",
   },
 ];
@@ -62,13 +102,13 @@ export type HistoryEntry = {
   print: boolean;
 };
 
-export default function BrandDetailsPage() {
+export default function DealerDetailsPage() {
   // const { t } = useTranslation();
   const navigate = useNavigate();
 
   const [keepChanges, setKeepChanges] = useState(false);
   const [isOptionModalOpen, setIsOptionModalOpen] = useState(false);
-  const [selectedBrand, setSelectedBrand] = useState("1");
+  const [selectedDealer, setSelectedDealer] = useState("1");
   const location = useLocation();
   const isViewPage = location.pathname.includes("/view");
   const [pdfChecked, setPdfChecked] = useState(false);
@@ -79,22 +119,54 @@ export default function BrandDetailsPage() {
   // const { canCreate, canView, canEdit, canDelete } = useUserMasterPermissions();
 
   // Field-level permissions
-  const canPdf: boolean = usePermission("brands", "pdf");
-  const canPrint: boolean = usePermission("brands", "print");
-  const canSeeHistory: boolean = usePermission("brands", "history");
+  const canPdf: boolean = usePermission("dealers", "pdf");
+  const canPrint: boolean = usePermission("dealers", "print");
+  const canSeeHistory: boolean = usePermission("dealers", "history");
 
-  let brandData = {
-    id: selectedBrand,
-    name: MOCK_BRANDS.find((b) => b.id === selectedBrand)?.name || "Apex",
-    code: MOCK_BRANDS.find((b) => b.id === selectedBrand)?.code || "BRD001",
-    description:
-      MOCK_BRANDS.find((b) => b.id === selectedBrand)?.description ||
-      "Premium performance brand",
+  let dealerData = {
+    id: selectedDealer,
+    customerName:
+      MOCK_DEALERS.find((d) => d.id === selectedDealer)?.customerName ||
+      "Tech Solutions Ltd",
+    customerNo:
+      MOCK_DEALERS.find((d) => d.id === selectedDealer)?.customerNo ||
+      "CUST001",
+    shortName:
+      MOCK_DEALERS.find((d) => d.id === selectedDealer)?.shortName || "TechSol",
+    vatNumber:
+      MOCK_DEALERS.find((d) => d.id === selectedDealer)?.vatNumber ||
+      "VAT123456789",
+    vendorCode:
+      MOCK_DEALERS.find((d) => d.id === selectedDealer)?.vendorCode ||
+      "VEND001",
+    currency:
+      MOCK_DEALERS.find((d) => d.id === selectedDealer)?.currency || "USD",
+    phone:
+      MOCK_DEALERS.find((d) => d.id === selectedDealer)?.phone || "+1-555-0123",
+    mobile:
+      MOCK_DEALERS.find((d) => d.id === selectedDealer)?.mobile ||
+      "+1-555-0125",
+    email:
+      MOCK_DEALERS.find((d) => d.id === selectedDealer)?.email ||
+      "info@techsolutions.com",
+    country:
+      MOCK_DEALERS.find((d) => d.id === selectedDealer)?.country ||
+      "United States",
+    city:
+      MOCK_DEALERS.find((d) => d.id === selectedDealer)?.city ||
+      "San Francisco",
+    address:
+      MOCK_DEALERS.find((d) => d.id === selectedDealer)?.address ||
+      "123 Market Street, Suite 100",
+    paymentMode:
+      MOCK_DEALERS.find((d) => d.id === selectedDealer)?.paymentMode ||
+      "Credit Card",
     isDefault: true,
     isActive: true,
     isDraft: false,
     isDeleted: false,
-    status: MOCK_BRANDS.find((b) => b.id === selectedBrand)?.status || "Active",
+    status:
+      MOCK_DEALERS.find((d) => d.id === selectedDealer)?.status || "Active",
     createdAt: "2023-05-15T10:30:00Z",
     updatedAt: "2025-01-15T14:30:00Z",
     draftedAt: "2025-05-20T14:45:00Z",
@@ -110,11 +182,21 @@ export default function BrandDetailsPage() {
     }
     console.log("isViewPage", isViewPage);
     if (isViewPage) {
-      brandData = {
-        id: selectedBrand,
-        name: "",
-        code: "",
-        description: "",
+      dealerData = {
+        id: selectedDealer,
+        customerName: "",
+        customerNo: "",
+        shortName: "",
+        vatNumber: "",
+        vendorCode: "",
+        currency: "",
+        phone: "",
+        mobile: "",
+        email: "",
+        country: "",
+        city: "",
+        address: "",
+        paymentMode: "",
         isDefault: true,
         isActive: true,
         isDraft: false,
@@ -128,17 +210,27 @@ export default function BrandDetailsPage() {
     }
   }, []);
 
-  const handlePrintBrand = (brand: any) => {
+  const handlePrintDealer = (dealer: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "Brand Master Details",
-        data: [brand],
+        title: "Dealer Master Details",
+        data: [dealer],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
-          name: "Brand Name",
-          code: "Brand Code",
-          description: "Description",
-          isDefault: "Default Brand",
+          customerName: "Customer Name",
+          customerNo: "Customer No",
+          shortName: "Short Name",
+          vatNumber: "VAT Number",
+          vendorCode: "Vendor Code",
+          currency: "Currency",
+          phone: "Phone",
+          mobile: "Mobile",
+          email: "Email",
+          country: "Country",
+          city: "City",
+          address: "Address",
+          paymentMode: "Payment Mode",
+          isDefault: "Default Dealer",
           isActive: "Active Status",
           isDraft: "Draft Status",
           isDeleted: "Deleted Status",
@@ -167,19 +259,19 @@ export default function BrandDetailsPage() {
   const handleExportPDF = async () => {
     console.log("Export PDF clicked");
     try {
-      console.log("brandData on pdf click", brandData);
+      console.log("dealerData on pdf click", dealerData);
       const blob = await pdf(
         <GenericPDF
-          data={[brandData]}
-          title="Brand Master Details"
-          subtitle="Brand Information"
+          data={[dealerData]}
+          title="Dealer Master Details"
+          subtitle="Dealer Information"
         />
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "brand-details.pdf";
+      a.download = "dealer-details.pdf";
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
@@ -223,25 +315,25 @@ export default function BrandDetailsPage() {
   return (
     <>
       <MinimizablePageLayout
-        moduleId="brand-details-module"
-        moduleName="Brand Details"
-        moduleRoute="/brands/view"
-        title="Viewing Brand"
+        moduleId="dealer-details-module"
+        moduleName="Dealer Details"
+        moduleRoute="/dealers/view"
+        title="Viewing Dealer"
         videoSrc={video}
         videoHeader="Tutorial video"
-        listPath="brands"
+        listPath="dealers"
         activePage="view"
-        module="brands"
+        module="dealers"
         popoverOptions={[
           {
             label: "Create",
             icon: <Plus className="w-5 h-5 text-green-600" />,
-            onClick: () => navigate("/brands/create"),
+            onClick: () => navigate("/dealers/create"),
           },
           {
             label: "Edit",
             icon: <Edit className="w-5 h-5 text-blue-600" />,
-            onClick: () => navigate("/brands/edit/1"),
+            onClick: () => navigate("/dealers/edit/1"),
           },
         ]}
         keepChanges={keepChanges}
@@ -265,67 +357,163 @@ export default function BrandDetailsPage() {
                   handleExportPDF();
                 }
                 if (printEnabled) {
-                  handlePrintBrand(brandData);
+                  handlePrintDealer(dealerData);
                 }
               }
             : undefined
         }
       >
-        {/* Row 1: Brand Selection, Name, Code */}
+        {/* Row 1: Dealer Selection, Customer Name, Customer No, Short Name */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
           <div className="mt-1">
             <Autocomplete
-              options={MOCK_BRANDS}
-              value={selectedBrand}
-              onValueChange={setSelectedBrand}
+              options={MOCK_DEALERS}
+              value={selectedDealer}
+              onValueChange={setSelectedDealer}
               placeholder=" "
-              displayKey="name"
+              displayKey="customerName"
               valueKey="id"
-              searchKey="name"
+              searchKey="customerName"
               disabled={false}
               className="w-[96%] bg-gray-100 rounded-xl"
               labelClassName="bg-gray-50 rounded-2xl"
-              labelText="Brand Name"
+              labelText="Dealer Name"
               isShowTemplateIcon={false}
             />
           </div>
 
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Brand Name</h3>
+              <h3 className="font-normal text-gray-600">Customer Name</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(brandData.name)}
+              {displayValue(dealerData.customerName)}
             </div>
           </div>
 
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Brand Code</h3>
+              <h3 className="font-normal text-gray-600">Customer No</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(brandData.code)}
+              {displayValue(dealerData.customerNo)}
             </div>
           </div>
 
           <div className="">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-normal text-gray-600">Description</h3>
+              <h3 className="font-normal text-gray-600">Short Name</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(brandData.description)}
+              {displayValue(dealerData.shortName)}
             </div>
           </div>
         </div>
 
-        {/* Row 2: Description, Status, Default */}
+        {/* Row 2: VAT Number, Vendor Code, Currency, Phone */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">VAT Number</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(dealerData.vatNumber)}
+            </div>
+          </div>
+
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">Vendor Code</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(dealerData.vendorCode)}
+            </div>
+          </div>
+
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">Currency</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(dealerData.currency)}
+            </div>
+          </div>
+
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">Phone</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(dealerData.phone)}
+            </div>
+          </div>
+        </div>
+
+        {/* Row 3: Mobile, Email, Country, City */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">Mobile</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(dealerData.mobile)}
+            </div>
+          </div>
+
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">Email</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(dealerData.email)}
+            </div>
+          </div>
+
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">Country</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(dealerData.country)}
+            </div>
+          </div>
+
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">City</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(dealerData.city)}
+            </div>
+          </div>
+        </div>
+
+        {/* Row 4: Address, Payment Mode, Status, Default */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">Address</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(dealerData.address)}
+            </div>
+          </div>
+
+          <div className="">
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-normal text-gray-600">Payment Mode</h3>
+            </div>
+            <div className="w-full py-1 text-gray-900 text-md dark:text-white">
+              {displayValue(dealerData.paymentMode)}
+            </div>
+          </div>
+
           <div className="">
             <div className="flex justify-between items-center mb-1">
               <h3 className="font-normal text-gray-600">Status</h3>
             </div>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
-              {displayValue(brandData.status)}
+              {displayValue(dealerData.status)}
             </div>
           </div>
 
@@ -335,7 +523,7 @@ export default function BrandDetailsPage() {
                 <span className="text-[15px] text-gray-600">Default</span>
               </div>
               <div className="">
-                {brandData.isDefault ? (
+                {dealerData.isDefault ? (
                   <span className="text-black text-[15px]">Yes</span>
                 ) : (
                   <span className="text-black text-[15px]">No</span>
@@ -343,7 +531,10 @@ export default function BrandDetailsPage() {
               </div>
             </div>
           </div>
+        </div>
 
+        {/* Row 5: Action */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
           <div className="">
             <h3 className="font-normal mb-1 text-gray-600">Action</h3>
             <div className="w-full py-1 text-gray-900 text-md dark:text-white">
@@ -360,10 +551,10 @@ export default function BrandDetailsPage() {
         columnData={mockHistoryData}
         title="History"
         statusInfo={{
-          created: getRelativeTime(brandData.createdAt),
-          updated: getRelativeTime(brandData.updatedAt),
-          drafted: getRelativeTime(brandData.draftedAt),
-          deleted: getRelativeTime(brandData.deletedAt),
+          created: getRelativeTime(dealerData.createdAt),
+          updated: getRelativeTime(dealerData.updatedAt),
+          drafted: getRelativeTime(dealerData.draftedAt),
+          deleted: getRelativeTime(dealerData.deletedAt),
         }}
       />
 

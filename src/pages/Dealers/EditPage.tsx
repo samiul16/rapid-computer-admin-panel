@@ -19,10 +19,27 @@ import { useMinimizedModuleData } from "@/hooks/useMinimizedModuleData";
 import { SwitchSelect } from "@/components/common/SwitchAutoComplete";
 import { ActionsAutocomplete } from "@/components/common/ActionsAutocomplete";
 
-type BrandData = {
-  name: string;
-  code: string;
-  description: string;
+type DealerData = {
+  customerNo: string;
+  customerName: string;
+  shortName: string;
+  vatNumber: string;
+  vendorCode: string;
+  currency: string;
+  phone: string;
+  fax: string;
+  mobile: string;
+  whatsapp: string;
+  country: string;
+  state: string;
+  city: string;
+  postCode: string;
+  address: string;
+  email: string;
+  website: string;
+  language: string;
+  locationUrl: string;
+  paymentMode: string;
   status: "active" | "inactive" | "draft" | "deleted";
   isDefault: boolean;
   isActive: boolean;
@@ -34,8 +51,8 @@ type BrandData = {
   deletedAt: Date | null;
 };
 
-type BrandModuleData = {
-  formData: BrandData;
+type DealerModuleData = {
+  formData: DealerData;
   hasChanges: boolean;
   scrollPosition: number;
 };
@@ -44,10 +61,27 @@ type Props = {
   isEdit?: boolean;
 };
 
-const initialData: BrandData = {
-  name: "Apex",
-  code: "BRD001",
-  description: "Premium performance brand",
+const initialData: DealerData = {
+  customerNo: "CUST001",
+  customerName: "Tech Solutions Ltd",
+  shortName: "TechSol",
+  vatNumber: "VAT123456789",
+  vendorCode: "VEND001",
+  currency: "USD",
+  phone: "+1-555-0123",
+  fax: "+1-555-0124",
+  mobile: "+1-555-0125",
+  whatsapp: "+1-555-0125",
+  country: "United States",
+  state: "California",
+  city: "San Francisco",
+  postCode: "94105",
+  address: "123 Market Street, Suite 100",
+  email: "info@techsolutions.com",
+  website: "www.techsolutions.com",
+  language: "English",
+  locationUrl: "https://maps.google.com/techsolutions",
+  paymentMode: "Credit Card",
   status: "active",
   isDefault: false,
   isActive: true,
@@ -59,14 +93,14 @@ const initialData: BrandData = {
   deletedAt: null,
 };
 
-export default function BrandEditPage({ isEdit = true }: Props) {
+export default function DealerEditPage({ isEdit = true }: Props) {
   const navigate = useNavigate();
   const { id } = useParams();
   // const labels = useLanguageLabels();
   const { isRTL } = useAppSelector((state) => state.language);
 
   // Get module ID for this edit page
-  const moduleId = `brand-edit-module-${id || "new"}`;
+  const moduleId = `dealer-edit-module-${id || "new"}`;
 
   // Use the custom hook for minimized module data
   const {
@@ -74,7 +108,7 @@ export default function BrandEditPage({ isEdit = true }: Props) {
     hasMinimizedData,
     resetModuleData,
     getModuleScrollPosition,
-  } = useMinimizedModuleData<BrandModuleData>(moduleId);
+  } = useMinimizedModuleData<DealerModuleData>(moduleId);
 
   const [keepCreating, setKeepCreating] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
@@ -95,19 +129,50 @@ export default function BrandEditPage({ isEdit = true }: Props) {
   const { canCreate, canView } = useColorsPermissions();
 
   // Field-level permissions
-  const name: boolean = usePermission("brands", "edit", "name");
-  const code: boolean = usePermission("brands", "edit", "code");
-  const description: boolean = usePermission("brands", "edit", "description");
-  const status: boolean = usePermission("brands", "edit", "status");
-  const isDefault: boolean = usePermission("brands", "edit", "isDefault");
-  const canPdf: boolean = usePermission("brands", "pdf");
-  const canPrint: boolean = usePermission("brands", "print");
+  const customerName: boolean = usePermission(
+    "dealers",
+    "edit",
+    "customerName"
+  );
+  const customerNo: boolean = usePermission("dealers", "edit", "customerNo");
+  const shortName: boolean = usePermission("dealers", "edit", "shortName");
+  const vatNumber: boolean = usePermission("dealers", "edit", "vatNumber");
+  const vendorCode: boolean = usePermission("dealers", "edit", "vendorCode");
+  const currency: boolean = usePermission("dealers", "edit", "currency");
+  const phone: boolean = usePermission("dealers", "edit", "phone");
+  const mobile: boolean = usePermission("dealers", "edit", "mobile");
+  const email: boolean = usePermission("dealers", "edit", "email");
+  const country: boolean = usePermission("dealers", "edit", "country");
+  const city: boolean = usePermission("dealers", "edit", "city");
+  const address: boolean = usePermission("dealers", "edit", "address");
+  const paymentMode: boolean = usePermission("dealers", "edit", "paymentMode");
+  const status: boolean = usePermission("dealers", "edit", "status");
+  const isDefault: boolean = usePermission("dealers", "edit", "isDefault");
+  const canPdf: boolean = usePermission("dealers", "pdf");
+  const canPrint: boolean = usePermission("dealers", "print");
 
   // Form state
-  const [formData, setFormData] = useState<BrandData>({
-    name: "",
-    code: "",
-    description: "",
+  const [formData, setFormData] = useState<DealerData>({
+    customerNo: "",
+    customerName: "",
+    shortName: "",
+    vatNumber: "",
+    vendorCode: "",
+    currency: "",
+    phone: "",
+    fax: "",
+    mobile: "",
+    whatsapp: "",
+    country: "",
+    state: "",
+    city: "",
+    postCode: "",
+    address: "",
+    email: "",
+    website: "",
+    language: "",
+    locationUrl: "",
+    paymentMode: "",
     status: "active",
     isDefault: false,
     isActive: true,
@@ -144,7 +209,7 @@ export default function BrandEditPage({ isEdit = true }: Props) {
       (hasMinimizedData &&
         moduleData?.formData &&
         !isRestoredFromMinimized &&
-        !formData.name);
+        !formData.customerName);
 
     if (hasMinimizedData && moduleData?.formData && shouldAutoRestore) {
       setFormData(moduleData.formData);
@@ -168,7 +233,7 @@ export default function BrandEditPage({ isEdit = true }: Props) {
     moduleData,
     isRestoredFromMinimized,
     shouldRestoreFromMinimized,
-    formData.name,
+    formData.customerName,
     moduleId,
     getModuleScrollPosition,
   ]);
@@ -205,25 +270,42 @@ export default function BrandEditPage({ isEdit = true }: Props) {
       await handleExportPDF();
     }
     if (printEnabled) {
-      handlePrintBrand(formData);
+      handlePrintDealer(formData);
     }
 
     // keep switch functionality
     if (keepCreating) {
-      toastSuccess("Brand updated successfully!");
+      toastSuccess("Dealer updated successfully!");
       handleReset();
     } else {
-      toastSuccess("Brand updated successfully!");
-      navigate("/brands");
+      toastSuccess("Dealer updated successfully!");
+      navigate("/dealers");
     }
   };
 
   // Update handleReset function to use the custom hook
   const handleReset = async () => {
     setFormData({
-      name: "",
-      code: "",
-      description: "",
+      customerNo: "",
+      customerName: "",
+      shortName: "",
+      vatNumber: "",
+      vendorCode: "",
+      currency: "",
+      phone: "",
+      fax: "",
+      mobile: "",
+      whatsapp: "",
+      country: "",
+      state: "",
+      city: "",
+      postCode: "",
+      address: "",
+      email: "",
+      website: "",
+      language: "",
+      locationUrl: "",
+      paymentMode: "",
       status: "active",
       isDefault: false,
       isActive: true,
@@ -256,7 +338,7 @@ export default function BrandEditPage({ isEdit = true }: Props) {
 
     // Focus the first input field after reset
     setTimeout(() => {
-      inputRefs.current["name"]?.focus();
+      inputRefs.current["customerName"]?.focus();
     }, 100);
   };
 
@@ -264,18 +346,28 @@ export default function BrandEditPage({ isEdit = true }: Props) {
     setIsResetModalOpen(true);
   };
 
-  const handlePrintBrand = (brandData: any) => {
+  const handlePrintDealer = (dealerData: any) => {
     try {
       const html = PrintCommonLayout({
-        title: "Brand Details",
-        data: [brandData],
+        title: "Dealer Details",
+        data: [dealerData],
         excludeFields: ["id", "__v", "_id"],
         fieldLabels: {
-          name: "Brand Name",
-          code: "Brand Code",
-          description: "Description",
+          customerName: "Customer Name",
+          customerNo: "Customer No",
+          shortName: "Short Name",
+          vatNumber: "VAT Number",
+          vendorCode: "Vendor Code",
+          currency: "Currency",
+          phone: "Phone",
+          mobile: "Mobile",
+          email: "Email",
+          country: "Country",
+          city: "City",
+          address: "Address",
+          paymentMode: "Payment Mode",
           status: "Status",
-          isDefault: "Default Brand",
+          isDefault: "Default Dealer",
           isActive: "Active Status",
           isDraft: "Draft Status",
           isDeleted: "Deleted Status",
@@ -305,15 +397,15 @@ export default function BrandEditPage({ isEdit = true }: Props) {
       const blob = await pdf(
         <GenericPDF
           data={[formData]}
-          title="Brand Details"
-          subtitle="Brand Information"
+          title="Dealer Details"
+          subtitle="Dealer Information"
         />
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "brand-details.pdf";
+      a.download = "dealer-details.pdf";
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
@@ -327,7 +419,7 @@ export default function BrandEditPage({ isEdit = true }: Props) {
       label: "Create",
       icon: <Plus className="w-5 h-5 text-green-500" />,
       onClick: () => {
-        navigate("/brands/create");
+        navigate("/dealers/create");
       },
       show: canCreate,
     },
@@ -335,7 +427,7 @@ export default function BrandEditPage({ isEdit = true }: Props) {
       label: "View",
       icon: <Eye className="w-5 h-5 text-green-600" />,
       onClick: () => {
-        navigate("/brands/view");
+        navigate("/dealers/view");
       },
       show: canView,
     },
@@ -358,7 +450,7 @@ export default function BrandEditPage({ isEdit = true }: Props) {
                 ...prev,
                 isDraft: true,
               }));
-              toastRestore("Color saved as draft successfully");
+              toastRestore("Dealer saved as draft successfully");
             },
             show: canCreate,
           },
@@ -369,7 +461,7 @@ export default function BrandEditPage({ isEdit = true }: Props) {
   }, [formData.isDraft, canCreate]);
 
   // Create minimize handler using the custom hook
-  const handleMinimize = useCallback((): BrandModuleData => {
+  const handleMinimize = useCallback((): DealerModuleData => {
     return {
       formData,
       hasChanges: true,
@@ -381,11 +473,11 @@ export default function BrandEditPage({ isEdit = true }: Props) {
     <>
       <MinimizablePageLayout
         moduleId={moduleId}
-        moduleName={`Edit Brand`}
-        moduleRoute={`/brands/edit/${id || "new"}`}
+        moduleName={`Edit Dealer`}
+        moduleRoute={`/dealers/edit/${id || "new"}`}
         onMinimize={handleMinimize}
-        title="Edit Brand"
-        listPath="brands"
+        title="Edit Dealer"
+        listPath="dealers"
         popoverOptions={popoverOptions}
         videoSrc={video}
         videoHeader="Tutorial video"
@@ -396,7 +488,7 @@ export default function BrandEditPage({ isEdit = true }: Props) {
         printEnabled={printEnabled}
         onPrintToggle={canPrint ? handleSwitchChange : undefined}
         activePage="edit"
-        module="brands"
+        module="dealers"
         additionalFooterButtons={
           canCreate ? (
             <div className="flex gap-4 max-[435px]:gap-2">
@@ -426,59 +518,255 @@ export default function BrandEditPage({ isEdit = true }: Props) {
             onSubmit={handleSubmit}
             className="space-y-6"
           >
-            {/* First Row: Brand Name, Code, Description */}
+            {/* First Row: Customer Name, Customer No, Short Name, VAT Number */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
-              {/* Brand Name field - only show if user can edit */}
-              {name && (
+              {/* Customer Name field - only show if user can edit */}
+              {customerName && (
                 <div className="space-y-2">
                   <EditableInput
-                    setRef={setRef("name")}
-                    id="name"
-                    name="name"
-                    value={formData.name}
+                    setRef={setRef("customerName")}
+                    id="customerName"
+                    name="customerName"
+                    value={formData.customerName}
                     onChange={handleChange}
-                    onNext={() => focusNextInput("code")}
-                    onCancel={() => setFormData({ ...formData, name: "" })}
-                    labelText="Brand Name"
-                    tooltipText="Enter the brand name"
+                    onNext={() => focusNextInput("customerNo")}
+                    onCancel={() =>
+                      setFormData({ ...formData, customerName: "" })
+                    }
+                    labelText="Customer Name"
+                    tooltipText="Enter the customer name"
                     required
                   />
                 </div>
               )}
 
-              {/* Brand Code field - only show if user can edit */}
-              {code && (
+              {/* Customer No field - only show if user can edit */}
+              {customerNo && (
                 <div className="space-y-2">
                   <EditableInput
-                    setRef={setRef("code")}
-                    id="code"
-                    name="code"
-                    value={formData.code}
+                    setRef={setRef("customerNo")}
+                    id="customerNo"
+                    name="customerNo"
+                    value={formData.customerNo}
                     onChange={handleChange}
-                    onNext={() => focusNextInput("description")}
-                    onCancel={() => setFormData({ ...formData, code: "" })}
-                    labelText="Brand Code"
-                    tooltipText="Enter the brand code (e.g., BRD001)"
+                    onNext={() => focusNextInput("shortName")}
+                    onCancel={() =>
+                      setFormData({ ...formData, customerNo: "" })
+                    }
+                    labelText="Customer No"
+                    tooltipText="Enter the customer number (e.g., CUST001)"
                     required
                   />
                 </div>
               )}
 
-              {/* Description field - only show if user can edit */}
-              {description && (
+              {/* Short Name field - only show if user can edit */}
+              {shortName && (
                 <div className="space-y-2">
                   <EditableInput
-                    setRef={setRef("description")}
-                    id="description"
-                    name="description"
-                    value={formData.description}
+                    setRef={setRef("shortName")}
+                    id="shortName"
+                    name="shortName"
+                    value={formData.shortName}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("vatNumber")}
+                    onCancel={() => setFormData({ ...formData, shortName: "" })}
+                    labelText="Short Name"
+                    tooltipText="Enter a short name for the customer"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* VAT Number field - only show if user can edit */}
+              {vatNumber && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("vatNumber")}
+                    id="vatNumber"
+                    name="vatNumber"
+                    value={formData.vatNumber}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("vendorCode")}
+                    onCancel={() => setFormData({ ...formData, vatNumber: "" })}
+                    labelText="VAT Number"
+                    tooltipText="Enter the VAT number"
+                    required
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Second Row: Vendor Code, Currency, Phone, Mobile */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
+              {/* Vendor Code field - only show if user can edit */}
+              {vendorCode && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("vendorCode")}
+                    id="vendorCode"
+                    name="vendorCode"
+                    value={formData.vendorCode}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("currency")}
+                    onCancel={() =>
+                      setFormData({ ...formData, vendorCode: "" })
+                    }
+                    labelText="Vendor Code"
+                    tooltipText="Enter the vendor code"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Currency field - only show if user can edit */}
+              {currency && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("currency")}
+                    id="currency"
+                    name="currency"
+                    value={formData.currency}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("phone")}
+                    onCancel={() => setFormData({ ...formData, currency: "" })}
+                    labelText="Currency"
+                    tooltipText="Enter the currency (e.g., USD, EUR)"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Phone field - only show if user can edit */}
+              {phone && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("phone")}
+                    id="phone"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("mobile")}
+                    onCancel={() => setFormData({ ...formData, phone: "" })}
+                    labelText="Phone"
+                    tooltipText="Enter the phone number"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Mobile field - only show if user can edit */}
+              {mobile && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("mobile")}
+                    id="mobile"
+                    name="mobile"
+                    value={formData.mobile}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("email")}
+                    onCancel={() => setFormData({ ...formData, mobile: "" })}
+                    labelText="Mobile"
+                    tooltipText="Enter the mobile number"
+                    required
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Third Row: Email, Country, City, Address */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
+              {/* Email field - only show if user can edit */}
+              {email && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("email")}
+                    id="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("country")}
+                    onCancel={() => setFormData({ ...formData, email: "" })}
+                    labelText="Email"
+                    tooltipText="Enter the email address"
+                    type="email"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Country field - only show if user can edit */}
+              {country && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("country")}
+                    id="country"
+                    name="country"
+                    value={formData.country}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("city")}
+                    onCancel={() => setFormData({ ...formData, country: "" })}
+                    labelText="Country"
+                    tooltipText="Enter the country"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* City field - only show if user can edit */}
+              {city && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("city")}
+                    id="city"
+                    name="city"
+                    value={formData.city}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("address")}
+                    onCancel={() => setFormData({ ...formData, city: "" })}
+                    labelText="City"
+                    tooltipText="Enter the city"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Address field - only show if user can edit */}
+              {address && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("address")}
+                    id="address"
+                    name="address"
+                    value={formData.address}
+                    onChange={handleChange}
+                    onNext={() => focusNextInput("paymentMode")}
+                    onCancel={() => setFormData({ ...formData, address: "" })}
+                    labelText="Address"
+                    tooltipText="Enter the address"
+                    required
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Fourth Row: Payment Mode, Status, Default */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
+              {/* Payment Mode field - only show if user can edit */}
+              {paymentMode && (
+                <div className="space-y-2">
+                  <EditableInput
+                    setRef={setRef("paymentMode")}
+                    id="paymentMode"
+                    name="paymentMode"
+                    value={formData.paymentMode}
                     onChange={handleChange}
                     onNext={() => focusNextInput("status")}
                     onCancel={() =>
-                      setFormData({ ...formData, description: "" })
+                      setFormData({ ...formData, paymentMode: "" })
                     }
-                    labelText="Description"
-                    tooltipText="Enter brand description"
+                    labelText="Payment Mode"
+                    tooltipText="Enter the payment mode"
                     required
                   />
                 </div>
@@ -497,22 +785,22 @@ export default function BrandEditPage({ isEdit = true }: Props) {
                       {
                         label: "Active",
                         value: "active",
-                        date: "Set active country",
+                        date: "Set active dealer",
                       },
                       {
                         label: "Inactive",
                         value: "InActive",
-                        date: "Set inactive country",
+                        date: "Set inactive dealer",
                       },
                       {
                         label: "Draft",
                         value: "Draft",
-                        date: "Set draft country",
+                        date: "Set draft dealer",
                       },
                       {
                         label: "Delete",
                         value: "Delete",
-                        date: "Set delete country",
+                        date: "Set delete dealer",
                       },
                     ]}
                     value={formData.status}
@@ -550,14 +838,11 @@ export default function BrandEditPage({ isEdit = true }: Props) {
                         },
                       },
                     }}
-                    tooltipText="Set the brand status"
+                    tooltipText="Set the dealer status"
                   />
                 </div>
               )}
-            </div>
 
-            {/* Second Row: Status, Default */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-8 relative">
               {/* Default field - only show if user can edit */}
               {isDefault && (
                 <div className="space-y-2 relative">
@@ -570,12 +855,12 @@ export default function BrandEditPage({ isEdit = true }: Props) {
                       {
                         label: "Yes",
                         value: "Yes",
-                        date: "Set default brand",
+                        date: "Set default dealer",
                       },
                       {
                         label: "No",
                         value: "No",
-                        date: "Remove default brand",
+                        date: "Remove default dealer",
                       },
                     ]}
                     value={isDefaultState === "Yes" ? "Yes" : "No"}
@@ -602,7 +887,7 @@ export default function BrandEditPage({ isEdit = true }: Props) {
                     placeholder=" "
                     labelText="Default"
                     className="relative"
-                    tooltipText="Set as default brand"
+                    tooltipText="Set as default dealer"
                   />
                 </div>
               )}
@@ -657,7 +942,7 @@ export default function BrandEditPage({ isEdit = true }: Props) {
                       },
                     },
                   }}
-                  tooltipText="Brand Action History"
+                  tooltipText="Dealer Action History"
                 />
               </div>
             </div>
