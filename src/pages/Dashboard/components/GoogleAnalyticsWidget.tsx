@@ -18,7 +18,7 @@ const GoogleAnalyticsWidget: React.FC = () => {
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-4">
-      <h2 className="text-lg font-semibold text-gray-800 mb-4">
+      <h2 className="text-xl font-semibold text-gray-800 mb-4">
         Google Analytics
       </h2>
 
@@ -79,7 +79,7 @@ const GoogleAnalyticsWidget: React.FC = () => {
 
       {/* Bottom Stats */}
       <div className="grid grid-cols-2 gap-4">
-        <div className="bg-gray-50 rounded-lg p-4">
+        <div className="bg-gray-50 rounded-lg p-4 shadow">
           <div className="flex items-center gap-2 mb-2">
             <TrendingUp className="w-4 h-4 text-orange-500" />
             <span className="text-sm text-gray-600">Sessions</span>
@@ -89,7 +89,7 @@ const GoogleAnalyticsWidget: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-gray-50 rounded-lg p-4">
+        <div className="bg-gray-50 rounded-lg p-4 shadow">
           <div className="flex items-center gap-2 mb-2">
             <TrendingUp className="w-4 h-4 text-orange-500" />
             <span className="text-sm text-gray-600">Goal Completions</span>
