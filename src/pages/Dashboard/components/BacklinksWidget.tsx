@@ -9,14 +9,12 @@ import {
 } from "recharts";
 import { Link } from "lucide-react";
 
-// const citationData = [{ score: 55 }]; // Removed unused variable
-
 const newLostLinksData = [
-  { date: "4 Feb", new: 1800, lost: 800 },
-  { date: "11 Feb", new: 1600, lost: 1000 },
-  { date: "18 Feb", new: 2000, lost: 900 },
-  { date: "25 Feb", new: 1900, lost: 1100 },
-  { date: "4 Mar", new: 1700, lost: 1000 },
+  { date: "4 Feb", new: 800, lost: 900 },
+  { date: "11 Feb", new: 400, lost: 900 },
+  { date: "18 Feb", new: 900, lost: 900 },
+  { date: "25 Feb", new: 300, lost: 900 },
+  { date: "4 Mar", new: 1000, lost: 800 },
 ];
 
 interface CircularProgressProps {
@@ -71,13 +69,13 @@ const CircularProgress: React.FC<CircularProgressProps> = ({
 
 const BacklinksWidget: React.FC = () => {
   return (
-    <div className="bg-white rounded-lg shadow-sm p-4">
-      <h2 className="text-lg font-semibold text-gray-800 mb-4">Backlinks</h2>
+    <div className="bg-white rounded-lg shadow-sm p-6">
+      <h2 className="text-xl font-semibold text-gray-800 mb-6">Backlinks</h2>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="flex gap-8 w-full">
         {/* Citation Flow */}
-        <div>
-          <div className="flex items-center gap-2 mb-4">
+        <div className="bg-gray-100 rounded-lg p-4 w-[300px] flex-shrink-0">
+          <div className="flex items-center gap-2 mb-6">
             <Link className="w-4 h-4 text-purple-500" />
             <span className="text-sm text-gray-600">Citation Flow</span>
           </div>
@@ -88,47 +86,60 @@ const BacklinksWidget: React.FC = () => {
         </div>
 
         {/* New/Lost Links */}
-        <div>
-          <div className="flex items-center gap-2 mb-4">
-            <Link className="w-4 h-4 text-purple-500" />
-            <span className="text-sm text-gray-600">New/Lost Links</span>
-          </div>
-
-          {/* Legend */}
-          <div className="flex gap-4 mb-4 text-xs">
+        <div className="bg-gray-50 p-4 shadow rounded-lg flex-1">
+          <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-green-500 rounded-sm"></div>
-              <span>New</span>
+              <Link className="w-4 h-4 text-purple-500" />
+              <span className="text-sm text-gray-600">New/Lost Links</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-red-500 rounded-sm"></div>
-              <span>Lost</span>
+
+            {/* Legend */}
+            <div className="flex gap-4 text-xs">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                <span className="text-gray-600">New</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                <span className="text-gray-600">Lost</span>
+              </div>
             </div>
           </div>
 
           {/* Chart */}
-          <div className="h-32">
+          <div className="h-40">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={newLostLinksData}
-                margin={{ top: 5, right: 5, left: 5, bottom: 20 }}
-                barCategoryGap="25%"
+                margin={{ top: 10, right: 10, left: 10, bottom: 20 }}
+                barCategoryGap="20%"
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis
                   dataKey="date"
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fontSize: 9, fill: "#666" }}
+                  tick={{ fontSize: 10, fill: "#666" }}
                 />
                 <YAxis
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fontSize: 9, fill: "#666" }}
-                  domain={[0, 2500]}
+                  tick={{ fontSize: 10, fill: "#666" }}
+                  domain={[0, 2000]}
+                  ticks={[0, 1000, 2000]}
                 />
-                <Bar dataKey="new" fill="#22c55e" radius={[2, 2, 0, 0]} />
-                <Bar dataKey="lost" fill="#ef4444" radius={[2, 2, 0, 0]} />
+                <Bar
+                  dataKey="lost"
+                  stackId="a"
+                  fill="#ef4444"
+                  radius={[0, 0, 0, 0]}
+                />
+                <Bar
+                  dataKey="new"
+                  stackId="a"
+                  fill="#22c55e"
+                  radius={[2, 2, 0, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
