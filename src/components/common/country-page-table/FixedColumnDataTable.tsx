@@ -235,7 +235,7 @@ const DragAlongCell = ({
         minWidth: `${cell.column.columnDef.minSize || cell.column.getSize()}px`,
         maxWidth: `${cell.column.columnDef.maxSize || "none"}`,
       }}
-      className={`px-4 py-1 whitespace-nowrap border-b border-gray-200 dark:border-gray-700 transition-all duration-200 ${
+      className={`px-4 py-3 whitespace-nowrap border-b border-gray-200 dark:border-gray-700 transition-all duration-200 ${
         isCellSelected ? "ring-1 ring-primary ring-inset" : ""
       } ${
         isFixed
