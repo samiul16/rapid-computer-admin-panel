@@ -1507,6 +1507,15 @@ import CategoryCreatePage from "./pages/category/CreatePage";
 import CategoryEditPage from "./pages/category/EditPage";
 import CategoryDetails from "./pages/category/DetailsPage";
 
+// Dealers
+import DealersPage from "./pages/Dealers/DealersPage";
+import DealersCreatePage from "./pages/Dealers/CreatePage";
+import DealersEditPage from "./pages/Dealers/EditPage";
+import DealersDetails from "./pages/Dealers/DealersDetails";
+
+// SEO Dashboard
+import SEODashboardPage from "./pages/Dashboard/SEODashboard";
+
 function App() {
   const { i18n } = useTranslation();
   const isAuthenticated = useSelector(
@@ -1608,7 +1617,7 @@ function App() {
               <Route element={<MainLayout />}>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/search" element={<Dashboard />} />
-
+                <Route path="/newdashboard" element={<SEODashboardPage />} />
                 {/* Users */}
 
                 {/* Permissions */}
@@ -1635,6 +1644,21 @@ function App() {
                 <Route path="/languages/view" element={<LanguageDetails />} />
                 {/* Users Location */}
                 <Route path="/users-location" element={<UsersLocationPage />} />
+
+                {/* Dealers */}
+                <Route path="/dealers" element={<DealersPage />} />
+                <Route path="/dealers/:id" element={<DealersDetails />} />
+                <Route path="/dealers/create" element={<DealersCreatePage />} />
+                <Route
+                  path="/dealers/:id/edit"
+                  element={<DealersEditPage isEdit={true} />}
+                />
+
+                <Route
+                  path="/dealers/edit/:id"
+                  element={<DealersEditPage isEdit={true} />}
+                />
+                <Route path="/dealers/view" element={<DealersDetails />} />
 
                 {/* Lead Sources */}
                 <Route path="/lead-sources" element={<LeadSourcesPage />} />
