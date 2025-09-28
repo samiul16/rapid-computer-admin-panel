@@ -2,9 +2,9 @@ import React from "react";
 import {
   LineChart,
   Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
+  // XAxis,
+  // YAxis,
+  // CartesianGrid,
   ResponsiveContainer,
 } from "recharts";
 import { Search } from "lucide-react";
@@ -23,21 +23,23 @@ const impressionsData = [
 const GoogleSearchConsoleWidget: React.FC = () => {
   return (
     <div className="bg-white rounded-lg shadow-sm p-4">
-      <h2 className="text-lg font-semibold text-gray-800 mb-4">
+      <h2 className="text-xl font-semibold text-gray-800 mb-6 mt-6">
         Google Search Console
       </h2>
 
       {/* Impressions Header */}
       <div className="mb-4">
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-center gap-2 mb-6">
           <Search className="w-4 h-4 text-blue-500" />
           <span className="text-sm text-gray-600">Impressions</span>
         </div>
-        <div className="text-3xl font-bold text-gray-900">262 K</div>
+        <div className="text-5xl font-bold text-gray-900 text-center">
+          262 K
+        </div>
       </div>
 
       {/* Impressions Chart */}
-      <div className="h-24 mt-4">
+      <div className="h-24 mt-10">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
             data={impressionsData}

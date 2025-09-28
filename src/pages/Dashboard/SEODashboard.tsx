@@ -9,10 +9,10 @@ import {
 
 const SEODashboard: React.FC = () => {
   return (
-    <div className="h-full overflow-y-auto bg-gray-100 grid-scroll">
+    <div className="h-full overflow-y-auto bg-gray-100 grid-scroll rounded-lg">
       <div className="p-4 min-h-full">
         <div className="mb-4">
-          <h1 className="text-xl font-semibold text-gray-800">SEO Dashboard</h1>
+          <h1 className="text-2xl font-semibold text-gray-800">SEO Dashboard</h1>
         </div>
 
         <div className="space-y-4">

@@ -74,7 +74,7 @@ const BacklinksWidget: React.FC = () => {
 
       <div className="flex gap-8 w-full">
         {/* Citation Flow */}
-        <div className="bg-gray-100 rounded-lg p-4 w-[300px] flex-shrink-0">
+        <div className="bg-gray-100 rounded-lg p-4 w-[300px] flex-shrink-0 shadow">
           <div className="flex items-center gap-2 mb-6">
             <Link className="w-4 h-4 text-purple-500" />
             <span className="text-sm text-gray-600">Citation Flow</span>
